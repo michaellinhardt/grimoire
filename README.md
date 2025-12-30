@@ -1,2 +1,1 @@
-# vaultai
-VAULTAI
+# Grimoire
