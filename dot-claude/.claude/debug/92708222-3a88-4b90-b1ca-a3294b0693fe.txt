@@ -1,0 +1,332 @@
+2026-01-02T17:14:15.146Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (12.5ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-02T17:14:15.158Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (11.7ms): security find-generic-password -a "teazyou" -w -s "Claude Code-credentials"
+2026-01-02T17:14:15.168Z [ERROR] Failed to save config with lock: Error: ENOENT: no such file or directory, lstat '/Users/teazyou/dev/grimoire/dot-claude/.claude.json'
+2026-01-02T17:14:15.168Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055168
+2026-01-02T17:14:15.168Z [DEBUG] Setting permissions for new file: 600
+2026-01-02T17:14:15.169Z [DEBUG] Temp file written successfully, size: 82 bytes
+2026-01-02T17:14:15.169Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055168 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:15.169Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:15.171Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055171
+2026-01-02T17:14:15.171Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:15.171Z [DEBUG] Temp file written successfully, size: 130 bytes
+2026-01-02T17:14:15.171Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:15.171Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055171 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:15.171Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:15.174Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055174
+2026-01-02T17:14:15.174Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:15.174Z [DEBUG] Temp file written successfully, size: 167 bytes
+2026-01-02T17:14:15.174Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:15.174Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055174 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:15.175Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:15.175Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055175
+2026-01-02T17:14:15.175Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:15.175Z [DEBUG] Temp file written successfully, size: 202 bytes
+2026-01-02T17:14:15.175Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:15.175Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055175 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:15.175Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:15.175Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055175
+2026-01-02T17:14:15.175Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:15.176Z [DEBUG] Temp file written successfully, size: 239 bytes
+2026-01-02T17:14:15.176Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:15.176Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374055175 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:15.176Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:15.176Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-02T17:14:15.176Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-02T17:14:15.176Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-02T17:14:15.177Z [DEBUG] LSP server manager initialized successfully
+2026-01-02T17:14:15.177Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-02T17:14:15.177Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-01-02T17:14:15.179Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/teazyou/dev/grimoire/dot-claude/.claude/skills, project=[]
+2026-01-02T17:14:15.229Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (49.4ms): ps aux | grep -E "Visual Studio Code|Code Helper|Cursor Helper|Windsurf Helper|IntelliJ IDEA|PyCharm
+2026-01-02T17:14:15.229Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-01-02T17:14:15.241Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-02T17:14:15.241Z [DEBUG] Looking for shell config file: /Users/teazyou/dev/grimoire/dot-claude/.zshrc
+2026-01-02T17:14:15.241Z [DEBUG] Shell config file not found: /Users/teazyou/dev/grimoire/dot-claude/.zshrc, creating snapshot with Claude Code defaults only
+2026-01-02T17:14:15.241Z [DEBUG] Snapshots directory: /Users/teazyou/dev/grimoire/dot-claude/.claude/shell-snapshots
+2026-01-02T17:14:15.241Z [DEBUG] Creating snapshot at: /Users/teazyou/dev/grimoire/dot-claude/.claude/shell-snapshots/snapshot-zsh-1767374055241-v72xfw.sh
+2026-01-02T17:14:15.241Z [DEBUG] Shell binary exists: true
+2026-01-02T17:14:15.241Z [DEBUG] Execution timeout: 10000ms
+2026-01-02T17:14:15.242Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude/todos/92708222-3a88-4b90-b1ca-a3294b0693fe-agent-92708222-3a88-4b90-b1ca-a3294b0693fe.json.tmp.86000.1767374055242
+2026-01-02T17:14:15.242Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-02T17:14:15.242Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude/todos/92708222-3a88-4b90-b1ca-a3294b0693fe-agent-92708222-3a88-4b90-b1ca-a3294b0693fe.json.tmp.86000.1767374055242 to /Users/teazyou/dev/grimoire/dot-claude/.claude/todos/92708222-3a88-4b90-b1ca-a3294b0693fe-agent-92708222-3a88-4b90-b1ca-a3294b0693fe.json
+2026-01-02T17:14:15.242Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude/todos/92708222-3a88-4b90-b1ca-a3294b0693fe-agent-92708222-3a88-4b90-b1ca-a3294b0693fe.json written atomically
+2026-01-02T17:14:15.246Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-01-02T17:14:15.246Z [DEBUG] Total plugin skills loaded: 0
+2026-01-02T17:14:15.246Z [DEBUG] Total plugin commands loaded: 0
+2026-01-02T17:14:15.246Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-01-02T17:14:15.248Z [DEBUG] Total plugin agents loaded: 0
+2026-01-02T17:14:15.248Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2026-01-02T17:14:15.248Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2026-01-02T17:14:16.216Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056216
+2026-01-02T17:14:16.216Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.216Z [DEBUG] Temp file written successfully, size: 411 bytes
+2026-01-02T17:14:16.216Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.216Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056216 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.216Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.222Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056222
+2026-01-02T17:14:16.222Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.222Z [DEBUG] Temp file written successfully, size: 483 bytes
+2026-01-02T17:14:16.222Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.222Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056222 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.222Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.223Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056223
+2026-01-02T17:14:16.223Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.223Z [DEBUG] Temp file written successfully, size: 535 bytes
+2026-01-02T17:14:16.223Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.223Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056223 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.223Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.223Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056223
+2026-01-02T17:14:16.223Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.223Z [DEBUG] Temp file written successfully, size: 573 bytes
+2026-01-02T17:14:16.223Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.223Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056223 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.223Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.224Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056224
+2026-01-02T17:14:16.224Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.224Z [DEBUG] Temp file written successfully, size: 609 bytes
+2026-01-02T17:14:16.224Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.224Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056224 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.224Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.224Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056224
+2026-01-02T17:14:16.224Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.224Z [DEBUG] Temp file written successfully, size: 639 bytes
+2026-01-02T17:14:16.224Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.224Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056224 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.225Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.225Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056225
+2026-01-02T17:14:16.225Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.225Z [DEBUG] Temp file written successfully, size: 669 bytes
+2026-01-02T17:14:16.225Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.225Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056225 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.226Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.226Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056226
+2026-01-02T17:14:16.226Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.226Z [DEBUG] Temp file written successfully, size: 694 bytes
+2026-01-02T17:14:16.226Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.226Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056226 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.226Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.243Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056243
+2026-01-02T17:14:16.243Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.243Z [DEBUG] Temp file written successfully, size: 52342 bytes
+2026-01-02T17:14:16.243Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.243Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056243 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.243Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.265Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056265
+2026-01-02T17:14:16.265Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.266Z [DEBUG] Temp file written successfully, size: 52409 bytes
+2026-01-02T17:14:16.266Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.266Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056265 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.266Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.267Z [DEBUG] Git remote URL: https://github.com/michaellinhardt/grimoire.git
+2026-01-02T17:14:16.267Z [DEBUG] Parsed repository: michaellinhardt/grimoire from https://github.com/michaellinhardt/grimoire.git
+2026-01-02T17:14:16.267Z [DEBUG] Parsed repository: michaellinhardt/grimoire from URL: https://github.com/michaellinhardt/grimoire.git
+2026-01-02T17:14:16.267Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056267
+2026-01-02T17:14:16.267Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:16.268Z [DEBUG] Temp file written successfully, size: 52513 bytes
+2026-01-02T17:14:16.268Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:16.268Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374056267 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:16.268Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:16.268Z [DEBUG] Added /Users/teazyou/dev/grimoire to tracked paths for repo michaellinhardt/grimoire
+2026-01-02T17:14:16.268Z [DEBUG] Shell snapshot created successfully (691 bytes)
+2026-01-02T17:14:16.617Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/Users/teazyou/.local/share/claude/versions/2.0.76)
+2026-01-02T17:14:19.875Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374059875
+2026-01-02T17:14:19.875Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:19.875Z [DEBUG] Temp file written successfully, size: 52513 bytes
+2026-01-02T17:14:19.875Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:19.875Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374059875 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:19.875Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:19.876Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374059876
+2026-01-02T17:14:19.876Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:19.876Z [DEBUG] Temp file written successfully, size: 52513 bytes
+2026-01-02T17:14:19.876Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:19.876Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374059876 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:19.876Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:55.092Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (30.0ms): security delete-generic-password -a $USER -s "Claude Code"
+2026-01-02T17:14:55.092Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374095092
+2026-01-02T17:14:55.092Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:55.092Z [DEBUG] Temp file written successfully, size: 52513 bytes
+2026-01-02T17:14:55.092Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:55.092Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374095092 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:55.093Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:55.108Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (15.3ms): security delete-generic-password -a "teazyou" -s "Claude Code-credentials"
+2026-01-02T17:14:55.121Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (12.2ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-02T17:14:55.133Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (11.6ms): security find-generic-password -a "teazyou" -w -s "Claude Code-credentials"
+2026-01-02T17:14:55.134Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374095134
+2026-01-02T17:14:55.134Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:55.134Z [DEBUG] Temp file written successfully, size: 52513 bytes
+2026-01-02T17:14:55.134Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:55.134Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374095134 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:55.135Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:55.529Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374095529
+2026-01-02T17:14:55.529Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:14:55.530Z [DEBUG] Temp file written successfully, size: 52775 bytes
+2026-01-02T17:14:55.530Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:14:55.530Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374095529 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:14:55.531Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:14:55.565Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (29.4ms): security find-generic-password -a "teazyou" -w -s "Claude Code-credentials"
+2026-01-02T17:14:55.581Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (16.4ms): security find-generic-password -a "teazyou" -w -s "Claude Code-credentials"
+2026-01-02T17:15:10.255Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (33.2ms): security find-generic-password -a "teazyou" -w -s "Claude Code-credentials"
+2026-01-02T17:15:10.643Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374110643
+2026-01-02T17:15:10.643Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:10.644Z [DEBUG] Temp file written successfully, size: 52904 bytes
+2026-01-02T17:15:10.644Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:10.644Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374110643 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:10.644Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:11.084Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374111084
+2026-01-02T17:15:11.084Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:11.085Z [DEBUG] Temp file written successfully, size: 52965 bytes
+2026-01-02T17:15:11.085Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:11.085Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374111084 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:11.086Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:11.090Z [DEBUG] Skipping Notification:auth_success hook execution - workspace trust not accepted
+2026-01-02T17:15:11.121Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (30.4ms): security find-generic-password -a "teazyou" -w -s "Claude Code-credentials"
+2026-01-02T17:15:24.728Z [ERROR] Error: Error: Failed to create backup of iTerm2 preferences, bailing out
+    at BMD (/$bunfs/root/claude:357:430)
+    at async wtR (/$bunfs/root/claude:335:91678)
+    at processTicksAndRejections (native:7:39)
+2026-01-02T17:15:38.316Z [ERROR] Error: Error: Failed to create backup of iTerm2 preferences, bailing out
+    at BMD (/$bunfs/root/claude:357:430)
+    at async wtR (/$bunfs/root/claude:335:91678)
+    at processTicksAndRejections (native:7:39)
+2026-01-02T17:15:41.109Z [ERROR] Error: Error: Failed to create backup of iTerm2 preferences, bailing out
+    at BMD (/$bunfs/root/claude:357:430)
+    at async wtR (/$bunfs/root/claude:335:91678)
+    at processTicksAndRejections (native:7:39)
+2026-01-02T17:15:43.748Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374143748
+2026-01-02T17:15:43.748Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:43.748Z [DEBUG] Temp file written successfully, size: 53036 bytes
+2026-01-02T17:15:43.748Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:43.748Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374143748 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:43.749Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:43.751Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374143751
+2026-01-02T17:15:43.751Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:43.751Z [DEBUG] Temp file written successfully, size: 53036 bytes
+2026-01-02T17:15:43.751Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:43.751Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374143751 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:43.751Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:45.345Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374145345
+2026-01-02T17:15:45.345Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:45.345Z [DEBUG] Temp file written successfully, size: 53433 bytes
+2026-01-02T17:15:45.345Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:45.345Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374145345 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:45.345Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:45.704Z [DEBUG] Metrics opt-out API response: enabled=true, vcsLinking=false
+2026-01-02T17:15:47.417Z [DEBUG] Passes: No cache, fetching eligibility
+2026-01-02T17:15:47.423Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2026-01-02T17:15:47.426Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147426
+2026-01-02T17:15:47.426Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.426Z [DEBUG] Temp file written successfully, size: 53453 bytes
+2026-01-02T17:15:47.426Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.426Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147426 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.426Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.428Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2026-01-02T17:15:47.428Z [DEBUG] Found 0 hook matchers in settings
+2026-01-02T17:15:47.428Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2026-01-02T17:15:47.430Z [DEBUG] Skills and commands included in Skill tool:
+2026-01-02T17:15:47.434Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-02T17:15:47.434Z [DEBUG] Found 0 hook matchers in settings
+2026-01-02T17:15:47.434Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-02T17:15:47.436Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-02T17:15:47.436Z [DEBUG] Found 0 hook matchers in settings
+2026-01-02T17:15:47.436Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-02T17:15:47.448Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147448
+2026-01-02T17:15:47.448Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.448Z [DEBUG] Temp file written successfully, size: 53489 bytes
+2026-01-02T17:15:47.448Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.448Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147448 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.448Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.449Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147449
+2026-01-02T17:15:47.449Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.449Z [DEBUG] Temp file written successfully, size: 53489 bytes
+2026-01-02T17:15:47.449Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.449Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147449 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.449Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.449Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147449
+2026-01-02T17:15:47.449Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.450Z [DEBUG] Temp file written successfully, size: 53571 bytes
+2026-01-02T17:15:47.450Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.450Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147449 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.450Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.451Z [DEBUG] performStartupChecks called
+2026-01-02T17:15:47.451Z [DEBUG] Starting background plugin installations
+2026-01-02T17:15:47.451Z [DEBUG] performBackgroundPluginInstallations called
+2026-01-02T17:15:47.453Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-02T17:15:47.454Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147454
+2026-01-02T17:15:47.454Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.454Z [DEBUG] Temp file written successfully, size: 53628 bytes
+2026-01-02T17:15:47.454Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.454Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147454 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.455Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.455Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147455
+2026-01-02T17:15:47.455Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.455Z [DEBUG] Temp file written successfully, size: 53677 bytes
+2026-01-02T17:15:47.455Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.455Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147455 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.455Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.456Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147456
+2026-01-02T17:15:47.456Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.456Z [DEBUG] Temp file written successfully, size: 53750 bytes
+2026-01-02T17:15:47.456Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.456Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147456 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.456Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.456Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147456
+2026-01-02T17:15:47.456Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.456Z [DEBUG] Temp file written successfully, size: 53797 bytes
+2026-01-02T17:15:47.456Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.456Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147456 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.456Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.457Z [DEBUG] Setting installation status: 0 marketplaces, 0 installable plugins, 0 uninstallable plugins
+2026-01-02T17:15:47.457Z [DEBUG] Attempting to auto-install official marketplace
+2026-01-02T17:15:47.459Z [DEBUG] Loaded plugins - Enabled: 0, Disabled: 0, Commands: 0, Agents: 0, Errors: 0
+2026-01-02T17:15:47.469Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147469
+2026-01-02T17:15:47.469Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.469Z [DEBUG] Temp file written successfully, size: 53843 bytes
+2026-01-02T17:15:47.469Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.469Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147469 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.469Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.477Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147477
+2026-01-02T17:15:47.477Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.477Z [DEBUG] Temp file written successfully, size: 54024 bytes
+2026-01-02T17:15:47.477Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.477Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147477 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.477Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.721Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147721
+2026-01-02T17:15:47.721Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.722Z [DEBUG] Temp file written successfully, size: 54024 bytes
+2026-01-02T17:15:47.722Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.722Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147721 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.722Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.861Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147861
+2026-01-02T17:15:47.861Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.862Z [DEBUG] Temp file written successfully, size: 54351 bytes
+2026-01-02T17:15:47.862Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.862Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147861 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.862Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:47.862Z [DEBUG] Passes eligibility cached for org 60ec40a8-4f5c-4aab-a118-7a536f9098b9: true
+2026-01-02T17:15:47.938Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147938
+2026-01-02T17:15:47.938Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:47.939Z [DEBUG] Temp file written successfully, size: 54527 bytes
+2026-01-02T17:15:47.939Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:47.939Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374147938 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:47.939Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:48.485Z [DEBUG] Stream started - received first chunk
+2026-01-02T17:15:48.659Z [DEBUG] Stream started - received first chunk
+2026-01-02T17:15:49.258Z [INFO] SSH not configured for GitHub, using HTTPS for anthropics/claude-plugins-official
+2026-01-02T17:15:50.792Z [DEBUG] Added marketplace source: claude-plugins-official
+2026-01-02T17:15:50.792Z [DEBUG] Successfully auto-installed official marketplace
+2026-01-02T17:15:50.792Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374150792
+2026-01-02T17:15:50.792Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:15:50.792Z [DEBUG] Temp file written successfully, size: 54622 bytes
+2026-01-02T17:15:50.792Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:15:50.792Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.86000.1767374150792 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:15:50.793Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:15:50.793Z [DEBUG] Showing marketplace installation success notification
+2026-01-02T17:15:51.696Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-02T17:15:51.696Z [DEBUG] Found 0 hook matchers in settings
+2026-01-02T17:15:51.696Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-02T17:15:51.946Z [DEBUG] Stream started - received first chunk
+2026-01-02T17:15:57.576Z [DEBUG] Getting matching hook commands for SessionEnd with query: prompt_input_exit
+2026-01-02T17:15:57.576Z [DEBUG] Found 0 hook matchers in settings
+2026-01-02T17:15:57.576Z [DEBUG] Matched 0 unique hooks for query "prompt_input_exit" (0 before deduplication)
+2026-01-02T17:15:57.577Z [DEBUG] Cleaned up session snapshot: /Users/teazyou/dev/grimoire/dot-claude/.claude/shell-snapshots/snapshot-zsh-1767374055241-v72xfw.sh
+2026-01-02T17:15:57.577Z [DEBUG] LSP server manager shut down successfully

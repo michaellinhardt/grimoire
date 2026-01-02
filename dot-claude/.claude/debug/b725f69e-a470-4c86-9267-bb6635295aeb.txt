@@ -1,0 +1,98 @@
+2026-01-02T17:21:43.813Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (12.2ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-02T17:21:43.825Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (11.1ms): security find-generic-password -a "teazyou" -w -s "Claude Code-credentials"
+2026-01-02T17:21:43.842Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-02T17:21:43.842Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-02T17:21:43.842Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-02T17:21:43.843Z [DEBUG] LSP server manager initialized successfully
+2026-01-02T17:21:43.843Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-02T17:21:43.843Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-01-02T17:21:43.844Z [DEBUG] Stats cache does not exist, returning empty cache
+2026-01-02T17:21:43.844Z [DEBUG] Stats cache empty, processing all historical data in background
+2026-01-02T17:21:43.846Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/teazyou/dev/grimoire/dot-claude/.claude/skills, project=[]
+2026-01-02T17:21:43.846Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-02T17:21:43.894Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (47.8ms): ps aux | grep -E "Visual Studio Code|Code Helper|Cursor Helper|Windsurf Helper|IntelliJ IDEA|PyCharm
+2026-01-02T17:21:43.895Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-01-02T17:21:43.906Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-02T17:21:43.907Z [DEBUG] Looking for shell config file: /Users/teazyou/dev/grimoire/dot-claude/.zshrc
+2026-01-02T17:21:43.907Z [DEBUG] Shell config file not found: /Users/teazyou/dev/grimoire/dot-claude/.zshrc, creating snapshot with Claude Code defaults only
+2026-01-02T17:21:43.907Z [DEBUG] Snapshots directory: /Users/teazyou/dev/grimoire/dot-claude/.claude/shell-snapshots
+2026-01-02T17:21:43.907Z [DEBUG] Creating snapshot at: /Users/teazyou/dev/grimoire/dot-claude/.claude/shell-snapshots/snapshot-zsh-1767374503907-kabjy7.sh
+2026-01-02T17:21:43.907Z [DEBUG] Shell binary exists: true
+2026-01-02T17:21:43.907Z [DEBUG] Execution timeout: 10000ms
+2026-01-02T17:21:43.907Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude/todos/b725f69e-a470-4c86-9267-bb6635295aeb-agent-b725f69e-a470-4c86-9267-bb6635295aeb.json.tmp.90803.1767374503907
+2026-01-02T17:21:43.908Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-02T17:21:43.908Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude/todos/b725f69e-a470-4c86-9267-bb6635295aeb-agent-b725f69e-a470-4c86-9267-bb6635295aeb.json.tmp.90803.1767374503907 to /Users/teazyou/dev/grimoire/dot-claude/.claude/todos/b725f69e-a470-4c86-9267-bb6635295aeb-agent-b725f69e-a470-4c86-9267-bb6635295aeb.json
+2026-01-02T17:21:43.908Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude/todos/b725f69e-a470-4c86-9267-bb6635295aeb-agent-b725f69e-a470-4c86-9267-bb6635295aeb.json written atomically
+2026-01-02T17:21:43.911Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-01-02T17:21:43.911Z [DEBUG] Total plugin skills loaded: 0
+2026-01-02T17:21:43.911Z [DEBUG] Total plugin commands loaded: 0
+2026-01-02T17:21:43.911Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-01-02T17:21:43.913Z [DEBUG] Total plugin agents loaded: 0
+2026-01-02T17:21:43.913Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2026-01-02T17:21:43.913Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2026-01-02T17:21:43.930Z [DEBUG] Git remote URL: https://github.com/michaellinhardt/grimoire.git
+2026-01-02T17:21:43.930Z [DEBUG] Parsed repository: michaellinhardt/grimoire from https://github.com/michaellinhardt/grimoire.git
+2026-01-02T17:21:43.930Z [DEBUG] Parsed repository: michaellinhardt/grimoire from URL: https://github.com/michaellinhardt/grimoire.git
+2026-01-02T17:21:43.930Z [DEBUG] Path /Users/teazyou/dev/grimoire already tracked for repo michaellinhardt/grimoire
+2026-01-02T17:21:43.932Z [DEBUG] Shell snapshot created successfully (742 bytes)
+2026-01-02T17:21:44.118Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374504118
+2026-01-02T17:21:44.118Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:21:44.118Z [DEBUG] Temp file written successfully, size: 55391 bytes
+2026-01-02T17:21:44.118Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:21:44.118Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374504118 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:21:44.119Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:21:44.456Z [DEBUG] Metrics opt-out API response: enabled=true, vcsLinking=false
+2026-01-02T17:21:44.838Z [DEBUG] Successfully refreshed marketplace: claude-plugins-official
+2026-01-02T17:21:44.838Z [DEBUG] Plugin autoupdate: checking installed plugins
+2026-01-02T17:21:44.989Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-02T17:21:44.996Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2026-01-02T17:21:44.997Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374504997
+2026-01-02T17:21:44.997Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:21:44.997Z [DEBUG] Temp file written successfully, size: 55391 bytes
+2026-01-02T17:21:44.997Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:21:44.997Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374504997 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:21:44.998Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:21:45.863Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2026-01-02T17:21:45.863Z [DEBUG] Found 0 hook matchers in settings
+2026-01-02T17:21:45.863Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2026-01-02T17:21:45.870Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-02T17:21:45.870Z [DEBUG] Found 0 hook matchers in settings
+2026-01-02T17:21:45.870Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-02T17:21:45.871Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-02T17:21:45.871Z [DEBUG] Found 0 hook matchers in settings
+2026-01-02T17:21:45.871Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-02T17:21:45.873Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/Users/teazyou/.local/share/claude/versions/2.0.76)
+2026-01-02T17:21:45.875Z [DEBUG] Skills and commands included in Skill tool:
+2026-01-02T17:21:45.893Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374505893
+2026-01-02T17:21:45.893Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:21:45.893Z [DEBUG] Temp file written successfully, size: 55318 bytes
+2026-01-02T17:21:45.893Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:21:45.893Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374505893 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:21:45.893Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:21:45.894Z [DEBUG] Official marketplace auto-install skipped: already_attempted
+2026-01-02T17:21:45.894Z [DEBUG] performStartupChecks called
+2026-01-02T17:21:45.894Z [DEBUG] Starting background plugin installations
+2026-01-02T17:21:45.894Z [DEBUG] performBackgroundPluginInstallations called
+2026-01-02T17:21:45.898Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-02T17:21:45.899Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374505899
+2026-01-02T17:21:45.899Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:21:45.899Z [DEBUG] Temp file written successfully, size: 55391 bytes
+2026-01-02T17:21:45.899Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:21:45.899Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374505899 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:21:45.899Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:21:45.899Z [DEBUG] Setting installation status: 0 marketplaces, 0 installable plugins, 0 uninstallable plugins
+2026-01-02T17:21:45.899Z [DEBUG] Loaded plugins - Enabled: 0, Disabled: 0, Commands: 0, Agents: 0, Errors: 0
+2026-01-02T17:21:45.913Z [DEBUG] Writing to temp file: /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374505913
+2026-01-02T17:21:45.913Z [DEBUG] Preserving file permissions: 100600
+2026-01-02T17:21:45.913Z [DEBUG] Temp file written successfully, size: 55391 bytes
+2026-01-02T17:21:45.913Z [DEBUG] Applied original permissions to temp file
+2026-01-02T17:21:45.913Z [DEBUG] Renaming /Users/teazyou/dev/grimoire/dot-claude/.claude.json.tmp.90803.1767374505913 to /Users/teazyou/dev/grimoire/dot-claude/.claude.json
+2026-01-02T17:21:45.913Z [DEBUG] File /Users/teazyou/dev/grimoire/dot-claude/.claude.json written atomically
+2026-01-02T17:21:46.615Z [DEBUG] Stream started - received first chunk
+2026-01-02T17:21:47.085Z [DEBUG] Stream started - received first chunk
+2026-01-02T17:21:48.095Z [DEBUG] Getting matching hook commands for SessionEnd with query: prompt_input_exit
+2026-01-02T17:21:48.095Z [DEBUG] Found 0 hook matchers in settings
+2026-01-02T17:21:48.095Z [DEBUG] Matched 0 unique hooks for query "prompt_input_exit" (0 before deduplication)
+2026-01-02T17:21:48.097Z [DEBUG] Cleaned up session snapshot: /Users/teazyou/dev/grimoire/dot-claude/.claude/shell-snapshots/snapshot-zsh-1767374503907-kabjy7.sh
+2026-01-02T17:21:48.097Z [DEBUG] LSP server manager shut down successfully
+2026-01-02T17:21:48.142Z [DEBUG] Stream started - received first chunk

@@ -1,0 +1,10 @@
+{
+  "claude-plugins-official": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/claude-plugins-official"
+    },
+    "installLocation": "/Users/teazyou/dev/grimoire/dot-claude/.claude/plugins/marketplaces/claude-plugins-official",
+    "lastUpdated": "2026-01-02T17:21:44.837Z"
+  }
+}
