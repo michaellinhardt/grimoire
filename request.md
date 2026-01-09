@@ -82,6 +82,12 @@ From left to right.
     - On the left panel is displayed the list of session. When click one, it display it on middle panel with elegant bubble. on the right panel is a way to navigate the conversation. it display one rectangle for each message in the conversation. Clicking one scroll to that part. it also highlight the one visible on the screen. When too long, it scroll the list to follow the user scroll in the conversation. ( this feature have its own button on the very top bar of the panel )
     - On the left panel, another button "info" to display all info we can collect about this session from claude code ( creation time, etc.. anything in claude folder related to the session ). ( this feature have its own button on the very top bar of the panel )
 
+## Namespaces
+
+When a workflow run, the prompt system of Grimoire instruct each claude code instance to use specific method (tool or mcp) to save files and data related to the workflow. Each new workflow create a new namespaces with random ID. However the user can create a persistent namespaces. We can assign one or many namespace to a workflow so the files from within those namespace can be manipulate during the workflow.
+
+This allow to create workflow such as "note-taking" which always use the same files. Then we can use another workflow and allow it to read the namespace "note-taking".
+
 # Request
 
-Now that you have my project brainstorming, guide me on what to do, which workflow to start with on an empty project folder ?
+Now that you have my project brainstorming, guide me on what to do. Help me to review it to ensure its good, coherent, what could be better, what could be a problem, what better solutions ? Etc.. Help me explore around this idea before we finalize the brainstorming document.
