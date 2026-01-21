@@ -810,7 +810,7 @@ flowchart TD
 
 **Feedback Patterns:**
 - **Inline expansion**: Sub-agents and tools expand in place
-- **Status indicators**: Active (green), paused (yellow), error (red)
+- **Status indicators**: 6-state machine (Idle, Spawning, Working, Pending, Terminating, Error) with triple redundancy (color bar + icon + animation)
 - **Real-time streaming**: Responses appear as they generate
 - **Token counts**: Cumulative in timeline, per-message optional
 
@@ -913,20 +913,28 @@ flowchart TD
 **Anatomy:**
 ```
 ┌────────────────────────────────┐
-│ Session Name                [⋮]│
-│ 2 hours ago                    │
+│ [⚡] Session Name        [🔌][⋮]│
+│     2 hours ago                │
 └────────────────────────────────┘
 ```
 
+**Elements:**
+- Left: State indicator (⚡ for connected, ⚠️ for error, none for idle)
+- Center: Session name + timestamp
+- Right: 🔌 disconnect button (only visible if instance exists) + ⋮ menu
+
 **States:**
 - Default: Subtle background
-- Hover: Elevated background, 3-dot menu appears
+- Hover: Elevated background, 3-dot menu appears, 🔌 button visible if connected
 - Active: Accent border, accent-tinted background
-- With active child: Green status dot
+- Working: ⚡ + `···` animation, green color bar
+- Pending: ⚡ icon, amber color bar
+- Error: ⚠️ icon, red color bar
 
 **Interaction:**
 - Click: Load session in middle panel
-- Hover: Reveal 3-dot context menu
+- Hover: Reveal 3-dot context menu and 🔌 button
+- 🔌 click: Disconnect (kill instance) - shows warning if Working state
 - 3-dot click: Open dropdown (archive, delete, etc.)
 
 ---
@@ -1060,16 +1068,23 @@ flowchart TD
 #### 8. Status Indicator
 
 **Purpose:** Show session/process state
-**Variants:** Dot (6-8px) or Badge
+**Variants:** Color bar + Icon + Animation (triple redundancy)
 
-**States:**
+**6-State Machine:**
 
-| State | Color | Usage |
-|-------|-------|-------|
-| Active | Green | CC child running |
-| Paused | Yellow/Amber | Waiting for input |
-| Error | Red | Failed operation |
-| Idle | Gray | No activity |
+| State | Visual | Icon | Animation | Usage |
+|-------|--------|------|-----------|-------|
+| Idle | No decoration | - | - | No instance running |
+| Spawning | Subtle pulse | - | Fade pulse | Instance starting |
+| Working | Green bar | ⚡ | `···` dots | CC processing |
+| Pending | Amber bar | ⚡ | - | Waiting for input |
+| Terminating | Gray bar | - | Fade out | Instance stopping |
+| Error | Red bar | ⚠️ | - | Failed operation |
+
+**Icon meanings:**
+- ⚡ = Connected (instance exists) - state indicator on left
+- ⚠️ = Error state (click for details)
+- 🔌 = Disconnect button (click to kill instance) - action button on right, only visible on hover when connected
 
 ---
 
@@ -1197,14 +1212,16 @@ flowchart TD
 
 ### Feedback Patterns
 
-**Status Indicators:**
+**Status Indicators (6-State Machine):**
 
 | State | Visual | Color | Location |
 |-------|--------|-------|----------|
-| Active (running) | Pulsing dot | Green | Session list, tab |
-| Paused (waiting) | Solid dot | Amber | Session list, tab |
-| Error | Solid dot | Red | Session list, bubble |
 | Idle | No indicator | - | - |
+| Spawning | Subtle pulse | Gray | Session list, tab |
+| Working | ⚡ + `···` animation | Green | Session list, tab |
+| Pending | ⚡ icon | Amber | Session list, tab |
+| Terminating | Fade out | Gray | Session list, tab |
+| Error | ⚠️ icon | Red | Session list, tab, bubble |
 
 **Streaming Feedback:**
 - Cursor blink animation in message bubble while receiving
@@ -1216,6 +1233,13 @@ flowchart TD
 - Visual state change is sufficient feedback
 - Success messages only for significant actions (e.g., "Session archived")
 
+**Completion Notification (Session):**
+- Brief flash highlight on session completion
+- Settles to red dot badge in session list
+- Red dot clears when session is focused
+- If already focused: red dot clears after 2 seconds
+- Optional completion sound (off by default, configurable in settings)
+
 **Error Feedback:**
 - Inline in conversation flow (error bubble)
 - Red left border + subtle red tint background
@@ -1225,7 +1249,7 @@ flowchart TD
 
 **Loading Feedback:**
 - Skeleton states for content loading
-- "Loading Claude Code..." indicator when spawning
+- "connecting..." indicator when spawning (subtle, non-blocking)
 - Progress indication for long operations
 - Never block the entire UI
 
@@ -1279,7 +1303,7 @@ flowchart TD
 |---------|-----------------|
 | App startup | Loading screen with logo + progress |
 | Session loading | Skeleton bubbles in conversation area |
-| CC spawning | "Starting Claude Code..." indicator |
+| CC spawning | "connecting..." indicator (subtle) |
 | Content streaming | Cursor blink in expanding bubble |
 
 **Error States:**

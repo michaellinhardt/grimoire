@@ -144,7 +144,7 @@ If any of these fail, the user falls back to CLI:
 4. Sessions (unified session management: history, create new, interact, real-time view, child process lifecycle)
 
 **Capabilities:**
-5. Run CC from Grimoire (spawn with HOME isolation, intelligent child lifecycle)
+5. Run CC from Grimoire (spawn with `CLAUDE_CONFIG_DIR` isolation, intelligent child lifecycle)
 
 ### Growth Features (Post-MVP)
 
@@ -301,9 +301,15 @@ Grimoire is an Electron-based desktop application. Phase 1 focuses on Mac as the
 ### System Integration
 
 **Phase 1:**
-- CC child process spawning and lifecycle management
-- Session file reading from `~/.claude/projects/`
-- HOME directory isolation for CC instances
+- CC child process spawning and lifecycle management via 6-state machine:
+  - **Idle:** No instance running
+  - **Spawning:** Instance starting (first-keystroke triggered)
+  - **Working:** CC processing (no timeout)
+  - **Pending:** Waiting for user input (tiered timeout applies)
+  - **Terminating:** Instance stopping
+  - **Error:** Failed operation
+- Session file reading from `CLAUDE_CONFIG_DIR` folder (app data path)
+- `CLAUDE_CONFIG_DIR` isolation for CC instances (per-process env var)
 
 **Post-Phase 1:**
 - System notifications (session complete, errors, etc.)
@@ -351,7 +357,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 | Loading Screen | CC verification, auth check, app initialization |
 | Plugin Architecture | Settings page, enable/disable, per-plugin config |
 | Sessions Plugin | History, create, interact, real-time view, child lifecycle |
-| Run CC from Grimoire | Spawn with HOME isolation, intelligent child lifecycle |
+| Run CC from Grimoire | Spawn with `CLAUDE_CONFIG_DIR` isolation, intelligent child lifecycle |
 
 **Explicitly Deferred:**
 - Internationalization (EN/FR) - Post-MVP
@@ -409,22 +415,29 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR2: User can collapse/expand left and right panels
 - FR3: User can navigate between app sections via ribbon icons
 - FR4: User can resize panels by dragging dividers
-- FR5: User can open multiple sessions in a tab system
-- FR6: User can switch between open session tabs
+- FR5: User can open multiple sessions in a tab system (one session = one tab maximum)
+- FR6: User can switch between open session tabs (clicking already-open session focuses existing tab)
 - FR7: User can drag a tab to panel border to split view
+- FR7a: System displays confirmation dialog when user closes tab with Working session
+- FR7b: User can close tab with Pending/Idle session without confirmation
+- FR7c: System terminates all child processes gracefully on application quit
 
 ### Application Lifecycle
 
 - FR8: System displays loading screen with app logo during startup
 - FR9: System verifies Claude Code installation on startup
-- FR10: System verifies HOME environment configuration on startup
-- FR11: System displays modal error with quit/retry if HOME setup fails
+- FR10: System verifies `CLAUDE_CONFIG_DIR` environment configuration on startup
+- FR11: System displays modal error with quit/retry if config directory setup fails
 - FR12: System verifies authentication credentials on startup
 - FR13: User can use the application offline for non-CC operations
 - FR14: System indicates online/offline status clearly
 - FR15: System checks for updates on launch and prompts user when available
 - FR16: User can choose to update now, skip version, or defer update reminder
 - FR17: System persists user preferences and application state across restarts
+- FR17a: System queries database first on startup for fast session list display (DB-first pattern)
+- FR17b: System scans `CLAUDE_CONFIG_DIR` folder in background after startup
+- FR17c: System notifies user of sessions discovered in config folder that are not in database
+- FR17d: User can sync discovered sessions into the database
 - FR18: System opens to new Session ready for input on launch
 - FR19: User can configure which plugin displays on startup (in settings)
 
@@ -438,10 +451,12 @@ Build the foundational architecture that enables future expansion. Prove the cor
 
 ### Session Management
 
-- FR25: User can view list of all CC sessions from ~/.claude/projects/
+- FR25: User can view list of all CC sessions from `CLAUDE_CONFIG_DIR` folder (app data path)
 - FR26: User can select a session to view its conversation
 - FR27: User can create a new session
 - FR28: User can see which sessions have active child processes (visual indicator)
+- FR28a: User can disconnect (kill) a running instance via 🔌 button on session row
+- FR28b: System shows warning when disconnecting a Working instance (not Pending)
 - FR29: User can see session metadata (date, project, duration)
 - FR30: User can archive sessions
 - FR31: User can toggle visibility of archived sessions
@@ -476,8 +491,13 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR51: User can interact with any session (historical or new) via chat input
 - FR52: System generates Session UUID on first user input (before CC spawn)
 - FR53: System saves session even if CC spawn fails (preserves user input and errors)
-- FR54: System stops child process when CC waits for user input
+- FR54: System stops child process when CC waits for user input (transitions to Pending state)
 - FR55: System restarts child process when user sends new message
+- FR55a: System spawns child process when user starts typing in an inactive session (first-keystroke spawn)
+- FR55b: User can configure idle timeout for unfocused sessions (default: 3 minutes)
+- FR55c: User can configure idle timeout for focused sessions (default: 10 minutes)
+- FR55d: User can disable idle timeout entirely ("never close" option)
+- FR55e: Timer resets when switching tabs (not cumulative)
 - FR56: System maintains session ID mapping to child processes
 - FR57: User can abort a running CC process
 - FR58: System displays "Aborted" message in conversation when user aborts
@@ -486,7 +506,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 
 ### CC Integration
 
-- FR61: System spawns CC child processes with isolated HOME directory
+- FR61: System spawns CC child processes with `CLAUDE_CONFIG_DIR` environment variable for isolation
 - FR62: System spawns CC with session ID argument for session continuity
 - FR63: System passes user input to CC child process as terminal input
 - FR64: System captures CC output and renders in conversation view
@@ -537,14 +557,14 @@ Build the foundational architecture that enables future expansion. Prove the cor
 ### Integration
 
 **Claude Code Integration:**
-- Reads session files from `~/.claude/projects/` directory structure
-- Spawns CC with `--session-id` argument for session continuity
-- Passes user input to CC child process via stdin
-- Captures stdout/stderr for conversation rendering
-- HOME directory isolation prevents config conflicts
+- Reads session files from `CLAUDE_CONFIG_DIR` folder (platform-specific app data path)
+- Spawns CC with `--session-id` and `--output-format stream-json` arguments
+- Passes user input to CC child process via `-p` argument
+- Captures NDJSON stream for conversation rendering
+- `CLAUDE_CONFIG_DIR` isolation prevents config conflicts (per-process env var)
 
 **File System:**
-- File watcher monitors `~/.claude/projects/` for new/updated sessions
+- File watcher monitors `CLAUDE_CONFIG_DIR` folder for new/updated sessions
 - Session list updates automatically when new sessions detected
 - Changes to session files reflected in real-time (if session is open)
 
@@ -558,4 +578,4 @@ Build the foundational architecture that enables future expansion. Prove the cor
 
 **Accessibility:** Deferred to post-MVP when expanding to non-expert users. Will revisit for Phase 2+.
 
-**Security:** Local-first architecture with no network data transmission beyond CC's own API calls. HOME isolation covered in functional requirements.
+**Security:** Local-first architecture with no network data transmission beyond CC's own API calls. `CLAUDE_CONFIG_DIR` isolation covered in functional requirements.
