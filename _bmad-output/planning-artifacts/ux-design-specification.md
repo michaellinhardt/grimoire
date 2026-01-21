@@ -303,7 +303,7 @@ Components not typically found in design systems that Grimoire requires:
 | Session List Item | Session preview with status indicators |
 | Panel Toggle | Show/hide panel controls |
 | Tab Bar | Multi-session tab management |
-| Status Indicator | Active/paused/error session states |
+| Status Indicator | Working/idle/error session states |
 
 ## Defining Experience
 
@@ -608,9 +608,8 @@ flowchart TD
     R --> S[User Clicks Retry]
     S --> P
     Q -->|Yes| T[Stream Response]
-    T --> U[CC Waits for Input]
-    U --> V[Stop Child Process]
-    V --> W[Session Paused State]
+    T --> U[Process Exits]
+    U --> V[Session Idle State]
 ```
 
 **Key Interactions:**
@@ -621,7 +620,7 @@ flowchart TD
 | Ready | None (automatic) | New session view, cursor in input |
 | Send | Type + Enter | UUID generated, CC spawns |
 | Wait | Watch response | Real-time streaming |
-| Pause | CC asks question | Child stops, session shows "paused" |
+| Complete | Response finishes | Process exits, session idle |
 
 **Success Criteria:**
 - Launch → typing: < 3 seconds
@@ -654,9 +653,8 @@ flowchart TD
     L --> M[User Clicks Retry]
     M --> J
     K -->|Yes| N[Stream Response]
-    N --> O[CC Waits for Input]
-    O --> P[Stop Child Process]
-    P --> Q[Session Paused]
+    N --> O[Process Exits]
+    O --> P[Session Idle]
 ```
 
 **Key Interactions:**
@@ -679,7 +677,7 @@ flowchart TD
 
 Understanding what happened in a complex multi-agent session.
 
-**Entry:** User wants to understand a completed/paused session
+**Entry:** User wants to understand a completed/idle session
 
 **Flow:**
 
@@ -842,7 +840,7 @@ flowchart TD
 3. **Inline everything**: No modals for viewing content, all inline expansion
 4. **Scroll not hunt**: Timeline + scroll-to-event eliminates scrolling search
 5. **Errors guide action**: Every error shows what to do next
-6. **State always visible**: Active/paused/error visible at a glance
+6. **State always visible**: Working/idle/error visible at a glance
 
 ## Component Strategy
 
@@ -956,7 +954,7 @@ flowchart TD
 **Anatomy:**
 ```
 ┌────────────────────────────────┐
-│ [⚡] Session Name        [🔌][⋮]│
+│ [⚡] Session Name           [⋮] │
 │     2 hours ago                │
 └────────────────────────────────┘
 ```
@@ -983,14 +981,14 @@ flowchart TD
 **Session List Item with Folder Path:**
 ```
 ┌────────────────────────────────┐
-│ [📌][⚡] Session Name    [🔌][⋮]│
+│ [📌][⚡] Session Name       [⋮] │
 │        /path/to/folder         │  ← Folder path (muted text)
 │        2 hours ago             │
 └────────────────────────────────┘
 
 Orphaned session:
 ┌────────────────────────────────┐
-│ [⚡] Session Name        [🔌][⋮]│
+│ [⚡] Session Name           [⋮] │
 │     ⚠️ /path/deleted/folder    │  ← Warning icon + red tint
 │        2 hours ago             │
 └────────────────────────────────┘

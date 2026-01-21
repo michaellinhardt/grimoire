@@ -236,9 +236,9 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - AR14: Plugin loader statically imports enabled plugins
 
 **From Architecture - Spawn Child System**
-- AR15: 6-state instance machine: Idle → Spawning → Working → Pending → Terminating (+ Error)
-- AR16: Tiered timeout: Working=∞, Pending+Focused=10min, Pending+Unfocused=3min
-- AR17: First-keystroke spawn strategy (typing masks cold start)
+- AR15: 3-state instance machine: Idle → Working → Idle (or Idle → Working → Error → Idle)
+- AR16: [REMOVED - No timeouts needed with request-response model]
+- AR17: [REMOVED - On-send spawn instead of first-keystroke]
 - AR18: Error categorization: Network/transient (auto-retry 2x), Spawn failure (show immediately), Claude error (show in chat), Crash/fatal (terminate, show error)
 
 **From Architecture - Stream Communication**
@@ -280,7 +280,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - UX7: Tab bar for multi-session management
 - UX8: Message bubbles (User, Claude, Tool, Sub-Agent variants)
 - UX9: Event Timeline with chat-style items (no icons, token counts)
-- UX10: Status indicators with 6-state visual mapping (color bar + icon + animation)
+- UX10: Status indicators with 3-state visual mapping (Idle, Working, Error - color bar + icon + animation)
 
 **From UX Design - Interaction Patterns**
 - UX11: Zero-click to first action principle (cursor in input on new session)
@@ -306,7 +306,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 | FR33-FR42 | Epic 2b | Conversation Rendering - bubbles, tools, sub-agents |
 | FR43-FR46 | Epic 2c | Session Info & Timeline |
 | FR47-FR53, FR57-FR60 | Epic 3a | Chat Input & Basic Send |
-| FR54-FR56, FR61-FR67b | Epic 3b | CC Integration & Instance Management |
+| FR55-FR56, FR61-FR67b | Epic 3b | CC Integration & Instance Management |
 | FR68-FR77 | Epic 5a | Folder Hierarchy |
 | FR78-FR84 | Epic 5b | File Tree & Change Indicators |
 | FR85-FR90 | Epic 6 | Search Feature |
@@ -323,7 +323,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR6: Epic 1 - Tab switching
 - FR7: Epic 1 - Tab drag to split view
 - FR7a: Epic 1 - Confirmation on close Working tab
-- FR7b: Epic 1 - Close Pending/Idle without confirm
+- FR7b: Epic 1 - Close Idle session without confirm
 - FR7c: Epic 1 - Graceful process termination on quit
 - FR8: Epic 4 - Loading screen
 - FR9: Epic 4 - CC installation verification
@@ -350,8 +350,8 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR26: Epic 2a - Select session to view
 - FR27: Epic 2a - Create new session
 - FR28: Epic 2a - Active process indicator
-- FR28a: Epic 2a - Disconnect button
-- FR28b: Epic 2a - Warning on Working disconnect
+- FR28a: [REMOVED - No persistent instances with request-response model]
+- FR28b: [REMOVED - No persistent instances with request-response model]
 - FR29: Epic 2a - Session metadata display
 - FR29a: Epic 2a - Folder path in session list
 - FR29b: Epic 2a - Orphaned session warning
@@ -388,13 +388,13 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR51: Epic 3a - Interact with any session
 - FR52: Epic 3a - UUID generation
 - FR53: Epic 3a - Save on spawn failure
-- FR54: Epic 3b - Stop on wait for input
-- FR55: Epic 3b - Restart on new message
-- FR55a: Epic 3b - First-keystroke spawn
-- FR55b: Epic 3b - Unfocused timeout config
-- FR55c: Epic 3b - Focused timeout config
-- FR55d: Epic 3b - Disable timeout option
-- FR55e: Epic 3b - Timer reset on tab switch
+- FR54: [REMOVED - Process exits naturally, no Pending state]
+- FR55: Epic 3b - Spawn new process on message send (request-response model)
+- FR55a: [REMOVED - On-send spawn instead]
+- FR55b: [REMOVED - No timeout needed]
+- FR55c: [REMOVED - No timeout needed]
+- FR55d: [REMOVED - No timeout needed]
+- FR55e: [REMOVED - No timeout needed]
 - FR56: Epic 3b - Session-to-process mapping
 - FR57: Epic 3a - Abort process
 - FR58: Epic 3a - Aborted message display
@@ -462,7 +462,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ### Epic 2a: Session List & Basic Display
 **User Outcome:** Browse all CC sessions from CLAUDE_CONFIG_DIR and select one to view its details.
 
-**FRs Covered:** FR25, FR26, FR27, FR28, FR28a, FR28b, FR29, FR29a, FR29b, FR30, FR31, FR32, FR32a, FR32b (14 FRs)
+**FRs Covered:** FR25, FR26, FR27, FR28, FR29, FR29a, FR29b, FR30, FR31, FR32, FR32a, FR32b (12 FRs)
 
 **ARs Covered:** AR23-AR27
 
@@ -496,9 +496,9 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 3b: CC Integration & Instance Management
-**User Outcome:** Spawn CC instances, stream responses in real-time, and manage instance lifecycle with configurable timeouts.
+**User Outcome:** Spawn CC instances, stream responses in real-time, and manage instance lifecycle with request-response model.
 
-**FRs Covered:** FR54, FR55, FR55a, FR55b, FR55c, FR55d, FR55e, FR56, FR61, FR62, FR63, FR64, FR65, FR66, FR67, FR67a, FR67b (17 FRs)
+**FRs Covered:** FR55, FR56, FR61, FR62, FR63, FR64, FR65, FR66, FR67, FR67a, FR67b (11 FRs)
 
 **ARs Covered:** AR15-AR22, UX10
 
@@ -548,17 +548,17 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 | Epic | Title | FRs | Complexity |
 |------|-------|-----|------------|
 | 1 | Project Bootstrap & Core Shell | 10 | Low |
-| 2a | Session List & Basic Display | 14 | Medium |
+| 2a | Session List & Basic Display | 12 | Medium |
 | 2b | Conversation Rendering | 14 | Medium |
 | 2c | Session Info & Timeline | 7 | Low |
 | 3a | Chat Input & Basic Send | 11 | Medium |
-| 3b | CC Integration & Instance Mgmt | 17 | Medium |
+| 3b | CC Integration & Instance Mgmt | 11 | Medium |
 | 4 | Application Lifecycle & Persistence | 16 | Medium |
 | 5a | Folder Hierarchy | 10 | Low |
 | 5b | File Tree & Change Indicators | 7 | Low |
 | 6 | Search, Pinning & File Tracking | 14 | Low |
 | 7 | Plugin System & Settings | 5 | Low |
-| **Total** | | **125** | |
+| **Total** | | **117** | |
 
 ---
 
@@ -643,7 +643,7 @@ So that **I can work with several conversations simultaneously**.
 **When** the close button (×) becomes visible
 **Then** clicking × closes the tab
 
-**Given** the user clicks × on a tab with a Pending or Idle session
+**Given** the user clicks × on a tab with an Idle session (FR7b)
 **When** the tab closes
 **Then** no confirmation is required
 
@@ -713,7 +713,6 @@ So that **I can quickly find and select the session I want to work with**.
 **When** displayed in the list
 **Then** a ⚡ icon appears indicating connected state
 **And** Working state shows green color bar with `···` animation
-**And** Pending state shows amber color bar
 
 **Given** a session's folder no longer exists (FR29b)
 **When** displayed in the list
@@ -750,13 +749,6 @@ So that **I can organize my Claude Code work effectively**.
 **When** the user toggles "Show archived" (FR31)
 **Then** archived sessions appear in the list with visual distinction
 **And** toggling off hides them again
-
-**Given** a session has an active instance (⚡ indicator)
-**When** the user clicks the 🔌 disconnect button (FR28a)
-**Then** if the instance is Working, a warning dialog appears (FR28b)
-**And** if the instance is Pending, no warning is shown
-**And** confirming disconnect terminates the child process
-**And** the session transitions to Idle state
 
 ---
 
@@ -1371,74 +1363,58 @@ So that **I understand the session state and can act accordingly**.
 
 **Acceptance Criteria:**
 
-**Given** the 6-state instance machine (AR15)
+**Given** the 3-state instance machine (AR15)
 **When** a session instance changes state
-**Then** transitions follow: Idle → Spawning → Working → Pending → (Terminating) → Idle
-**And** Error state can be reached from Spawning or Working
+**Then** transitions follow: Idle → Working → Idle (normal flow)
+**And** Error state can be reached from Working: Idle → Working → Error → Idle
 
-**Given** CC is processing (Working state)
-**When** CC reaches a point waiting for user input (FR54)
-**Then** the child process is stopped
-**And** the session transitions to Pending state
-**And** the UI shows amber indicator
-
-**Given** the user sends a new message to a Pending session (FR55)
+**Given** the user sends a message (FR55)
 **When** the message is sent
 **Then** a new CC child process is spawned
-**And** the session transitions through Spawning → Working
+**And** the session transitions to Working state
+**And** the UI shows green indicator with animation
+
+**Given** CC completes processing
+**When** the response is fully received
+**Then** the child process exits naturally
+**And** the session transitions to Idle state
+**And** no idle process remains running
 
 **Given** CC fails to spawn (FR67)
 **When** an error occurs
 **Then** the session transitions to Error state
 **And** an actionable error message is displayed in the conversation
 **And** the error includes a retry option
-
-**Given** the instance is being terminated
-**When** graceful shutdown is triggered
-**Then** the session shows Terminating state briefly
-**And** transitions to Idle when process exits
+**And** the session returns to Idle after error is acknowledged
 
 ---
 
-### Story 3b.4: First-Keystroke Spawn and Timeouts
+### Story 3b.4: Request-Response Process Model
 
 As a **user**,
-I want **fast response times and smart resource management**,
-So that **typing feels instant and idle sessions don't waste resources**.
+I want **each message to spawn a fresh process that exits after response**,
+So that **system resources are used efficiently without idle processes**.
 
 **Acceptance Criteria:**
 
-**Given** a session is in Idle state (FR55a)
-**When** the user starts typing in the input
-**Then** CC child process begins spawning immediately (first-keystroke spawn)
-**And** this masks the cold start time
-**And** by the time user presses Enter, CC may already be ready
+**Given** the user sends a message (FR55)
+**When** the send action triggers
+**Then** a new CC child process spawns
+**And** the process runs to completion
+**And** the process exits naturally after response
+**And** no idle process remains running
 
-**Given** a session is in Pending state and unfocused (FR55b)
-**When** the idle timeout elapses (default 3 minutes)
-**Then** the instance is terminated
-**And** the session transitions to Idle
-**And** resources are freed
+**Given** a CC process completes
+**When** the response is fully received
+**Then** the session returns to Idle state
+**And** no timeout management is needed
+**And** the next message will spawn a fresh process
 
-**Given** a session is in Pending state and focused (FR55c)
-**When** the idle timeout elapses (default 10 minutes)
-**Then** the instance is terminated
-**And** the session transitions to Idle
-
-**Given** the user configures timeout settings (FR55d)
-**When** selecting "Never close" option
-**Then** idle timeout is disabled for that setting
-**And** instances remain in Pending state indefinitely
-
-**Given** the user switches tabs (FR55e)
-**When** moving from one session to another
-**Then** the timeout timer resets for the newly focused session
-**And** the timer is not cumulative across tab switches
-
-**Given** timeout settings exist
-**When** the user opens Settings
-**Then** they can configure unfocused timeout (1-30 min or never)
-**And** they can configure focused timeout (5-60 min or never)
+**Given** the user wants to continue a session
+**When** they type and send a new message
+**Then** a fresh CC process spawns with the session ID
+**And** CC resumes the conversation context automatically
+**And** the response streams back normally
 
 ---
 
@@ -1917,7 +1893,6 @@ So that **I can customize each plugin's behavior to my preferences**.
 - Sub-agent default view (Collapsed/Expanded)
 - Tool call display (Summary/Full)
 - Show token counts (On/Off)
-- Idle timeout settings (unfocused, focused, never)
 
 **Given** plugin settings are changed
 **When** the user modifies a value

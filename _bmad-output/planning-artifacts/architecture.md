@@ -2,6 +2,8 @@
 stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 status: 'complete'
 completedAt: '2026-01-21'
+updatedAt: '2026-01-22'
+updateNotes: 'Aligned with PRD: 6-state→3-state machine, removed timeout config, added Rewind Architecture section'
 inputDocuments:
   - '_bmad-output/planning-artifacts/prd.md'
   - '_bmad-output/planning-artifacts/product-brief-grimoire-2026-01-09.md'
@@ -295,7 +297,7 @@ grimoire/
 │       ├── src/
 │       │   ├── main/
 │       │   │   ├── index.ts
-│       │   │   ├── instance-manager.ts   ← 6-state machine
+│       │   │   ├── instance-manager.ts   ← 3-state machine
 │       │   │   └── stream-parser.ts      ← NDJSON parsing
 │       │   ├── renderer/
 │       │   │   ├── SessionList.tsx
@@ -413,7 +415,6 @@ Idle → Working → Idle
 |------------|----------|
 | Spawn failure (ENOENT) | Show immediately, CC not installed |
 | Non-zero exit code | Show error in chat, session returns to Idle |
-| Process timeout (optional) | Configurable max runtime, default none |
 
 **Concurrency:** Multiple sessions can have active processes simultaneously. Each session limited to one active process at a time.
 
@@ -499,12 +500,14 @@ async function* parseStream(sessionId: string, stdout: Readable): AsyncGenerator
 }
 ```
 
-**Response Tracking:**
+**Response Tracking (Internal):**
+
+Note: This is internal process tracking state, separate from the 3-state UI model (Idle/Working/Error). The `sending` status maps to `Working` in the UI.
 
 ```typescript
 interface ResponseState {
   sessionId: string
-  status: 'idle' | 'sending' | 'complete' | 'error'
+  status: 'idle' | 'sending' | 'complete' | 'error'  // Internal tracking
   lastEventUuid: string | null
   error?: string
   startedAt?: Date
@@ -601,6 +604,86 @@ child.on('exit', async (code) => {
 ### Data Export/Backup
 
 **MVP:** Not included. Users can manually backup app data folder if needed.
+
+### Rewind Architecture
+
+**Purpose:** Allow users to rewind a conversation to any previous user message checkpoint and fork into a new session from that point.
+
+**Environment Setup:**
+
+```bash
+# Enable file checkpointing in CC spawn
+CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING=1
+```
+
+This environment variable must be set when spawning CC to enable checkpoint capabilities.
+
+**Checkpoint Capture:**
+
+During stream parsing, capture checkpoint UUIDs from user message events:
+
+```typescript
+// In stream-parser.ts
+if (msg.type === 'user' && msg.uuid) {
+  // This UUID is a valid checkpoint for rewind
+  yield { type: 'checkpoint', uuid: msg.uuid }
+}
+```
+
+**Rewind Flow:**
+
+| Step | Action |
+|------|--------|
+| 1 | User hovers over user message bubble, clicks "Rewind" action |
+| 2 | System prompts for new message text |
+| 3 | System calls `sessions:rewind` IPC with checkpoint UUID and new message |
+| 4 | Main process creates new session by spawning CC with `--resume` at checkpoint |
+| 5 | New session created with `forked_from_session_id` pointing to original |
+| 6 | Original session optionally marked `is_hidden: true` |
+| 7 | UI opens new forked session in a tab |
+
+**IPC Contract:**
+
+```typescript
+// Request
+interface RewindRequest {
+  sessionId: string        // Original session ID
+  checkpointUuid: string   // UUID of user message to rewind to
+  newMessage: string       // New message to send after rewind
+  hideOriginal?: boolean   // Whether to hide the forked-from session
+}
+
+// Response
+interface RewindResult {
+  newSessionId: string     // ID of the newly forked session
+  success: boolean
+  error?: string
+}
+```
+
+**Database Schema Support:**
+
+```sql
+-- Sessions table includes lineage tracking
+forked_from_session_id TEXT,  -- Points to parent session when rewound
+is_hidden INTEGER DEFAULT 0,  -- Hide forked-from sessions in list
+
+FOREIGN KEY (forked_from_session_id) REFERENCES sessions(id)
+```
+
+**Session Lineage:**
+
+- `forked_from_session_id`: Links forked session to its parent
+- `is_hidden`: Allows hiding original sessions after rewind (user preference)
+- Query patterns:
+  - Show all visible sessions: `WHERE is_hidden = 0`
+  - Show session lineage: Follow `forked_from_session_id` chain
+
+**UI Constraints:**
+
+- Rewind action only available on user messages (not assistant messages)
+- First user message in session cannot be rewound (no prior checkpoint)
+- Rewind indicator shows on sessions that have been forked from
 
 ## Claude Code JSONL Format Specification
 
@@ -1125,7 +1208,7 @@ test('SpawnRequestSchema rejects empty message', () => {
 - Zod schemas shared between renderer validation and main process
 - SQLite accessed only from main process (renderer queries via IPC)
 - Zustand stores mirror instance state from main process events
-- 6-state machine drives both IPC events and UI indicators
+- 3-state machine drives both IPC events and UI indicators
 
 ## Implementation Patterns & Consistency Rules
 
