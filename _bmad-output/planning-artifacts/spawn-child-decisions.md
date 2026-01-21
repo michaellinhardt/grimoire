@@ -1,8 +1,8 @@
 # Grimoire: Spawn Child - Architecture Decisions
 
 **Date:** 2026-01-20
-**Status:** Brainstorming Phase - Decisions Captured
-**Next Step:** Multi-window/tab behavior (use same approach study method)
+**Updated:** 2026-01-22 (CC Integration Mode Change)
+**Status:** Decisions Captured - Updated for Request-Response Pattern
 
 ---
 
@@ -11,7 +11,7 @@
 Grimoire is an application that wraps Claude Code CLI to provide a multi-session chat interface. Key concepts:
 
 - **Session:** A conversation within Claude Code (persisted in `.claude` folder)
-- **Instance:** A running Claude Code stream/child process (ephemeral)
+- **Instance:** A running Claude Code child process for a single request (ephemeral, exits after response)
 
 ---
 
@@ -47,62 +47,68 @@ Grimoire is an application that wraps Claude Code CLI to provide a multi-session
 
 ## 3. Instance Lifecycle
 
-### 3.1 Tiered Timeout (Pattern 6)
+### 3.1 Process Lifecycle (Request-Response Pattern)
 
-| State | Default Timeout | Behavior |
-|-------|-----------------|----------|
-| Working | None | No timeout while processing |
-| Pending + Focused | 10 min | User viewing this session |
-| Pending + Unfocused | 3 min | User in different session |
-| Never close | ∞ | Optional setting |
+**Decision:** Each user message spawns a new process that exits after response.
 
-**Timer behavior:** Switching tabs RESETS the counter (doesn't accumulate). Switch away = restart at 3 min. Switch back = restart at 10 min.
+| Event | Behavior |
+|-------|----------|
+| User sends message | Spawn `claude` process with `-p` flag |
+| Process running | State = Working, "Thinking..." indicator shown |
+| Process exits (code 0) | Read session file, display response, State = Idle |
+| Process exits (non-zero) | State = Error, show error in chat |
 
-**Settings:** Both timeouts configurable, plus "never close" option.
+**Why:** The `-p` flag provides complete functionality without streaming complexity. Process exit is a clear completion signal. No timeout management needed.
 
-### 3.2 State Machine (Standard - 6 states)
+### 3.2 State Machine (3 states)
 
 ```
-Idle → Spawning → Working → Pending → Terminating
-                     ↓
-                   Error
+Idle → Working → Idle (success)
+         ↓
+       Error
 ```
 
-**Why:** Maps directly to UI indicators (blinking dots = Working, red dot = Pending, warning = Error). Clean, not over-engineered.
+| State | Description |
+|-------|-------------|
+| Idle | No process running, ready for input |
+| Working | Process running, "Thinking..." indicator shown |
+| Error | Process failed, error message displayed |
 
-### 3.3 Error Handling (Categorized)
+**Why:** Simplified from 6-state machine. Request-response pattern eliminates Spawning, Pending, and Terminating states.
+
+### 3.3 Error Handling (Simplified)
 
 | Error Type | Handling |
 |------------|----------|
-| Network/transient | Auto-retry 2x, then surface |
-| Spawn failure | Show immediately, offer retry button |
-| Claude error | Show in chat, instance stays alive |
-| Crash/fatal | Terminate, show error, offer restart |
+| Spawn failure (ENOENT) | Show immediately - CC not installed |
+| Non-zero exit code | Show error in chat, session returns to Idle |
+| Process timeout (optional) | Configurable max runtime, default none |
 
-**Why:** Different errors need different handling. Network blips shouldn't require user action.
+**Why:** With request-response pattern, error handling is simpler. No stream state to manage.
 
-### 3.4 Concurrency (Unlimited + User-Managed)
+### 3.4 Concurrency (Unlimited + Simple)
 
-**Decision:** No artificial limits. User manages via UI.
+**Decision:** No artificial limits. Each session can have at most one active process.
 
-- Connected icon (🔌) shown for sessions with running instance
-- Click to disconnect (kills instance)
-- Warning shown if disconnecting while Working (not Pending)
+- Multiple sessions can have concurrent processes
+- No disconnect button needed (processes exit naturally)
+- User can abort via abort button if needed
 
-**Why:** Let users manage their own resources rather than imposing arbitrary limits.
+**Why:** Let users manage their own resources. Processes exit naturally after each response.
 
-### 3.5 Spawn Strategy (First Keystroke)
+### 3.5 Spawn Strategy (On-Send)
 
-**Decision:** Spawn instance when user starts typing
+**Decision:** Spawn process when user clicks Send
 
 ```
-User clicks session → (no spawn yet)
-User starts typing → SPAWN INSTANCE
-User still typing → (instance warming up)
-User hits Send → Instance ready (or nearly ready)
+User clicks session → (no spawn)
+User types message → (no spawn)
+User clicks Send → SPAWN PROCESS
+Process runs → "Thinking..." indicator
+Process exits → Display response
 ```
 
-**Why:** Clear intent signal, typing time masks cold start latency. Can't pre-spawn because Claude Code streams are session-bound (1:1).
+**Why:** No warmup penalty with `-p` flag. Clear, predictable behavior.
 
 ---
 
@@ -114,19 +120,18 @@ User hits Send → Instance ready (or nearly ready)
 
 | State | Visual |
 |-------|--------|
-| Idle (no instance) | No decoration |
-| Connected + Pending | ⚡ icon |
-| Connected + Working | ⚡ + animated `···` |
-| Error | ⚠️ icon |
+| Idle | No decoration |
+| Working | ⚡ + animated `···` + green color bar |
+| Error | ⚠️ icon + red color bar |
 
 Left color accent bar for quick scanning + icons for explicit state.
 
 ### 4.2 Working Indicator
 
-**Decision:** `···` dots in session list + streaming preview in chat panel
+**Decision:** `···` dots in session list + "Thinking..." in chat panel
 
 - Slow blink (1-2s cycle) in session list (ambient awareness)
-- Streaming text in chat panel (active awareness when focused)
+- "Thinking..." indicator in chat panel (active awareness when focused)
 
 ### 4.3 Completion Notification
 
@@ -141,88 +146,84 @@ Left color accent bar for quick scanning + icons for explicit state.
 
 **Decision:** Colored ⚠️ with tooltip
 
-- ⚠️ yellow for transient/retrying (auto-clears if retry succeeds)
-- ⚠️ red for fatal errors (persists until dismissed)
+- ⚠️ red for errors (persists until dismissed or new message sent)
 - Hover/click shows error detail tooltip
 - Error also shown in chat panel when focused
+- Sending new message clears error and starts fresh
 
-### 4.5 Connection Status Icon
+### 4.5 [REMOVED] Connection Status Icon
 
-**Decision:** 🔌 icon on right side of session row
+**Previous Decision:** 🔌 disconnect button on session row.
 
-- Only visible if instance exists
-- Click to disconnect
-- Warning if disconnecting while Working
+**Removed:** With request-response pattern, processes exit naturally after each response. No persistent instances to disconnect. User can abort a running process via abort button in chat input area.
 
-### 4.6 Typing/Spawning Feedback
+### 4.6 Send Feedback
 
-**Decision:** Optimistic queue + subtle indicator
+**Decision:** Immediate feedback + "Thinking..." indicator
 
-- User can always type and send (never blocked)
-- If instance not ready: message queued, subtle "connecting..." shown
-- Auto-sends when ready
-- If spawn fails: show error, message preserved in input
+- Send button triggers process spawn immediately
+- "Thinking..." indicator appears in chat
+- If spawn fails: show error inline, message preserved in input
+- User can abort via abort button (replaces send button while Working)
 
 ---
 
-## 5. Stream Communication
+## 5. CC Communication
 
 ### 5.1 Message Protocol
 
-**Decision:** NDJSON stream-json via Claude Code CLI with isolated config
+**Decision:** Request-response via Claude Code CLI with `-p` flag
 
 ```bash
 CLAUDE_CONFIG_DIR=/path/to/grimoire/.claude \
 claude --session-id <uuid> \
-       --output-format stream-json \
-       --include-partial-messages \
        -p "user message"
 ```
 
-**Event types from stream:**
-| Event | Purpose |
-|-------|---------|
-| `init` | Session metadata |
-| `message` | Assistant/user messages with content blocks |
-| `tool_use` | Tool invocations (name, params) |
-| `tool_result` | Tool execution output |
-| `result` | Final completion status |
+**Why:** The `-p` flag runs Claude Code in prompt mode - it processes the message and exits. No streaming, no partial messages, no NDJSON parsing needed.
 
-**Known issue:** Final `result` event may not emit (GitHub #1920). Mitigation: timeout-based completion detection or detect via `stop_reason` in message event.
+### 5.2 Response Retrieval
 
-### 5.2 Streaming Display
+**Decision:** Read session JSONL file after process exit
 
-**Decision:** Buffered append (50-100ms batches) + progressive markdown rendering
+```typescript
+async function getResponseAfterProcess(sessionId: string): Promise<ConversationEvent[]> {
+  const sessionPath = getSessionPath(sessionId)
+  const lines = await readJsonlFile(sessionPath)
+  const events = lines.map(parseConversationEvent)
 
-- Buffer chunks for smoother rendering
-- Parse markdown incrementally
-- Fall back to raw text for incomplete structures
+  // Return only new events since last read
+  const lastKnownUuid = getLastKnownEventUuid(sessionId)
+  return events.slice(events.findIndex(e => e.uuid === lastKnownUuid) + 1)
+}
+```
+
+**Why:** CC writes complete responses to session file. Process exit (code 0) signals completion. Simple and reliable.
 
 ### 5.3 Input Handling
 
-**Decision:** Optimistic echo + queue
+**Decision:** Direct send
 
-- Instant local echo when user sends
-- Queue if instance not ready
+- User clicks Send → spawn process immediately
+- No queuing needed (process spawns on demand)
 - If send fails: show error inline, preserve message for retry
 
 ### 5.4 Response Tracking
 
-**Decision:** Response object with full state
+**Decision:** Response object with simplified state
 
 ```typescript
-interface Response {
-  id: string
-  status: 'sending' | 'streaming' | 'complete' | 'error'
-  chunks: string[]
-  fullText: string
-  error?: Error
-  startedAt: Date
+interface ResponseState {
+  sessionId: string
+  status: 'idle' | 'sending' | 'complete' | 'error'
+  lastEventUuid: string | null
+  error?: string
+  startedAt?: Date
   completedAt?: Date
 }
 ```
 
-**Why:** Tracks everything needed for UI and debugging, easy to serialize for history, supports analytics.
+**Why:** Tracks what's needed for UI. No streaming state to manage.
 
 ### 5.5 History Management
 
@@ -233,13 +234,11 @@ interface Response {
 
 **Why:** Aligns with hybrid pattern. Claude Code owns content, Grimoire adds value layer.
 
-### 5.6 Error Recovery in Stream
+### 5.6 [REMOVED] Stream Error Recovery
 
-**Decision:** Checkpoint + Partial preserve
+**Previous Decision:** Checkpoint + partial preserve for streaming errors.
 
-- Periodically checkpoint long responses to DB
-- On failure: save partial response, show "Received X% before error"
-- Offer retry (regenerate full) or accept partial
+**Removed:** With request-response pattern, there's no partial response to recover. Either the process completes (read full response from file) or it fails (show error). Simple and clean.
 
 ---
 
@@ -288,6 +287,16 @@ interface Response {
 - "Reset all" for full reset
 - Flag any that truly need restart
 
+### 6.6 Removed Settings (CC Integration Mode Change)
+
+The following settings were removed with the switch to request-response pattern:
+
+| Setting | Previous Purpose | Why Removed |
+|---------|------------------|-------------|
+| Unfocused timeout | Kill idle instances after 3 min | Processes exit after each response |
+| Focused timeout | Kill idle instances after 10 min | Processes exit after each response |
+| Never close option | Keep instances alive indefinitely | No persistent instances |
+
 ---
 
 ## 7. Isolation (MVP)
@@ -306,8 +315,6 @@ interface Response {
 ```bash
 CLAUDE_CONFIG_DIR=~/Library/Application\ Support/Grimoire/.claude \
 claude --session-id <uuid> \
-       --output-format stream-json \
-       --include-partial-messages \
        -p "user message"
 ```
 
@@ -315,13 +322,21 @@ claude --session-id <uuid> \
 ```typescript
 const child = spawn('claude', [
   '--session-id', sessionId,
-  '--output-format', 'stream-json',
-  '--include-partial-messages',
   '-p', message
 ], {
   env: {
     ...process.env,
     CLAUDE_CONFIG_DIR: path.join(app.getPath('userData'), '.claude')
+  }
+});
+
+// Handle process completion
+child.on('exit', async (code) => {
+  if (code === 0) {
+    const newEvents = await getResponseAfterProcess(sessionId);
+    emitResponseReady(sessionId, newEvents);
+  } else {
+    emitError(sessionId, `Process exited with code ${code}`);
   }
 });
 ```
@@ -338,13 +353,13 @@ const child = spawn('claude', [
 
 | Component | Uses CLAUDE_CONFIG_DIR? |
 |-----------|------------------------|
-| Sessions storage | ✅ Yes |
-| Credentials/API keys | ✅ Yes |
-| Skills/agents | ✅ Yes |
-| CLAUDE.md files | ✅ Yes |
-| MCP config | ✅ Yes |
-| `/ide` command | ❌ Broken (ignores it) |
-| Some install detection | ❌ May still create local `.claude/` |
+| Sessions storage | Yes |
+| Credentials/API keys | Yes |
+| Skills/agents | Yes |
+| CLAUDE.md files | Yes |
+| MCP config | Yes |
+| `/ide` command | Broken (ignores it) |
+| Some install detection | May still create local `.claude/` |
 
 **Why this is acceptable for Grimoire:**
 - Grimoire doesn't use `/ide` command
@@ -392,23 +407,23 @@ On first Grimoire launch:
 |----------|----------|
 | Click session in list | Open tab (or focus if already open) |
 | Click same session again | Focus existing tab |
-| Close tab while Pending/Idle | Tab closes, instance terminates |
-| Close tab while Working | Confirmation dialog |
-| Close app | All instances terminate (graceful shutdown) |
+| Close tab while Idle | Tab closes immediately |
+| Close tab while Working | Confirmation dialog, kill process if confirmed |
+| Close app | All active processes terminate (graceful shutdown) |
 
 ### 8.3 Close While Working - Confirmation Dialog
 
-When user closes a tab with a Working instance:
+When user closes a tab with a Working process:
 
 ```
 "Response in progress. Close anyway?"
 [Cancel] [Close & Stop]
 ```
 
-- **Confirm (Close & Stop):** Kill instance immediately, close tab
-- **Cancel:** Keep tab open, instance continues
+- **Confirm (Close & Stop):** Kill process immediately, close tab
+- **Cancel:** Keep tab open, process continues
 
-**Why:** Simple and explicit. No background processing complexity. User makes clear choice.
+**Why:** Simple and explicit. User makes clear choice.
 
 ---
 
@@ -434,12 +449,12 @@ When user closes a tab with a Working instance:
 |---------|-------|--------|
 | 1 | Session ID Management | ✅ |
 | 2 | App Startup Pattern | ✅ |
-| 3 | Instance Lifecycle | ✅ |
-| 4 | UI/UX Indicators | ✅ |
-| 5 | Stream Communication | ✅ |
-| 6 | Settings Architecture | ✅ |
-| 7 | Isolation | ✅ |
-| 8 | Tab Behavior | ✅ |
+| 3 | Instance Lifecycle | ✅ Updated for request-response |
+| 4 | UI/UX Indicators | ✅ Updated for 3-state |
+| 5 | CC Communication | ✅ Updated for request-response |
+| 6 | Settings Architecture | ✅ Documented removed settings |
+| 7 | Isolation | ✅ Updated spawn code |
+| 8 | Tab Behavior | ✅ Updated for new states |
 | 9 | Data Export/Backup | ✅ |
 
-**Next Phase:** Architecture document creation
+**Architecture Change:** 2026-01-22 - Changed from NDJSON streaming to `-p` request-response pattern. See `sprint-change-proposal-cc-integration.md` for details.

@@ -36,7 +36,7 @@ A unified interface for all Claude Code sessions - create new, resume old, watch
 
 **Unified session experience:** Every session - past or present - lives in one place. Click any session, type a message, hit Enter. Grimoire wakes it up. No terminal switching, no session hunting, no lost context.
 
-**Intelligent resource management:** Child processes spawn only when needed, stop when idle. Your machine isn't running unused Claude instances.
+**Intelligent resource management:** Child processes spawn per message and exit after response. Your machine isn't running unused Claude instances.
 
 **Foundation-first approach:** Phase 1 builds the solid base (fast, bug-free, polished UI/UX) that workflow management features will layer onto. No over-engineering, no premature abstraction.
 
@@ -100,8 +100,8 @@ If any of these fail, the user falls back to CLI:
 | App startup | < 3 seconds |
 | Session load (100+ messages) | < 1 second |
 | Sub-agent expansion | Instant (< 100ms perceived) |
-| Live updates | Real-time, no perceptible lag |
-| Child spawn/resume | < 500ms |
+| Response display | Fast, no perceptible delay after process completion |
+| Child spawn | < 500ms |
 
 **Reliability Requirements:**
 - All CC sessions from `~/.claude/projects/` display correctly
@@ -110,9 +110,9 @@ If any of these fail, the user falls back to CLI:
 - Human-readable errors (no stack traces)
 
 **Child Process Management:**
-- Child processes stop when CC waits for user input
-- Child processes restart seamlessly when user sends message
-- Active sessions show visual indicator in session list
+- Child processes spawn per message and exit after response
+- Each message triggers a new process invocation
+- Active (Working) sessions show visual indicator in session list
 - Session ID ↔ child process mapping always accurate
 
 **Plugin Architecture Validation:**
@@ -301,13 +301,11 @@ Grimoire is an Electron-based desktop application. Phase 1 focuses on Mac as the
 ### System Integration
 
 **Phase 1:**
-- CC child process spawning and lifecycle management via 6-state machine:
-  - **Idle:** No instance running
-  - **Spawning:** Instance starting (first-keystroke triggered)
-  - **Working:** CC processing (no timeout)
-  - **Pending:** Waiting for user input (tiered timeout applies)
-  - **Terminating:** Instance stopping
+- CC child process spawning and lifecycle management via 3-state machine:
+  - **Idle:** No process running
+  - **Working:** CC processing ("Thinking..." indicator shown)
   - **Error:** Failed operation
+- Request-response model: each message spawns process, process exits after response
 - Session file reading from `CLAUDE_CONFIG_DIR` folder (app data path)
 - `CLAUDE_CONFIG_DIR` isolation for CC instances (per-process env var)
 
@@ -419,7 +417,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR6: User can switch between open session tabs (clicking already-open session focuses existing tab)
 - FR7: User can drag a tab to panel border to split view
 - FR7a: System displays confirmation dialog when user closes tab with Working session
-- FR7b: User can close tab with Pending/Idle session without confirmation
+- FR7b: User can close tab with Idle session without confirmation
 - FR7c: System terminates all child processes gracefully on application quit
 
 ### Application Lifecycle
@@ -455,8 +453,8 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR26: User can select a session to view its conversation
 - FR27: User can create a new session (requires folder selection when initiated from within app)
 - FR28: User can see which sessions have active child processes (visual indicator)
-- FR28a: User can disconnect (kill) a running instance via 🔌 button on session row
-- FR28b: System shows warning when disconnecting a Working instance (not Pending)
+- FR28a: [REMOVED - No persistent instances with request-response model]
+- FR28b: [REMOVED - No persistent instances with request-response model]
 - FR29: User can see session metadata (date, project, duration, folder path)
 - FR29a: System displays folder path below session name in session list
 - FR29b: System displays warning icon on sessions whose folder no longer exists
@@ -464,7 +462,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR31: User can toggle visibility of archived sessions
 - FR32: System displays empty/new session state when no session selected
 - FR32a: System builds sub-agent index when session loads, containing path, parent reference, and label for each sub-agent
-- FR32b: System updates sub-agent index when new sub-agents are discovered during streaming
+- FR32b: System updates sub-agent index when new sub-agents are discovered after response
 
 ### Conversation Display
 
@@ -480,7 +478,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR38: User can see error indicators on failed operations
 - FR39: User can scroll through long conversations
 - FR40: User can navigate long conversations via navigation map in right panel
-- FR41: System displays non-persistent "thinking" indicator while waiting for CC response
+- FR41: System displays "Thinking..." indicator in chat while CC process is running
 - FR42: System displays "Loading Claude Code" indicator when spawning child
 
 ### Session Information
@@ -498,17 +496,17 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR47: User can type messages in chat input at bottom of conversation view
 - FR48: User can paste multi-line content into chat input
 - FR49: User can send message to spawn/resume CC child process
-- FR50: User can see real-time streaming of CC responses
+- FR50: User can see CC responses displayed after process completion (with "Thinking..." indicator during processing)
 - FR51: User can interact with any session (historical or new) via chat input
 - FR52: System generates Session UUID on first user input (before CC spawn)
 - FR53: System saves session even if CC spawn fails (preserves user input and errors)
-- FR54: System stops child process when CC waits for user input (transitions to Pending state)
-- FR55: System restarts child process when user sends new message
-- FR55a: System spawns child process when user starts typing in an inactive session (first-keystroke spawn)
-- FR55b: User can configure idle timeout for unfocused sessions (default: 3 minutes)
-- FR55c: User can configure idle timeout for focused sessions (default: 10 minutes)
-- FR55d: User can disable idle timeout entirely ("never close" option)
-- FR55e: Timer resets when switching tabs (not cumulative)
+- FR54: [REMOVED - Process exits naturally after each response, no Pending state]
+- FR55: System spawns new child process when user sends message (request-response model)
+- FR55a: [REMOVED - No warmup benefit with -p flag, spawn on send instead]
+- FR55b: [REMOVED - No idle timeout needed, processes exit after response]
+- FR55c: [REMOVED - No idle timeout needed, processes exit after response]
+- FR55d: [REMOVED - No idle timeout needed, processes exit after response]
+- FR55e: [REMOVED - No idle timeout needed, processes exit after response]
 - FR56: System maintains session ID mapping to child processes
 - FR57: User can abort a running CC process
 - FR58: System displays "Aborted" message in conversation when user aborts
@@ -520,7 +518,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR61: System spawns CC child processes with `CLAUDE_CONFIG_DIR` environment variable for isolation
 - FR62: System spawns CC with session ID argument for session continuity
 - FR63: System passes user input to CC child process as terminal input
-- FR64: System captures CC output (NDJSON stream events) and renders in conversation view
+- FR64: System reads session file after process exit and renders new messages in conversation view
 - FR65: System tracks session ID for each spawned CC instance
 - FR66: System supports resuming any existing session by ID
 - FR67: System displays actionable error in conversation when CC fails to spawn
@@ -587,7 +585,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 | Session load (100+ messages) | < 1 second | Instant-feel navigation |
 | Sub-agent expansion | < 100ms | Perceived as instant |
 | Child spawn/resume | < 500ms | No waiting after hitting Enter |
-| Real-time streaming | No perceptible lag | Matches terminal experience |
+| Response display | Minimal delay after process completion | Fast feedback with "Thinking..." indicator |
 | Panel resize/collapse | Instant | No UI jank |
 | Tab switching | Instant | No reload delay |
 
@@ -616,15 +614,15 @@ Build the foundational architecture that enables future expansion. Prove the cor
 
 **Claude Code Integration:**
 - Reads session files from `CLAUDE_CONFIG_DIR` folder (platform-specific app data path)
-- Spawns CC with `--session-id` and `--output-format stream-json` arguments
-- Passes user input to CC child process via `-p` argument
-- Captures NDJSON stream for conversation rendering
+- Spawns CC with `--session-id` and `-p` arguments (request-response mode)
+- Passes user message to CC child process via `-p` argument
+- Reads session file after process exit for conversation rendering
 - `CLAUDE_CONFIG_DIR` isolation prevents config conflicts (per-process env var)
 
 **File System:**
-- File watcher monitors `CLAUDE_CONFIG_DIR` folder for new/updated sessions
-- Session list updates automatically when new sessions detected
-- Changes to session files reflected in real-time (if session is open)
+- Session file read after each process exit to retrieve response
+- Session list updates on app startup and after session interactions
+- New sessions discovered via background scan on startup
 
 **System:**
 - Respects system dark/light mode (if applicable to UI framework)

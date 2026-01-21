@@ -26,7 +26,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR6: User can switch between open session tabs (clicking already-open session focuses existing tab)
 - FR7: User can drag a tab to panel border to split view
 - FR7a: System displays confirmation dialog when user closes tab with Working session
-- FR7b: User can close tab with Pending/Idle session without confirmation
+- FR7b: User can close tab with Idle session without confirmation
 - FR7c: System terminates all child processes gracefully on application quit
 
 **Application Lifecycle (FR8-FR19)**
@@ -59,8 +59,8 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR26: User can select a session to view its conversation
 - FR27: User can create a new session (requires folder selection when initiated from within app)
 - FR28: User can see which sessions have active child processes (visual indicator)
-- FR28a: User can disconnect (kill) a running instance via 🔌 button on session row
-- FR28b: System shows warning when disconnecting a Working instance (not Pending)
+- FR28a: [REMOVED - No persistent instances to disconnect with request-response model]
+- FR28b: [REMOVED - No persistent instances to disconnect with request-response model]
 - FR29: User can see session metadata (date, project, duration, folder path)
 - FR29a: System displays folder path below session name in session list
 - FR29b: System displays warning icon on sessions whose folder no longer exists
@@ -68,7 +68,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR31: User can toggle visibility of archived sessions
 - FR32: System displays empty/new session state when no session selected
 - FR32a: System builds sub-agent index when session loads, containing path, parent reference, and label for each sub-agent
-- FR32b: System updates sub-agent index when new sub-agents are discovered during streaming
+- FR32b: System updates sub-agent index when new sub-agents are discovered after response
 
 **Conversation Display (FR33-FR42)**
 - FR33: User can view conversation as sequential message bubbles (user/Claude)
@@ -99,17 +99,17 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR47: User can type messages in chat input at bottom of conversation view
 - FR48: User can paste multi-line content into chat input
 - FR49: User can send message to spawn/resume CC child process
-- FR50: User can see real-time streaming of CC responses
+- FR50: User can see CC responses displayed after process completion
 - FR51: User can interact with any session (historical or new) via chat input
 - FR52: System generates Session UUID on first user input (before CC spawn)
 - FR53: System saves session even if CC spawn fails (preserves user input and errors)
-- FR54: System stops child process when CC waits for user input (transitions to Pending state)
-- FR55: System restarts child process when user sends new message
-- FR55a: System spawns child process when user starts typing in an inactive session (first-keystroke spawn)
-- FR55b: User can configure idle timeout for unfocused sessions (default: 3 minutes)
-- FR55c: User can configure idle timeout for focused sessions (default: 10 minutes)
-- FR55d: User can disable idle timeout entirely ("never close" option)
-- FR55e: Timer resets when switching tabs (not cumulative)
+- FR54: [REMOVED - Process exits naturally after each response, no Pending state]
+- FR55: System spawns new child process when user sends message (request-response model)
+- FR55a: [REMOVED - On-send spawn instead]
+- FR55b: [REMOVED - No timeout needed]
+- FR55c: [REMOVED - No timeout needed]
+- FR55d: [REMOVED - No timeout needed]
+- FR55e: [REMOVED - No timeout needed]
 - FR56: System maintains session ID mapping to child processes
 - FR57: User can abort a running CC process
 - FR58: System displays "Aborted" message in conversation when user aborts
@@ -120,7 +120,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR61: System spawns CC child processes with CLAUDE_CONFIG_DIR environment variable for isolation
 - FR62: System spawns CC with session ID argument for session continuity
 - FR63: System passes user input to CC child process as terminal input
-- FR64: System captures CC output (NDJSON stream events) and renders in conversation view
+- FR64: System reads session file after process exit and renders new messages in conversation view
 - FR65: System tracks session ID for each spawned CC instance
 - FR66: System supports resuming any existing session by ID
 - FR67: System displays actionable error in conversation when CC fails to spawn
@@ -175,7 +175,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - NFR2: Session load (100+ messages) < 1 second (instant-feel navigation)
 - NFR3: Sub-agent expansion < 100ms (perceived as instant)
 - NFR4: Child spawn/resume < 500ms (no waiting after hitting Enter)
-- NFR5: Real-time streaming with no perceptible lag (matches terminal experience)
+- NFR5: Response display with minimal delay after process completion
 - NFR6: Panel resize/collapse instant (no UI jank)
 - NFR7: Tab switching instant (no reload delay)
 
@@ -194,9 +194,9 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 
 **Integration**
 - NFR19: Reads session files from CLAUDE_CONFIG_DIR folder (platform-specific app data path)
-- NFR20: Spawns CC with --session-id and --output-format stream-json arguments
-- NFR21: Passes user input to CC child process via -p argument
-- NFR22: Captures NDJSON stream for conversation rendering
+- NFR20: Spawns CC with --session-id and -p arguments (request-response mode)
+- NFR21: Passes user message to CC child process via -p argument
+- NFR22: Reads session JSONL file after process exit for conversation rendering
 - NFR23: CLAUDE_CONFIG_DIR isolation prevents config conflicts (per-process env var)
 - NFR24: File watcher monitors CLAUDE_CONFIG_DIR folder for new/updated sessions
 - NFR25: Session list updates automatically when new sessions detected

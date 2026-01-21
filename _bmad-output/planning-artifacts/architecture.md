@@ -26,11 +26,11 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 - **Application Shell (FR1-7):** Multi-panel Obsidian-inspired layout with ribbon navigation, collapsible panels, resizable dividers, and tab system for multiple open sessions
 - **Application Lifecycle (FR8-19):** Loading screen with CC verification, HOME/auth checks, offline support, auto-updates, state persistence
 - **Plugin System (FR20-24):** Enable/disable plugins, per-plugin settings, core plugins use same architecture as future community plugins
-- **Session Management (FR25-32):** Session list from `CLAUDE_CONFIG_DIR` folder, metadata display, archive functionality, active child process indicators (6-state system)
+- **Session Management (FR25-32):** Session list from `CLAUDE_CONFIG_DIR` folder, metadata display, archive functionality, active child process indicators (3-state system: Idle/Working/Error)
 - **Conversation Display (FR33-42):** Message bubbles, tool call cards, sub-agent expansion, error indicators, navigation map, streaming indicators
 - **Session Information (FR43-46):** Token usage display, per-message consumption, full metadata exposure
-- **Session Interaction (FR47-60):** Chat input, real-time streaming, child process spawn/stop with configurable idle timeout, session UUID generation, abort capability
-- **CC Integration (FR61-67):** Direct spawn with `CLAUDE_CONFIG_DIR` isolation, session ID argument passing, NDJSON stream parsing, graceful cleanup on app quit
+- **Session Interaction (FR47-60):** Chat input, request-response pattern, child process spawn per message, session UUID generation, abort capability
+- **CC Integration (FR61-67):** Direct spawn with `CLAUDE_CONFIG_DIR` isolation, session ID argument passing, `-p` prompt mode (request-response), session file reading, graceful cleanup on app quit
 
 **Non-Functional Requirements:**
 
@@ -38,19 +38,19 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 |----------|-------------|
 | Performance | App startup < 3s, session load < 1s, sub-agent expansion < 100ms, child spawn < 500ms, real-time streaming with no lag |
 | Reliability | Zero data loss, user input preserved on spawn failure, graceful child cleanup on app quit |
-| Integration | File watcher on `CLAUDE_CONFIG_DIR` folder, direct child process spawn with NDJSON stream parsing |
+| Integration | Session file reading on process exit, direct child process spawn with `-p` prompt mode |
 
 **Scale & Complexity:**
 
 - Primary domain: Desktop App (Electron)
 - Complexity level: Medium
-- Estimated architectural components: ~8-10 major subsystems (shell, plugins, sessions, conversation renderer, child process manager, stream parser, file watcher, IPC layer)
+- Estimated architectural components: ~7-8 major subsystems (shell, plugins, sessions, conversation renderer, child process manager, session file reader, IPC layer)
 
 ### Technical Constraints & Dependencies
 
 - **Electron framework:** Main process + renderer process architecture
 - **Claude Code CLI:** External dependency - spawned directly with `CLAUDE_CONFIG_DIR` env var for isolation
-- **Process architecture:** Main process spawns CC children directly via Node.js `child_process`, manages lifecycle via 6-state machine
+- **Process architecture:** Main process spawns CC children directly via Node.js `child_process`, manages lifecycle via 3-state machine (Idle/Working/Error)
 - **File system:** `CLAUDE_CONFIG_DIR` path under app data folder for session data (platform-specific paths)
 - **macOS primary:** Phase 1 targets macOS, architecture must not block future Windows/Linux
 - **Local-first:** No cloud dependencies, all data on user machine
@@ -58,17 +58,17 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 ### Cross-Cutting Concerns Identified
 
-1. **Child Process Lifecycle:** Direct spawn via Node.js with `CLAUDE_CONFIG_DIR` env var. 6-state machine (Idle → Spawning → Working → Pending → Terminating, plus Error). Tiered timeout: Working=∞, Pending+Focused=10min, Pending+Unfocused=3min. See [Spawn Child Architecture](#spawn-child-architecture) for details.
+1. **Child Process Lifecycle:** Direct spawn via Node.js with `CLAUDE_CONFIG_DIR` env var. 3-state machine (Idle → Working → Error). Each message = one process invocation with `-p` flag. Process exits naturally after response. See [Spawn Child Architecture](#spawn-child-architecture) for details.
 
-2. **Waiting State Detection:** Detect via NDJSON stream events - `stop_reason` in message event indicates Claude waiting for input. Instance transitions to Pending state.
+2. **Response Completion:** Detect via process exit. Exit code 0 = success (read session file for response). Non-zero = error. No persistent "waiting" state - session returns to Idle after each response.
 
-3. **Status Communication:** In-memory state management in main process. No separate status file needed - stream events provide real-time state.
+3. **Status Communication:** In-memory state management in main process. Status determined by process existence (Working if child running, Idle if not). Session file read on process exit to get response.
 
-4. **File Watcher Scope:** Watch `CLAUDE_CONFIG_DIR/.claude` folder (platform-specific path under app data). Changes only occur when our child process runs.
+4. **Session File Reading:** Read session JSONL file after each process exit to retrieve response. No file watcher needed - we know exactly when to read (on process exit with code 0).
 
 5. **Plugin Architecture:** Define core plugin patterns *before* building Sessions plugin. Build only what Sessions needs in the API; extract reusable patterns when second plugin arrives.
 
-6. **Visual Indicators:** Triple redundancy pattern - color bar + icon (⚡/⚠️) + animation (`···` for working). 6 states mapped to distinct visuals. 🔌 disconnect button on session row (click to kill instance). Graceful cleanup of all children on app quit.
+6. **Visual Indicators:** Triple redundancy pattern - color bar + icon (⚡/⚠️) + animation (`···` for working). 3 states mapped to distinct visuals (Idle=none, Working=⚡+animation, Error=⚠️). No disconnect button needed (process exits naturally). Graceful cleanup of all children on app quit.
 
 7. **State Persistence:** Hybrid pattern - `.claude` folder is source of truth for session existence, DB stores app metadata and enables fast startup queries.
 
@@ -142,7 +142,7 @@ npm install -D prettier eslint
 |-------|----------|---------|
 | **Persistent** | SQLite | Sessions, settings, plugin config - externally queryable |
 | **Runtime UI** | Zustand | Panel visibility, selected tab, transient state |
-| **Main process** | Plain objects | Child process registry, watcher status |
+| **Main process** | Plain objects | Child process registry, active process tracking |
 
 **Database location:** `~/.grimoire/grimoire.db`
 
@@ -292,7 +292,7 @@ grimoire/
 3. **Plugins kept flat** - 2-3 levels max, static imports for MVP
 4. **Shared UI strategy** - Start in plugin, extract when second consumer appears
 5. **Ship then optimize** - Polling before events, static before dynamic
-6. **State machine testability** - 6-state machine is pure logic, easy unit tests
+6. **State machine testability** - 3-state machine is pure logic, easy unit tests
 
 ## Spawn Child Architecture
 
@@ -301,7 +301,7 @@ grimoire/
 The Spawn Child system manages Claude Code CLI instances on behalf of Grimoire. Key concepts:
 
 - **Session:** A conversation within Claude Code (persisted in `.claude` folder)
-- **Instance:** A running Claude Code stream/child process (ephemeral)
+- **Instance:** A running Claude Code child process for a single request (ephemeral, exits after response)
 
 ### Session ID Management
 
@@ -365,125 +365,93 @@ const subAgentIndex = new Map<string, SubAgentEntry>()
 
 ### Instance Lifecycle
 
-**State Machine (6 states):**
+**State Machine (3 states):**
 
 ```
-Idle → Spawning → Working → Pending → Terminating
-                     ↓
-                   Error
+Idle → Working → Idle
+         ↓
+       Error
 ```
 
-**Tiered Timeout:**
+**Process Lifecycle:** Each user message spawns a new process. Process runs to completion and exits. No persistent instances, no timeouts needed.
 
-| State | Default Timeout | Behavior |
-|-------|-----------------|----------|
-| Working | None | No timeout while processing |
-| Pending + Focused | 10 min | User viewing this session |
-| Pending + Unfocused | 3 min | User in different session |
-| Never close | ∞ | Optional setting |
+| Event | State Transition |
+|-------|------------------|
+| User sends message | Idle → Working |
+| Process exits (code 0) | Working → Idle |
+| Process exits (non-zero) | Working → Error |
+| User sends new message | Error → Working (clears error) |
 
-Timer resets on tab switch (not cumulative).
-
-**Spawn Strategy:** First keystroke triggers spawn (typing masks cold start).
+**Spawn Strategy:** On-send - process spawns when user clicks Send (no warmup penalty with `-p` flag).
 
 **Error Handling:**
 
 | Error Type | Handling |
 |------------|----------|
-| Network/transient | Auto-retry 2x, then surface |
-| Spawn failure | Show immediately, offer retry |
-| Claude error | Show in chat, instance stays alive |
-| Crash/fatal | Terminate, show error, offer restart |
+| Spawn failure (ENOENT) | Show immediately, CC not installed |
+| Non-zero exit code | Show error in chat, session returns to Idle |
+| Process timeout (optional) | Configurable max runtime, default none |
 
-**Concurrency:** Unlimited instances, user-managed via UI.
+**Concurrency:** Multiple sessions can have active processes simultaneously. Each session limited to one active process at a time.
 
-### Stream Communication
+### CC Communication
 
-**Protocol:** NDJSON stream-json via Claude Code CLI
+**Protocol:** Request-response via Claude Code CLI with `-p` flag
 
 ```bash
 CLAUDE_CONFIG_DIR=/path/to/grimoire/.claude \
 claude --session-id <uuid> \
-       --output-format stream-json \
-       --include-partial-messages \
        -p "user message"
 ```
 
-**NDJSON Event Types (from `--output-format stream-json`):**
+**Request-Response Flow:**
 
-| Event Type | Purpose |
-|------------|---------|
-| `message_start` | Beginning of response, includes model/ID |
-| `content_block_start` | Start of text/tool_use/thinking block |
-| `content_block_delta` | Incremental update (text_delta, input_json_delta) |
-| `content_block_stop` | End of content block |
-| `message_delta` | Top-level changes (stop_reason, usage) |
-| `message_stop` | Final event, response complete |
-| `result` | Final result (may not emit - see Known Issue) |
-| `ping` | Keep-alive, safe to ignore |
-| `error` | Error events |
+| Step | Action |
+|------|--------|
+| 1 | User sends message |
+| 2 | Spawn `claude` process with `-p` flag |
+| 3 | Process runs (state = Working) |
+| 4 | Process exits |
+| 5 | Read session JSONL file for response |
+| 6 | Parse and display new messages |
+| 7 | Return to Idle state |
 
-**Streaming State Management:**
+**Session File Reading:**
+
 ```typescript
-interface StreamState {
-  currentText: string
-  currentToolCall: {
-    id: string
-    name: string
-    inputJson: string
-  } | null
-  completedToolCalls: ToolUseBlock[]
-}
+async function getResponseAfterProcess(sessionId: string): Promise<ConversationEvent[]> {
+  const sessionPath = getSessionPath(sessionId)
+  const lines = await readJsonlFile(sessionPath)
+  const events = lines.map(parseConversationEvent)
 
-function handleStreamEvent(event: StreamEvent, state: StreamState) {
-  switch (event.event.type) {
-    case 'content_block_start':
-      if (event.event.content_block?.type === 'tool_use') {
-        state.currentToolCall = {
-          id: event.event.content_block.id,
-          name: event.event.content_block.name,
-          inputJson: ''
-        }
-      }
-      break
+  // Return only new events since last read
+  const lastKnownUuid = getLastKnownEventUuid(sessionId)
+  const newEvents = events.slice(
+    events.findIndex(e => e.uuid === lastKnownUuid) + 1
+  )
 
-    case 'content_block_delta':
-      if (event.event.delta?.type === 'text_delta') {
-        state.currentText += event.event.delta.text
-      } else if (event.event.delta?.type === 'input_json_delta') {
-        state.currentToolCall!.inputJson += event.event.delta.partial_json
-      }
-      break
-
-    case 'content_block_stop':
-      if (state.currentToolCall) {
-        state.completedToolCalls.push({
-          type: 'tool_use',
-          ...state.currentToolCall,
-          input: JSON.parse(state.currentToolCall.inputJson)
-        })
-        state.currentToolCall = null
-      }
-      break
-  }
+  return newEvents
 }
 ```
 
 **Response Tracking:**
 
 ```typescript
-interface Response {
-  id: string
-  status: 'sending' | 'streaming' | 'complete' | 'error'
-  chunks: string[]
-  fullText: string
-  error?: Error
-  startedAt: Date
+interface ResponseState {
+  sessionId: string
+  status: 'idle' | 'sending' | 'complete' | 'error'
+  lastEventUuid: string | null
+  error?: string
+  startedAt?: Date
   completedAt?: Date
 }
 ```
 
-**Known Issue:** Final `result` event may not emit (GitHub #1920). Mitigate via `stop_reason` in message event.
+**Why not streaming?** The `-p` flag provides simpler integration:
+- No NDJSON parsing complexity
+- No partial message handling
+- Session file is authoritative (already written by CC)
+- Process exit is clear completion signal
 
 ### Unified Conversation Loader
 
@@ -522,13 +490,21 @@ async function loadConversation(path: string): Promise<Conversation> {
 ```typescript
 const child = spawn('claude', [
   '--session-id', sessionId,
-  '--output-format', 'stream-json',
-  '--include-partial-messages',
   '-p', message
 ], {
   env: {
     ...process.env,
     CLAUDE_CONFIG_DIR: path.join(app.getPath('userData'), '.claude')
+  }
+});
+
+// Handle process completion
+child.on('exit', async (code) => {
+  if (code === 0) {
+    const newEvents = await getResponseAfterProcess(sessionId);
+    emitResponseEvents(sessionId, newEvents);
+  } else {
+    emitError(sessionId, `Process exited with code ${code}`);
   }
 });
 ```
@@ -546,9 +522,9 @@ const child = spawn('claude', [
 | Scenario | Behavior |
 |----------|----------|
 | Click session in list | Open tab (or focus if already open) |
-| Close tab while Pending/Idle | Tab closes, instance terminates |
-| Close tab while Working | Confirmation dialog |
-| Close app | All instances terminate (graceful shutdown) |
+| Close tab while Idle | Tab closes immediately |
+| Close tab while Working | Confirmation dialog, kill process if confirmed |
+| Close app | All active processes terminate (graceful shutdown) |
 
 ### Settings
 
@@ -871,7 +847,7 @@ function isToolResult(event: ConversationEvent): boolean {
 **Critical Decisions (Block Implementation):**
 - All critical decisions made in Steps 2-3 and spawn-child-decisions
 - Stack: electron-vite + React + TypeScript + Tailwind + Radix + Zustand + SQLite
-- Child process: CLAUDE_CONFIG_DIR isolation + 6-state machine + NDJSON streaming
+- Child process: CLAUDE_CONFIG_DIR isolation + 3-state machine + `-p` request-response mode
 
 **Important Decisions (Shape Architecture):**
 - Data validation: Zod for runtime validation (renderer → main only)
@@ -1136,12 +1112,11 @@ CREATE TABLE sessions (
 
 // Event channels (main → renderer)
 'instance:stateChanged'
-'instance:streamChunk'
-'instance:fileEdited'     // AI edited a file (for real-time tracking)
+'instance:responseReady'  // Process completed, response available
+'instance:fileEdited'     // AI edited a file (tracked from session file)
 'session:discovered'
 'session:folderMissing'   // Folder no longer exists for session
-'subagent:discovered'     // New sub-agent found during scan/stream
-'folder:changed'          // File system change in watched folder
+'subagent:discovered'     // New sub-agent found during session file scan
 'app:beforeQuit'
 ```
 
@@ -1395,15 +1370,15 @@ interface SubAgentInfo {
 // Main → Renderer events
 interface InstanceStateEvent {
   sessionId: string
-  state: InstanceState // 'idle' | 'spawning' | 'working' | 'pending' | 'terminating' | 'error'
+  state: InstanceState // 'idle' | 'working' | 'error'
   previousState: InstanceState
   timestamp: number
 }
 
-interface StreamChunkEvent {
+interface ResponseReadyEvent {
   sessionId: string
-  chunk: string
-  eventType: 'message' | 'tool_use' | 'tool_result'
+  newEvents: ConversationEvent[]  // New events parsed from session file
+  timestamp: number
 }
 ```
 
@@ -1519,8 +1494,8 @@ interface SessionState {
 
 // Instance-specific states
 interface InstanceState {
-  state: 'idle' | 'spawning' | 'working' | 'pending' | 'terminating' | 'error'
-  // 'spawning' IS the loading state for that instance
+  state: 'idle' | 'working' | 'error'
+  // 'working' IS the loading state for that instance (process running)
 }
 ```
 
@@ -1714,8 +1689,8 @@ grimoire/
 │           │   ├── index.test.ts
 │           │   ├── instance-manager.ts
 │           │   ├── instance-manager.test.ts
-│           │   ├── stream-parser.ts
-│           │   ├── stream-parser.test.ts
+│           │   ├── session-file-reader.ts
+│           │   ├── session-file-reader.test.ts
 │           │   ├── session-scanner.ts
 │           │   ├── session-scanner.test.ts
 │           │   ├── conversation-loader.ts
@@ -1772,7 +1747,7 @@ grimoire/
 │           │   │
 │           │   └── hooks/
 │           │       ├── useSessionPolling.ts
-│           │       ├── useStreamEvents.ts
+│           │       ├── useResponseEvents.ts
 │           │       ├── useFolderTree.ts
 │           │       ├── useFileEdits.ts
 │           │       └── useSearch.ts
@@ -1816,7 +1791,7 @@ grimoire/
 │         │                │                     │             │
 │  ┌──────┴──────┐  ┌──────┴──────┐  ┌──────────┴──────────┐  │
 │  │   SQLite    │  │   Plugin    │  │  Instance Manager   │  │
-│  │    (DB)     │  │   Loader    │  │   (6-state FSM)     │  │
+│  │    (DB)     │  │   Loader    │  │   (3-state FSM)     │  │
 │  └─────────────┘  └─────────────┘  └──────────┬──────────┘  │
 │                     MAIN PROCESS              │             │
 └───────────────────────────────────────────────┼─────────────┘
@@ -1841,7 +1816,7 @@ grimoire/
 
 | Data Type | Location | Access Pattern |
 |-----------|----------|----------------|
-| Sessions | `CLAUDE_CONFIG_DIR/.claude/` | Read-only (file watcher) |
+| Sessions | `CLAUDE_CONFIG_DIR/.claude/` | Read on process exit |
 | App metadata | SQLite `sessions` table | Main process only |
 | Settings | SQLite `settings` table | Main process only |
 | UI state | Zustand stores | Renderer only |
@@ -1878,7 +1853,7 @@ grimoire/
 | FR | File | Purpose |
 |----|------|---------|
 | FR25-27 | `SessionList.tsx` | List from CLAUDE_CONFIG_DIR |
-| FR28 | `SessionListItem.tsx` | State indicators, 🔌 disconnect |
+| FR28 | `SessionListItem.tsx` | State indicators (3-state) |
 | FR29-32 | `session-scanner.ts` | Archive, metadata |
 
 #### FR33-42: Conversation Display → `plugins/sessions/renderer/`
@@ -1902,15 +1877,15 @@ grimoire/
 | FR | File | Purpose |
 |----|------|---------|
 | FR47-53 | `ChatInput.tsx` | Input, send, abort |
-| FR54-55 | `instance-manager.ts` | Spawn on keystroke, timeout |
-| FR56-60 | `stream-parser.ts` | Real-time streaming |
+| FR54-55 | `instance-manager.ts` | Spawn on send, process management |
+| FR56-60 | `session-file-reader.ts` | Response retrieval from session file |
 
 #### FR61-67: CC Integration → `plugins/sessions/main/`
 
 | FR | File | Purpose |
 |----|------|---------|
-| FR61-64 | `instance-manager.ts` | CLAUDE_CONFIG_DIR spawn |
-| FR65-67 | `stream-parser.ts` | NDJSON parsing, session ID |
+| FR61-64 | `instance-manager.ts` | CLAUDE_CONFIG_DIR spawn with `-p` flag |
+| FR65-67 | `session-file-reader.ts` | Session file parsing, response extraction |
 
 ### Integration Points
 
@@ -1918,8 +1893,8 @@ grimoire/
 
 | From | To | Method | Channel/Pattern |
 |------|-----|--------|-----------------|
-| Renderer | Main | IPC invoke | `sessions:list`, `sessions:spawn` |
-| Main | Renderer | IPC send | `instance:stateChanged`, `instance:streamChunk` |
+| Renderer | Main | IPC invoke | `sessions:list`, `sessions:sendMessage` |
+| Main | Renderer | IPC send | `instance:stateChanged`, `instance:responseReady` |
 | Components | Components | Zustand | `useSessionStore`, `useUIStore` |
 | Plugin | Core | Props | Shell passes plugin components |
 
@@ -1992,9 +1967,9 @@ Project structure supports all architectural decisions. Electron process separat
 All 67 functional requirements mapped to specific files in the project structure. Each FR category has a designated location with clear file responsibilities.
 
 **Non-Functional Requirements Coverage:**
-- Performance: DB-first startup, first-keystroke spawn, client-side expansions
+- Performance: DB-first startup, on-send spawn, client-side expansions
 - Reliability: SQLite + .claude folder dual truth, graceful shutdown
-- Integration: CLAUDE_CONFIG_DIR isolation, NDJSON streaming, file watching
+- Integration: CLAUDE_CONFIG_DIR isolation, `-p` request-response mode, session file reading
 
 ### Implementation Readiness Validation ✅
 
@@ -2066,7 +2041,7 @@ All 67 functional requirements mapped to specific files in the project structure
 - Clear separation between core and plugins
 - Comprehensive pattern documentation prevents AI agent conflicts
 - All FRs mapped to specific implementation files
-- 6-state machine fully documented with spawn-child decisions
+- 3-state machine fully documented with spawn-child decisions
 
 **Areas for Future Enhancement:**
 - Dynamic plugin loading when second plugin needed

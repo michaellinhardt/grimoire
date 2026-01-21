@@ -83,7 +83,7 @@ The core interaction: **Type a message, hit Enter, work happens with full visibi
 
 ### Critical Success Moments
 
-1. **App launch → first message** - Open Grimoire → cursor ready → type → Enter → CC spawns → response streams. Zero friction from launch to work.
+1. **App launch → first message** - Open Grimoire → cursor ready → type → Enter → CC spawns → "Thinking..." indicator → response appears. Zero friction from launch to work.
 
 2. **Session resume** - Click any historical session, type a follow-up, conversation continues seamlessly. No "loading" or "reconnecting" friction.
 
@@ -258,7 +258,7 @@ The design system must support Grimoire's core UX needs:
 | Progressive disclosure | Critical | Collapse/expand for sub-agents, tool calls, session info |
 | Conversation UI | Critical | Custom components: message bubbles, tool cards, sub-agent containers |
 | Minimal aesthetic | High | Clean, not overwhelming - professional developer tool feel |
-| Fast rendering | High | Must handle 100+ message sessions with real-time streaming |
+| Fast rendering | High | Must handle 100+ message sessions with fast response display |
 | Theming support | Medium | CSS variables or equivalent for future light mode, user themes |
 
 ### Evaluation Criteria
@@ -365,18 +365,18 @@ Users come from terminal-based Claude Code with this mental model:
 |------|--------|-----------------|
 | 1 | Open Grimoire | New session ready, cursor in input |
 | 2 | Type prompt | Text appears in input box |
-| 3 | Press Enter | CC child spawns, "Starting..." indicator |
-| 4 | — | Response streams in real-time |
+| 3 | Press Enter | CC child spawns, "Thinking..." indicator |
+| 4 | — | Process completes, response appears |
 
 **2. Interaction - Watch it Unfold**
 
 | Element | Behavior |
 |---------|----------|
-| Claude messages | Appear as bubbles, stream in real-time |
+| Claude messages | Appear as bubbles after process completion |
 | Sub-agent spawns | Appear as collapsible containers, collapsed by default |
 | Tool calls | Appear as compact cards with summary, expandable for details |
-| Event timeline | Updates live, each event as one-line item |
-| Status indicator | Shows active/thinking/waiting/error state |
+| Event timeline | Updates after response, each event as one-line item |
+| Status indicator | Shows idle/working/error state |
 
 **3. Feedback - Understand Everything**
 
@@ -823,8 +823,8 @@ flowchart TD
 
 **Feedback Patterns:**
 - **Inline expansion**: Sub-agents and tools expand in place
-- **Status indicators**: 6-state machine (Idle, Spawning, Working, Pending, Terminating, Error) with triple redundancy (color bar + icon + animation)
-- **Real-time streaming**: Responses appear as they generate
+- **Status indicators**: 3-state machine (Idle, Working, Error) with triple redundancy (color bar + icon + animation)
+- **Thinking indicator**: "Thinking..." shown while process runs, response appears on completion
 - **Token counts**: Cumulative in timeline, per-message optional
 
 **Error Patterns:**
@@ -964,20 +964,19 @@ flowchart TD
 **Elements:**
 - Left: State indicator (⚡ for connected, ⚠️ for error, none for idle)
 - Center: Session name + timestamp
-- Right: 🔌 disconnect button (only visible if instance exists) + ⋮ menu
+- Right: ⋮ menu
 
 **States:**
 - Default: Subtle background
-- Hover: Elevated background, 3-dot menu appears, 🔌 button visible if connected
+- Hover: Elevated background, 3-dot menu appears
 - Active: Accent border, accent-tinted background
 - Working: ⚡ + `···` animation, green color bar
-- Pending: ⚡ icon, amber color bar
+- Idle: No decoration
 - Error: ⚠️ icon, red color bar
 
 **Interaction:**
 - Click: Load session in middle panel
-- Hover: Reveal 3-dot context menu, 🔌 button, and pin icon
-- 🔌 click: Disconnect (kill instance) - shows warning if Working state
+- Hover: Reveal 3-dot context menu and pin icon
 - 3-dot click: Open dropdown (archive, delete, etc.)
 - Pin click: Toggle pinned state
 
@@ -1399,21 +1398,17 @@ Pinned:
 **Purpose:** Show session/process state
 **Variants:** Color bar + Icon + Animation (triple redundancy)
 
-**6-State Machine:**
+**3-State Machine:**
 
 | State | Visual | Icon | Animation | Usage |
 |-------|--------|------|-----------|-------|
-| Idle | No decoration | - | - | No instance running |
-| Spawning | Subtle pulse | - | Fade pulse | Instance starting |
-| Working | Green bar | ⚡ | `···` dots | CC processing |
-| Pending | Amber bar | ⚡ | - | Waiting for input |
-| Terminating | Gray bar | - | Fade out | Instance stopping |
+| Idle | No decoration | - | - | No process running |
+| Working | Green bar | ⚡ | `···` dots | CC processing ("Thinking...") |
 | Error | Red bar | ⚠️ | - | Failed operation |
 
 **Icon meanings:**
-- ⚡ = Connected (instance exists) - state indicator on left
+- ⚡ = Working (process running)
 - ⚠️ = Error state (click for details)
-- 🔌 = Disconnect button (click to kill instance) - action button on right, only visible on hover when connected
 
 ---
 
@@ -1501,7 +1496,7 @@ Pinned:
 
 | Component | Priority | Needed For |
 |-----------|----------|------------|
-| Streaming Indicator | P2 | Response feedback |
+| Thinking Indicator | P2 | Response feedback |
 | Error Bubble + Retry | P2 | Error handling |
 | Loading States | P2 | Process feedback |
 
@@ -1548,21 +1543,18 @@ Pinned:
 
 ### Feedback Patterns
 
-**Status Indicators (6-State Machine):**
+**Status Indicators (3-State Machine):**
 
 | State | Visual | Color | Location |
 |-------|--------|-------|----------|
 | Idle | No indicator | - | - |
-| Spawning | Subtle pulse | Gray | Session list, tab |
 | Working | ⚡ + `···` animation | Green | Session list, tab |
-| Pending | ⚡ icon | Amber | Session list, tab |
-| Terminating | Fade out | Gray | Session list, tab |
 | Error | ⚠️ icon | Red | Session list, tab, bubble |
 
-**Streaming Feedback:**
-- Cursor blink animation in message bubble while receiving
-- Smooth scroll as content arrives
-- No blocking UI during stream
+**Thinking Feedback:**
+- "Thinking..." indicator in chat while process runs
+- Indicator disappears when response appears
+- No blocking UI during processing
 
 **Success Feedback:**
 - Operation completes silently (no toast for normal operations)
@@ -1639,8 +1631,7 @@ Pinned:
 |---------|-----------------|
 | App startup | Loading screen with logo + progress |
 | Session loading | Skeleton bubbles in conversation area |
-| CC spawning | "connecting..." indicator (subtle) |
-| Content streaming | Cursor blink in expanding bubble |
+| CC processing | "Thinking..." indicator in chat |
 
 **Error States:**
 
@@ -1656,9 +1647,8 @@ Pinned:
 | State | Session List | Tab | Conversation |
 |-------|--------------|-----|--------------|
 | New (unsaved) | Not in list yet | "New Session" | Input focused |
-| Active (running) | Green dot | Green dot | Streaming |
-| Paused | Amber dot | Amber dot | Ready for input |
-| Completed | No dot | No dot | Historical view |
+| Working | Green dot + ⚡ | Green dot | "Thinking..." indicator |
+| Idle | No dot | No dot | Ready for input |
 | Error | Red dot | Red dot | Error bubble visible |
 
 ---
