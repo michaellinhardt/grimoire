@@ -534,16 +534,38 @@ const child = spawn('claude', [
 **Schema version tracking:**
 ```sql
 -- src/shared/db/schema.sql
--- VERSION: 1
+-- VERSION: 2
 -- IMPORTANT: Bump version number when modifying this file
 
 CREATE TABLE sessions (
   id TEXT PRIMARY KEY,
-  project_path TEXT,
-  created_at INTEGER,
-  updated_at INTEGER,
-  archived INTEGER DEFAULT 0
+  folder_path TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  last_accessed_at INTEGER,
+  archived INTEGER DEFAULT 0,
+  is_pinned INTEGER DEFAULT 0
 );
+
+CREATE TABLE folders (
+  path TEXT PRIMARY KEY,
+  is_pinned INTEGER DEFAULT 0,
+  last_accessed_at INTEGER
+);
+
+CREATE TABLE file_edits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  file_path TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  timestamp INTEGER NOT NULL,
+  tool_type TEXT NOT NULL,
+  line_start INTEGER,
+  line_end INTEGER,
+  FOREIGN KEY (session_id) REFERENCES sessions(id)
+);
+
+CREATE INDEX idx_file_edits_file_path ON file_edits(file_path);
+CREATE INDEX idx_file_edits_session_id ON file_edits(session_id);
 
 CREATE TABLE settings (
   key TEXT PRIMARY KEY,
@@ -730,6 +752,16 @@ CREATE TABLE sessions (
 'sessions:spawn'
 'sessions:kill'
 'sessions:sendMessage'
+'sessions:pin'            // Toggle session pin state
+'sessions:relocateFolder' // Update folder path for orphaned session
+'folders:list'            // Get folder hierarchy with session counts
+'folders:pin'             // Toggle folder pin state
+'folders:getTree'         // Get file tree for a folder path
+'folders:exists'          // Check if folder path exists on disk
+'fileEdits:list'          // Get edit history for a file path
+'fileEdits:bySession'     // Get all file edits for a session
+'search:sessions'         // Search sessions by query string
+'search:folders'          // Search folders by query string
 'db:query'
 'app:getPath'
 'subagent:openTab'        // Open sub-agent in new tab
@@ -738,8 +770,11 @@ CREATE TABLE sessions (
 // Event channels (main → renderer)
 'instance:stateChanged'
 'instance:streamChunk'
+'instance:fileEdited'     // AI edited a file (for real-time tracking)
 'session:discovered'
+'session:folderMissing'   // Folder no longer exists for session
 'subagent:discovered'     // New sub-agent found during scan/stream
+'folder:changed'          // File system change in watched folder
 'app:beforeQuit'
 ```
 
@@ -847,10 +882,81 @@ const AppErrorSchema = z.discriminatedUnion('type', [
 function toSession(row: DBSessionRow): Session {
   return {
     id: row.id,
-    projectPath: row.project_path,
+    folderPath: row.folder_path,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    archived: Boolean(row.archived)
+    lastAccessedAt: row.last_accessed_at,
+    archived: Boolean(row.archived),
+    isPinned: Boolean(row.is_pinned)
+  }
+}
+```
+
+**Extended TypeScript interfaces:**
+
+```typescript
+// src/shared/types/session.ts
+interface Session {
+  id: string
+  folderPath: string
+  createdAt: number
+  updatedAt: number
+  lastAccessedAt: number | null
+  archived: boolean
+  isPinned: boolean
+}
+
+// src/shared/types/folder.ts
+interface Folder {
+  path: string
+  isPinned: boolean
+  lastAccessedAt: number | null
+  sessionCount: number        // Computed: direct sessions in this folder
+  totalSessionCount: number   // Computed: including nested folders
+  exists: boolean             // Runtime check: does folder still exist on disk
+}
+
+interface FolderTreeNode {
+  path: string
+  name: string
+  isDirectory: boolean
+  children?: FolderTreeNode[]
+  isExpanded?: boolean
+  changeCount?: number        // Number of AI edits (for files) or sum of children (for folders)
+}
+
+// src/shared/types/file-edit.ts
+interface FileEdit {
+  id: number
+  filePath: string
+  sessionId: string
+  timestamp: number
+  toolType: 'Edit' | 'Write' | 'NotebookEdit'
+  lineStart: number | null
+  lineEnd: number | null
+}
+
+// Transform functions
+function toFolder(row: DBFolderRow, stats: FolderStats): Folder {
+  return {
+    path: row.path,
+    isPinned: Boolean(row.is_pinned),
+    lastAccessedAt: row.last_accessed_at,
+    sessionCount: stats.direct,
+    totalSessionCount: stats.total,
+    exists: stats.exists
+  }
+}
+
+function toFileEdit(row: DBFileEditRow): FileEdit {
+  return {
+    id: row.id,
+    filePath: row.file_path,
+    sessionId: row.session_id,
+    timestamp: row.timestamp,
+    toolType: row.tool_type as FileEdit['toolType'],
+    lineStart: row.line_start,
+    lineEnd: row.line_end
   }
 }
 ```
@@ -1190,7 +1296,15 @@ grimoire/
 │           │   ├── conversation-loader.ts
 │           │   ├── conversation-loader.test.ts
 │           │   ├── subagent-index.ts
-│           │   └── subagent-index.test.ts
+│           │   ├── subagent-index.test.ts
+│           │   ├── folder-service.ts
+│           │   ├── folder-service.test.ts
+│           │   ├── folder-tree-builder.ts
+│           │   ├── folder-tree-builder.test.ts
+│           │   ├── file-edit-tracker.ts
+│           │   ├── file-edit-tracker.test.ts
+│           │   ├── search-service.ts
+│           │   └── search-service.test.ts
 │           │
 │           ├── renderer/
 │           │   ├── SessionList.tsx
@@ -1209,16 +1323,34 @@ grimoire/
 │           │   ├── StreamingIndicator.tsx
 │           │   ├── SubAgentTab.tsx
 │           │   ├── SubAgentTab.test.tsx
+│           │   ├── FolderHierarchy.tsx
+│           │   ├── FolderHierarchy.test.tsx
+│           │   ├── FolderHierarchyItem.tsx
+│           │   ├── FolderTree.tsx
+│           │   ├── FolderTree.test.tsx
+│           │   ├── FolderTreeNode.tsx
+│           │   ├── FileEditHistory.tsx
+│           │   ├── FileEditHistory.test.tsx
+│           │   ├── SearchBar.tsx
+│           │   ├── SearchBar.test.tsx
+│           │   ├── PinButton.tsx
+│           │   ├── OrphanWarning.tsx
 │           │   │
 │           │   ├── store/
 │           │   │   ├── useSessionStore.ts
 │           │   │   ├── useSessionStore.test.ts
 │           │   │   ├── useInstanceStore.ts
-│           │   │   └── useInstanceStore.test.ts
+│           │   │   ├── useInstanceStore.test.ts
+│           │   │   ├── useFolderStore.ts
+│           │   │   ├── useFolderStore.test.ts
+│           │   │   └── useSearchStore.ts
 │           │   │
 │           │   └── hooks/
 │           │       ├── useSessionPolling.ts
-│           │       └── useStreamEvents.ts
+│           │       ├── useStreamEvents.ts
+│           │       ├── useFolderTree.ts
+│           │       ├── useFileEdits.ts
+│           │       └── useSearch.ts
 │           │
 │           └── shared/
 │               ├── types.ts

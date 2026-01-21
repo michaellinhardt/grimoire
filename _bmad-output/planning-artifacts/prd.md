@@ -453,11 +453,13 @@ Build the foundational architecture that enables future expansion. Prove the cor
 
 - FR25: User can view list of all CC sessions from `CLAUDE_CONFIG_DIR` folder (app data path)
 - FR26: User can select a session to view its conversation
-- FR27: User can create a new session
+- FR27: User can create a new session (requires folder selection when initiated from within app)
 - FR28: User can see which sessions have active child processes (visual indicator)
 - FR28a: User can disconnect (kill) a running instance via 🔌 button on session row
 - FR28b: System shows warning when disconnecting a Working instance (not Pending)
-- FR29: User can see session metadata (date, project, duration)
+- FR29: User can see session metadata (date, project, duration, folder path)
+- FR29a: System displays folder path below session name in session list
+- FR29b: System displays warning icon on sessions whose folder no longer exists
 - FR30: User can archive sessions
 - FR31: User can toggle visibility of archived sessions
 - FR32: System displays empty/new session state when no session selected
@@ -483,7 +485,10 @@ Build the foundational architecture that enables future expansion. Prove the cor
 
 ### Session Information
 
-- FR43: User can view session information in right panel
+- FR43: User can view session information in right panel (context-dependent view)
+- FR43a: Right panel shows session info/events when viewing a conversation
+- FR43b: Right panel shows file edit history when viewing a file
+- FR43c: Right panel shows folder tree when folder tree view is active
 - FR44: User can see token usage for the session
 - FR45: User can see token consumption per message (if available from CC data)
 - FR46: User can see all metadata available from Claude Code session files
@@ -522,9 +527,54 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR67a: System uses unified conversation loader for both main sessions and sub-agent conversations
 - FR67b: System determines conversation type (main vs sub-agent) from file path, not loader logic
 
+### Folder Management
+
+- FR68: System requires folder selection when creating new session from within app (folder picker dialog)
+- FR69: System uses implicit folder from CLI argument when launched via `grimoire <path>` or OS context menu
+- FR70: User can view hierarchical folder tree in left panel showing folders that contain sessions
+- FR71: User can expand/collapse folder nodes in hierarchy to see nested folders
+- FR72: User can see session count (direct + recursive) on each folder in hierarchy
+- FR73: User can click folder to filter session list to that folder's sessions
+- FR74: User can see folder path displayed below session name in session list
+- FR75: System displays warning icon on sessions whose folder no longer exists (orphaned)
+- FR76: System displays warning icon on folders in hierarchy that no longer exist
+- FR77: User can relocate orphaned folder via "Relocate folder" action
+
+### Folder Tree (Right Panel)
+
+- FR78: User can view full file tree of active session's folder in right panel
+- FR79: System respects `.gitignore` when building folder tree (excludes `node_modules`, etc.)
+- FR80: User can expand/collapse folders in file tree
+- FR81: User can use "Collapse All" / "Expand All" buttons in file tree header
+- FR82: User can click any file to open file preview in middle panel tab
+- FR83: System displays change indicator (color + count) on files modified by AI
+- FR84: System bubbles up change indicators to parent folders (if any descendant has changes)
+
+### Search Feature
+
+- FR85: User can access expandable search bar in session list panel header
+- FR86: User can access expandable search bar in folder hierarchy panel header
+- FR87: System filters list instantly per keystroke (no confirmation needed)
+- FR88: System supports fuzzy matching on session name, folder path, session ID, git branch
+- FR89: System supports comma-separated terms as OR logic (e.g., "dev,marketing")
+- FR90: User can collapse search bar by clicking outside or clicking search icon again
+
+### Pinning
+
+- FR91: User can pin any session (pinned sessions appear at top of session list)
+- FR92: User can pin root folders only (pinned folders appear at top of folder hierarchy)
+- FR93: System reveals pin icon on hover (top-left of item)
+- FR94: User can toggle pin state by clicking pin icon
+
+### File Edit Tracking
+
+- FR95: System tracks all AI file edits with session ID, timestamp, tool type, and line range
+- FR96: User can view file edit history in right panel when viewing a file (not conversation)
+- FR97: System displays file edits from all sessions that modified that file (cross-session)
+- FR98: User can click file edit event to open the session that made that edit
+
 ### Deferred to Post-MVP
 
-- Session search/filter functionality
 - Content search within conversations
 
 ## Non-Functional Requirements

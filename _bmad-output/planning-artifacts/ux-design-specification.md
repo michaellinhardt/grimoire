@@ -893,19 +893,49 @@ flowchart TD
 
 #### 2. Panel (Left/Right)
 
-**Purpose:** Collapsible content containers for sessions and events
+**Purpose:** Collapsible content containers for sessions, folders, and context info
 **Variants:** Left panel (280px), Right panel (300px)
 
-**Anatomy:**
+**Left Panel Anatomy:**
 ```
 ┌─────────────────────────────────┐
-│ [Icon] [Icon] ... [Spacer] [🚪] │  ← Topbar (40px)
+│ [Sessions] [Folders]  [🔍] [🚪] │  ← Topbar (40px) with view toggle
+├─────────────────────────────────┤
+│ ┌─────────────────────────────┐ │
+│ │ 🔍 Search...            [×] │ │  ← Expandable search (when active)
+│ └─────────────────────────────┘ │
 ├─────────────────────────────────┤
 │                                 │
-│         Panel Content           │
+│    Sessions List                │  ← When Sessions view active
+│    OR                           │
+│    Folder Hierarchy             │  ← When Folders view active
 │                                 │
 └─────────────────────────────────┘
 ```
+
+**Right Panel Anatomy:**
+```
+┌─────────────────────────────────┐
+│ [Info] [Events] [Files]  [🚪]  │  ← Topbar with view tabs
+├─────────────────────────────────┤
+│                                 │
+│    Session Info                 │  ← When Info tab active
+│    OR                           │
+│    Event Timeline               │  ← When Events tab active
+│    OR                           │
+│    Folder Tree / File History   │  ← When Files tab active
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Left Panel Views:**
+- **Sessions**: Session list with folder path below each name
+- **Folders**: Hierarchical folder tree with session counts
+
+**Right Panel Views:**
+- **Info**: Session metadata, token usage (existing)
+- **Events**: Event timeline for navigation (existing)
+- **Files**: Folder tree when viewing conversation, File edit history when viewing file
 
 **States:**
 - Expanded: Full width, content visible
@@ -946,9 +976,264 @@ flowchart TD
 
 **Interaction:**
 - Click: Load session in middle panel
-- Hover: Reveal 3-dot context menu and 🔌 button
+- Hover: Reveal 3-dot context menu, 🔌 button, and pin icon
 - 🔌 click: Disconnect (kill instance) - shows warning if Working state
 - 3-dot click: Open dropdown (archive, delete, etc.)
+- Pin click: Toggle pinned state
+
+**Session List Item with Folder Path:**
+```
+┌────────────────────────────────┐
+│ [📌][⚡] Session Name    [🔌][⋮]│
+│        /path/to/folder         │  ← Folder path (muted text)
+│        2 hours ago             │
+└────────────────────────────────┘
+
+Orphaned session:
+┌────────────────────────────────┐
+│ [⚡] Session Name        [🔌][⋮]│
+│     ⚠️ /path/deleted/folder    │  ← Warning icon + red tint
+│        2 hours ago             │
+└────────────────────────────────┘
+```
+
+---
+
+#### 3a. Folder Hierarchy Item
+
+**Purpose:** Display folder in left panel folder hierarchy view
+**Style:** Matches Session List Item with tree indentation
+
+**Anatomy:**
+```
+┌────────────────────────────────────┐
+│ [▶] [📁] /projects/grimoire   (12)│  ← Collapsed folder
+└────────────────────────────────────┘
+
+┌────────────────────────────────────┐
+│ [▼] [📁] /projects/grimoire   (12)│  ← Expanded folder
+├────────────────────────────────────┤
+│   [▶] [📁] /src               (5) │  ← Nested folder (indented)
+│   [▶] [📁] /docs              (3) │
+└────────────────────────────────────┘
+
+┌────────────────────────────────────┐
+│ [📌][📁] /projects/grimoire   (12)│  ← Pinned folder (pin replaces chevron)
+└────────────────────────────────────┘
+
+┌────────────────────────────────────┐
+│ [▶] [⚠️] /old/deleted-proj    (2) │  ← Orphaned folder (warning icon)
+└────────────────────────────────────┘
+```
+
+**Elements:**
+- Left: Chevron (expand/collapse) OR pin icon (if pinned)
+- Icon: 📁 folder icon, ⚠️ if folder doesn't exist
+- Center: Folder path (truncated from left if needed)
+- Right: Session count badge (direct + recursive)
+
+**States:**
+- Default: Subtle background
+- Hover: Elevated background, pin icon appears (top-left overlay)
+- Active: Accent border (when folder is selected/filtering)
+- Expanded: Chevron rotated, children visible
+- Pinned: Pin icon visible, appears at top of list
+- Orphaned: ⚠️ icon, red tint border
+
+**Interaction:**
+- Click chevron: Expand/collapse children
+- Click folder name: Filter session list to this folder
+- Hover: Reveal pin icon overlay
+- Click pin: Toggle pinned state
+
+---
+
+#### 3b. Folder Tree (Right Panel)
+
+**Purpose:** Display file tree of active session's folder with change indicators
+**Location:** Right panel "Files" tab when viewing a conversation
+**Style:** Obsidian-like file explorer
+
+**Anatomy:**
+```
+┌─────────────────────────────────────┐
+│ Files          [⊟] [⊞] [🔍] [🚪]   │  ← Header with collapse/expand all
+├─────────────────────────────────────┤
+│ [▼] 📁 src                      (8)│  ← Folder with change count
+│     [▼] 📁 components           (3)│
+│         📄 Button.tsx            2 │  ← File with edit count (highlighted)
+│         📄 Modal.tsx               │  ← File without changes
+│         📄 Input.tsx             1 │
+│     [▶] 📁 utils                (5)│
+│ [▶] 📁 tests                       │  ← No changes in subtree
+│ 📄 package.json                  1 │
+│ 📄 README.md                       │
+└─────────────────────────────────────┘
+```
+
+**Header Actions:**
+- [⊟] Collapse All: Collapse all folder nodes
+- [⊞] Expand All: Expand all folder nodes
+- [🔍] Search files (future enhancement)
+
+**Elements:**
+- Chevron: Expand/collapse (folders only)
+- Icon: 📁 folder / 📄 file (can use file-type specific icons)
+- Name: File or folder name
+- Change indicator: Edit count (right side, accent color if > 0)
+
+**Change Indicator Logic:**
+- Files: Number of AI edits in current session
+- Folders: Sum of all descendant file edits (bubble up)
+- Color: Accent color when count > 0, muted when 0 or absent
+
+**States:**
+- Default: Base background
+- Hover: Elevated background
+- Selected: Accent border (file currently open in preview)
+- Has changes: Accent color on count badge
+
+**Interaction:**
+| Action | Result |
+|--------|--------|
+| Click folder chevron | Toggle expand/collapse |
+| Click folder name | Toggle expand/collapse |
+| Click file | Open file preview in middle panel tab |
+
+**Performance:**
+- Load tree structure (paths only) on session open
+- Lazy load file contents on click
+- Respect `.gitignore` to exclude `node_modules`, `dist`, etc.
+
+---
+
+#### 3c. Search Bar (Expandable)
+
+**Purpose:** Filter session list or folder hierarchy with instant fuzzy search
+**Location:** Left panel topbar, expands inline when activated
+**Style:** Minimal, non-intrusive when collapsed
+
+**Anatomy - Collapsed:**
+```
+┌─────────────────────────────────┐
+│ [Sessions] [Folders]  [🔍] [🚪] │  ← 🔍 is clickable icon button
+└─────────────────────────────────┘
+```
+
+**Anatomy - Expanded:**
+```
+┌─────────────────────────────────┐
+│ [🔍 Search sessions...     ] [×]│  ← Full-width input with clear button
+└─────────────────────────────────┘
+│                                 │
+│   Filtered results below...     │
+│                                 │
+```
+
+**Behavior:**
+| Action | Result |
+|--------|--------|
+| Click 🔍 icon | Expand to full search input, auto-focus |
+| Type characters | Instant filter per keystroke (no debounce) |
+| Press Escape | Clear input and collapse |
+| Click × button | Clear input and collapse |
+| Click outside | Collapse (preserving filter if text present) |
+| Empty input + collapse | Show unfiltered list |
+
+**Search Syntax:**
+| Input | Behavior |
+|-------|----------|
+| `grimoire` | Match "grimoire" anywhere in searchable fields |
+| `dev,marketing` | Match "dev" OR "marketing" (comma = OR) |
+| `/Users/tea` | Match folder path containing string |
+| `abc-123` | Match session ID |
+
+**Searchable Fields:**
+- Session list: Session name/summary, folder path, session ID, git branch
+- Folder hierarchy: Folder path, session names within folder
+
+**States:**
+- Collapsed: 🔍 icon only (default)
+- Expanded: Full input visible, icon becomes part of input
+- Has query: Show clear × button
+- No results: Show "No matches" message in list area
+
+---
+
+#### 3d. File Edit History (Right Panel)
+
+**Purpose:** Show all AI edits to a file across sessions
+**Location:** Right panel "Files" tab when viewing a file (not conversation)
+**Style:** Chat-style event list matching Event Timeline
+
+**Anatomy:**
+```
+┌─────────────────────────────────────┐
+│ src/components/Button.tsx    [🚪]  │  ← File path header
+├─────────────────────────────────────┤
+│ Today                               │
+│ ┌─────────────────────────────────┐ │
+│ │ Edit lines 12-45                │ │
+│ │ Session: PRD workflow           │ │
+│ │ 14:32                           │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ Yesterday                           │
+│ ┌─────────────────────────────────┐ │
+│ │ Write (new file)                │ │
+│ │ Session: Initial setup          │ │
+│ │ 09:15                           │ │
+│ └─────────────────────────────────┘ │
+└─────────────────────────────────────┘
+```
+
+**Edit Event Card:**
+- Tool type: Edit / Write / NotebookEdit
+- Line range (if applicable)
+- Session name (clickable)
+- Timestamp
+
+**Interaction:**
+- Click session name → Opens that session in new tab
+- Click event card → Opens session and scrolls to that tool call
+
+---
+
+#### 3e. Pin Button
+
+**Purpose:** Toggle pinned state on sessions and root folders
+**Style:** Subtle hover-reveal pattern
+
+**Anatomy:**
+```
+Default (not hovered):
+┌────────────────────────────┐
+│ Session Name          [⋮]  │  ← No pin visible
+└────────────────────────────┘
+
+Hovered (not pinned):
+┌────────────────────────────┐
+│ [📌] Session Name     [⋮]  │  ← Pin icon appears (muted)
+└────────────────────────────┘
+
+Pinned:
+┌────────────────────────────┐
+│ [📌] Session Name     [⋮]  │  ← Pin icon always visible (accent)
+└────────────────────────────┘
+```
+
+**States:**
+- Hidden: Not hovered, not pinned
+- Visible (muted): Hovered, not pinned
+- Visible (accent): Pinned (always visible)
+
+**Interaction:**
+- Click pin icon: Toggle pinned state
+- Pinned items sort to top of their list
+
+**Usage:**
+- Session list items: Pin any session
+- Folder hierarchy: Pin root folders only (nested folders cannot be pinned)
 
 ---
 
@@ -1196,6 +1481,9 @@ flowchart TD
 | Message Bubble (all variants) | P0 | Conversation display |
 | Chat Input Area | P0 | User interaction |
 | Status Indicator | P0 | Process feedback |
+| Folder Hierarchy | P0 | Folder navigation |
+| Folder Hierarchy Item | P0 | Folder display |
+| Folder Tree | P0 | File navigation |
 
 **Phase 2 - Enhancement Components:**
 
@@ -1204,6 +1492,10 @@ flowchart TD
 | Event Timeline Item | P1 | Session navigation |
 | Topbar Icon Buttons | P1 | Panel controls |
 | Context Menu (3-dot) | P1 | Session actions |
+| Search Bar | P1 | Session/folder filtering |
+| File Edit History | P1 | Cross-session tracking |
+| Pin Button | P1 | Quick access |
+| Orphan Warning | P1 | Data integrity feedback |
 
 **Phase 3 - Polish Components:**
 
