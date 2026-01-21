@@ -1285,14 +1285,23 @@ Pinned:
 
 **User Bubble:**
 ```
+Default:
 ┌─────────────────────────────────┐
 │ Message content here...         │
+└─────────────────────────────────┘
+                            14:32
+
+On hover (non-first message):
+┌─────────────────────────────────┐
+│ Message content here...     [↺] │  ← Rewind icon appears top-right
 └─────────────────────────────────┘
                             14:32
 ```
 - Alignment: Right
 - Background: Accent muted + accent border
 - Border radius: Rounded, bottom-right smaller
+- **Rewind action:** [↺] icon appears on hover (except first message)
+- **Rewind click:** Opens Rewind Modal (see component below)
 
 **Claude Bubble:**
 ```
@@ -1433,6 +1442,69 @@ Pinned:
 - Shift+Enter: New line
 - Auto-expand up to max height
 - Placeholder changes based on session state
+- **Hidden when viewing sub-agent tab** (`tab.type === 'subagent'`)
+
+**Sub-Agent Tab Behavior:**
+- When `tab.type === 'subagent'`, hide chat input completely
+- Conversation view expands to fill available space
+- Reinforces read-only nature of sub-agent views
+
+---
+
+#### 10. Rewind Modal
+
+**Purpose:** Allow user to rewind conversation and send new message
+**Trigger:** Click [↺] rewind icon on user message bubble
+
+**Anatomy:**
+```
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│  ┌───────────────────────────────────────────────┐  │
+│  │         Rewind Conversation                   │  │
+│  ├───────────────────────────────────────────────┤  │
+│  │                                               │  │
+│  │  ┌───────────────────────────────────────┐    │  │
+│  │  │ Enter new message...                  │    │  │
+│  │  │                                       │    │  │
+│  │  │                                       │    │  │
+│  │  └───────────────────────────────────────┘    │  │
+│  │                                               │  │
+│  │                    [Cancel]  [Send]           │  │
+│  └───────────────────────────────────────────────┘  │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+  ↑ Darkened overlay (click to close)
+```
+
+**Elements:**
+- Darkened overlay background (click outside closes)
+- Modal container (centered, max-width 500px)
+- Title: "Rewind Conversation"
+- Text area for new message (auto-focus)
+- Cancel button (secondary style)
+- Send button (primary style, accent color)
+
+**Behavior:**
+| Action | Result |
+|--------|--------|
+| Click [↺] on user message | Open modal, focus text area |
+| Click outside modal | Close modal (discard input) |
+| Press Escape | Close modal (discard input) |
+| Click Cancel | Close modal (discard input) |
+| Click Send (empty) | Disabled or show validation |
+| Click Send (with text) | Trigger rewind operation |
+
+**Rewind Operation Flow:**
+1. Call `sessions:rewind` IPC with checkpoint UUID + new message
+2. Show loading state on Send button
+3. On success: Close modal, display new forked session
+4. On error: Show error message in modal
+
+**Keyboard:**
+- Escape: Close modal
+- Enter: Send (when text area not focused on newline)
+- Tab: Navigate between text area and buttons
 
 ---
 
@@ -1479,6 +1551,7 @@ Pinned:
 | Folder Hierarchy | P0 | Folder navigation |
 | Folder Hierarchy Item | P0 | Folder display |
 | Folder Tree | P0 | File navigation |
+| Rewind Modal | P0 | Conversation rewind |
 
 **Phase 2 - Enhancement Components:**
 

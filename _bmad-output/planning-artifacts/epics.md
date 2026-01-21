@@ -126,6 +126,13 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR67: System displays actionable error in conversation when CC fails to spawn
 - FR67a: System uses unified conversation loader for both main sessions and sub-agent conversations
 - FR67b: System determines conversation type (main vs sub-agent) from file path, not loader logic
+- FR67c: System captures session ID from stream init message (not from file system)
+- FR67d: System captures user message UUIDs from stream for checkpoint capability
+- FR67e: System stores session metadata (tokens, cost) to database during streaming
+- FR67f: System tracks session lineage via forked_from_session_id when rewinding
+- FR67g: System can hide forked-from sessions via is_hidden flag
+- FR67h: User can rewind conversation from any user message via hover action (except first message)
+- FR67i: System hides chat input when viewing sub-agent conversation tab
 
 **Folder Management (FR68-FR77)**
 - FR68: System requires folder selection when creating new session from within app (folder picker dialog)
@@ -402,6 +409,13 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR67: Epic 3b - Spawn error display
 - FR67a: Epic 3b - Unified conversation loader
 - FR67b: Epic 3b - Conversation type from path
+- FR67c: Epic 3b - Session ID from stream
+- FR67d: Epic 3b - Checkpoint UUIDs from stream
+- FR67e: Epic 2a - Session metadata storage (also Epic 3b for capture)
+- FR67f: Epic 2a - Session forking lineage
+- FR67g: Epic 2a - Hidden session flag
+- FR67h: Epic 2b - Rewind UI on user messages
+- FR67i: Epic 2b - Sub-agent tab read-only
 - FR68: Epic 5a - Folder picker for new session
 - FR69: Epic 5a - Implicit folder from CLI
 - FR70: Epic 5a - Folder hierarchy view
@@ -772,6 +786,55 @@ So that **I understand the app state and know how to proceed**.
 
 ---
 
+### Story 2a.5: Session Forking Database Support
+
+As a **system**,
+I want **to track session lineage and hidden status**,
+So that **rewind operations preserve history while keeping the UI clean**.
+
+**Acceptance Criteria:**
+
+**Given** the database schema (FR67f)
+**When** a session is forked via rewind
+**Then** the new session record includes `forked_from_session_id` pointing to the parent
+**And** the parent session is marked with `is_hidden = 1` (FR67g)
+
+**Given** the session list is displayed
+**When** loading sessions from database
+**Then** sessions with `is_hidden = 1` are excluded from the default list
+**And** the hidden sessions remain accessible via "Show all sessions" toggle (optional, can defer)
+
+**Given** a session has `forked_from_session_id` set
+**When** viewing the session info panel
+**Then** the lineage is available for display (optional enhancement)
+
+---
+
+### Story 2a.6: Session Metadata Storage
+
+As a **user**,
+I want **to see token usage and cost in the Info panel**,
+So that **I can track my Claude Code usage**.
+
+**Acceptance Criteria:**
+
+**Given** the database has `session_metadata` table (FR67e)
+**When** a session streams responses
+**Then** the system captures token counts and cost from the stream
+**And** stores them in `session_metadata` table
+
+**Given** a session has metadata stored
+**When** viewing the session info panel
+**Then** total input tokens, output tokens, and estimated cost are displayed
+**And** the format is: "Tokens: 12.5k in / 8.2k out" and "Est. Cost: $0.42"
+
+**Given** metadata is being captured during streaming
+**When** the response completes
+**Then** the session_metadata record is updated with cumulative totals
+**And** the info panel reflects the updated values
+
+---
+
 ## Epic 2b: Conversation Rendering
 
 ### Story 2b.1: Message Bubble Components
@@ -904,6 +967,60 @@ So that **I can find specific points in the conversation and know when Claude is
 
 ---
 
+### Story 2b.5: Rewind UI on User Messages
+
+As a **user**,
+I want **to rewind a conversation from any of my messages**,
+So that **I can explore different conversation paths without losing history**.
+
+**Acceptance Criteria:**
+
+**Given** a user message bubble is displayed (not the first message) (FR67h)
+**When** the user hovers over the message
+**Then** a [↺] rewind icon appears in the top-right corner of the bubble
+
+**Given** the first user message in a conversation
+**When** the user hovers over it
+**Then** no rewind icon appears (no prior checkpoint to rewind to)
+
+**Given** the user clicks the [↺] rewind icon
+**When** the modal opens
+**Then** a "Rewind Conversation" modal appears with darkened overlay
+**And** the modal contains a text area (auto-focused) for the new message
+**And** Cancel and Send buttons are displayed
+
+**Given** the rewind modal is open
+**When** the user clicks outside the modal, presses Escape, or clicks Cancel
+**Then** the modal closes without any action
+
+**Given** the rewind modal is open with text entered
+**When** the user clicks Send
+**Then** the system calls `sessions:rewind` IPC with checkpoint UUID and new message
+**And** a loading state appears on the Send button
+**And** on success: modal closes, new forked session becomes active
+**And** on error: error message displays in the modal
+
+---
+
+### Story 2b.6: Sub-Agent Tab Read-Only
+
+As a **user** viewing a sub-agent conversation,
+I want **a read-only view without chat input**,
+So that **I understand this is a historical view, not an interactive session**.
+
+**Acceptance Criteria:**
+
+**Given** a sub-agent conversation is opened in a tab (FR67i)
+**When** the tab type is `subagent`
+**Then** the chat input area at the bottom is hidden completely
+**And** the conversation view expands to fill the available space
+
+**Given** a main session tab is active
+**When** switching between main session and sub-agent tabs
+**Then** the input area appears/disappears appropriately based on tab type
+
+---
+
 ## Epic 2c: Session Info & Timeline
 
 ### Story 2c.1: Right Panel with Tab Views
@@ -954,11 +1071,16 @@ So that **I can understand the session's context, duration, and resource usage**
 - Last updated date/time
 - Session duration (calculated from first to last message)
 
-**Given** token usage data is available (FR44)
+**Given** token usage data is available from session_metadata table (FR44, FR67e)
 **When** displayed in the Info view
-**Then** total input tokens are shown
-**And** total output tokens are shown
-**And** total tokens (combined) are shown
+**Then** total input tokens are shown (format: "12.5k in")
+**And** total output tokens are shown (format: "8.2k out")
+**And** estimated cost is shown (format: "Est. Cost: $0.42")
+**And** the model name is displayed if available
+
+**Given** a session is streaming and metadata updates (FR67e)
+**When** the Info view is open
+**Then** token counts and cost update in real-time as the stream progresses
 
 **Given** per-message token data is available from CC (FR45)
 **When** the user views the Info panel
@@ -1173,22 +1295,24 @@ So that **my sessions work seamlessly with proper isolation and continuity**.
 **Given** the user sends a message to a session (FR61)
 **When** CC needs to be spawned
 **Then** the child process is created with CLAUDE_CONFIG_DIR environment variable set
+**And** CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING=1 is set for rewind support
 **And** this provides isolation from other CC instances
 
 **Given** a session has an existing ID (FR62, FR66)
 **When** spawning CC for that session
-**Then** the --session-id argument is passed with the session UUID
+**Then** the --resume argument is passed with the session UUID
 **And** CC resumes the existing conversation
 
 **Given** the user sends a message (FR63)
 **When** CC is spawned
-**Then** the user input is passed via -p argument
-**And** --output-format stream-json is specified
-**And** --include-partial-messages is included for streaming
+**Then** the spawn uses `-p --input-format stream-json --output-format stream-json --verbose --replay-user-messages --dangerously-skip-permissions`
+**And** the user message is sent via stdin as JSON (not CLI argument)
+**And** stdin is closed after sending the message
 
 **Given** CC is spawned (FR56, FR65)
 **When** the process starts
-**Then** the session ID is mapped to the child process in the registry
+**Then** the session ID is captured from the stream init message (FR67c)
+**And** the session ID is mapped to the child process in the registry
 **And** the mapping enables tracking which process belongs to which session
 
 ---
@@ -1196,35 +1320,46 @@ So that **my sessions work seamlessly with proper isolation and continuity**.
 ### Story 3b.2: NDJSON Stream Parser
 
 As a **user**,
-I want **CC output to be parsed and displayed correctly**,
-So that **I see properly formatted messages, tool calls, and results**.
+I want **CC output to be parsed and displayed in real-time**,
+So that **I see properly formatted messages, tool calls, and results as they stream**.
 
 **Acceptance Criteria:**
 
 **Given** CC is running and producing output (FR64)
-**When** NDJSON events arrive
-**Then** each line is parsed as a JSON object
-**And** events are processed based on their type
+**When** NDJSON events arrive on stdout
+**Then** each line is parsed as a JSON object in real-time
+**And** events are processed based on their type (system, user, assistant, result)
 
-**Given** text content is streaming (AR20)
-**When** partial message events arrive
-**Then** text chunks are assembled into complete messages
-**And** the UI updates incrementally as chunks arrive
+**Given** the first message arrives (type: system, subtype: init) (FR67c)
+**When** the init event is received
+**Then** the session_id is captured from the message
+**And** the session is associated with this ID (no file reading needed)
 
-**Given** a tool call is in progress (AR20)
-**When** tool events arrive
-**Then** tool input and output are assembled
-**And** the tool card is updated with results when complete
+**Given** user messages arrive with --replay-user-messages (FR67d)
+**When** a user message event is received
+**Then** the uuid field is captured as a checkpoint/rewind point
+**And** checkpoints are stored for potential rewind operations
 
-**Given** the stream ends (AR22)
-**When** detecting completion
-**Then** stop_reason is used as the primary completion signal
-**And** the system handles the known issue where final result event may not emit
+**Given** assistant messages are streaming
+**When** assistant content events arrive
+**Then** the UI updates incrementally as content arrives
+**And** tool calls are displayed as they execute
+
+**Given** cost/token data is included in the stream (FR67e)
+**When** costUSD or token fields are present
+**Then** the metadata is captured and stored to session_metadata table
+**And** the info panel can display cumulative totals
+
+**Given** the stream ends with a result message
+**When** the result event (subtype: success) arrives
+**Then** the session returns to Idle state
+**And** no file reading is needed (all data came from stream)
 
 **Given** the unified conversation loader is used (FR67a)
-**When** loading conversation data
+**When** loading conversation data at startup sync
 **Then** the same loader handles both main sessions and sub-agent conversations
 **And** conversation type is determined from file path structure (FR67b)
+**And** file reading is only used during startup sync, not during active sessions
 
 ---
 

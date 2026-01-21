@@ -1,0 +1,16 @@
+{
+  "name": "prototype",
+  "version": "1.0.0",
+  "description": "",
+  "main": "grimoire-claude.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.14"
+  }
+}

@@ -202,10 +202,33 @@ export interface GrimoireAPI {
     list: () => Promise<Session[]>
     spawn: (sessionId: string) => Promise<void>
     kill: (sessionId: string) => Promise<void>
+    rewind: (req: RewindRequest) => Promise<RewindResult>
+    getMetadata: (sessionId: string) => Promise<SessionMetadata>
   }
   db: {
     query: <T>(sql: string, params?: unknown[]) => Promise<T[]>
   }
+}
+
+export interface RewindRequest {
+  sessionId: string
+  checkpointUuid: string
+  newMessage: string
+  rewindFiles?: boolean
+}
+
+export interface RewindResult {
+  newSessionId: string
+  success: boolean
+  error?: string
+}
+
+export interface SessionMetadata {
+  sessionId: string
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalCostUsd: number
+  model: string | null
 }
 ```
 
@@ -396,41 +419,83 @@ Idle → Working → Idle
 
 ### CC Communication
 
-**Protocol:** Request-response via Claude Code CLI with `-p` flag
+**Protocol:** Stream-JSON via Claude Code CLI with `-p` flag and real-time NDJSON parsing
 
 ```bash
 CLAUDE_CONFIG_DIR=/path/to/grimoire/.claude \
-claude --session-id <uuid> \
-       -p "user message"
+CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING=1 \
+claude -p \
+  --input-format stream-json \
+  --output-format stream-json \
+  --verbose \
+  --replay-user-messages \
+  --dangerously-skip-permissions \
+  --resume <session-id>
 ```
 
-**Request-Response Flow:**
+**Message sent via stdin (not CLI argument):**
+```json
+{"type":"user","message":{"role":"user","content":"user message here"}}
+```
+
+**Stream-JSON Flow:**
 
 | Step | Action |
 |------|--------|
 | 1 | User sends message |
-| 2 | Spawn `claude` process with `-p` flag |
-| 3 | Process runs (state = Working) |
-| 4 | Process exits |
-| 5 | Read session JSONL file for response |
-| 6 | Parse and display new messages |
-| 7 | Return to Idle state |
+| 2 | Spawn `claude` process with stream-json flags |
+| 3 | Send message via stdin JSON, close stdin |
+| 4 | Parse NDJSON from stdout in real-time (state = Working) |
+| 5 | Capture session_id, UUIDs, costs, tool calls as they stream |
+| 6 | Display messages in real-time as they arrive |
+| 7 | On process exit, return to Idle state |
+| 8 | No file reading needed during conversation (only startup sync) |
 
-**Session File Reading:**
+**Stream Message Types:**
 
 ```typescript
-async function getResponseAfterProcess(sessionId: string): Promise<ConversationEvent[]> {
-  const sessionPath = getSessionPath(sessionId)
-  const lines = await readJsonlFile(sessionPath)
-  const events = lines.map(parseConversationEvent)
+// First message - contains session ID
+{ type: 'system', subtype: 'init', session_id: string, tools: Tool[] }
 
-  // Return only new events since last read
-  const lastKnownUuid = getLastKnownEventUuid(sessionId)
-  const newEvents = events.slice(
-    events.findIndex(e => e.uuid === lastKnownUuid) + 1
-  )
+// Assistant response with content
+{ type: 'assistant', message: { content: ContentBlock[] }, uuid: string }
 
-  return newEvents
+// User message (with --replay-user-messages) - uuid is checkpoint
+{ type: 'user', message: { content: ContentBlock[] }, uuid: string }
+
+// Final message - summary
+{ type: 'result', subtype: 'success', result: string, session_id: string }
+```
+
+**Stream Parsing:**
+
+```typescript
+async function* parseStream(sessionId: string, stdout: Readable): AsyncGenerator<StreamEvent> {
+  const rl = readline.createInterface({ input: stdout })
+
+  for await (const line of rl) {
+    const msg = JSON.parse(line)
+
+    // Capture session ID from init
+    if (msg.type === 'system' && msg.subtype === 'init') {
+      yield { type: 'init', sessionId: msg.session_id }
+    }
+
+    // Capture checkpoints from user messages
+    if (msg.type === 'user' && msg.uuid) {
+      yield { type: 'checkpoint', uuid: msg.uuid }
+    }
+
+    // Yield content for display
+    if (msg.type === 'assistant') {
+      yield { type: 'content', message: msg.message, uuid: msg.uuid }
+    }
+
+    // Capture cost metadata
+    if (msg.costUSD !== undefined) {
+      yield { type: 'cost', cost: msg.costUSD }
+    }
+  }
 }
 ```
 
@@ -877,7 +942,7 @@ function isToolResult(event: ConversationEvent): boolean {
 **Schema version tracking:**
 ```sql
 -- src/shared/db/schema.sql
--- VERSION: 2
+-- VERSION: 3
 -- IMPORTANT: Bump version number when modifying this file
 
 CREATE TABLE sessions (
@@ -887,7 +952,20 @@ CREATE TABLE sessions (
   updated_at INTEGER NOT NULL,
   last_accessed_at INTEGER,
   archived INTEGER DEFAULT 0,
-  is_pinned INTEGER DEFAULT 0
+  is_pinned INTEGER DEFAULT 0,
+  forked_from_session_id TEXT,
+  is_hidden INTEGER DEFAULT 0,
+  FOREIGN KEY (forked_from_session_id) REFERENCES sessions(id)
+);
+
+CREATE TABLE session_metadata (
+  session_id TEXT PRIMARY KEY,
+  total_input_tokens INTEGER DEFAULT 0,
+  total_output_tokens INTEGER DEFAULT 0,
+  total_cost_usd REAL DEFAULT 0,
+  model TEXT,
+  updated_at INTEGER,
+  FOREIGN KEY (session_id) REFERENCES sessions(id)
 );
 
 CREATE TABLE folders (

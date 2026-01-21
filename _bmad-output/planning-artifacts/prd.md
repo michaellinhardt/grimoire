@@ -496,7 +496,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR47: User can type messages in chat input at bottom of conversation view
 - FR48: User can paste multi-line content into chat input
 - FR49: User can send message to spawn/resume CC child process
-- FR50: User can see CC responses displayed after process completion (with "Thinking..." indicator during processing)
+- FR50: User can see CC responses streamed in real-time during process execution (with "Thinking..." indicator while waiting for first token)
 - FR51: User can interact with any session (historical or new) via chat input
 - FR52: System generates Session UUID on first user input (before CC spawn)
 - FR53: System saves session even if CC spawn fails (preserves user input and errors)
@@ -518,12 +518,19 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR61: System spawns CC child processes with `CLAUDE_CONFIG_DIR` environment variable for isolation
 - FR62: System spawns CC with session ID argument for session continuity
 - FR63: System passes user input to CC child process as terminal input
-- FR64: System reads session file after process exit and renders new messages in conversation view
+- FR64: System parses NDJSON stream in real-time during process execution; session file reading used only during startup sync
 - FR65: System tracks session ID for each spawned CC instance
 - FR66: System supports resuming any existing session by ID
 - FR67: System displays actionable error in conversation when CC fails to spawn
 - FR67a: System uses unified conversation loader for both main sessions and sub-agent conversations
 - FR67b: System determines conversation type (main vs sub-agent) from file path, not loader logic
+- FR67c: System captures session ID from stream init message (not from file system)
+- FR67d: System captures user message UUIDs from stream for checkpoint capability
+- FR67e: System stores session metadata (tokens, cost) to database during streaming
+- FR67f: System tracks session lineage via forked_from_session_id when rewinding
+- FR67g: System can hide forked-from sessions via is_hidden flag
+- FR67h: User can rewind conversation from any user message via hover action (except first message)
+- FR67i: System hides chat input when viewing sub-agent conversation tab
 
 ### Folder Management
 
