@@ -53,6 +53,7 @@ Celebrate the successful agent edit, provide summary of changes, and mark edit w
 ### 1. Read Edit Plan
 
 Read `{editPlan}` to get:
+
 - Original agent state
 - All edits that were applied
 - Validation results (before and after)
@@ -85,10 +86,12 @@ Read `{editPlan}` to get:
 ### 4. Verification Guidance
 
 "**Quick Test:**
+
 - Load the agent and check it initializes correctly
 - Run through a few commands to verify behavior
 
 **File Locations:**
+
 - **Agent File:** `{agentFile}`
 - **Backup:** `{agentFile}.backup`"
 
@@ -103,6 +106,7 @@ Append to editPlan:
 **Status:** Success
 
 ### Final State
+
 - Agent file updated successfully
 - All edits applied
 - Backup preserved

@@ -51,8 +51,8 @@ This step will generate content and present choices:
 
 ## PROTOCOL INTEGRATION:
 
-- When 'A' selected: Execute {project-root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
-- When 'P' selected: Execute {project-root}/_bmad/core/workflows/party-mode/workflow.md
+- When 'A' selected: Execute {project-root}/\_bmad/core/workflows/advanced-elicitation/workflow.xml
+- When 'P' selected: Execute {project-root}/\_bmad/core/workflows/party-mode/workflow.md
 - PROTOCOLS always return to display this step's A/P/C menu after the A or P have completed
 - User accepts/rejects protocol changes before proceeding
 
@@ -244,7 +244,7 @@ Show the scoping decisions and present choices:
 
 #### If 'A' (Advanced Elicitation):
 
-- Execute {project-root}/_bmad/core/workflows/advanced-elicitation/workflow.xml with current scoping analysis
+- Execute {project-root}/\_bmad/core/workflows/advanced-elicitation/workflow.xml with current scoping analysis
 - Process enhanced scoping insights that come back
 - Ask user: "Accept these improvements to the scoping decisions? (y/n)"
 - If yes: Update content, then return to A/P/C menu
@@ -252,7 +252,7 @@ Show the scoping decisions and present choices:
 
 #### If 'P' (Party Mode):
 
-- Execute {project-root}/_bmad/core/workflows/party-mode/workflow.md with scoping context
+- Execute {project-root}/\_bmad/core/workflows/party-mode/workflow.md with scoping context
 - Process collaborative insights on MVP and roadmap decisions
 - Ask user: "Accept these changes to the scoping decisions? (y/n)"
 - If yes: Update content, then return to A/P/C menu

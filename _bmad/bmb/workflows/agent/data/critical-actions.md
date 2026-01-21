@@ -9,6 +9,7 @@ Activation instructions that execute every time the agent starts.
 Numbered steps that execute FIRST when an agent activates.
 
 **Use for:**
+
 - Loading memory/knowledge files
 - Setting file access boundaries
 - Startup behavior (greeting enhancement, data fetch, state init)
@@ -30,6 +31,7 @@ critical_actions:
 ```
 
 **CRITICAL Path Format:**
+
 - `{project-root}` = literal text (not replaced)
 - Sidecar copied to `_memory/` at build time
 - Use `{project-root}/_bmad/_memory/{sidecar-folder}/` format
@@ -51,21 +53,21 @@ critical_actions:
 
 ## Path Reference Patterns
 
-| Type | Pattern |
-|------|---------|
+| Type           | Pattern                                                 |
+| -------------- | ------------------------------------------------------- |
 | Expert sidecar | `{project-root}/_bmad/_memory/{sidecar-folder}/file.md` |
-| Simple data | `{project-root}/finances/data.csv` |
-| Output folders | `{output_folder}/results/` |
+| Simple data    | `{project-root}/finances/data.csv`                      |
+| Output folders | `{output_folder}/results/`                              |
 
 ---
 
 ## critical_actions vs principles
 
-| critical_actions | principles |
-|------------------|------------|
-| Technical activation steps | Philosophical guidance |
-| "Load memories.md" | "I believe in evidence" |
-| MUST execute on startup | Guides decision-making |
+| critical_actions           | principles              |
+| -------------------------- | ----------------------- |
+| Technical activation steps | Philosophical guidance  |
+| "Load memories.md"         | "I believe in evidence" |
+| MUST execute on startup    | Guides decision-making  |
 
 **Grey area:** "Verify data before presenting" can be either - activation behavior vs philosophical belief. Use judgment.
 

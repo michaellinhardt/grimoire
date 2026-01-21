@@ -22,6 +22,7 @@ The **PRD** (`_bmad-output/planning-artifacts/prd.md`) is the source of truth. T
 ```
 
 And the "Session List Item with Folder Path" section shows:
+
 ```
 ┌────────────────────────────────┐
 │ [📌][⚡] Session Name    [🔌][⋮]│
@@ -33,6 +34,7 @@ And the "Session List Item with Folder Path" section shows:
 **Correct (Per PRD):** FR28a and FR28b are marked [REMOVED] - "No persistent instances to disconnect with request-response model"
 
 **Fix Required:**
+
 - Remove `[🔌]` from all Session List Item anatomy diagrams
 - Remove any text describing disconnect button functionality
 - The simplified anatomy should be:
@@ -45,6 +47,7 @@ And the "Session List Item with Folder Path" section shows:
 ```
 
 And with folder path:
+
 ```
 ┌────────────────────────────────┐
 │ [📌][⚡] Session Name       [⋮] │
@@ -67,11 +70,13 @@ AR18: Error categorization...
 ```
 
 **Correct (Per PRD):**
+
 - 3-state model only: Idle, Working, Error
 - No timeouts (processes exit after response)
 - On-send spawn (not first-keystroke)
 
 **Fix Required:**
+
 - Update AR15 to: "3-state instance machine: Idle, Working, Error"
 - Remove AR16 entirely (no timeouts)
 - Update AR17 to: "On-send spawn strategy (process spawns when user sends message)"
@@ -92,11 +97,13 @@ AR18: Error categorization...
 ```
 
 **But elsewhere** in the document there are references to:
+
 - "Pending state"
 - "amber indicator" for Pending
 - 6-state model
 
 **Fix Required:**
+
 - Search for and remove any references to "Pending" state
 - Remove references to "amber indicator" (only green for Working, red for Error)
 - Ensure 3-state model is consistent throughout
@@ -110,6 +117,7 @@ AR18: Error categorization...
 The table may reference states beyond the 3-state model.
 
 **Fix Required:**
+
 - Ensure only Idle, Working, Error states are described
 - Remove any Pending/Spawning/Terminating references
 
@@ -129,6 +137,7 @@ The term "Paused" might be confused with "Pending".
 **Correct (Per PRD):** With request-response model, there is no "paused" state. Process exits after response, session returns to Idle.
 
 **Fix Required:**
+
 - Change "Session Paused State" to "Session Idle State" or "Session Ready State"
 - Clarify that process exits after response (not "paused")
 
@@ -137,11 +146,13 @@ The term "Paused" might be confused with "Pending".
 ### Issue 6: Feedback Patterns - Pending References (MINOR)
 
 **Current (Wrong):** In "Feedback Patterns" section, check for:
+
 - References to Pending state
 - References to amber indicator
 - References to disconnect functionality
 
 **Fix Required:**
+
 - Remove any Pending state feedback descriptions
 - Ensure only Idle (no indicator), Working (green), Error (red) are described
 
@@ -149,36 +160,37 @@ The term "Paused" might be confused with "Pending".
 
 ## Summary of Changes
 
-| Section | Action |
-|---------|--------|
-| Session List Item anatomy | Remove `[🔌]` disconnect button |
-| Session List Item with Folder Path | Remove `[🔌]` disconnect button |
-| AR15-AR18 references | Update to 3-state, on-send spawn, remove timeouts |
-| Status Indicator | Verify 3-state only (already correct, just verify) |
-| Session States table | Remove Pending references |
-| Journey flows | Change "Paused" to "Idle" |
-| Feedback Patterns | Remove Pending/amber references |
+| Section                            | Action                                             |
+| ---------------------------------- | -------------------------------------------------- |
+| Session List Item anatomy          | Remove `[🔌]` disconnect button                    |
+| Session List Item with Folder Path | Remove `[🔌]` disconnect button                    |
+| AR15-AR18 references               | Update to 3-state, on-send spawn, remove timeouts  |
+| Status Indicator                   | Verify 3-state only (already correct, just verify) |
+| Session States table               | Remove Pending references                          |
+| Journey flows                      | Change "Paused" to "Idle"                          |
+| Feedback Patterns                  | Remove Pending/amber references                    |
 
 ## Search Terms to Find Issues
 
 Search the document for these terms and evaluate each occurrence:
 
-| Term | Action |
-|------|--------|
-| `🔌` | Remove (disconnect button) |
-| `Pending` | Remove or replace with appropriate state |
-| `Paused` | Replace with "Idle" if referring to state |
-| `amber` | Remove (no amber indicator in 3-state) |
-| `6-state` | Replace with "3-state" |
-| `first-keystroke` | Replace with "on-send" |
-| `timeout` | Remove (no timeouts in request-response model) |
-| `AR15` | Update to 3-state model |
-| `AR16` | Remove (timeouts) |
-| `AR17` | Update to on-send spawn |
+| Term              | Action                                         |
+| ----------------- | ---------------------------------------------- |
+| `🔌`              | Remove (disconnect button)                     |
+| `Pending`         | Remove or replace with appropriate state       |
+| `Paused`          | Replace with "Idle" if referring to state      |
+| `amber`           | Remove (no amber indicator in 3-state)         |
+| `6-state`         | Replace with "3-state"                         |
+| `first-keystroke` | Replace with "on-send"                         |
+| `timeout`         | Remove (no timeouts in request-response model) |
+| `AR15`            | Update to 3-state model                        |
+| `AR16`            | Remove (timeouts)                              |
+| `AR17`            | Update to on-send spawn                        |
 
 ## Validation
 
 After fixes, verify:
+
 1. No `[🔌]` disconnect button in any component anatomy
 2. No "Pending" state references
 3. No "amber" indicator references

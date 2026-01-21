@@ -44,6 +44,7 @@ Read `{editPlan}` to get agent file path and persona.
 ### 2. Validate Persona
 
 Perform checks on:
+
 - **role**: present, specific, not generic
 - **identity**: present, defines who agent is
 - **communication_style**: present, speech patterns only (no behavioral words)
@@ -54,11 +55,11 @@ Perform checks on:
 Append to editPlan frontmatter:
 
 ```yaml
-  persona:
-    status: [pass|fail|warning]
-    findings:
-      - {check}: [pass|fail]
-      - {check}: [pass|fail]
+persona:
+  status: [pass|fail|warning]
+  findings:
+    - { check }: [pass|fail]
+    - { check }: [pass|fail]
 ```
 
 ### 4. Auto-Advance

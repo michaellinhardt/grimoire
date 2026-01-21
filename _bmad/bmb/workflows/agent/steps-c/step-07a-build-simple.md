@@ -34,12 +34,14 @@ Assemble the agent plan content into a Simple agent YAML configuration using the
 ## EXECUTION PROTOCOLS
 
 ### File Loading Sequence
+
 1. Read `simpleTemplate` - provides the YAML structure
 2. Read `simpleArch` - defines Simple agent architecture rules
 3. Read `agentCompilation` - provides assembly guidelines
 4. Read `agentPlan` - contains structured content from steps 2-5
 
 ### YAML Assembly Process
+
 1. Parse template structure
 2. Extract content sections from agentPlan YAML
 3. Map plan content to template fields
@@ -49,12 +51,14 @@ Assemble the agent plan content into a Simple agent YAML configuration using the
 ## CONTEXT BOUNDARIES
 
 **INCLUDE:**
+
 - Template structure exactly as provided
 - All agent metadata from agentPlan
 - Persona, commands, and rules from plan
 - Configuration options specified
 
 **EXCLUDE:**
+
 - Any content not in agentPlan
 - Sidecar file references (Simple agents don't use them)
 - Template placeholders (replace with actual content)
@@ -65,6 +69,7 @@ Assemble the agent plan content into a Simple agent YAML configuration using the
 ### 1. Load Template and Architecture Files
 
 Read the following files in order:
+
 - `simpleTemplate` - YAML structure template
 - `simpleArch` - Simple agent architecture definition
 - `agentCompilation` - Assembly instructions
@@ -74,6 +79,7 @@ Read the following files in order:
 ### 2. Load Agent Plan
 
 Read `agentPlan` which contains structured YAML from steps 2-5:
+
 - Step 2: Discovery findings
 - Step 3: Persona development
 - Step 4: Command structure
@@ -113,6 +119,7 @@ Execute the following assembly process:
 ### 4. Write Agent Build Output
 
 Write the assembled YAML to `agentBuildOutput`:
+
 - Use exact output path from variable
 - Include all content without truncation
 - Maintain YAML formatting
@@ -141,11 +148,13 @@ Display: "**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Cont
 ### 6. Route Based on User Choice
 
 **If user chooses "one-at-a-time":**
+
 - Proceed to `nextStepFile` (step-07a-plan-traceability.md)
 - Continue through each validation step sequentially
 - Allow review between each validation
 
 **If user chooses "YOLO":**
+
 - Run all validation steps (7A through 7F) consecutively
 - Do not pause between validations
 - After all validations complete, proceed to Step 8
@@ -158,6 +167,7 @@ ONLY WHEN [C continue option] is selected and [complete YAML generated and writt
 ## SUCCESS METRICS
 
 **SUCCESS looks like:**
+
 - Agent YAML file exists at specified output path
 - YAML is syntactically valid and well-formed
 - All template fields populated with plan content
@@ -166,6 +176,7 @@ ONLY WHEN [C continue option] is selected and [complete YAML generated and writt
 - Clear next step identified
 
 **FAILURE looks like:**
+
 - Template or architecture files not found
 - Agent plan missing required sections
 - YAML syntax errors in output
@@ -176,10 +187,12 @@ ONLY WHEN [C continue option] is selected and [complete YAML generated and writt
 ## TRANSITION CRITERIA
 
 **Ready for Step 7A when:**
+
 - Simple agent YAML successfully created
 - User chooses "one-at-a-time" validation
 
 **Ready for Step 8 when:**
+
 - Simple agent YAML successfully created
 - User chooses "YOLO" validation
 - All validations (7A-7F) completed consecutively

@@ -48,10 +48,10 @@ Perform checks on A/P/C convention, command names, descriptions.
 Append to editPlan frontmatter:
 
 ```yaml
-  menu:
-    status: [pass|fail|warning]
-    findings:
-      - {check}: [pass|fail]
+menu:
+  status: [pass|fail|warning]
+  findings:
+    - { check }: [pass|fail]
 ```
 
 ### 4. Auto-Advance

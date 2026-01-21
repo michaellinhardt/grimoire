@@ -48,10 +48,10 @@ Perform checks on YAML syntax, required fields, field types, indentation.
 Append to editPlan frontmatter:
 
 ```yaml
-  structure:
-    status: [pass|fail|warning]
-    findings:
-      - {check}: [pass|fail]
+structure:
+  status: [pass|fail|warning]
+  findings:
+    - { check }: [pass|fail]
 ```
 
 ### 4. Auto-Advance

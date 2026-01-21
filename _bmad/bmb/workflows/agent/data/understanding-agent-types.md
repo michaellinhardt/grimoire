@@ -1,6 +1,7 @@
 # Understanding Agent Types: Simple VS Expert VS Module
 
 > **For the LLM running this workflow:** Load and review the example files referenced below when helping users choose an agent type.
+>
 > - Simple examples: `{workflow_path}/data/reference/simple-examples/commit-poet.agent.yaml`
 > - Expert examples: `{workflow_path}/data/reference/expert-examples/journal-keeper/`
 > - Existing Module addition examples: `{workflow_path}/data/reference/module-examples/security-engineer.agent.yaml`
@@ -64,12 +65,14 @@ agent-name.agent.yaml (~250 lines max)
 ```
 
 **Choose when:**
+
 - Single-purpose utility
 - Each session is independent (stateless)
 - All knowledge fits in the YAML
 - Menu handlers are 5-15 line prompts
 
 **Examples:**
+
 - Commit message helper (conventional commits)
 - Document formatter/validator
 - Joke/teller persona agent
@@ -94,6 +97,7 @@ agent-name.agent.yaml
 ```
 
 **Choose when:**
+
 - Must remember across sessions
 - User might create multiple instances each with own memory of actions (such as 2 different developers agents)
 - Personal knowledge base that grows
@@ -102,6 +106,7 @@ agent-name.agent.yaml
 - Complex multi-step workflows
 
 **Examples:**
+
 - Journal companion (remembers mood patterns, past entries)
 - Personal job augmentation agent (knows your role, meetings, projects)
 - Therapy/health tracking (progress, goals, insights)
@@ -110,11 +115,12 @@ agent-name.agent.yaml
 **Reference:** `./data/reference/expert-examples/journal-keeper/`
 
 **Required critical_actions:**
+
 ```yaml
 critical_actions:
-  - "Load COMPLETE file ./sidecar/memories.md"
-  - "Load COMPLETE file ./sidecar/instructions.md"
-  - "ONLY read/write files in ./sidecar/ - private space"
+  - 'Load COMPLETE file ./sidecar/memories.md'
+  - 'Load COMPLETE file ./sidecar/instructions.md'
+  - 'ONLY read/write files in ./sidecar/ - private space'
 ```
 
 ---
@@ -128,12 +134,14 @@ Two distinct purposes:
 Add an agent to BMM, CIS, BMGD, or another existing module.
 
 **Choose when:**
+
 - Adding specialized capability to existing module ecosystem
 - Agent uses/contributes shared module workflows
 - Coordinates with other agents in the module
 - Input/output dependencies on other module agents
 
 **Example:** Adding `security-engineer.agent.yaml` to BMM (software dev module)
+
 - Requires architecture document from BMM architect agent
 - Contributes security review workflow to BMM
 - Coordinates with analyst, pm, architect, dev agents
@@ -145,11 +153,13 @@ Add an agent to BMM, CIS, BMGD, or another existing module.
 When requirements exceed single-agent scope, suggest the user **use BMAD Module Builder** instead.
 
 **Signals:**
+
 - "I need an HR agent, sales agent, F&I agent, and training coach..."
 - "Some info is global/shared across users, some is private per user..."
 - "Many workflows, skills, tools, and platform integrations..."
 
 **Example:** Car Dealership Module
+
 - Multiple specialized agents (sales-trainer, service-advisor, sales-manager, F&I)
 - Shared workflows (VIN lookup, vehicle research)
 - Global knowledge base + per-user private sidecars
@@ -176,12 +186,14 @@ When requirements exceed single-agent scope, suggest the user **use BMAD Module 
 ## Selection Checklist
 
 **Choose Simple if:**
+
 - [ ] One clear purpose
 - [ ] No need to remember past sessions
 - [ ] All logic fits in ~250 lines
 - [ ] Each interaction is independent
 
 **Choose Expert if:**
+
 - [ ] Needs memory across sessions
 - [ ] Personal knowledge base
 - [ ] Domain-specific expertise
@@ -190,10 +202,12 @@ When requirements exceed single-agent scope, suggest the user **use BMAD Module 
 - [ ] Complex workflows in sidecar
 
 **Then, for EITHER Simple or Expert:**
+
 - [ ] Extending existing module (BMM/CIS/BMGD/etc.) → Make it a Module Agent
 - [ ] Independent operation → Keep it Standalone
 
 **Escalate to Module Builder if:**
+
 - [ ] Multiple distinct personas needed (not one swiss-army-knife agent)
 - [ ] Many specialized workflows required
 - [ ] Multiple users with mixed data scope
@@ -215,6 +229,7 @@ When requirements exceed single-agent scope, suggest the user **use BMAD Module 
 ## Architecture Notes
 
 All three types are equally powerful. The difference is:
+
 - **How they manage state** (memory vs stateless)
 - **Where they store data** (inline vs sidecar vs module)
 - **How they integrate** (standalone vs module ecosystem)

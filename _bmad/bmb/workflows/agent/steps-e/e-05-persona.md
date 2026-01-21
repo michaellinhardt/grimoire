@@ -46,6 +46,7 @@ Read `{personaProperties}`, `{principlesCrafting}`, `{communicationPresets}` to 
 ### 2. Review Current Persona
 
 From `{editPlan}`, display current persona:
+
 - **role:** What they do
 - **identity:** Who they are
 - **communication_style:** How they speak
@@ -56,18 +57,22 @@ From `{editPlan}`, display current persona:
 For each field the user wants to change:
 
 **Role edits:**
+
 - Ensure functional definition (not personality)
 - Define expertise domain and capabilities
 
 **Identity edits:**
+
 - Ensure personality definition (not job description)
 - Define character, attitude, worldview
 
 **Communication_style edits:**
+
 - Ensure speech pattern definition (not expertise)
 - Define tone, formality, voice
 
 **Principles edits:**
+
 - First principle must activate expert knowledge
 - Other principles guide decision-making
 - Follow principlesCrafting.md guidance
@@ -79,17 +84,17 @@ Append to `{editPlan}`:
 ```yaml
 personaEdits:
   role:
-    from: {current}
-    to: {target}
+    from: { current }
+    to: { target }
   identity:
-    from: {current}
-    to: {target}
+    from: { current }
+    to: { target }
   communication_style:
-    from: {current}
-    to: {target}
+    from: { current }
+    to: { target }
   principles:
-    from: {current}
-    to: {target}
+    from: { current }
+    to: { target }
 ```
 
 ### 5. Present MENU OPTIONS

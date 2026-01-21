@@ -44,18 +44,19 @@ This research establishes how to parse Claude Code session files and display the
 
 ### 1.2 File Naming Conventions
 
-| Item | Pattern | Example |
-|------|---------|---------|
-| Project folder | `-<path-encoded>` | `-Users-teazyou-dev-grimoire` |
-| Session file | `<uuid>.jsonl` | `00868b4f-969f-45dd-8d33-15a449510bc0.jsonl` |
-| Sub-agent file | `agent-<6-hex>.jsonl` | `agent-a951b4d.jsonl` |
-| File backup | `<hash>@v<n>` | `f1230fdacb9e65df@v2` |
+| Item           | Pattern               | Example                                      |
+| -------------- | --------------------- | -------------------------------------------- |
+| Project folder | `-<path-encoded>`     | `-Users-teazyou-dev-grimoire`                |
+| Session file   | `<uuid>.jsonl`        | `00868b4f-969f-45dd-8d33-15a449510bc0.jsonl` |
+| Sub-agent file | `agent-<6-hex>.jsonl` | `agent-a951b4d.jsonl`                        |
+| File backup    | `<hash>@v<n>`         | `f1230fdacb9e65df@v2`                        |
 
 ### 1.3 Core Event Types
 
 Each line in a `.jsonl` file is one of these event types:
 
 #### USER MESSAGE
+
 ```json
 {
   "type": "user",
@@ -75,6 +76,7 @@ Each line in a `.jsonl` file is one of these event types:
 ```
 
 #### ASSISTANT MESSAGE
+
 ```json
 {
   "type": "assistant",
@@ -102,6 +104,7 @@ Each line in a `.jsonl` file is one of these event types:
 ```
 
 #### TOOL RESULT (follows assistant tool_use)
+
 ```json
 {
   "type": "user",
@@ -130,6 +133,7 @@ Each line in a `.jsonl` file is one of these event types:
 ```
 
 #### SESSION SUMMARY (first line of resumed sessions)
+
 ```json
 {
   "type": "summary",
@@ -139,6 +143,7 @@ Each line in a `.jsonl` file is one of these event types:
 ```
 
 #### FILE HISTORY SNAPSHOT
+
 ```json
 {
   "type": "file-history-snapshot",
@@ -162,26 +167,24 @@ Each line in a `.jsonl` file is one of these event types:
 ### 2.1 Detecting File Edits
 
 **Write Tool (creates/overwrites file):**
+
 ```typescript
 function isFileWrite(event: ConversationEvent): boolean {
-  if (event.type !== 'assistant') return false;
-  return event.message.content.some(c =>
-    c.type === 'tool_use' && c.name === 'Write'
-  );
+  if (event.type !== 'assistant') return false
+  return event.message.content.some((c) => c.type === 'tool_use' && c.name === 'Write')
 }
 
 function extractFilePath(toolUse: ToolUseContent): string {
-  return toolUse.input.file_path;
+  return toolUse.input.file_path
 }
 ```
 
 **Edit Tool (modifies existing file):**
+
 ```typescript
 function isFileEdit(event: ConversationEvent): boolean {
-  if (event.type !== 'assistant') return false;
-  return event.message.content.some(c =>
-    c.type === 'tool_use' && c.name === 'Edit'
-  );
+  if (event.type !== 'assistant') return false
+  return event.message.content.some((c) => c.type === 'tool_use' && c.name === 'Edit')
 }
 
 function extractEditDetails(toolUse: ToolUseContent): EditDetails {
@@ -189,7 +192,7 @@ function extractEditDetails(toolUse: ToolUseContent): EditDetails {
     filePath: toolUse.input.file_path,
     oldString: toolUse.input.old_string,
     newString: toolUse.input.new_string
-  };
+  }
 }
 ```
 
@@ -197,10 +200,8 @@ function extractEditDetails(toolUse: ToolUseContent): EditDetails {
 
 ```typescript
 function isSubAgentSpawn(event: ConversationEvent): boolean {
-  if (event.type !== 'assistant') return false;
-  return event.message.content.some(c =>
-    c.type === 'tool_use' && c.name === 'Task'
-  );
+  if (event.type !== 'assistant') return false
+  return event.message.content.some((c) => c.type === 'tool_use' && c.name === 'Task')
 }
 
 function extractSubAgentInfo(toolUse: ToolUseContent): SubAgentInfo {
@@ -209,24 +210,25 @@ function extractSubAgentInfo(toolUse: ToolUseContent): SubAgentInfo {
     subagentType: toolUse.input.subagent_type,
     prompt: toolUse.input.prompt,
     model: toolUse.input.model
-  };
+  }
 }
 ```
 
 ### 2.3 Detecting Sub-Agent Conversations
 
 Sub-agent files are identified by:
+
 - Location: `<session-uuid>/subagents/agent-<id>.jsonl`
 - Field: `isSidechain: true` in every event
 - Field: `agentId: "<6-char-hex>"` in every event
 
 ```typescript
 function isSubAgentConversation(event: ConversationEvent): boolean {
-  return event.isSidechain === true;
+  return event.isSidechain === true
 }
 
 function getSubAgentId(event: ConversationEvent): string | null {
-  return event.agentId ?? null;
+  return event.agentId ?? null
 }
 ```
 
@@ -236,26 +238,26 @@ Use `parentUuid` to construct conversation tree:
 
 ```typescript
 interface MessageNode {
-  event: ConversationEvent;
-  children: MessageNode[];
+  event: ConversationEvent
+  children: MessageNode[]
 }
 
 function buildMessageTree(events: ConversationEvent[]): MessageNode[] {
-  const nodeMap = new Map<string, MessageNode>();
-  const roots: MessageNode[] = [];
+  const nodeMap = new Map<string, MessageNode>()
+  const roots: MessageNode[] = []
 
   for (const event of events) {
-    const node = { event, children: [] };
-    nodeMap.set(event.uuid, node);
+    const node = { event, children: [] }
+    nodeMap.set(event.uuid, node)
 
     if (event.parentUuid && nodeMap.has(event.parentUuid)) {
-      nodeMap.get(event.parentUuid)!.children.push(node);
+      nodeMap.get(event.parentUuid)!.children.push(node)
     } else {
-      roots.push(node);
+      roots.push(node)
     }
   }
 
-  return roots;
+  return roots
 }
 ```
 
@@ -263,14 +265,14 @@ function buildMessageTree(events: ConversationEvent[]): MessageNode[] {
 
 ```typescript
 function pairToolCallsWithResults(events: ConversationEvent[]): Map<string, ToolPair> {
-  const pairs = new Map<string, ToolPair>();
+  const pairs = new Map<string, ToolPair>()
 
   for (const event of events) {
     // Find tool_use in assistant messages
     if (event.type === 'assistant') {
       for (const content of event.message.content) {
         if (content.type === 'tool_use') {
-          pairs.set(content.id, { call: content, result: null });
+          pairs.set(content.id, { call: content, result: null })
         }
       }
     }
@@ -279,13 +281,13 @@ function pairToolCallsWithResults(events: ConversationEvent[]): Map<string, Tool
     if (event.type === 'user' && Array.isArray(event.message.content)) {
       for (const content of event.message.content) {
         if (content.type === 'tool_result' && pairs.has(content.tool_use_id)) {
-          pairs.get(content.tool_use_id)!.result = content;
+          pairs.get(content.tool_use_id)!.result = content
         }
       }
     }
   }
 
-  return pairs;
+  return pairs
 }
 ```
 
@@ -297,16 +299,16 @@ When using `--output-format stream-json`, Claude Code emits NDJSON events:
 
 ### 3.1 Stream Event Types
 
-| Event Type | Purpose |
-|------------|---------|
-| `message_start` | Beginning of response, includes model/ID |
-| `content_block_start` | Start of text/tool_use/thinking block |
+| Event Type            | Purpose                                           |
+| --------------------- | ------------------------------------------------- |
+| `message_start`       | Beginning of response, includes model/ID          |
+| `content_block_start` | Start of text/tool_use/thinking block             |
 | `content_block_delta` | Incremental update (text_delta, input_json_delta) |
-| `content_block_stop` | End of content block |
-| `message_delta` | Top-level changes (stop_reason, usage) |
-| `message_stop` | Final event, response complete |
-| `ping` | Keep-alive, safe to ignore |
-| `error` | Error events |
+| `content_block_stop`  | End of content block                              |
+| `message_delta`       | Top-level changes (stop_reason, usage)            |
+| `message_stop`        | Final event, response complete                    |
+| `ping`                | Keep-alive, safe to ignore                        |
+| `error`               | Error events                                      |
 
 ### 3.2 Parsing Streaming Content
 
@@ -370,13 +372,13 @@ function handleStreamEvent(event: StreamEvent, state: StreamState) {
 
 Based on research, the best-fit stack for Grimoire (Electron + React):
 
-| Layer | Choice | Rationale |
-|-------|--------|-----------|
-| UI Components | **shadcn/ui** + **Radix UI** | Already in architecture doc |
-| Chat Components | **shadcn-chat** | Pre-built message bubbles |
-| Streaming | **Custom NDJSON parser** | More control than Vercel AI SDK |
-| State | **Zustand** | Already in architecture doc |
-| Code Blocks | **react-syntax-highlighter** or **shiki** | Syntax highlighting |
+| Layer           | Choice                                    | Rationale                       |
+| --------------- | ----------------------------------------- | ------------------------------- |
+| UI Components   | **shadcn/ui** + **Radix UI**              | Already in architecture doc     |
+| Chat Components | **shadcn-chat**                           | Pre-built message bubbles       |
+| Streaming       | **Custom NDJSON parser**                  | More control than Vercel AI SDK |
+| State           | **Zustand**                               | Already in architecture doc     |
+| Code Blocks     | **react-syntax-highlighter** or **shiki** | Syntax highlighting             |
 
 ### 4.2 Message Type Visual Distinction
 
@@ -384,34 +386,50 @@ Based on research, the best-fit stack for Grimoire (Electron + React):
 /* User messages - right aligned */
 .message--user {
   @apply flex justify-end;
-  .bubble { @apply bg-blue-500 text-white rounded-lg px-4 py-2; }
+  .bubble {
+    @apply bg-blue-500 text-white rounded-lg px-4 py-2;
+  }
 }
 
 /* Assistant messages - left aligned with avatar */
 .message--assistant {
   @apply flex gap-3;
-  .avatar { @apply w-8 h-8 rounded-full bg-purple-500; }
-  .bubble { @apply bg-gray-100 text-gray-900 rounded-lg px-4 py-2; }
+  .avatar {
+    @apply w-8 h-8 rounded-full bg-purple-500;
+  }
+  .bubble {
+    @apply bg-gray-100 text-gray-900 rounded-lg px-4 py-2;
+  }
 }
 
 /* Tool call - collapsed card */
 .message--tool-call {
   @apply border border-gray-200 rounded-lg p-3 bg-gray-50;
-  .tool-name { @apply font-mono text-sm text-gray-600; }
-  .tool-summary { @apply text-sm text-gray-500; }
+  .tool-name {
+    @apply font-mono text-sm text-gray-600;
+  }
+  .tool-summary {
+    @apply text-sm text-gray-500;
+  }
 }
 
 /* Sub-agent - indented with color border */
 .message--subagent {
   @apply ml-6 pl-4 border-l-4 border-amber-400;
-  .bubble { @apply bg-amber-50 text-amber-900; }
+  .bubble {
+    @apply bg-amber-50 text-amber-900;
+  }
 }
 
 /* File edit - with file icon */
 .message--file-edit {
   @apply border border-green-200 rounded-lg overflow-hidden;
-  .file-header { @apply bg-green-100 px-3 py-2 flex items-center gap-2; }
-  .file-path { @apply font-mono text-sm; }
+  .file-header {
+    @apply bg-green-100 px-3 py-2 flex items-center gap-2;
+  }
+  .file-path {
+    @apply font-mono text-sm;
+  }
 }
 ```
 
@@ -496,22 +514,22 @@ function renderConversation(events: ConversationEvent[]): ReactNode[] {
 
 ### 5.1 Existing JSONL Parsers
 
-| Tool | Tech | Key Feature |
-|------|------|-------------|
-| **claude-JSONL-browser** | Web | Converts JSONL → Markdown |
-| **claude-code-log** | Python | HTML output with timeline |
-| **ClaudeCodeJSONLParser** | HTML | Collapsible format, Git integration |
-| **claude-code-transcripts** | Python | Publishing tool by Simon Willison |
-| **cclog** | Python | TUI interface |
+| Tool                        | Tech   | Key Feature                         |
+| --------------------------- | ------ | ----------------------------------- |
+| **claude-JSONL-browser**    | Web    | Converts JSONL → Markdown           |
+| **claude-code-log**         | Python | HTML output with timeline           |
+| **ClaudeCodeJSONLParser**   | HTML   | Collapsible format, Git integration |
+| **claude-code-transcripts** | Python | Publishing tool by Simon Willison   |
+| **cclog**                   | Python | TUI interface                       |
 
 ### 5.2 Existing UI Projects
 
-| Project | Tech | Key Feature |
-|---------|------|-------------|
-| **claude-code-ui** (KyleAMathews) | React, XState | Kanban view, AI summaries |
-| **CloudCLI** (siteboon) | React, WebSocket | Full IDE-like interface |
-| **Claudia GUI** | Tauri 2, React | Desktop app, analytics |
-| **opcode** | GUI | Custom agent creation |
+| Project                           | Tech             | Key Feature               |
+| --------------------------------- | ---------------- | ------------------------- |
+| **claude-code-ui** (KyleAMathews) | React, XState    | Kanban view, AI summaries |
+| **CloudCLI** (siteboon)           | React, WebSocket | Full IDE-like interface   |
+| **Claudia GUI**                   | Tauri 2, React   | Desktop app, analytics    |
+| **opcode**                        | GUI              | Custom agent creation     |
 
 ### 5.3 Key Lessons from Community
 
@@ -532,38 +550,38 @@ Add to `plugins/sessions/src/shared/types.ts`:
 
 ```typescript
 interface ConversationEvent {
-  type: 'user' | 'assistant' | 'summary' | 'file-history-snapshot';
-  uuid: string;
-  parentUuid: string | null;
-  sessionId: string;
-  timestamp: string;
-  isSidechain: boolean;
-  agentId?: string;  // Present if sub-agent
+  type: 'user' | 'assistant' | 'summary' | 'file-history-snapshot'
+  uuid: string
+  parentUuid: string | null
+  sessionId: string
+  timestamp: string
+  isSidechain: boolean
+  agentId?: string // Present if sub-agent
   message?: {
-    role: 'user' | 'assistant';
-    content: string | ContentBlock[];
-    model?: string;
-    usage?: TokenUsage;
-  };
-  toolUseResult?: ToolUseResult;
-  sourceToolAssistantUUID?: string;
+    role: 'user' | 'assistant'
+    content: string | ContentBlock[]
+    model?: string
+    usage?: TokenUsage
+  }
+  toolUseResult?: ToolUseResult
+  sourceToolAssistantUUID?: string
 }
 
 interface ContentBlock {
-  type: 'text' | 'tool_use' | 'tool_result';
-  text?: string;
-  id?: string;
-  name?: string;
-  input?: Record<string, unknown>;
-  tool_use_id?: string;
-  content?: string;
+  type: 'text' | 'tool_use' | 'tool_result'
+  text?: string
+  id?: string
+  name?: string
+  input?: Record<string, unknown>
+  tool_use_id?: string
+  content?: string
 }
 
 interface TokenUsage {
-  input_tokens: number;
-  output_tokens: number;
-  cache_creation_input_tokens?: number;
-  cache_read_input_tokens?: number;
+  input_tokens: number
+  output_tokens: number
+  cache_creation_input_tokens?: number
+  cache_read_input_tokens?: number
 }
 ```
 
@@ -572,30 +590,32 @@ interface TokenUsage {
 Create `plugins/sessions/src/main/conversation-parser.ts`:
 
 ```typescript
-import { readFile } from 'fs/promises';
+import { readFile } from 'fs/promises'
 
 export async function parseConversation(filePath: string): Promise<ConversationEvent[]> {
-  const content = await readFile(filePath, 'utf-8');
-  const lines = content.split('\n').filter(line => line.trim());
+  const content = await readFile(filePath, 'utf-8')
+  const lines = content.split('\n').filter((line) => line.trim())
 
-  return lines.map(line => {
-    try {
-      return JSON.parse(line) as ConversationEvent;
-    } catch (e) {
-      console.warn(`Failed to parse line: ${line.slice(0, 100)}`);
-      return null;
-    }
-  }).filter(Boolean);
+  return lines
+    .map((line) => {
+      try {
+        return JSON.parse(line) as ConversationEvent
+      } catch (e) {
+        console.warn(`Failed to parse line: ${line.slice(0, 100)}`)
+        return null
+      }
+    })
+    .filter(Boolean)
 }
 
 export function getFileEdits(events: ConversationEvent[]): FileEditInfo[] {
-  const edits: FileEditInfo[] = [];
+  const edits: FileEditInfo[] = []
 
   for (const event of events) {
-    if (event.type !== 'assistant') continue;
+    if (event.type !== 'assistant') continue
 
-    const content = event.message?.content;
-    if (!Array.isArray(content)) continue;
+    const content = event.message?.content
+    if (!Array.isArray(content)) continue
 
     for (const block of content) {
       if (block.type === 'tool_use' && (block.name === 'Write' || block.name === 'Edit')) {
@@ -605,22 +625,22 @@ export function getFileEdits(events: ConversationEvent[]): FileEditInfo[] {
           toolType: block.name as 'Write' | 'Edit',
           filePath: block.input?.file_path as string,
           toolUseId: block.id
-        });
+        })
       }
     }
   }
 
-  return edits;
+  return edits
 }
 
 export function getSubAgentSpawns(events: ConversationEvent[]): SubAgentSpawn[] {
-  const spawns: SubAgentSpawn[] = [];
+  const spawns: SubAgentSpawn[] = []
 
   for (const event of events) {
-    if (event.type !== 'assistant') continue;
+    if (event.type !== 'assistant') continue
 
-    const content = event.message?.content;
-    if (!Array.isArray(content)) continue;
+    const content = event.message?.content
+    if (!Array.isArray(content)) continue
 
     for (const block of content) {
       if (block.type === 'tool_use' && block.name === 'Task') {
@@ -631,12 +651,12 @@ export function getSubAgentSpawns(events: ConversationEvent[]): SubAgentSpawn[] 
           description: block.input?.description as string,
           subagentType: block.input?.subagent_type as string,
           model: block.input?.model as string
-        });
+        })
       }
     }
   }
 
-  return spawns;
+  return spawns
 }
 ```
 
@@ -644,7 +664,7 @@ export function getSubAgentSpawns(events: ConversationEvent[]): SubAgentSpawn[] 
 
 ```typescript
 // New channels for conversation parsing
-'conversation:load'         // Load parsed conversation events
+'conversation:load' // Load parsed conversation events
 'conversation:getFileEdits' // Get file edit events for a session
 'conversation:getSubAgents' // Get sub-agent spawns for a session
 'conversation:loadSubAgent' // Load sub-agent conversation
@@ -693,11 +713,13 @@ export function discoverSubAgentsFromSession(
 ## Part 7: Sources
 
 ### Official Documentation
+
 - Claude Code CLI Reference: https://code.claude.com/docs/en/cli-reference
 - Claude Code Headless Usage: https://code.claude.com/docs/en/headless.md
 - Claude API Streaming: https://platform.claude.com/docs/en/build-with-claude/streaming
 
 ### Community Projects
+
 - claude-JSONL-browser: https://github.com/withLinda/claude-JSONL-browser
 - claude-code-log: https://github.com/daaain/claude-code-log
 - claude-code-ui: https://github.com/KyleAMathews/claude-code-ui
@@ -705,11 +727,13 @@ export function discoverSubAgentsFromSession(
 - Claudia GUI: https://claudia.so/
 
 ### UI Libraries
+
 - shadcn-chat: https://github.com/jakobhoeg/shadcn-chat
 - assistant-ui: https://github.com/assistant-ui/assistant-ui
 - Vercel AI SDK: https://ai-sdk.dev/docs/ai-sdk-ui/chatbot-tool-usage
 
 ### Blog Posts & Tutorials
+
 - Building a Visual Dashboard for Claude Code: https://dev.to/thuongx/i-built-a-visual-dashboard-for-claude-code-because-i-was-tired-of-managing-text-files-4j38
 - Claude Code's hidden conversation history: https://kentgigger.com/posts/claude-code-conversation-history
 - Monitor Claude Code with OpenTelemetry: https://signoz.io/blog/claude-code-monitoring-with-opentelemetry/
@@ -719,6 +743,7 @@ export function discoverSubAgentsFromSession(
 ## Appendix: Sample Event Reference
 
 ### A.1 Complete User Message Event
+
 ```json
 {
   "parentUuid": null,
@@ -739,6 +764,7 @@ export function discoverSubAgentsFromSession(
 ```
 
 ### A.2 Complete Assistant Message with Tool Use
+
 ```json
 {
   "parentUuid": "16540dd7-981e-4df8-9509-92abc3a65da2",
@@ -784,6 +810,7 @@ export function discoverSubAgentsFromSession(
 ```
 
 ### A.3 Sub-Agent File Event (isSidechain: true)
+
 ```json
 {
   "parentUuid": null,

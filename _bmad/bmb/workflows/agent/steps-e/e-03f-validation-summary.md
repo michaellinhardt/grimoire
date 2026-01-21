@@ -39,6 +39,7 @@ Display all validation findings from the previous 5 validation steps to the user
 ### 1. Load Validation Findings
 
 Read `{editPlan}` frontmatter to collect:
+
 - validationBefore.metadata.status and findings
 - validationBefore.persona.status and findings
 - validationBefore.menu.status and findings
@@ -51,22 +52,27 @@ Read `{editPlan}` frontmatter to collect:
 ## Pre-Edit Validation Report for {agent-name}
 
 ### Metadata Validation
+
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL}
 {Findings summary}
 
 ### Persona Validation
+
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL}
 {Findings summary}
 
 ### Menu Validation
+
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL}
 {Findings summary}
 
 ### Structure Validation
+
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL}
 {Findings summary}
 
 ### Sidecar Validation
+
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL / N/A}
 {Findings summary}
 ```
@@ -77,7 +83,7 @@ Read `{editPlan}` frontmatter to collect:
 
 **[I**ntegrate fixes**] - Add validation fixes to your edit plan
 **[S]kip** - Proceed with your planned edits only
-**[A]dvanced** - Deeper exploration of any issues"
+**[A]dvanced\*\* - Deeper exploration of any issues"
 
 ### 4. Present MENU OPTIONS
 

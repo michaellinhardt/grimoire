@@ -276,26 +276,26 @@ Expands test automation coverage by generating comprehensive test suites at appr
 
    ```typescript
    // tests/support/fixtures/auth.fixture.ts
-   import { test as base } from '@playwright/test';
-   import { createUser, deleteUser } from '../factories/user.factory';
+   import { test as base } from '@playwright/test'
+   import { createUser, deleteUser } from '../factories/user.factory'
 
    export const test = base.extend({
      authenticatedUser: async ({ page }, use) => {
        // Setup: Create and authenticate user
-       const user = await createUser();
-       await page.goto('/login');
-       await page.fill('[data-testid="email"]', user.email);
-       await page.fill('[data-testid="password"]', user.password);
-       await page.click('[data-testid="login-button"]');
-       await page.waitForURL('/dashboard');
+       const user = await createUser()
+       await page.goto('/login')
+       await page.fill('[data-testid="email"]', user.email)
+       await page.fill('[data-testid="password"]', user.password)
+       await page.click('[data-testid="login-button"]')
+       await page.waitForURL('/dashboard')
 
        // Provide to test
-       await use(user);
+       await use(user)
 
        // Cleanup: Delete user automatically
-       await deleteUser(user.id);
-     },
-   });
+       await deleteUser(user.id)
+     }
+   })
    ```
 
 2. **Enhance Data Factories**
@@ -316,7 +316,7 @@ Expands test automation coverage by generating comprehensive test suites at appr
 
    ```typescript
    // tests/support/factories/user.factory.ts
-   import { faker } from '@faker-js/faker';
+   import { faker } from '@faker-js/faker'
 
    export const createUser = (overrides = {}) => ({
      id: faker.number.int(),
@@ -325,15 +325,15 @@ Expands test automation coverage by generating comprehensive test suites at appr
      name: faker.person.fullName(),
      role: 'user',
      createdAt: faker.date.recent().toISOString(),
-     ...overrides,
-   });
+     ...overrides
+   })
 
-   export const createUsers = (count: number) => Array.from({ length: count }, () => createUser());
+   export const createUsers = (count: number) => Array.from({ length: count }, () => createUser())
 
    // API helper for cleanup
    export const deleteUser = async (userId: number) => {
-     await fetch(`/api/users/${userId}`, { method: 'DELETE' });
-   };
+     await fetch(`/api/users/${userId}`, { method: 'DELETE' })
+   }
    ```
 
 3. **Create/Enhance Helper Utilities**
@@ -350,14 +350,18 @@ Expands test automation coverage by generating comprehensive test suites at appr
 
    ```typescript
    // tests/support/helpers/wait-for.ts
-   export const waitFor = async (condition: () => Promise<boolean>, timeout = 5000, interval = 100): Promise<void> => {
-     const startTime = Date.now();
+   export const waitFor = async (
+     condition: () => Promise<boolean>,
+     timeout = 5000,
+     interval = 100
+   ): Promise<void> => {
+     const startTime = Date.now()
      while (Date.now() - startTime < timeout) {
-       if (await condition()) return;
-       await new Promise((resolve) => setTimeout(resolve, interval));
+       if (await condition()) return
+       await new Promise((resolve) => setTimeout(resolve, interval))
      }
-     throw new Error(`Condition not met within ${timeout}ms`);
-   };
+     throw new Error(`Condition not met within ${timeout}ms`)
+   }
    ```
 
 ---
@@ -389,36 +393,38 @@ Expands test automation coverage by generating comprehensive test suites at appr
    **Follow Given-When-Then format:**
 
    ```typescript
-   import { test, expect } from '@playwright/test';
+   import { test, expect } from '@playwright/test'
 
    test.describe('User Authentication', () => {
      test('[P0] should login with valid credentials and load dashboard', async ({ page }) => {
        // GIVEN: User is on login page
-       await page.goto('/login');
+       await page.goto('/login')
 
        // WHEN: User submits valid credentials
-       await page.fill('[data-testid="email-input"]', 'user@example.com');
-       await page.fill('[data-testid="password-input"]', 'Password123!');
-       await page.click('[data-testid="login-button"]');
+       await page.fill('[data-testid="email-input"]', 'user@example.com')
+       await page.fill('[data-testid="password-input"]', 'Password123!')
+       await page.click('[data-testid="login-button"]')
 
        // THEN: User is redirected to dashboard
-       await expect(page).toHaveURL('/dashboard');
-       await expect(page.locator('[data-testid="user-name"]')).toBeVisible();
-     });
+       await expect(page).toHaveURL('/dashboard')
+       await expect(page.locator('[data-testid="user-name"]')).toBeVisible()
+     })
 
      test('[P1] should display error for invalid credentials', async ({ page }) => {
        // GIVEN: User is on login page
-       await page.goto('/login');
+       await page.goto('/login')
 
        // WHEN: User submits invalid credentials
-       await page.fill('[data-testid="email-input"]', 'invalid@example.com');
-       await page.fill('[data-testid="password-input"]', 'wrongpassword');
-       await page.click('[data-testid="login-button"]');
+       await page.fill('[data-testid="email-input"]', 'invalid@example.com')
+       await page.fill('[data-testid="password-input"]', 'wrongpassword')
+       await page.click('[data-testid="login-button"]')
 
        // THEN: Error message is displayed
-       await expect(page.locator('[data-testid="error-message"]')).toHaveText('Invalid email or password');
-     });
-   });
+       await expect(page.locator('[data-testid="error-message"]')).toHaveText(
+         'Invalid email or password'
+       )
+     })
+   })
    ```
 
    **Critical patterns:**
@@ -432,48 +438,52 @@ Expands test automation coverage by generating comprehensive test suites at appr
 3. **Write API Tests (If Applicable)**
 
    ```typescript
-   import { test, expect } from '@playwright/test';
+   import { test, expect } from '@playwright/test'
 
    test.describe('User Authentication API', () => {
-     test('[P1] POST /api/auth/login - should return token for valid credentials', async ({ request }) => {
+     test('[P1] POST /api/auth/login - should return token for valid credentials', async ({
+       request
+     }) => {
        // GIVEN: Valid user credentials
        const credentials = {
          email: 'user@example.com',
-         password: 'Password123!',
-       };
+         password: 'Password123!'
+       }
 
        // WHEN: Logging in via API
        const response = await request.post('/api/auth/login', {
-         data: credentials,
-       });
+         data: credentials
+       })
 
        // THEN: Returns 200 and JWT token
-       expect(response.status()).toBe(200);
-       const body = await response.json();
-       expect(body).toHaveProperty('token');
-       expect(body.token).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/); // JWT format
-     });
+       expect(response.status()).toBe(200)
+       const body = await response.json()
+       expect(body).toHaveProperty('token')
+       expect(body.token).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/) // JWT format
+     })
 
-     test('[P1] POST /api/auth/login - should return 401 for invalid credentials', async ({ request }) => {
+     test('[P1] POST /api/auth/login - should return 401 for invalid credentials', async ({
+       request
+     }) => {
        // GIVEN: Invalid credentials
        const credentials = {
          email: 'invalid@example.com',
-         password: 'wrongpassword',
-       };
+         password: 'wrongpassword'
+       }
 
        // WHEN: Attempting login
        const response = await request.post('/api/auth/login', {
-         data: credentials,
-       });
+         data: credentials
+       })
 
        // THEN: Returns 401 with error
-       expect(response.status()).toBe(401);
-       const body = await response.json();
+       expect(response.status()).toBe(401)
+       const body = await response.json()
        expect(body).toMatchObject({
-         error: 'Invalid credentials',
-       });
-     });
-   });
+         error: 'Invalid credentials'
+       })
+     })
+   })
    ```
 
 4. **Write Component Tests (If Applicable)**
@@ -514,30 +524,30 @@ Expands test automation coverage by generating comprehensive test suites at appr
 5. **Write Unit Tests (If Applicable)**
 
    ```typescript
-   import { validateEmail } from './validation';
+   import { validateEmail } from './validation'
 
    describe('Email Validation', () => {
      test('[P2] should return true for valid email', () => {
        // GIVEN: Valid email address
-       const email = 'user@example.com';
+       const email = 'user@example.com'
 
        // WHEN: Validating email
-       const result = validateEmail(email);
+       const result = validateEmail(email)
 
        // THEN: Returns true
-       expect(result).toBe(true);
-     });
+       expect(result).toBe(true)
+     })
 
      test('[P2] should return false for malformed email', () => {
        // GIVEN: Malformed email addresses
-       const invalidEmails = ['notanemail', '@example.com', 'user@', 'user @example.com'];
+       const invalidEmails = ['notanemail', '@example.com', 'user@', 'user @example.com']
 
        // WHEN/THEN: Each should fail validation
        invalidEmails.forEach((email) => {
-         expect(validateEmail(email)).toBe(false);
-       });
-     });
-   });
+         expect(validateEmail(email)).toBe(false)
+       })
+     })
+   })
    ```
 
 6. **Apply Network-First Pattern (E2E tests)**
@@ -552,15 +562,15 @@ Expands test automation coverage by generating comprehensive test suites at appr
      await page.route('**/api/user', (route) =>
        route.fulfill({
          status: 200,
-         body: JSON.stringify({ id: 1, name: 'Test User' }),
-       }),
-     );
+         body: JSON.stringify({ id: 1, name: 'Test User' })
+       })
+     )
 
      // NOW navigate
-     await page.goto('/dashboard');
+     await page.goto('/dashboard')
 
-     await expect(page.locator('[data-testid="user-name"]')).toHaveText('Test User');
-   });
+     await expect(page.locator('[data-testid="user-name"]')).toHaveText('Test User')
+   })
    ```
 
 7. **Enforce Quality Standards**
@@ -730,7 +740,7 @@ Expands test automation coverage by generating comprehensive test suites at appr
      // Manual investigation needed: Selector may require application code changes
      // TODO: Review with team, may need data-testid added to button component
      // Original test code...
-   });
+   })
    ```
 
    **Note**: Workflow continues even with unfixable tests (marked as test.fixme() for manual review)
@@ -1126,30 +1136,30 @@ Use fixtures for setup/teardown, not page objects for actions.
 
 ```typescript
 // ❌ WRONG: Hard wait
-await page.waitForTimeout(2000);
+await page.waitForTimeout(2000)
 
 // ✅ CORRECT: Explicit wait
-await page.waitForSelector('[data-testid="user-name"]');
-await expect(page.locator('[data-testid="user-name"]')).toBeVisible();
+await page.waitForSelector('[data-testid="user-name"]')
+await expect(page.locator('[data-testid="user-name"]')).toBeVisible()
 
 // ❌ WRONG: Conditional flow
 if (await element.isVisible()) {
-  await element.click();
+  await element.click()
 }
 
 // ✅ CORRECT: Deterministic assertion
-await expect(element).toBeVisible();
-await element.click();
+await expect(element).toBeVisible()
+await element.click()
 
 // ❌ WRONG: Try-catch for test logic
 try {
-  await element.click();
+  await element.click()
 } catch (e) {
   // Test shouldn't catch errors
 }
 
 // ✅ CORRECT: Let test fail if element not found
-await element.click();
+await element.click()
 ```
 
 ### Self-Cleaning Tests
@@ -1160,18 +1170,18 @@ await element.click();
 // ✅ CORRECT: Fixture with auto-cleanup
 export const test = base.extend({
   testUser: async ({ page }, use) => {
-    const user = await createUser();
-    await use(user);
-    await deleteUser(user.id); // Auto-cleanup
-  },
-});
+    const user = await createUser()
+    await use(user)
+    await deleteUser(user.id) // Auto-cleanup
+  }
+})
 
 // ❌ WRONG: Manual cleanup (can be forgotten)
 test('should login', async ({ page }) => {
-  const user = await createUser();
+  const user = await createUser()
   // ... test logic ...
   // Forgot to delete user!
-});
+})
 ```
 
 ### File Size Limits

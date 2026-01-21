@@ -165,7 +165,7 @@ Result: Run 14 targeted tests instead of 147 with --only-changed!
 **Implementation**:
 
 ```typescript
-import type { BurnInConfig } from '@seontechnologies/playwright-utils/burn-in';
+import type { BurnInConfig } from '@seontechnologies/playwright-utils/burn-in'
 
 const config: BurnInConfig = {
   skipBurnInPatterns: ['**/config/**', '**/*types*', '**/*.md'],
@@ -175,11 +175,11 @@ const config: BurnInConfig = {
 
   burnIn: {
     repeatEach: process.env.CI ? 2 : 3,
-    retries: process.env.CI ? 0 : 1, // No retries in CI
-  },
-};
+    retries: process.env.CI ? 0 : 1 // No retries in CI
+  }
+}
 
-export default config;
+export default config
 ```
 
 **Key Points**:
@@ -197,18 +197,18 @@ export default config;
 
 ```typescript
 // burn-in-changed.ts with sharding
-import { runBurnIn } from '@seontechnologies/playwright-utils/burn-in';
+import { runBurnIn } from '@seontechnologies/playwright-utils/burn-in'
 
 async function main() {
-  const shardArg = process.argv.find((arg) => arg.startsWith('--shard='));
+  const shardArg = process.argv.find((arg) => arg.startsWith('--shard='))
 
   if (shardArg) {
-    process.env.PW_SHARD = shardArg.split('=')[1];
+    process.env.PW_SHARD = shardArg.split('=')[1]
   }
 
   await runBurnIn({
-    configPath: 'playwright/config/.burn-in.config.ts',
-  });
+    configPath: 'playwright/config/.burn-in.config.ts'
+  })
 }
 ```
 
@@ -250,24 +250,24 @@ When setting up CI with `*ci` workflow, recommend burn-in for:
 
 ```typescript
 skipBurnInPatterns: [
-  '**/*', // Skips everything!
-];
+  '**/*' // Skips everything!
+]
 ```
 
 **✅ Targeted skip patterns:**
 
 ```typescript
-skipBurnInPatterns: ['**/config/**', '**/*types*', '**/*.md', '**/*constants*'];
+skipBurnInPatterns: ['**/config/**', '**/*types*', '**/*.md', '**/*constants*']
 ```
 
 **❌ Too low percentage (false confidence):**
 
 ```typescript
-burnInTestPercentage: 0.05; // Only 5% - might miss issues
+burnInTestPercentage: 0.05 // Only 5% - might miss issues
 ```
 
 **✅ Balanced percentage:**
 
 ```typescript
-burnInTestPercentage: 0.2; // 20% in CI, provides good coverage
+burnInTestPercentage: 0.2 // 20% in CI, provides good coverage
 ```

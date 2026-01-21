@@ -78,23 +78,23 @@ Expected format: `{path-to-agent}/{agent-name}.agent.yaml`"
 
 ```yaml
 # Basic Metadata
-- name: {agent-name}
-- description: {agent-description}
-- type: {simple|expert|module}
-- version: {version}
+- name: { agent-name }
+- description: { agent-description }
+- type: { simple|expert|module }
+- version: { version }
 
 # Persona
-- persona: {full persona text}
-- system-context: {if present}
+- persona: { full persona text }
+- system-context: { if present }
 
 # Commands/Menu
-- commands: {full command structure}
+- commands: { full command structure }
 
 # Critical Actions (if present)
-- critical-actions: {list}
+- critical-actions: { list }
 
 # Metadata
-- metadata: {all metadata fields}
+- metadata: { all metadata fields }
 ```
 
 ### 3. Display Agent Summary
@@ -161,13 +161,13 @@ stepsCompleted:
 
 ## Edits Planned
 
-*This section will be populated in subsequent steps*
+_This section will be populated in subsequent steps_
 
 ---
 
 ## Edits Applied
 
-*This section will track completed edits*
+_This section will track completed edits_
 ```
 
 Write to `{editPlan}`.

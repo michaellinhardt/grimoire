@@ -43,6 +43,7 @@ Read `{editPlan}` to get agent file path and metadata.
 ### 2. Validate Metadata
 
 Perform checks on:
+
 - **id**: kebab-case, no spaces
 - **name**: display name, clear branding
 - **title**: concise function description
@@ -59,8 +60,8 @@ validationBefore:
   metadata:
     status: [pass|fail|warning]
     findings:
-      - {check}: [pass|fail]
-      - {check}: [pass|fail]
+      - { check }: [pass|fail]
+      - { check }: [pass|fail]
 ```
 
 ### 4. Auto-Advance

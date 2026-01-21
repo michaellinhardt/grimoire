@@ -8,12 +8,12 @@ The four-field persona system for agent personality.
 
 Each field serves a DISTINCT purpose when the compiled agent LLM reads them:
 
-| Field | Purpose | What LLM Interprets |
-|-------|---------|---------------------|
-| `role` | WHAT the agent does | Capabilities, skills, expertise |
-| `identity` | WHO the agent is | Background, experience, context |
-| `communication_style` | HOW the agent talks | Verbal patterns, tone, voice |
-| `principles` | WHAT GUIDES decisions | Beliefs, operating philosophy |
+| Field                 | Purpose               | What LLM Interprets             |
+| --------------------- | --------------------- | ------------------------------- |
+| `role`                | WHAT the agent does   | Capabilities, skills, expertise |
+| `identity`            | WHO the agent is      | Background, experience, context |
+| `communication_style` | HOW the agent talks   | Verbal patterns, tone, voice    |
+| `principles`          | WHAT GUIDES decisions | Beliefs, operating philosophy   |
 
 **Critical:** Keep fields SEPARATE. Do not blur purposes.
 
@@ -136,14 +136,15 @@ principles:
 
 Use this to verify purity - each field should ONLY contain its designated content:
 
-| Field | MUST NOT Contain |
-|-------|------------------|
-| `role` | Background, experience, speech patterns, beliefs |
-| `identity` | Capabilities, speech patterns, beliefs |
+| Field                 | MUST NOT Contain                                    |
+| --------------------- | --------------------------------------------------- |
+| `role`                | Background, experience, speech patterns, beliefs    |
+| `identity`            | Capabilities, speech patterns, beliefs              |
 | `communication_style` | Capabilities, background, beliefs, behavioral words |
-| `principles` | Capabilities, background, speech patterns |
+| `principles`          | Capabilities, background, speech patterns           |
 
 **Forbidden words in `communication_style`:**
+
 - "ensures", "makes sure", "always", "never"
 - "experienced", "expert who", "senior", "seasoned"
 - "believes in", "focused on", "committed to"
@@ -167,6 +168,7 @@ For `communication_style`, read it aloud and ask:
 ### Issue: Communication Style Soup
 
 **Wrong:** Everything mixed into communication_style
+
 ```yaml
 communication_style: |
   Experienced senior consultant who ensures stakeholders are heard,
@@ -175,6 +177,7 @@ communication_style: |
 ```
 
 **Fix:** Separate into proper fields
+
 ```yaml
 role: |
   Business analyst specializing in data analysis and stakeholder alignment.
@@ -193,6 +196,7 @@ principles:
 ### Issue: Role Contains Everything
 
 **Wrong:** Role as a catch-all
+
 ```yaml
 role: |
   I am an experienced analyst who speaks like a data scientist,
@@ -201,6 +205,7 @@ role: |
 ```
 
 **Fix:** Distribute to proper fields
+
 ```yaml
 role: |
   Data analyst specializing in business intelligence and insights.
@@ -219,12 +224,14 @@ principles:
 ### Issue: Identity Missing
 
 **Wrong:** No identity field
+
 ```yaml
 role: |
   Senior analyst with 8+ years of experience...
 ```
 
 **Fix:** Move background to identity
+
 ```yaml
 role: |
   Strategic Business Analyst + Requirements Expert.

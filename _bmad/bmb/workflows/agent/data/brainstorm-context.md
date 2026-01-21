@@ -1,4 +1,5 @@
 # Agent Creation Brainstorming Context
+
 ## Session Focus
 
 You're brainstorming the **essence** of a BMAD agent - the living personality AND the utility it provides. Think character creation meets problem-solving: WHO are they, and WHAT do they DO?

@@ -44,6 +44,7 @@ Read `{agentMenuPatterns}` to understand menu structure requirements.
 ### 2. Review Current Commands
 
 From `{editPlan}`, display current commands with:
+
 - trigger
 - description
 - handler/action
@@ -51,15 +52,18 @@ From `{editPlan}`, display current commands with:
 ### 3. Discuss Command Edits
 
 **For additions:**
+
 - Define trigger (clear, intuitive, following conventions)
 - Define description (concise, one line)
 - Define handler/action (references capability)
 
 **For modifications:**
+
 - Update trigger, description, or handler
 - Ensure still follows menu patterns
 
 **For removals:**
+
 - Identify commands to remove
 - Confirm impact on agent functionality
 
@@ -70,14 +74,14 @@ Append to `{editPlan}`:
 ```yaml
 commandEdits:
   additions:
-    - trigger: {trigger}
-      description: {description}
-      handler: {handler}
+    - trigger: { trigger }
+      description: { description }
+      handler: { handler }
   modifications:
-    - command: {existing-command}
-      changes: {what-to-change}
+    - command: { existing-command }
+      changes: { what-to-change }
   removals:
-    - command: {command-to-remove}
+    - command: { command-to-remove }
 ```
 
 ### 5. Present MENU OPTIONS

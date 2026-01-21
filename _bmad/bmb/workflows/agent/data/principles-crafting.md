@@ -28,6 +28,7 @@ principles:
 ```
 
 **Template for first principle:**
+
 ```
 "Channel expert [domain] knowledge: draw upon deep understanding of [key frameworks, patterns, mental models]"
 ```
@@ -36,12 +37,12 @@ principles:
 
 ## What Principles Are NOT
 
-| Principles ARE | Principles are NOT |
-|----------------|-------------------|
-| Unique philosophy | Job description |
-| What makes THIS agent different | Generic filler |
-| 3-5 focused beliefs | 5-8 obvious duties |
-| "I believe X" | "I will do X" (that's a task) |
+| Principles ARE                  | Principles are NOT            |
+| ------------------------------- | ----------------------------- |
+| Unique philosophy               | Job description               |
+| What makes THIS agent different | Generic filler                |
+| 3-5 focused beliefs             | 5-8 obvious duties            |
+| "I believe X"                   | "I will do X" (that's a task) |
 
 **If it's obvious for the role, it doesn't belong in principles.**
 
@@ -80,6 +81,7 @@ principles:
 ```
 
 **Why it works:**
+
 - First principle activates expert EM knowledge
 - "Career is non-negotiable" - fiercely protective stance
 - Each principle is a belief, not a task
@@ -101,6 +103,7 @@ principles:
 ```
 
 **Why it works:**
+
 - First principle activates hypnosis expertise
 - "Every word must drip with feeling" - unique emotional twist
 - Each principle reinforces the emotional approach
@@ -122,6 +125,7 @@ principles:
 ```
 
 **Why it works:**
+
 - First principle activates PM frameworks (JTBD, opportunity scoring)
 - "PRDs emerge from interviews" - specific philosophy
 - Each principle is a belief, not a process step
@@ -142,6 +146,7 @@ principles:
 ```
 
 **Why it works:**
+
 - First principle activates attacker mindset + OWASP knowledge
 - "Every user input is an exploit vector" - specific belief
 - Each principle is actionable philosophy
@@ -208,13 +213,13 @@ For each principle, ask: **"Would this be obvious to anyone in this role?"**
 If YES → Remove it
 If NO → Keep it
 
-| Principle | Obvious? | Verdict |
-|-----------|----------|---------|
-| "Collaborate with stakeholders" | Yes - all PMs do this | ❌ Remove |
-| "Every user input is an exploit vector" | No - this is a specific security mindset | ✅ Keep |
-| "Write clean code" | Yes - all developers should | ❌ Remove |
-| "Your career is non-negotiable" | No - this is a fierce protective stance | ✅ Keep |
-| "Document everything" | Borderline - keep if it's a specific philosophy | ✅ Keep |
+| Principle                               | Obvious?                                        | Verdict   |
+| --------------------------------------- | ----------------------------------------------- | --------- |
+| "Collaborate with stakeholders"         | Yes - all PMs do this                           | ❌ Remove |
+| "Every user input is an exploit vector" | No - this is a specific security mindset        | ✅ Keep   |
+| "Write clean code"                      | Yes - all developers should                     | ❌ Remove |
+| "Your career is non-negotiable"         | No - this is a fierce protective stance         | ✅ Keep   |
+| "Document everything"                   | Borderline - keep if it's a specific philosophy | ✅ Keep   |
 
 ---
 
@@ -235,6 +240,7 @@ If NO → Keep it
 ### Issue: Principles as Job Description
 
 **Wrong:**
+
 ```yaml
 principles:
   - Facilitate meetings with stakeholders
@@ -243,6 +249,7 @@ principles:
 ```
 
 **Fix:**
+
 ```yaml
 principles:
   - Channel expert facilitation: draw upon consensus-building frameworks, conflict
@@ -277,6 +284,7 @@ principles:
 ### Issue: Generic Opener
 
 **Wrong:**
+
 ```yaml
 principles:
   - Be professional in all interactions
@@ -284,6 +292,7 @@ principles:
 ```
 
 **Fix:**
+
 ```yaml
 principles:
   - Channel expert [domain] wisdom: [specific frameworks, mental models]

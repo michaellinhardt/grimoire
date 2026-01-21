@@ -74,6 +74,7 @@ After reviewing a multi-agent session in Grimoire, the user feels confident they
 
 **The Escape Hatch Test:**
 If any of these fail, the user falls back to CLI:
+
 - Slow startup (> 3 seconds)
 - Missing sessions
 - Unreadable UI (can't tell tools from messages)
@@ -84,11 +85,11 @@ If any of these fail, the user falls back to CLI:
 
 **Personal Utility Adoption** (personal tool metrics):
 
-| Timeframe | Success Indicator |
-|-----------|-------------------|
-| 1 month | Opening Grimoire instead of terminal for all CC sessions |
-| 3 months | Grimoire has revealed workflow insights that improved prompts/agents |
-| 6 months | Removing Grimoire would feel like losing a critical tool |
+| Timeframe | Success Indicator                                                    |
+| --------- | -------------------------------------------------------------------- |
+| 1 month   | Opening Grimoire instead of terminal for all CC sessions             |
+| 3 months  | Grimoire has revealed workflow insights that improved prompts/agents |
+| 6 months  | Removing Grimoire would feel like losing a critical tool             |
 
 **Core Test:** "Do I open Grimoire instead of defaulting to CLI?"
 
@@ -104,18 +105,21 @@ If any of these fail, the user falls back to CLI:
 | Child spawn | < 500ms |
 
 **Reliability Requirements:**
+
 - All CC sessions from `~/.claude/projects/` display correctly
 - Zero data loss or corruption
 - Works offline, no account required
 - Human-readable errors (no stack traces)
 
 **Child Process Management:**
+
 - Child processes spawn per message and exit after response
 - Each message triggers a new process invocation
 - Active (Working) sessions show visual indicator in session list
 - Session ID ↔ child process mapping always accurate
 
 **Plugin Architecture Validation:**
+
 - Core plugin (Sessions) runs on same architecture community plugins will use
 - Plugins can be toggled on/off from settings
 - Per-plugin settings functional
@@ -124,6 +128,7 @@ If any of these fail, the user falls back to CLI:
 ### Measurable Outcomes
 
 **Phase 1 Complete When:**
+
 - [ ] Core infrastructure functional and stable
 - [ ] Sessions plugin fully operational (history, create, interact, real-time)
 - [ ] Plugin architecture validated with Sessions core plugin
@@ -136,15 +141,14 @@ If any of these fail, the user falls back to CLI:
 ### MVP - Phase 1: Observability Core
 
 **Core Infrastructure:**
+
 1. Core UI Shell (Obsidian-inspired ribbon + panels)
 2. Loading Screen (CC verification, auth check)
 3. Plugin Architecture (settings page, enable/disable, per-plugin config)
 
-**Core Plugins:**
-4. Sessions (unified session management: history, create new, interact, real-time view, child process lifecycle)
+**Core Plugins:** 4. Sessions (unified session management: history, create new, interact, real-time view, child process lifecycle)
 
-**Capabilities:**
-5. Run CC from Grimoire (spawn with `CLAUDE_CONFIG_DIR` isolation, intelligent child lifecycle)
+**Capabilities:** 5. Run CC from Grimoire (spawn with `CLAUDE_CONFIG_DIR` isolation, intelligent child lifecycle)
 
 ### Growth Features (Post-MVP)
 
@@ -207,6 +211,7 @@ You've been using Grimoire for a week. You want to tweak a few things to match y
 You open Settings and navigate to Core Plugins. The Sessions plugin is listed with a toggle (enabled) and a settings gear. You click the gear.
 
 Inside, you find options that matter:
+
 - "Default sub-agent view: Collapsed / Expanded" - you set it to Collapsed (less visual noise)
 - "Tool calls: Show summary / Show full" - you keep it on Summary (expand on click)
 - "Sessions list: Show last 20 / 50 / 100" - you bump it to 50
@@ -219,11 +224,11 @@ The plugin system that will power community plugins someday is already powering 
 
 ### Journey Requirements Summary
 
-| Journey | Capabilities Required |
-|---------|----------------------|
-| Session Reviewer | Session list, conversation view, sub-agent expansion, tool call display, error indicators |
-| Sessions | Chat input, child process spawn/stop, session ID management, real-time streaming, visual status indicators |
-| Plugin Manager | Settings UI, plugin toggle, per-plugin config |
+| Journey          | Capabilities Required                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------- |
+| Session Reviewer | Session list, conversation view, sub-agent expansion, tool call display, error indicators                  |
+| Sessions         | Chat input, child process spawn/stop, session ID management, real-time streaming, visual status indicators |
+| Plugin Manager   | Settings UI, plugin toggle, per-plugin config                                                              |
 
 ## Innovation & Novel Patterns
 
@@ -234,16 +239,17 @@ Grimoire transforms Claude Code from a terminal-only tool into a visual, interac
 
 **Key Innovation Dimensions:**
 
-| Dimension | Current State | Grimoire Innovation |
-|-----------|--------------|---------------------|
-| Access | CLI-only, expert users | Visual interface, accessible to non-experts |
-| Session management | Terminal history, raw JSON | Unified list, click-to-resume |
-| Multi-agent visibility | Opaque, buried in output | Clear tree, expandable conversations |
-| Workflow control | Command line, flags, manual | Chat interface, intelligent process lifecycle |
+| Dimension              | Current State               | Grimoire Innovation                           |
+| ---------------------- | --------------------------- | --------------------------------------------- |
+| Access                 | CLI-only, expert users      | Visual interface, accessible to non-experts   |
+| Session management     | Terminal history, raw JSON  | Unified list, click-to-resume                 |
+| Multi-agent visibility | Opaque, buried in output    | Clear tree, expandable conversations          |
+| Workflow control       | Command line, flags, manual | Chat interface, intelligent process lifecycle |
 
 ### Future Innovation Potential
 
 Phase 1 establishes the foundation. Future phases unlock:
+
 - **Workflow creation** for non-experts (no code, no CLI)
 - **Workflow sharing** (community templates)
 - **Plugin ecosystem** (community extensions)
@@ -253,22 +259,24 @@ These capabilities will open Claude Code's power to an audience that would never
 ### Validation Approach
 
 **Phase 1 Success Criterion:**
+
 > "I don't need to use the terminal anymore."
 
 If Grimoire becomes the default way to interact with Claude Code - replacing terminal entirely for session creation, interaction, and review - the core innovation is validated.
 
 **Future Validation:**
+
 - Non-expert users can operate Grimoire without CLI knowledge
 - Workflow builder enables creation without code
 - Community adoption of plugin/workflow ecosystem
 
 ### Risk Mitigation
 
-| Risk | Mitigation |
-|------|------------|
-| Too slow vs CLI | Performance targets (< 3s startup, < 500ms spawn) |
-| Missing CLI capabilities | Ensure all CC features accessible via chat interface |
-| Complexity creep | Foundation-first approach, no over-building |
+| Risk                          | Mitigation                                                |
+| ----------------------------- | --------------------------------------------------------- |
+| Too slow vs CLI               | Performance targets (< 3s startup, < 500ms spawn)         |
+| Missing CLI capabilities      | Ensure all CC features accessible via chat interface      |
+| Complexity creep              | Foundation-first approach, no over-building               |
 | Plugin architecture fragility | Core plugins validate architecture before community opens |
 
 ## Desktop App Specific Requirements
@@ -280,11 +288,13 @@ Grimoire is an Electron-based desktop application. Phase 1 focuses on Mac as the
 ### Platform Support
 
 **Phase 1:**
+
 - Primary: macOS (development and testing focus)
 - Architecture: Electron (cross-platform ready)
 - No platform-specific code that would block future expansion
 
 **Post-Phase 1:**
+
 - Windows support
 - Linux support
 - Platform-specific optimizations as needed
@@ -292,6 +302,7 @@ Grimoire is an Electron-based desktop application. Phase 1 focuses on Mac as the
 ### Update Strategy
 
 **Auto-Update Behavior:**
+
 - Check for updates on app launch
 - Prompt user when new version available
 - User options: Update now / Skip this version / Remind me later
@@ -301,6 +312,7 @@ Grimoire is an Electron-based desktop application. Phase 1 focuses on Mac as the
 ### System Integration
 
 **Phase 1:**
+
 - CC child process spawning and lifecycle management via 3-state machine:
   - **Idle:** No process running
   - **Working:** CC processing ("Thinking..." indicator shown)
@@ -310,6 +322,7 @@ Grimoire is an Electron-based desktop application. Phase 1 focuses on Mac as the
 - `CLAUDE_CONFIG_DIR` isolation for CC instances (per-process env var)
 
 **Post-Phase 1:**
+
 - System notifications (session complete, errors, etc.)
 - Global keyboard shortcuts
 - Menu bar presence (optional)
@@ -318,16 +331,19 @@ Grimoire is an Electron-based desktop application. Phase 1 focuses on Mac as the
 ### Offline Capabilities
 
 **Offline-First Design:**
+
 - App launches and functions without internet
 - Full session history browsing offline
 - Workflow creation and editing offline
 - Plugin settings and configuration offline
 
 **Online Required:**
+
 - Running CC sessions (API calls)
 - Update checks
 
 **Offline Indicator:**
+
 - Clear UI indication when offline
 - Graceful handling when attempting online-only actions
 
@@ -343,21 +359,23 @@ Build the foundational architecture that enables future expansion. Prove the cor
 ### MVP Feature Set (Phase 1)
 
 **Supported User Journeys:**
+
 - Session Reviewer - Full support
 - Sessions (interactive) - Full support
 - Plugin Manager - Basic support
 
 **Must-Have Capabilities:**
 
-| Component | Purpose |
-|-----------|---------|
-| Core UI Shell | Obsidian-inspired ribbon + panels foundation |
-| Loading Screen | CC verification, auth check, app initialization |
-| Plugin Architecture | Settings page, enable/disable, per-plugin config |
-| Sessions Plugin | History, create, interact, real-time view, child lifecycle |
+| Component            | Purpose                                                               |
+| -------------------- | --------------------------------------------------------------------- |
+| Core UI Shell        | Obsidian-inspired ribbon + panels foundation                          |
+| Loading Screen       | CC verification, auth check, app initialization                       |
+| Plugin Architecture  | Settings page, enable/disable, per-plugin config                      |
+| Sessions Plugin      | History, create, interact, real-time view, child lifecycle            |
 | Run CC from Grimoire | Spawn with `CLAUDE_CONFIG_DIR` isolation, intelligent child lifecycle |
 
 **Explicitly Deferred:**
+
 - Internationalization (EN/FR) - Post-MVP
 - System notifications - Post-MVP
 - Global keyboard shortcuts - Post-MVP
@@ -366,18 +384,21 @@ Build the foundational architecture that enables future expansion. Prove the cor
 ### Post-MVP Features
 
 **Phase 2 (Enhancement):**
+
 - i18n System (EN, FR, architecture for more)
 - System notifications
 - Global keyboard shortcuts
 - Windows/Linux support
 
 **Phase 3 (Expansion):**
+
 - Workflow library and management
 - Workflow builder
 - Community plugin support
 - Sharing/export workflows
 
 **Phase 4 (Vision):**
+
 - Reusable workflow templates
 - Shared agent memory spaces
 - Workflow chaining
@@ -586,33 +607,36 @@ Build the foundational architecture that enables future expansion. Prove the cor
 
 ### Performance
 
-| Metric | Requirement | Rationale |
-|--------|-------------|-----------|
-| App startup | < 3 seconds | Faster than opening terminal + typing `claude` |
-| Session load (100+ messages) | < 1 second | Instant-feel navigation |
-| Sub-agent expansion | < 100ms | Perceived as instant |
-| Child spawn/resume | < 500ms | No waiting after hitting Enter |
-| Response display | Minimal delay after process completion | Fast feedback with "Thinking..." indicator |
-| Panel resize/collapse | Instant | No UI jank |
-| Tab switching | Instant | No reload delay |
+| Metric                       | Requirement                            | Rationale                                      |
+| ---------------------------- | -------------------------------------- | ---------------------------------------------- |
+| App startup                  | < 3 seconds                            | Faster than opening terminal + typing `claude` |
+| Session load (100+ messages) | < 1 second                             | Instant-feel navigation                        |
+| Sub-agent expansion          | < 100ms                                | Perceived as instant                           |
+| Child spawn/resume           | < 500ms                                | No waiting after hitting Enter                 |
+| Response display             | Minimal delay after process completion | Fast feedback with "Thinking..." indicator     |
+| Panel resize/collapse        | Instant                                | No UI jank                                     |
+| Tab switching                | Instant                                | No reload delay                                |
 
 **Performance Gate:** If any user-facing operation feels slower than the CLI equivalent, it's a bug.
 
 ### Reliability
 
 **Data Integrity:**
+
 - Zero session data loss under any circumstance
 - User input preserved even if CC spawn fails
 - Application state persists across crashes/restarts
 - Graceful degradation when offline (read-only operations work)
 
 **Crash Recovery:**
+
 - Application restarts to last known good state
 - Open tabs/sessions restored on restart
 - No corruption of session files or preferences
 - Clear error messaging when recovery needed
 
 **Process Stability:**
+
 - Child process failures don't crash the main application
 - Orphaned child processes are cleaned up on app quit
 - Memory usage remains stable during long sessions
@@ -620,6 +644,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 ### Integration
 
 **Claude Code Integration:**
+
 - Reads session files from `CLAUDE_CONFIG_DIR` folder (platform-specific app data path)
 - Spawns CC with `--session-id` and `-p` arguments (request-response mode)
 - Passes user message to CC child process via `-p` argument
@@ -627,11 +652,13 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - `CLAUDE_CONFIG_DIR` isolation prevents config conflicts (per-process env var)
 
 **File System:**
+
 - Session file read after each process exit to retrieve response
 - Session list updates on app startup and after session interactions
 - New sessions discovered via background scan on startup
 
 **System:**
+
 - Respects system dark/light mode (if applicable to UI framework)
 - Proper app lifecycle (quit, minimize, background behavior)
 

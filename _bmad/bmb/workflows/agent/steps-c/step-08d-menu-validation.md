@@ -27,12 +27,14 @@ Validate that the agent's menu (commands/tools) follows BMAD patterns, is well-s
 ## EXECUTION PROTOCOLS
 
 ### Protocol 1: Load and Compare
+
 1. Read the menu patterns reference from `{agentMenuPatterns}`
 2. Read the built agent YAML from `{builtYaml}`
 3. Extract the menu/commands section from the builtYaml
 4. Compare actual menu against validation rules
 
 ### Protocol 2: Validation Checks
+
 Perform these checks systematically:
 
 1. **Menu Structure**
@@ -79,9 +81,11 @@ Perform these checks systematically:
    - [ ] Consistent naming conventions
 
 ### Protocol 3: Report Findings
+
 Organize your report into three sections:
 
 **PASSING CHECKS** (List what passed)
+
 ```
 ✓ Menu structure properly formatted
 ✓ 5 menu items defined, all with required fields
@@ -90,6 +94,7 @@ Organize your report into three sections:
 ```
 
 **WARNINGS** (Non-blocking issues)
+
 ```
 ⚠ Item "analyze-data" description is vague
 ⚠ No menu item for [common capability X]
@@ -97,6 +102,7 @@ Organize your report into three sections:
 ```
 
 **FAILURES** (Blocking issues that must be fixed)
+
 ```
 ✗ Duplicate menu item name: "process" appears twice
 ✗ Invalid regex pattern: "[unclosed bracket"
@@ -128,18 +134,21 @@ Display: "**Select an Option:** [A] Advanced Elicitation [F] Fix Findings [P] Pa
 ## CONTEXT BOUNDARIES
 
 **IN SCOPE:**
+
 - Menu/commands section of agent.yaml
 - Referencing agentMenuPatterns.md
 - Menu structure, patterns, and alignment
 - Individual menu item validation
 
 **OUT OF SCOPE:**
+
 - Metadata fields (handled in step-07b)
 - Persona fields (handled in step-07c)
 - System architecture (handled in step-07e)
 - Workflow/capability implementation (handled in step-07f)
 
 **DO NOT:**
+
 - Validate metadata or persona in this step
 - Suggest entirely new capabilities (that's for earlier steps)
 - Question whether menu items are "good enough" qualitatively beyond standards

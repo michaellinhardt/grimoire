@@ -43,6 +43,7 @@ Read `{editPlan}` to get agent file path.
 ### 2. Validate Structure
 
 Perform checks on:
+
 - **YAML syntax**: valid, no parse errors
 - **Required fields**: name, description, type, persona present
 - **Field types**: arrays where expected, strings where expected
@@ -53,11 +54,11 @@ Perform checks on:
 Append to editPlan frontmatter:
 
 ```yaml
-  structure:
-    status: [pass|fail|warning]
-    findings:
-      - {check}: [pass|fail]
-      - {check}: [pass|fail]
+structure:
+  status: [pass|fail|warning]
+  findings:
+    - { check }: [pass|fail]
+    - { check }: [pass|fail]
 ```
 
 ### 4. Auto-Advance

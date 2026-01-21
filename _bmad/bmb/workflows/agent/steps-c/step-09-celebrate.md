@@ -118,12 +118,14 @@ Present enthusiastic celebration:
 "To make your agent installable and sharable, you'll need to package it as a standalone BMAD content module. Here's what you need to know:"
 
 **Key Steps:**
+
 1. **Create a module folder:** Name it something descriptive (e.g., `my-custom-stuff`)
 2. **Add module.yaml:** Include a `module.yaml` file with `unitary: true`
 3. **Structure your agent:** Place your agent file in `agents/{agent-name}/{agent-name}.agent.yaml`
 4. **Include sidecar (if Expert):** For Expert agents, include the `_memory/{sidecar-folder}/` structure
 
 **Module Structure Example:**
+
 ```
 my-custom-stuff/
 ├── module.yaml          # Contains: unitary: true
@@ -142,6 +144,7 @@ my-custom-stuff/
 **Note:** Your custom module can contain agents, workflows, or both. The `agents/` and `workflows/` folders are siblings alongside `module.yaml`.
 
 **Installation Methods:**
+
 - **New projects:** The BMAD installer will prompt for local custom modules
 - **Existing projects:** Use "Modify BMAD Installation" to add your module
 

@@ -31,6 +31,7 @@ Agents with a sidecar folder for persistent memory, custom workflows, and restri
 ```
 
 **Naming:**
+
 - Agent file: `{agent-name}.agent.yaml`
 - Sidecar folder: `{agent-name}-sidecar/`
 - Lowercase, hyphenated names
@@ -53,18 +54,18 @@ At build/install, sidecar is copied to `{project-root}/_bmad/_memory/{sidecar-fo
 ```yaml
 # ✅ CORRECT
 critical_actions:
-  - "Load COMPLETE file {project-root}/_bmad/_memory/journal-keeper-sidecar/memories.md"
-  - "ONLY read/write files in {project-root}/_bmad/_memory/journal-keeper-sidecar/"
+  - 'Load COMPLETE file {project-root}/_bmad/_memory/journal-keeper-sidecar/memories.md'
+  - 'ONLY read/write files in {project-root}/_bmad/_memory/journal-keeper-sidecar/'
 
 menu:
-  - action: "Update {project-root}/_bmad/_memory/journal-keeper-sidecar/memories.md with insights"
+  - action: 'Update {project-root}/_bmad/_memory/journal-keeper-sidecar/memories.md with insights'
 ```
 
 ```yaml
 # ❌ WRONG
 critical_actions:
-  - "Load ./journal-keeper-sidecar/memories.md"
-  - "Load /Users/absolute/path/memories.md"
+  - 'Load ./journal-keeper-sidecar/memories.md'
+  - 'Load /Users/absolute/path/memories.md'
 ```
 
 ---
@@ -78,7 +79,7 @@ agent:
     name: 'Persona Name'
     title: 'Agent Title'
     icon: '🔧'
-    module: stand-alone           # or: bmm, cis, bmgd, other
+    module: stand-alone # or: bmm, cis, bmgd, other
 
   persona:
     role: |
@@ -130,10 +131,12 @@ critical_actions:
 ### Sidecar Files (Customizable)
 
 **Common patterns:**
+
 - `instructions.md` - Startup protocols, domain boundaries
 - `memories.md` - User profile, session notes, patterns
 
 **Fully customizable - add what your agent needs:**
+
 - `workflows/` - Large workflows for on-demand loading
 - `knowledge/` - Domain reference material
 - `data/` - Data files
@@ -203,6 +206,7 @@ Compiler handles these automatically:
 **Folder:** `{workflow_path}/data/reference/expert-examples/journal-keeper/`
 
 **Features:**
+
 - First-person persona with memory reference patterns
 - critical_actions loading sidecar files
 - Menu items updating sidecar files

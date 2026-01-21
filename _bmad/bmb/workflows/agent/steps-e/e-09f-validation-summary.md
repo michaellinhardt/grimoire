@@ -46,13 +46,13 @@ Read `{editPlan}` frontmatter to collect validationBefore and validationAfter fi
 
 ### Before vs After Comparison
 
-| Component | Before | After | Status |
-|-----------|--------|-------|--------|
-| Metadata | {status} | {status} | {Δ} |
-| Persona | {status} | {status} | {Δ} |
-| Menu | {status} | {status} | {Δ} |
-| Structure | {status} | {status} | {Δ} |
-| Sidecar | {status} | {status} | {Δ} |
+| Component | Before   | After    | Status |
+| --------- | -------- | -------- | ------ |
+| Metadata  | {status} | {status} | {Δ}    |
+| Persona   | {status} | {status} | {Δ}    |
+| Menu      | {status} | {status} | {Δ}    |
+| Structure | {status} | {status} | {Δ}    |
+| Sidecar   | {status} | {status} | {Δ}    |
 
 ### Detailed Findings (After Edit)
 

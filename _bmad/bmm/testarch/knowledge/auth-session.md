@@ -33,46 +33,54 @@ The `auth-session` utility provides:
 
 ```typescript
 // Step 1: Configure in global-setup.ts
-import { authStorageInit, setAuthProvider, configureAuthSession, authGlobalInit } from '@seontechnologies/playwright-utils/auth-session';
-import myCustomProvider from './auth/custom-auth-provider';
+import {
+  authStorageInit,
+  setAuthProvider,
+  configureAuthSession,
+  authGlobalInit
+} from '@seontechnologies/playwright-utils/auth-session'
+import myCustomProvider from './auth/custom-auth-provider'
 
 async function globalSetup() {
   // Ensure storage directories exist
-  authStorageInit();
+  authStorageInit()
 
   // Configure storage path
   configureAuthSession({
     authStoragePath: process.cwd() + '/playwright/auth-sessions',
-    debug: true,
-  });
+    debug: true
+  })
 
   // Set custom provider (HOW to authenticate)
-  setAuthProvider(myCustomProvider);
+  setAuthProvider(myCustomProvider)
 
   // Optional: pre-fetch token for default user
-  await authGlobalInit();
+  await authGlobalInit()
 }
 
-export default globalSetup;
+export default globalSetup
 
 // Step 2: Create auth fixture
-import { test as base } from '@playwright/test';
-import { createAuthFixtures, setAuthProvider } from '@seontechnologies/playwright-utils/auth-session';
-import myCustomProvider from './custom-auth-provider';
+import { test as base } from '@playwright/test'
+import {
+  createAuthFixtures,
+  setAuthProvider
+} from '@seontechnologies/playwright-utils/auth-session'
+import myCustomProvider from './custom-auth-provider'
 
 // Register provider early
-setAuthProvider(myCustomProvider);
+setAuthProvider(myCustomProvider)
 
-export const test = base.extend(createAuthFixtures());
+export const test = base.extend(createAuthFixtures())
 
 // Step 3: Use in tests
 test('authenticated request', async ({ authToken, request }) => {
   const response = await request.get('/api/protected', {
-    headers: { Authorization: `Bearer ${authToken}` },
-  });
+    headers: { Authorization: `Bearer ${authToken}` }
+  })
 
-  expect(response.ok()).toBeTruthy();
-});
+  expect(response.ok()).toBeTruthy()
+})
 ```
 
 **Key Points**:
@@ -89,34 +97,34 @@ test('authenticated request', async ({ authToken, request }) => {
 **Implementation**:
 
 ```typescript
-import { test } from '../support/auth/auth-fixture';
+import { test } from '../support/auth/auth-fixture'
 
 // Option 1: Per-test user override
 test('admin actions', async ({ authToken, authOptions }) => {
   // Override default user
-  authOptions.userIdentifier = 'admin';
+  authOptions.userIdentifier = 'admin'
 
   const { authToken: adminToken } = await test.step('Get admin token', async () => {
-    return { authToken }; // Re-fetches with new identifier
-  });
+    return { authToken } // Re-fetches with new identifier
+  })
 
   // Use admin token
   const response = await request.get('/api/admin/users', {
-    headers: { Authorization: `Bearer ${adminToken}` },
-  });
-});
+    headers: { Authorization: `Bearer ${adminToken}` }
+  })
+})
 
 // Option 2: Parallel execution with different users
 test.describe.parallel('multi-user tests', () => {
   test('user 1 actions', async ({ authToken }) => {
     // Uses default user (e.g., 'user1')
-  });
+  })
 
   test('user 2 actions', async ({ authToken, authOptions }) => {
-    authOptions.userIdentifier = 'user2';
+    authOptions.userIdentifier = 'user2'
     // Uses different token for user2
-  });
-});
+  })
+})
 ```
 
 **Key Points**:
@@ -133,26 +141,26 @@ test.describe.parallel('multi-user tests', () => {
 **Implementation**:
 
 ```typescript
-import { applyUserCookiesToBrowserContext } from '@seontechnologies/playwright-utils/auth-session';
-import { createTestUser } from '../utils/user-factory';
+import { applyUserCookiesToBrowserContext } from '@seontechnologies/playwright-utils/auth-session'
+import { createTestUser } from '../utils/user-factory'
 
 test('ephemeral user test', async ({ context, page }) => {
   // Create temporary user (not persisted)
   const ephemeralUser = await createTestUser({
     role: 'admin',
-    permissions: ['delete-users'],
-  });
+    permissions: ['delete-users']
+  })
 
   // Apply auth directly to browser context
-  await applyUserCookiesToBrowserContext(context, ephemeralUser);
+  await applyUserCookiesToBrowserContext(context, ephemeralUser)
 
   // Page now authenticated as ephemeral user
-  await page.goto('/admin/users');
+  await page.goto('/admin/users')
 
-  await expect(page.getByTestId('delete-user-btn')).toBeVisible();
+  await expect(page.getByTestId('delete-user-btn')).toBeVisible()
 
   // User and token cleaned up after test
-});
+})
 ```
 
 **Key Points**:
@@ -172,29 +180,29 @@ test('ephemeral user test', async ({ context, page }) => {
 test('user interaction', async ({ browser }) => {
   // User 1 context
   const user1Context = await browser.newContext({
-    storageState: './auth-sessions/local/user1/storage-state.json',
-  });
-  const user1Page = await user1Context.newPage();
+    storageState: './auth-sessions/local/user1/storage-state.json'
+  })
+  const user1Page = await user1Context.newPage()
 
   // User 2 context
   const user2Context = await browser.newContext({
-    storageState: './auth-sessions/local/user2/storage-state.json',
-  });
-  const user2Page = await user2Context.newPage();
+    storageState: './auth-sessions/local/user2/storage-state.json'
+  })
+  const user2Page = await user2Context.newPage()
 
   // User 1 sends message
-  await user1Page.goto('/messages');
-  await user1Page.fill('#message', 'Hello from user 1');
-  await user1Page.click('#send');
+  await user1Page.goto('/messages')
+  await user1Page.fill('#message', 'Hello from user 1')
+  await user1Page.click('#send')
 
   // User 2 receives message
-  await user2Page.goto('/messages');
-  await expect(user2Page.getByText('Hello from user 1')).toBeVisible();
+  await user2Page.goto('/messages')
+  await expect(user2Page.getByText('Hello from user 1')).toBeVisible()
 
   // Cleanup
-  await user1Context.close();
-  await user2Context.close();
-});
+  await user1Context.close()
+  await user2Context.close()
+})
 ```
 
 **Key Points**:
@@ -217,24 +225,24 @@ export default defineConfig({
   use: {
     // Each worker uses different user
     storageState: async ({}, use, testInfo) => {
-      const workerIndex = testInfo.workerIndex;
-      const userIdentifier = `worker-${workerIndex}`;
+      const workerIndex = testInfo.workerIndex
+      const userIdentifier = `worker-${workerIndex}`
 
-      await use(`./auth-sessions/local/${userIdentifier}/storage-state.json`);
-    },
-  },
-});
+      await use(`./auth-sessions/local/${userIdentifier}/storage-state.json`)
+    }
+  }
+})
 
 // Tests run in parallel, each worker with its own user
 test('parallel test 1', async ({ page }) => {
   // Worker 0 uses worker-0 account
-  await page.goto('/dashboard');
-});
+  await page.goto('/dashboard')
+})
 
 test('parallel test 2', async ({ page }) => {
   // Worker 1 uses worker-1 account
-  await page.goto('/dashboard');
-});
+  await page.goto('/dashboard')
+})
 ```
 
 **Key Points**:
@@ -251,7 +259,7 @@ test('parallel test 2', async ({ page }) => {
 **Minimal provider structure**:
 
 ```typescript
-import { type AuthProvider } from '@seontechnologies/playwright-utils/auth-session';
+import { type AuthProvider } from '@seontechnologies/playwright-utils/auth-session'
 
 const myCustomProvider: AuthProvider = {
   getEnvironment: (options) => options.environment || 'local',
@@ -260,7 +268,7 @@ const myCustomProvider: AuthProvider = {
 
   extractToken: (storageState) => {
     // Extract token from your storage format
-    return storageState.cookies.find((c) => c.name === 'auth_token')?.value;
+    return storageState.cookies.find((c) => c.name === 'auth_token')?.value
   },
 
   extractCookies: (tokenData) => {
@@ -272,40 +280,40 @@ const myCustomProvider: AuthProvider = {
         domain: 'example.com',
         path: '/',
         httpOnly: true,
-        secure: true,
-      },
-    ];
+        secure: true
+      }
+    ]
   },
 
   isTokenExpired: (storageState) => {
     // Check if token is expired
-    const expiresAt = storageState.cookies.find((c) => c.name === 'expires_at');
-    return Date.now() > parseInt(expiresAt?.value || '0');
+    const expiresAt = storageState.cookies.find((c) => c.name === 'expires_at')
+    return Date.now() > parseInt(expiresAt?.value || '0')
   },
 
   manageAuthToken: async (request, options) => {
     // Main token acquisition logic
     // Return storage state with cookies/localStorage
-  },
-};
+  }
+}
 
-export default myCustomProvider;
+export default myCustomProvider
 ```
 
 ## Integration with API Request
 
 ```typescript
-import { test } from '@seontechnologies/playwright-utils/fixtures';
+import { test } from '@seontechnologies/playwright-utils/fixtures'
 
 test('authenticated API call', async ({ apiRequest, authToken }) => {
   const { status, body } = await apiRequest({
     method: 'GET',
     path: '/api/protected',
-    headers: { Authorization: `Bearer ${authToken}` },
-  });
+    headers: { Authorization: `Bearer ${authToken}` }
+  })
 
-  expect(status).toBe(200);
-});
+  expect(status).toBe(200)
+})
 ```
 
 ## Related Fragments
@@ -340,17 +348,17 @@ async function globalSetup() {
 **❌ Hardcoding storage paths:**
 
 ```typescript
-const storageState = './auth-sessions/local/user1/storage-state.json'; // Brittle
+const storageState = './auth-sessions/local/user1/storage-state.json' // Brittle
 ```
 
 **✅ Use helper functions:**
 
 ```typescript
-import { getTokenFilePath } from '@seontechnologies/playwright-utils/auth-session';
+import { getTokenFilePath } from '@seontechnologies/playwright-utils/auth-session'
 
 const tokenPath = getTokenFilePath({
   environment: 'local',
   userIdentifier: 'user1',
-  tokenFileName: 'storage-state.json',
-});
+  tokenFileName: 'storage-state.json'
+})
 ```

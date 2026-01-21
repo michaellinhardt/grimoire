@@ -1,14 +1,14 @@
 # {module_display_name} Module Configuration
 # This file defines installation questions and module configuration values
 
-code: "${module_name}" # e.g., my-module
-name: "{module_display_name}"
+code: '${module_name}' # e.g., my-module
+name: '{module_display_name}'
 default_selected: false
 
 # Welcome message shown during installation
 prompt:
-  - "Thank you for choosing {module_display_name}!"
-  - "{module_purpose}"
+  - 'Thank you for choosing {module_display_name}!'
+  - '{module_purpose}'
 # Core config values are automatically inherited from installer:
 ## user_name
 ## communication_language

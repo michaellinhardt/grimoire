@@ -38,11 +38,11 @@ Add the ability to open sub-agent conversations in dedicated tabs, with visual d
 
 ### Artifact Impact Summary
 
-| Artifact | Impact Level | Changes Required |
-|----------|--------------|------------------|
-| PRD | Medium | 4 FR additions, 2 FR modifications |
-| Architecture | Medium | 3 new sections, 2 section updates |
-| UX Specification | Medium | 3 component updates, 1 journey update |
+| Artifact         | Impact Level | Changes Required                      |
+| ---------------- | ------------ | ------------------------------------- |
+| PRD              | Medium       | 4 FR additions, 2 FR modifications    |
+| Architecture     | Medium       | 3 new sections, 2 section updates     |
+| UX Specification | Medium       | 3 component updates, 1 journey update |
 
 ### Technical Impact
 
@@ -65,20 +65,20 @@ Add the ability to open sub-agent conversations in dedicated tabs, with visual d
 
 ### Effort Assessment
 
-| Area | Effort | Notes |
-|------|--------|-------|
-| PRD updates | Low | Adding FRs, minor modifications |
-| Architecture updates | Medium | New sections for sub-agent handling |
-| UX updates | Medium | Component and journey updates |
-| **Total** | **Medium** | ~2-3 hours of specification work |
+| Area                 | Effort     | Notes                               |
+| -------------------- | ---------- | ----------------------------------- |
+| PRD updates          | Low        | Adding FRs, minor modifications     |
+| Architecture updates | Medium     | New sections for sub-agent handling |
+| UX updates           | Medium     | Component and journey updates       |
+| **Total**            | **Medium** | ~2-3 hours of specification work    |
 
 ### Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Tab proliferation (too many open) | Low | Medium | User-controlled; close tabs anytime |
-| Visual differentiation insufficient | Low | Low | Multiple signals: color + label format |
-| Complexity creep | Low | Medium | Unified loader reduces, not increases, complexity |
+| Risk                                | Likelihood | Impact | Mitigation                                        |
+| ----------------------------------- | ---------- | ------ | ------------------------------------------------- |
+| Tab proliferation (too many open)   | Low        | Medium | User-controlled; close tabs anytime               |
+| Visual differentiation insufficient | Low        | Low    | Multiple signals: color + label format            |
+| Complexity creep                    | Low        | Medium | Unified loader reduces, not increases, complexity |
 
 ---
 
@@ -108,11 +108,13 @@ Add the ability to open sub-agent conversations in dedicated tabs, with visual d
 **Section:** Functional Requirements - Application Shell (FR5)
 
 **OLD:**
+
 ```markdown
 - FR5: User can open multiple sessions in a tab system (one session = one tab maximum)
 ```
 
 **NEW:**
+
 ```markdown
 - FR5: User can open multiple sessions in a tab system (one session = one tab maximum, sub-agent conversations open as additional tabs)
 ```
@@ -159,26 +161,29 @@ Add the ability to open sub-agent conversations in dedicated tabs, with visual d
 
 **ADD:**
 
-```markdown
+````markdown
 #### Tab Type Conventions
 
-| Type | Value | Visual Treatment | Label Format |
-|------|-------|------------------|--------------|
-| Session | `'session'` | Default tab styling | Session name or "New Session" |
-| SubAgent | `'subagent'` | `.tab--subagent` CSS class (color tint) | `{agentType}-{shortId}` |
+| Type     | Value        | Visual Treatment                        | Label Format                  |
+| -------- | ------------ | --------------------------------------- | ----------------------------- |
+| Session  | `'session'`  | Default tab styling                     | Session name or "New Session" |
+| SubAgent | `'subagent'` | `.tab--subagent` CSS class (color tint) | `{agentType}-{shortId}`       |
 
 **Tab interface extension:**
+
 ```typescript
 interface Tab {
   id: string
   type: 'session' | 'subagent'
-  sessionId: string           // Parent session ID
-  agentId?: string            // Only for subagent type
+  sessionId: string // Parent session ID
+  agentId?: string // Only for subagent type
   label: string
-  conversationPath: string    // Path to JSONL file
+  conversationPath: string // Path to JSONL file
 }
 ```
-```
+````
+
+````
 
 **Rationale:** Type-safe differentiation between tab types with clear visual and data conventions.
 
@@ -208,7 +213,7 @@ interface SubAgentEntry {
 
 // Stored in main process memory
 const subAgentIndex = new Map<string, SubAgentEntry>()
-```
+````
 
 **Lifecycle:**
 | Event | Action |
@@ -219,9 +224,11 @@ const subAgentIndex = new Map<string, SubAgentEntry>()
 | App quit | Index discarded (rebuilt on next session load) |
 
 **Discovery Pattern:**
+
 - Sub-agent files located at: `{sessionFolder}/subagents/agent-{agentId}.jsonl`
 - Nested sub-agents follow same pattern within their parent's folder
-```
+
+````
 
 **Rationale:** Enables O(1) sub-agent lookup. Index is ephemeral (memory only) since source of truth is file system.
 
@@ -246,14 +253,16 @@ async function loadConversation(path: string): Promise<Conversation> {
   const lines = await readJsonlFile(path)
   return parseConversation(lines)
 }
-```
+````
 
 **Caller determines path:**
+
 - Main session: `{CLAUDE_CONFIG_DIR}/projects/{hash}/{sessionId}.jsonl`
 - Sub-agent: From `subAgentIndex.get(agentId).path`
 
 **No conditionals based on conversation type** - rendering logic is identical.
-```
+
+````
 
 **Rationale:** Architectural simplification per brainstorming session findings.
 
@@ -272,7 +281,7 @@ async function loadConversation(path: string): Promise<Conversation> {
 
 // Event channels (main → renderer)
 'subagent:discovered'     // New sub-agent found during scan/stream
-```
+````
 
 **Rationale:** Consistent with existing `namespace:action` pattern.
 
@@ -285,17 +294,17 @@ async function loadConversation(path: string): Promise<Conversation> {
 **ADD under `plugins/sessions/src/main/`:**
 
 ```markdown
-│           │   ├── conversation-loader.ts
-│           │   ├── conversation-loader.test.ts
-│           │   ├── subagent-index.ts
-│           │   ├── subagent-index.test.ts
+│ │ ├── conversation-loader.ts
+│ │ ├── conversation-loader.test.ts
+│ │ ├── subagent-index.ts
+│ │ ├── subagent-index.test.ts
 ```
 
 **ADD under `plugins/sessions/src/renderer/`:**
 
 ```markdown
-│           │   ├── SubAgentTab.tsx
-│           │   ├── SubAgentTab.test.tsx
+│ │ ├── SubAgentTab.tsx
+│ │ ├── SubAgentTab.test.tsx
 ```
 
 **Rationale:** Explicit file locations for new functionality.
@@ -309,13 +318,16 @@ async function loadConversation(path: string): Promise<Conversation> {
 **Section:** Component Strategy - Custom Components - Sub-Agent Bubble
 
 **OLD:**
+
 ```markdown
 **Sub-Agent Bubble:**
 ```
+
 ┌─────────────────────────────────┐
-│ [A] Code Analysis Agent    Done │
+│ [A] Code Analysis Agent Done │
 └─────────────────────────────────┘
 14:32
+
 ```
 - Alignment: Left
 - Background: Agent background (purple-tinted)
@@ -324,13 +336,16 @@ async function loadConversation(path: string): Promise<Conversation> {
 ```
 
 **NEW:**
+
 ```markdown
 **Sub-Agent Bubble:**
 ```
+
 ┌─────────────────────────────────────────┐
-│ [A] Code Analysis Agent    Done    [↗] │
+│ [A] Code Analysis Agent Done [↗] │
 └─────────────────────────────────────────┘
 14:32
+
 ```
 - Alignment: Left
 - Background: Agent background (purple-tinted)
@@ -359,10 +374,12 @@ async function loadConversation(path: string): Promise<Conversation> {
 ```markdown
 **Sub-Agent Tab Variant:**
 ```
+
 ┌────────────────────────────────────────────────────────┐
-│ [Session ×] [Explore-a8b2 ×] [+]              [🚪] [🚪] │
+│ [Session ×] [Explore-a8b2 ×] [+] [🚪] [🚪] │
 └────────────────────────────────────────────────────────┘
-              ↑ purple tint background
+↑ purple tint background
+
 ```
 
 **Sub-Agent Tab States:**
@@ -387,6 +404,7 @@ async function loadConversation(path: string): Promise<Conversation> {
 
 ```markdown
 **Sub-Agent Events:**
+
 - Display: Agent type + short ID (e.g., "Explore-a8b2")
 - Click behavior: Opens sub-agent in dedicated tab (not inline scroll)
 - Visual: Purple-tinted background (matches sub-agent bubble)
@@ -402,7 +420,7 @@ async function loadConversation(path: string): Promise<Conversation> {
 
 **ADD alternative path to flow:**
 
-```markdown
+````markdown
 **Flow (Extended):**
 
 ```mermaid
@@ -424,6 +442,7 @@ flowchart TD
     L --> M[Same UI as Main Session]
     M --> N[Can Type to Continue Sub-Agent]
 ```
+````
 
 **New Interaction Pattern:**
 | Entry Point | Action | Result |
@@ -432,6 +451,7 @@ flowchart TD
 | [↗] button on bubble | Click | Opens sub-agent in new tab |
 | Event timeline click | Click sub-agent event | Opens sub-agent in new tab |
 | Expanded bubble [↗] | Click | Opens sub-agent in new tab |
+
 ```
 
 **Rationale:** Documents both paths (inline and tab) with clear user decision points.
@@ -499,3 +519,4 @@ flowchart TD
 ---
 
 *Generated by BMad Correct Course Workflow*
+```

@@ -13,4 +13,3 @@ context_file: 'requests/01 brainstorm.tab.spawe.md'
 
 **Facilitator:** Teazyou
 **Date:** 2026-01-19
-

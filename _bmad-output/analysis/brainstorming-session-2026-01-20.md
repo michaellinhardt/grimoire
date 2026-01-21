@@ -21,6 +21,7 @@ session_status: 'completed'
 **Topic:** Session management architecture for Claude Code stream-based child processes
 
 **Goals:**
+
 - Decide between DB-managed vs folder-scan approach for session IDs
 - Explore instance lifecycle patterns (pending status, auto-disconnect)
 - Refine UI/UX indicators for session states
@@ -30,6 +31,7 @@ session_status: 'completed'
 Working on Grimoire project in specifications period. Completed brainstorming, Product Brief, and UI-UX workflows. Currently in architecture phase. Focus is on "Idea 1: Spawn Child" - managing Claude Code child processes using stream mode.
 
 **Key Decision Point:** Two competing approaches for session ID management:
+
 1. **DB-controlled:** Generate and persist session IDs in database
 2. **Folder-scan:** Read sessions from `.claude` folder at startup, no DB needed
 
@@ -59,6 +61,7 @@ Session confirmed with focus on architectural decision-making for stream-based p
 **Key Discovery:** The original "DB vs Folder-scan" framing was a false binary.
 
 **Fundamental truths identified:**
+
 1. Claude Code creates sessions, not us - `.claude` folder is the source of truth for existence
 2. DB serves a different purpose - storing app metadata, stats, links
 3. DB entry should only be created after Claude Code confirms session exists
@@ -70,6 +73,7 @@ Session confirmed with focus on architectural decision-making for stream-based p
 Instead of Six Thinking Hats, we pivoted to **Expert Pattern Analysis** - examining industry-standard approaches for each architectural decision. For each topic, 2-4 approaches were evaluated with pros/cons before selecting the best fit.
 
 **Topics explored with pattern analysis:**
+
 1. Session ID Management → Hybrid (folder + DB)
 2. App Startup Pattern → DB-First with Background Validation
 3. Instance Lifecycle → Tiered Timeout, 6-state machine, Categorized errors
@@ -89,18 +93,18 @@ All architectural decisions are documented in detail at:
 
 ### Key Decisions at a Glance
 
-| Area | Decision |
-|------|----------|
-| **Session Truth** | `.claude` folder (Claude Code authoritative) |
-| **App Metadata** | Database (stats, search index, analytics) |
-| **Startup** | DB-First with Background Validation |
-| **Instance Timeout** | 10 min focused, 3 min unfocused (configurable) |
-| **State Machine** | 6 states: Idle → Spawning → Working → Pending → Error → Terminating |
-| **Concurrency** | Unlimited, user-managed via disconnect icon |
-| **Spawn Trigger** | First keystroke |
-| **Protocol** | NDJSON stream-json with `--output-format stream-json` |
-| **Isolation** | `CLAUDE_CONFIG_DIR` env variable per-process |
-| **Settings Storage** | Database (not files) |
+| Area                 | Decision                                                            |
+| -------------------- | ------------------------------------------------------------------- |
+| **Session Truth**    | `.claude` folder (Claude Code authoritative)                        |
+| **App Metadata**     | Database (stats, search index, analytics)                           |
+| **Startup**          | DB-First with Background Validation                                 |
+| **Instance Timeout** | 10 min focused, 3 min unfocused (configurable)                      |
+| **State Machine**    | 6 states: Idle → Spawning → Working → Pending → Error → Terminating |
+| **Concurrency**      | Unlimited, user-managed via disconnect icon                         |
+| **Spawn Trigger**    | First keystroke                                                     |
+| **Protocol**         | NDJSON stream-json with `--output-format stream-json`               |
+| **Isolation**        | `CLAUDE_CONFIG_DIR` env variable per-process                        |
+| **Settings Storage** | Database (not files)                                                |
 
 ---
 
@@ -109,6 +113,7 @@ All architectural decisions are documented in detail at:
 **Status:** ✅ Complete
 
 **All decisions documented:**
+
 - Session ID Management
 - App Startup Pattern
 - Instance Lifecycle (timeout, state machine, errors, concurrency, spawn)
@@ -128,12 +133,14 @@ All architectural decisions are documented in detail at:
 ## Creative Facilitation Notes
 
 **Session approach:** Collaborative pattern analysis rather than traditional brainstorming techniques. For each architectural decision point, we:
+
 1. Identified the key question
 2. Researched 2-4 industry approaches (via sub-agent research when documentation needed)
 3. Evaluated pros/cons for Grimoire's context
 4. Selected and documented the decision
 
 **Research conducted via sub-agents:**
+
 - Claude Code CLI stream capabilities and flags
 - Claude Code configuration and settings structure
 - HOME override implications for developer tools

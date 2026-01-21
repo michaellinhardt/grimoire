@@ -53,6 +53,7 @@ Append to `{validationReport}`:
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL}
 
 **Checks:**
+
 - [ ] id: kebab-case, no spaces
 - [ ] name: clear display name
 - [ ] title: concise function description

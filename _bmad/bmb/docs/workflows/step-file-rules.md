@@ -17,6 +17,7 @@ BMAD workflow step files follow a strict structure to ensure consistency, progre
 **CRITICAL:** Keep step files **LT 200 lines** (250 lines absolute maximum).
 
 If a step exceeds this limit:
+
 - Consider splitting into multiple steps
 - Extract content to `/data/` reference files
 - Optimize verbose explanations
@@ -86,6 +87,7 @@ partyModeWorkflow: '{project-root}/_bmad/core/workflows/party-mode/workflow.md'
 
 ```markdown
 ### Language Preference:
+
 The user has chosen to communicate in the **{language}** language.
 You MUST respond in **{language}** throughout this step.
 ```
@@ -146,18 +148,21 @@ You MUST respond in **{language}** throughout this step.
 Display: "**Select:** [A] [menu item A] [P] [menu item P] [C] [menu item C]"
 
 #### Menu Handling Logic:
+
 - IF A: Execute {advancedElicitationTask}, and when finished redisplay the menu
 - IF P: Execute {partyModeWorkflow}, and when finished redisplay the menu
 - IF C: Save content to {outputFile}, update frontmatter, then load, read entire file, then execute {nextStepFile}
 - IF Any other comments or queries: help user respond then [Redisplay Menu Options](#x-present-menu-options)
 
 #### EXECUTION RULES:
+
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
 - User can chat or ask questions - always respond and then end with display again of the menu options
 
 ## CRITICAL STEP COMPLETION NOTE
+
 ONLY WHEN [C continue option] is selected and [completion conditions], will you then load and read fully `{nextStepFile}`...
 ```
 
@@ -167,11 +172,13 @@ ONLY WHEN [C continue option] is selected and [completion conditions], will you 
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:
+
 - [Success criterion 1]
 - [Success criterion 2]
 - ...
 
 ### ❌ SYSTEM FAILURE:
+
 - [Failure criterion 1]
 - [Failure criterion 2]
 - ...
@@ -193,6 +200,7 @@ BMAD workflows use a fixed menu structure:
 | Other  | Custom               | Defined per step (e.g., F = Fix, X = Exit)           |
 
 **Rules:**
+
 - A and P MUST always be present
 - C MUST be present except in final step (use X or similar for exit)
 - After A/P → redisplay menu
@@ -210,15 +218,20 @@ BMAD workflows use a fixed menu structure:
 1. **Never pre-load future steps** - Only load `nextStepFile` when user selects [C]
 
 2. **Mode-aware routing** (for shared steps):
+
    ```markdown
    ## MODE-AWARE ROUTING:
+
    ### If entered from CREATE mode:
+
    Load ./s-next-step.md
 
    ### If entered from EDIT mode:
+
    Load ./e-next-step.md
 
    ### If entered from VALIDATE mode:
+
    Load ./v-next-step.md
    ```
 
@@ -234,7 +247,7 @@ Shared steps (`s-*.md`) must route based on the mode stored in the tracking file
 
 ```yaml
 ---
-mode: create              # or edit | validate
+mode: create # or edit | validate
 stepsCompleted:
   - c-01-brainstorm.md
   - s-01-discovery.md
@@ -253,12 +266,15 @@ stepsCompleted:
 4. Route based on mode:
 
 ### IF mode == create:
+
 Load ./s-next-create-step.md
 
 ### IF mode == edit:
+
 Load ./e-next-edit-step.md
 
 ### IF mode == validate:
+
 Load ./s-next-validate-step.md
 ```
 
@@ -291,6 +307,7 @@ Load ./s-next-validate-step.md
 
 ```markdown
 ### Language Preference:
+
 The user has chosen to communicate in the **{language}** language.
 You MUST respond in **{language}** throughout this step.
 ```
@@ -298,10 +315,11 @@ You MUST respond in **{language}** throughout this step.
 ### Reading Language Preference
 
 From tracking file frontmatter:
+
 ```yaml
 ---
 userPreferences:
-  language: spanish    # or any language
+  language: spanish # or any language
 ---
 ```
 
@@ -332,6 +350,7 @@ When step content becomes too large (>200 lines), extract to `/data/` files:
 Load and reference: `../data/{data-file-name}.md`
 
 Key points from that file:
+
 - [Point 1]
 - [Point 2]
 ```
@@ -399,6 +418,7 @@ partyModeWorkflow: '{project-root}/_bmad/core/workflows/party-mode/workflow.md'
 - ✅ Maintain [tone] throughout
 
 ### Language Preference:
+
 The user has chosen to communicate in the **{language}** language.
 You MUST respond in **{language}** throughout this step.
 
@@ -439,26 +459,31 @@ You MUST respond in **{language}** throughout this step.
 Display: "**Select:** [A] Advanced Elicitation [P] Party Mode [C] Continue"
 
 #### Menu Handling Logic:
+
 - IF A: Execute {advancedElicitationTask}, and when finished redisplay the menu
 - IF P: Execute {partyModeWorkflow}, and when finished redisplay the menu
 - IF C: Save content to {outputFile}, update frontmatter, then load, read entire file, then execute {nextStepFile}
 - IF Any other comments or queries: help user respond then [Redisplay Menu Options](#x-present-menu-options)
 
 #### EXECUTION RULES:
+
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
 - User can chat or ask questions - always respond and then end with display again of the menu options
 
 ## CRITICAL STEP COMPLETION NOTE
+
 ONLY WHEN [C continue option] is selected and [conditions], will you then load and read fully `{nextStepFile}`...
 
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:
+
 - [Success criteria]
 
 ### ❌ SYSTEM FAILURE:
+
 - [Failure criteria]
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.

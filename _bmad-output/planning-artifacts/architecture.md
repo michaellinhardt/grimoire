@@ -25,6 +25,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 **Functional Requirements:**
 
 67 functional requirements organized into 8 categories:
+
 - **Application Shell (FR1-7):** Multi-panel Obsidian-inspired layout with ribbon navigation, collapsible panels, resizable dividers, and tab system for multiple open sessions
 - **Application Lifecycle (FR8-19):** Loading screen with CC verification, HOME/auth checks, offline support, auto-updates, state persistence
 - **Plugin System (FR20-24):** Enable/disable plugins, per-plugin settings, core plugins use same architecture as future community plugins
@@ -36,11 +37,11 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 **Non-Functional Requirements:**
 
-| Category | Requirements |
-|----------|-------------|
+| Category    | Requirements                                                                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Performance | App startup < 3s, session load < 1s, sub-agent expansion < 100ms, child spawn < 500ms, real-time streaming with no lag |
-| Reliability | Zero data loss, user input preserved on spawn failure, graceful child cleanup on app quit |
-| Integration | Session file reading on process exit, direct child process spawn with `-p` prompt mode |
+| Reliability | Zero data loss, user input preserved on spawn failure, graceful child cleanup on app quit                              |
+| Integration | Session file reading on process exit, direct child process spawn with `-p` prompt mode                                 |
 
 **Scale & Complexity:**
 
@@ -68,7 +69,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 4. **Session File Reading:** Read session JSONL file after each process exit to retrieve response. No file watcher needed - we know exactly when to read (on process exit with code 0).
 
-5. **Plugin Architecture:** Define core plugin patterns *before* building Sessions plugin. Build only what Sessions needs in the API; extract reusable patterns when second plugin arrives.
+5. **Plugin Architecture:** Define core plugin patterns _before_ building Sessions plugin. Build only what Sessions needs in the API; extract reusable patterns when second plugin arrives.
 
 6. **Visual Indicators:** Triple redundancy pattern - color bar + icon (⚡/⚠️) + animation (`···` for working). 3 states mapped to distinct visuals (Idle=none, Working=⚡+animation, Error=⚠️). No disconnect button needed (process exits naturally). Graceful cleanup of all children on app quit.
 
@@ -89,20 +90,21 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 ### Technical Preferences Established
 
-| Category | Choice | Rationale |
-|----------|--------|-----------|
-| Framework | React + TypeScript | Component model, ecosystem, team familiarity |
-| Build Tool | Vite (via electron-vite) | Fast HMR, modern ESM support |
-| Styling | Tailwind CSS v4 | Utility-first, dark-mode native, UX spec recommendation |
-| Components | Radix UI | Headless, accessible, full styling control |
-| State (runtime) | Zustand | Minimal boilerplate, ~3KB, transient UI state only |
-| State (persistent) | SQLite (better-sqlite3) | Single DB for all data, externally queryable |
-| Packaging | electron-builder | Mature, DMG/NSIS/code signing support |
-| Testing | Vitest + Testing Library | AI-automatable, fast, Vite-native |
+| Category           | Choice                   | Rationale                                               |
+| ------------------ | ------------------------ | ------------------------------------------------------- |
+| Framework          | React + TypeScript       | Component model, ecosystem, team familiarity            |
+| Build Tool         | Vite (via electron-vite) | Fast HMR, modern ESM support                            |
+| Styling            | Tailwind CSS v4          | Utility-first, dark-mode native, UX spec recommendation |
+| Components         | Radix UI                 | Headless, accessible, full styling control              |
+| State (runtime)    | Zustand                  | Minimal boilerplate, ~3KB, transient UI state only      |
+| State (persistent) | SQLite (better-sqlite3)  | Single DB for all data, externally queryable            |
+| Packaging          | electron-builder         | Mature, DMG/NSIS/code signing support                   |
+| Testing            | Vitest + Testing Library | AI-automatable, fast, Vite-native                       |
 
 ### Selected Starter: electron-vite (react-ts template)
 
 **Rationale:**
+
 - Native Vite integration with mature, stable implementation
 - Single config file for main, renderer, and preload scripts
 - True HMR for renderer + hot reload for main/preload
@@ -140,11 +142,11 @@ npm install -D prettier eslint
 
 ### State Architecture
 
-| Layer | Solution | Purpose |
-|-------|----------|---------|
-| **Persistent** | SQLite | Sessions, settings, plugin config - externally queryable |
-| **Runtime UI** | Zustand | Panel visibility, selected tab, transient state |
-| **Main process** | Plain objects | Child process registry, active process tracking |
+| Layer            | Solution      | Purpose                                                  |
+| ---------------- | ------------- | -------------------------------------------------------- |
+| **Persistent**   | SQLite        | Sessions, settings, plugin config - externally queryable |
+| **Runtime UI**   | Zustand       | Panel visibility, selected tab, transient state          |
+| **Main process** | Plain objects | Child process registry, active process tracking          |
 
 **Database location:** `~/.grimoire/grimoire.db`
 
@@ -237,6 +239,7 @@ export interface SessionMetadata {
 ### Testing Configuration
 
 **AI-automatable validation:**
+
 ```json
 {
   "scripts": {
@@ -246,6 +249,7 @@ export interface SessionMetadata {
 ```
 
 **Vitest config with environment separation:**
+
 ```typescript
 // vitest.config.ts
 export default defineConfig({
@@ -332,10 +336,10 @@ The Spawn Child system manages Claude Code CLI instances on behalf of Grimoire. 
 
 **Pattern:** Hybrid - folder is truth, DB adds metadata
 
-| Responsibility | Source of Truth | Purpose |
-|----------------|-----------------|---------|
-| Session existence | `.claude` folder | Claude Code is authoritative |
-| App metadata/stats | Database | Links app data to sessions |
+| Responsibility     | Source of Truth  | Purpose                      |
+| ------------------ | ---------------- | ---------------------------- |
+| Session existence  | `.claude` folder | Claude Code is authoritative |
+| App metadata/stats | Database         | Links app data to sessions   |
 
 DB entry created only after Claude Code's first response or error confirms session exists.
 
@@ -344,16 +348,17 @@ DB entry created only after Claude Code's first response or error confirms sessi
 **Purpose:** Fast lookup of sub-agent metadata without repeated file system scans.
 
 **Structure:**
+
 ```typescript
 interface SubAgentEntry {
-  agentId: string                 // 6-char hex from filename (e.g., "a951b4d")
-  path: string                    // Full path: {sessionFolder}/subagents/agent-{agentId}.jsonl
-  parentId: string                // sessionId OR agentId (for nested sub-agents)
-  parentMessageUuid: string       // UUID of tool_use message that spawned this agent
-  agentType: string               // From Task tool input.subagent_type: "Explore", "Bash", etc.
-  label: string                   // Display label: "{agentType}-{shortId}" (e.g., "Explore-a951")
-  description?: string            // From Task tool input.description
-  model?: string                  // From Task tool input.model (if specified)
+  agentId: string // 6-char hex from filename (e.g., "a951b4d")
+  path: string // Full path: {sessionFolder}/subagents/agent-{agentId}.jsonl
+  parentId: string // sessionId OR agentId (for nested sub-agents)
+  parentMessageUuid: string // UUID of tool_use message that spawned this agent
+  agentType: string // From Task tool input.subagent_type: "Explore", "Bash", etc.
+  label: string // Display label: "{agentType}-{shortId}" (e.g., "Explore-a951")
+  description?: string // From Task tool input.description
+  model?: string // From Task tool input.model (if specified)
 }
 
 // Sub-agent file identification:
@@ -366,14 +371,15 @@ const subAgentIndex = new Map<string, SubAgentEntry>()
 
 **Lifecycle:**
 
-| Event | Action |
-|-------|--------|
-| Session loads | Scan session folder for sub-agent files, populate index |
-| Tab opens (any conversation) | Scan that conversation's folder, add to index |
-| New sub-agent spawned | Add entry from stream event |
-| App quit | Index discarded (rebuilt on next session load) |
+| Event                        | Action                                                  |
+| ---------------------------- | ------------------------------------------------------- |
+| Session loads                | Scan session folder for sub-agent files, populate index |
+| Tab opens (any conversation) | Scan that conversation's folder, add to index           |
+| New sub-agent spawned        | Add entry from stream event                             |
+| App quit                     | Index discarded (rebuilt on next session load)          |
 
 **Discovery Pattern:**
+
 - Sub-agent files located at: `{sessionFolder}/subagents/agent-{agentId}.jsonl`
 - Nested sub-agents follow same pattern within their parent's folder
 
@@ -381,12 +387,12 @@ const subAgentIndex = new Map<string, SubAgentEntry>()
 
 **Pattern:** DB-First with Background Validation
 
-| Step | Action |
-|------|--------|
-| 1 | Query DB → Show session list immediately (fast startup) |
-| 2 | Background: Scan `.claude` folder |
-| 3 | Compare → Flag discrepancies |
-| 4 | Notify user of "discovered" sessions if any |
+| Step | Action                                                  |
+| ---- | ------------------------------------------------------- |
+| 1    | Query DB → Show session list immediately (fast startup) |
+| 2    | Background: Scan `.claude` folder                       |
+| 3    | Compare → Flag discrepancies                            |
+| 4    | Notify user of "discovered" sessions if any             |
 
 ### Instance Lifecycle
 
@@ -400,21 +406,21 @@ Idle → Working → Idle
 
 **Process Lifecycle:** Each user message spawns a new process. Process runs to completion and exits. No persistent instances, no timeouts needed.
 
-| Event | State Transition |
-|-------|------------------|
-| User sends message | Idle → Working |
-| Process exits (code 0) | Working → Idle |
-| Process exits (non-zero) | Working → Error |
-| User sends new message | Error → Working (clears error) |
+| Event                    | State Transition               |
+| ------------------------ | ------------------------------ |
+| User sends message       | Idle → Working                 |
+| Process exits (code 0)   | Working → Idle                 |
+| Process exits (non-zero) | Working → Error                |
+| User sends new message   | Error → Working (clears error) |
 
 **Spawn Strategy:** On-send - process spawns when user clicks Send (no warmup penalty with `-p` flag).
 
 **Error Handling:**
 
-| Error Type | Handling |
-|------------|----------|
-| Spawn failure (ENOENT) | Show immediately, CC not installed |
-| Non-zero exit code | Show error in chat, session returns to Idle |
+| Error Type             | Handling                                    |
+| ---------------------- | ------------------------------------------- |
+| Spawn failure (ENOENT) | Show immediately, CC not installed          |
+| Non-zero exit code     | Show error in chat, session returns to Idle |
 
 **Concurrency:** Multiple sessions can have active processes simultaneously. Each session limited to one active process at a time.
 
@@ -435,22 +441,23 @@ claude -p \
 ```
 
 **Message sent via stdin (not CLI argument):**
+
 ```json
-{"type":"user","message":{"role":"user","content":"user message here"}}
+{ "type": "user", "message": { "role": "user", "content": "user message here" } }
 ```
 
 **Stream-JSON Flow:**
 
-| Step | Action |
-|------|--------|
-| 1 | User sends message |
-| 2 | Spawn `claude` process with stream-json flags |
-| 3 | Send message via stdin JSON, close stdin |
-| 4 | Parse NDJSON from stdout in real-time (state = Working) |
-| 5 | Capture session_id, UUIDs, costs, tool calls as they stream |
-| 6 | Display messages in real-time as they arrive |
-| 7 | On process exit, return to Idle state |
-| 8 | No file reading needed during conversation (only startup sync) |
+| Step | Action                                                         |
+| ---- | -------------------------------------------------------------- |
+| 1    | User sends message                                             |
+| 2    | Spawn `claude` process with stream-json flags                  |
+| 3    | Send message via stdin JSON, close stdin                       |
+| 4    | Parse NDJSON from stdout in real-time (state = Working)        |
+| 5    | Capture session_id, UUIDs, costs, tool calls as they stream    |
+| 6    | Display messages in real-time as they arrive                   |
+| 7    | On process exit, return to Idle state                          |
+| 8    | No file reading needed during conversation (only startup sync) |
 
 **Stream Message Types:**
 
@@ -507,7 +514,7 @@ Note: This is internal process tracking state, separate from the 3-state UI mode
 ```typescript
 interface ResponseState {
   sessionId: string
-  status: 'idle' | 'sending' | 'complete' | 'error'  // Internal tracking
+  status: 'idle' | 'sending' | 'complete' | 'error' // Internal tracking
   lastEventUuid: string | null
   error?: string
   startedAt?: Date
@@ -516,6 +523,7 @@ interface ResponseState {
 ```
 
 **Why not streaming?** The `-p` flag provides simpler integration:
+
 - No NDJSON parsing complexity
 - No partial message handling
 - Session file is authoritative (already written by CC)
@@ -536,6 +544,7 @@ async function loadConversation(path: string): Promise<Conversation> {
 ```
 
 **Caller determines path:**
+
 - Main session: `{CLAUDE_CONFIG_DIR}/projects/{hash}/{sessionId}.jsonl`
 - Sub-agent: From `subAgentIndex.get(agentId).path`
 
@@ -547,37 +556,35 @@ async function loadConversation(path: string): Promise<Conversation> {
 
 **Data Locations:**
 
-| Platform | Path |
-|----------|------|
-| macOS | `~/Library/Application Support/Grimoire/.claude/` |
-| Windows | `%APPDATA%/Grimoire/.claude/` |
-| Linux | `~/.local/share/grimoire/.claude/` |
+| Platform | Path                                              |
+| -------- | ------------------------------------------------- |
+| macOS    | `~/Library/Application Support/Grimoire/.claude/` |
+| Windows  | `%APPDATA%/Grimoire/.claude/`                     |
+| Linux    | `~/.local/share/grimoire/.claude/`                |
 
 **Spawn Implementation:**
 
 ```typescript
-const child = spawn('claude', [
-  '--session-id', sessionId,
-  '-p', message
-], {
+const child = spawn('claude', ['--session-id', sessionId, '-p', message], {
   env: {
     ...process.env,
     CLAUDE_CONFIG_DIR: path.join(app.getPath('userData'), '.claude')
   }
-});
+})
 
 // Handle process completion
 child.on('exit', async (code) => {
   if (code === 0) {
-    const newEvents = await getResponseAfterProcess(sessionId);
-    emitResponseEvents(sessionId, newEvents);
+    const newEvents = await getResponseAfterProcess(sessionId)
+    emitResponseEvents(sessionId, newEvents)
   } else {
-    emitError(sessionId, `Process exited with code ${code}`);
+    emitError(sessionId, `Process exited with code ${code}`)
   }
-});
+})
 ```
 
 **Why CLAUDE_CONFIG_DIR over alternatives:**
+
 - Docker: Too much friction (requires install, 500MB+)
 - HOME override: Breaks developer toolchain
 - Symlink swap: Risky with concurrent processes
@@ -587,16 +594,17 @@ child.on('exit', async (code) => {
 
 **Architecture:** Single-window app with tabbed interface
 
-| Scenario | Behavior |
-|----------|----------|
-| Click session in list | Open tab (or focus if already open) |
-| Close tab while Idle | Tab closes immediately |
-| Close tab while Working | Confirmation dialog, kill process if confirmed |
-| Close app | All active processes terminate (graceful shutdown) |
+| Scenario                | Behavior                                           |
+| ----------------------- | -------------------------------------------------- |
+| Click session in list   | Open tab (or focus if already open)                |
+| Close tab while Idle    | Tab closes immediately                             |
+| Close tab while Working | Confirmation dialog, kill process if confirmed     |
+| Close app               | All active processes terminate (graceful shutdown) |
 
 ### Settings
 
 **Storage:** Database (not files)
+
 - Global + per-project settings in DB
 - Schema-driven defaults and validation
 - Immediate application with undo support
@@ -632,30 +640,30 @@ if (msg.type === 'user' && msg.uuid) {
 
 **Rewind Flow:**
 
-| Step | Action |
-|------|--------|
-| 1 | User hovers over user message bubble, clicks "Rewind" action |
-| 2 | System prompts for new message text |
-| 3 | System calls `sessions:rewind` IPC with checkpoint UUID and new message |
-| 4 | Main process creates new session by spawning CC with `--resume` at checkpoint |
-| 5 | New session created with `forked_from_session_id` pointing to original |
-| 6 | Original session optionally marked `is_hidden: true` |
-| 7 | UI opens new forked session in a tab |
+| Step | Action                                                                        |
+| ---- | ----------------------------------------------------------------------------- |
+| 1    | User hovers over user message bubble, clicks "Rewind" action                  |
+| 2    | System prompts for new message text                                           |
+| 3    | System calls `sessions:rewind` IPC with checkpoint UUID and new message       |
+| 4    | Main process creates new session by spawning CC with `--resume` at checkpoint |
+| 5    | New session created with `forked_from_session_id` pointing to original        |
+| 6    | Original session optionally marked `is_hidden: true`                          |
+| 7    | UI opens new forked session in a tab                                          |
 
 **IPC Contract:**
 
 ```typescript
 // Request
 interface RewindRequest {
-  sessionId: string        // Original session ID
-  checkpointUuid: string   // UUID of user message to rewind to
-  newMessage: string       // New message to send after rewind
-  hideOriginal?: boolean   // Whether to hide the forked-from session
+  sessionId: string // Original session ID
+  checkpointUuid: string // UUID of user message to rewind to
+  newMessage: string // New message to send after rewind
+  hideOriginal?: boolean // Whether to hide the forked-from session
 }
 
 // Response
 interface RewindResult {
-  newSessionId: string     // ID of the newly forked session
+  newSessionId: string // ID of the newly forked session
   success: boolean
   error?: string
 }
@@ -709,29 +717,31 @@ This section documents the Claude Code conversation storage format discovered th
 
 Each line in a `.jsonl` file is one of these event types:
 
-| Type | Purpose | Key Fields |
-|------|---------|------------|
-| `user` | User message or tool result | `message.role: "user"`, `message.content` |
-| `assistant` | Claude response | `message.role: "assistant"`, `message.content[]`, `message.usage` |
-| `summary` | Session summary (first line of resumed sessions) | `summary`, `leafUuid` |
-| `file-history-snapshot` | File backup tracking | `snapshot.trackedFileBackups` |
+| Type                    | Purpose                                          | Key Fields                                                        |
+| ----------------------- | ------------------------------------------------ | ----------------------------------------------------------------- |
+| `user`                  | User message or tool result                      | `message.role: "user"`, `message.content`                         |
+| `assistant`             | Claude response                                  | `message.role: "assistant"`, `message.content[]`, `message.usage` |
+| `summary`               | Session summary (first line of resumed sessions) | `summary`, `leafUuid`                                             |
+| `file-history-snapshot` | File backup tracking                             | `snapshot.trackedFileBackups`                                     |
 
 ### Event Structure
 
 **Common Fields (all events):**
+
 ```typescript
 interface BaseEvent {
   type: 'user' | 'assistant' | 'summary' | 'file-history-snapshot'
   uuid: string
-  parentUuid: string | null       // For building message tree
+  parentUuid: string | null // For building message tree
   sessionId: string
-  timestamp: string               // ISO 8601
-  isSidechain: boolean            // true = sub-agent conversation
-  agentId?: string                // Present if sub-agent (6-char hex)
+  timestamp: string // ISO 8601
+  isSidechain: boolean // true = sub-agent conversation
+  agentId?: string // Present if sub-agent (6-char hex)
 }
 ```
 
 **User Message Event:**
+
 ```typescript
 interface UserEvent extends BaseEvent {
   type: 'user'
@@ -749,6 +759,7 @@ interface UserEvent extends BaseEvent {
 ```
 
 **Assistant Message Event:**
+
 ```typescript
 interface AssistantEvent extends BaseEvent {
   type: 'assistant'
@@ -775,14 +786,14 @@ interface TextBlock {
 
 interface ToolUseBlock {
   type: 'tool_use'
-  id: string              // e.g., "toolu_01HXYyux..."
-  name: string            // e.g., "Read", "Write", "Edit", "Task"
+  id: string // e.g., "toolu_01HXYyux..."
+  name: string // e.g., "Read", "Write", "Edit", "Task"
   input: Record<string, unknown>
 }
 
 interface ToolResultBlock {
   type: 'tool_result'
-  tool_use_id: string     // Matches ToolUseBlock.id
+  tool_use_id: string // Matches ToolUseBlock.id
   content: string
 }
 ```
@@ -801,11 +812,12 @@ interface TokenUsage {
 ### Detection Patterns
 
 **File Edit Detection:**
+
 ```typescript
 function isFileEdit(event: ConversationEvent): boolean {
   if (event.type !== 'assistant') return false
-  return event.message.content.some(c =>
-    c.type === 'tool_use' && (c.name === 'Write' || c.name === 'Edit')
+  return event.message.content.some(
+    (c) => c.type === 'tool_use' && (c.name === 'Write' || c.name === 'Edit')
   )
 }
 
@@ -815,12 +827,11 @@ function extractFilePath(toolUse: ToolUseBlock): string {
 ```
 
 **Sub-Agent Spawn Detection:**
+
 ```typescript
 function isSubAgentSpawn(event: ConversationEvent): boolean {
   if (event.type !== 'assistant') return false
-  return event.message.content.some(c =>
-    c.type === 'tool_use' && c.name === 'Task'
-  )
+  return event.message.content.some((c) => c.type === 'tool_use' && c.name === 'Task')
 }
 
 function extractSubAgentInfo(toolUse: ToolUseBlock): SubAgentInfo {
@@ -834,6 +845,7 @@ function extractSubAgentInfo(toolUse: ToolUseBlock): SubAgentInfo {
 ```
 
 **Sub-Agent Conversation Detection:**
+
 ```typescript
 function isSubAgentConversation(event: ConversationEvent): boolean {
   return event.isSidechain === true
@@ -979,50 +991,53 @@ function isToolResult(event: ConversationEvent): boolean {
 
 **Component Mapping:**
 
-| Event/Content Type | Component | Notes |
-|--------------------|-----------|-------|
-| `user` event (text) | `MessageBubble` | Right-aligned, user styling |
-| `assistant` text block | `MessageBubble` | Left-aligned, assistant styling |
-| `tool_use` (Task) | `SubAgentBubble` | Expandable, opens tab |
-| `tool_use` (Write/Edit) | `FileEditCard` | Shows file path, diff |
-| `tool_use` (other) | `ToolCallCard` | Generic tool display |
-| `tool_result` | Paired with call | Not rendered separately |
+| Event/Content Type      | Component        | Notes                           |
+| ----------------------- | ---------------- | ------------------------------- |
+| `user` event (text)     | `MessageBubble`  | Right-aligned, user styling     |
+| `assistant` text block  | `MessageBubble`  | Left-aligned, assistant styling |
+| `tool_use` (Task)       | `SubAgentBubble` | Expandable, opens tab           |
+| `tool_use` (Write/Edit) | `FileEditCard`   | Shows file path, diff           |
+| `tool_use` (other)      | `ToolCallCard`   | Generic tool display            |
+| `tool_result`           | Paired with call | Not rendered separately         |
 
 ## Core Architectural Decisions
 
 ### Decision Priority Analysis
 
 **Critical Decisions (Block Implementation):**
+
 - All critical decisions made in Steps 2-3 and spawn-child-decisions
 - Stack: electron-vite + React + TypeScript + Tailwind + Radix + Zustand + SQLite
 - Child process: CLAUDE_CONFIG_DIR isolation + 3-state machine + `-p` request-response mode
 
 **Important Decisions (Shape Architecture):**
+
 - Data validation: Zod for runtime validation (renderer → main only)
 - Plugin architecture: Static imports for MVP
 - IPC: Typed contextBridge with shared types
 
 **Deferred Decisions (Post-MVP):**
 
-| Decision | Trigger to Implement |
-|----------|---------------------|
-| Auto-updates | Before first external user |
-| Code signing | Before first external user |
-| Database migrations | When schema changes post-launch |
-| Dynamic plugin loading | When second plugin needed |
-| Event-driven data fetching | If polling causes performance issues |
-| Settings backup on schema change | When approaching stability |
+| Decision                         | Trigger to Implement                 |
+| -------------------------------- | ------------------------------------ |
+| Auto-updates                     | Before first external user           |
+| Code signing                     | Before first external user           |
+| Database migrations              | When schema changes post-launch      |
+| Dynamic plugin loading           | When second plugin needed            |
+| Event-driven data fetching       | If polling causes performance issues |
+| Settings backup on schema change | When approaching stability           |
 
 ### Data Architecture
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Database | SQLite (better-sqlite3) | Single file, externally queryable, no server |
-| Schema location | `src/shared/db/schema.sql` | AI reference, version controlled |
+| Decision           | Choice                       | Rationale                                     |
+| ------------------ | ---------------------------- | --------------------------------------------- |
+| Database           | SQLite (better-sqlite3)      | Single file, externally queryable, no server  |
+| Schema location    | `src/shared/db/schema.sql`   | AI reference, version controlled              |
 | Migration strategy | **Recreate on change** (MVP) | Acceptable data loss during early development |
-| Validation | **Zod** | Runtime validation with TypeScript inference |
+| Validation         | **Zod**                      | Runtime validation with TypeScript inference  |
 
 **Schema version tracking:**
+
 ```sql
 -- src/shared/db/schema.sql
 -- VERSION: 3
@@ -1079,6 +1094,7 @@ CREATE TABLE settings (
 ```
 
 **Migration approach for MVP:**
+
 ```typescript
 // src/main/db.ts
 const DB_VERSION = 1
@@ -1088,7 +1104,9 @@ function initDatabase(dbPath: string) {
   const currentVersion = db.pragma('user_version', { simple: true })
 
   if (currentVersion !== DB_VERSION) {
-    console.warn(`Database schema changed (${currentVersion} → ${DB_VERSION}). Recreating database.`)
+    console.warn(
+      `Database schema changed (${currentVersion} → ${DB_VERSION}). Recreating database.`
+    )
     // Drop and recreate all tables
     db.exec(fs.readFileSync('src/shared/db/schema.sql', 'utf-8'))
     db.pragma(`user_version = ${DB_VERSION}`)
@@ -1099,24 +1117,25 @@ function initDatabase(dbPath: string) {
 
 ### Authentication & Security
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| App authentication | **None** | Local-first single-user app |
-| Claude Code auth | **External** | CC handles its own authentication |
-| Data location | Platform app data folder | Standard, user-accessible if needed |
+| Decision           | Choice                   | Rationale                           |
+| ------------------ | ------------------------ | ----------------------------------- |
+| App authentication | **None**                 | Local-first single-user app         |
+| Claude Code auth   | **External**             | CC handles its own authentication   |
+| Data location      | Platform app data folder | Standard, user-accessible if needed |
 
 **Security model:** Trust local environment. No encryption of local data.
 
 ### API & Communication Patterns
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| IPC mechanism | Typed contextBridge | Simple, type-safe, no extra deps |
-| Data fetching | Polling (MVP) | Ship first, optimize to events later |
+| Decision       | Choice                    | Rationale                                          |
+| -------------- | ------------------------- | -------------------------------------------------- |
+| IPC mechanism  | Typed contextBridge       | Simple, type-safe, no extra deps                   |
+| Data fetching  | Polling (MVP)             | Ship first, optimize to events later               |
 | Error handling | Categorized (spawn-child) | Network, spawn, Claude, crash - different handling |
-| Validation | Zod at IPC boundary | Renderer → Main only (trust main → renderer) |
+| Validation     | Zod at IPC boundary       | Renderer → Main only (trust main → renderer)       |
 
 **Validation pattern:**
+
 ```typescript
 // src/shared/types/ipc.ts
 import { z } from 'zod'
@@ -1149,47 +1168,53 @@ ipcMain.handle('sessions:spawn', async (_, req: unknown) => {
 **Validation failure:** Throws error → IPC rejects → Renderer catches in try/catch.
 
 **Schema tests required:**
+
 ```typescript
 // src/shared/types/ipc.test.ts
 import { SpawnRequestSchema } from './ipc'
 
 test('SpawnRequestSchema rejects invalid sessionId', () => {
-  expect(() => SpawnRequestSchema.parse({
-    sessionId: 'not-a-uuid',
-    message: 'hi'
-  })).toThrow()
+  expect(() =>
+    SpawnRequestSchema.parse({
+      sessionId: 'not-a-uuid',
+      message: 'hi'
+    })
+  ).toThrow()
 })
 
 test('SpawnRequestSchema rejects empty message', () => {
-  expect(() => SpawnRequestSchema.parse({
-    sessionId: crypto.randomUUID(),
-    message: ''
-  })).toThrow()
+  expect(() =>
+    SpawnRequestSchema.parse({
+      sessionId: crypto.randomUUID(),
+      message: ''
+    })
+  ).toThrow()
 })
 ```
 
 ### Frontend Architecture
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| State (UI) | Zustand | Minimal boilerplate, mirrors main process state |
-| State (persistent) | SQLite via IPC | Single source of truth |
-| Components | Radix UI (headless) | Accessible, unstyled, full control |
-| Styling | Tailwind CSS v4 | Utility-first, dark mode native |
-| Routing | N/A | Single window with tabs (not SPA routing) |
-| Code organization | Feature-based | AI-friendly, autonomous folders |
+| Decision           | Choice              | Rationale                                       |
+| ------------------ | ------------------- | ----------------------------------------------- |
+| State (UI)         | Zustand             | Minimal boilerplate, mirrors main process state |
+| State (persistent) | SQLite via IPC      | Single source of truth                          |
+| Components         | Radix UI (headless) | Accessible, unstyled, full control              |
+| Styling            | Tailwind CSS v4     | Utility-first, dark mode native                 |
+| Routing            | N/A                 | Single window with tabs (not SPA routing)       |
+| Code organization  | Feature-based       | AI-friendly, autonomous folders                 |
 
 ### Infrastructure & Deployment
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Build tool | electron-vite | Fast HMR, stable Vite integration |
-| Packaging | electron-builder | Mature, cross-platform |
-| Auto-updates | **Deferred** | Implement before first external user |
-| Code signing | **Deferred** | Implement before first external user |
-| CI/CD | **Deferred** | Local builds for MVP |
+| Decision     | Choice           | Rationale                            |
+| ------------ | ---------------- | ------------------------------------ |
+| Build tool   | electron-vite    | Fast HMR, stable Vite integration    |
+| Packaging    | electron-builder | Mature, cross-platform               |
+| Auto-updates | **Deferred**     | Implement before first external user |
+| Code signing | **Deferred**     | Implement before first external user |
+| CI/CD        | **Deferred**     | Local builds for MVP                 |
 
 **Distribution approach (MVP):**
+
 - Build locally with `npm run build`
 - Distribute unsigned DMG for personal use
 - Add signing + notarization before any public release
@@ -1197,6 +1222,7 @@ test('SpawnRequestSchema rejects empty message', () => {
 ### Decision Impact Analysis
 
 **Implementation Sequence:**
+
 1. Project scaffold (electron-vite react-ts)
 2. Tailwind + Radix + Zod setup
 3. SQLite integration with schema
@@ -1205,6 +1231,7 @@ test('SpawnRequestSchema rejects empty message', () => {
 6. Sessions plugin (instance-manager, stream-parser)
 
 **Cross-Component Dependencies:**
+
 - Zod schemas shared between renderer validation and main process
 - SQLite accessed only from main process (renderer queries via IPC)
 - Zustand stores mirror instance state from main process events
@@ -1220,16 +1247,17 @@ test('SpawnRequestSchema rejects empty message', () => {
 
 #### Database Naming Conventions
 
-| Element | Convention | Example |
-|---------|------------|---------|
-| Tables | snake_case, plural | `sessions`, `settings`, `plugin_configs` |
-| Columns | snake_case | `session_id`, `folder_path`, `created_at` |
-| Primary keys | `id` or `{table}_id` | `id` for simple, `session_id` if referenced |
-| Foreign keys | `{referenced_table}_id` | `session_id` referencing sessions |
-| Timestamps | `{action}_at` | `created_at`, `updated_at`, `archived_at` |
-| Booleans | `is_{state}` or `{state}` | `is_archived` or `archived` |
+| Element      | Convention                | Example                                     |
+| ------------ | ------------------------- | ------------------------------------------- |
+| Tables       | snake_case, plural        | `sessions`, `settings`, `plugin_configs`    |
+| Columns      | snake_case                | `session_id`, `folder_path`, `created_at`   |
+| Primary keys | `id` or `{table}_id`      | `id` for simple, `session_id` if referenced |
+| Foreign keys | `{referenced_table}_id`   | `session_id` referencing sessions           |
+| Timestamps   | `{action}_at`             | `created_at`, `updated_at`, `archived_at`   |
+| Booleans     | `is_{state}` or `{state}` | `is_archived` or `archived`                 |
 
 **Example schema:**
+
 ```sql
 CREATE TABLE sessions (
   id TEXT PRIMARY KEY,
@@ -1242,113 +1270,116 @@ CREATE TABLE sessions (
 
 #### IPC Channel Naming Conventions
 
-| Element | Convention | Example |
-|---------|------------|---------|
-| Channels | `namespace:action` | `sessions:list`, `sessions:spawn` |
-| Events | `namespace:eventName` | `instance:stateChanged`, `session:discovered` |
-| Namespace | Lowercase, singular | `session`, `instance`, `db`, `app` |
-| Action | camelCase verb | `list`, `spawn`, `kill`, `getById` |
+| Element   | Convention            | Example                                       |
+| --------- | --------------------- | --------------------------------------------- |
+| Channels  | `namespace:action`    | `sessions:list`, `sessions:spawn`             |
+| Events    | `namespace:eventName` | `instance:stateChanged`, `session:discovered` |
+| Namespace | Lowercase, singular   | `session`, `instance`, `db`, `app`            |
+| Action    | camelCase verb        | `list`, `spawn`, `kill`, `getById`            |
 
 **All IPC channels:**
+
 ```typescript
 // Request channels (renderer → main)
 'sessions:list'
 'sessions:spawn'
 'sessions:kill'
 'sessions:sendMessage'
-'sessions:pin'            // Toggle session pin state
+'sessions:pin' // Toggle session pin state
 'sessions:relocateFolder' // Update folder path for orphaned session
-'folders:list'            // Get folder hierarchy with session counts
-'folders:pin'             // Toggle folder pin state
-'folders:getTree'         // Get file tree for a folder path
-'folders:exists'          // Check if folder path exists on disk
-'fileEdits:list'          // Get edit history for a file path
-'fileEdits:bySession'     // Get all file edits for a session
-'search:sessions'         // Search sessions by query string
-'search:folders'          // Search folders by query string
+'folders:list' // Get folder hierarchy with session counts
+'folders:pin' // Toggle folder pin state
+'folders:getTree' // Get file tree for a folder path
+'folders:exists' // Check if folder path exists on disk
+'fileEdits:list' // Get edit history for a file path
+'fileEdits:bySession' // Get all file edits for a session
+'search:sessions' // Search sessions by query string
+'search:folders' // Search folders by query string
 'db:query'
 'app:getPath'
-'subagent:openTab'        // Open sub-agent in new tab
-'subagent:getIndex'       // Get current sub-agent index
+'subagent:openTab' // Open sub-agent in new tab
+'subagent:getIndex' // Get current sub-agent index
 
 // Event channels (main → renderer)
 'instance:stateChanged'
-'instance:responseReady'  // Process completed, response available
-'instance:fileEdited'     // AI edited a file (tracked from session file)
+'instance:responseReady' // Process completed, response available
+'instance:fileEdited' // AI edited a file (tracked from session file)
 'session:discovered'
-'session:folderMissing'   // Folder no longer exists for session
-'subagent:discovered'     // New sub-agent found during session file scan
+'session:folderMissing' // Folder no longer exists for session
+'subagent:discovered' // New sub-agent found during session file scan
 'app:beforeQuit'
 ```
 
 #### Tab Type Conventions
 
-| Type | Value | Visual Treatment | Label Format |
-|------|-------|------------------|--------------|
-| Session | `'session'` | Default tab styling | Session name or "New Session" |
-| SubAgent | `'subagent'` | `.tab--subagent` CSS class (color tint) | `{agentType}-{shortId}` |
+| Type     | Value        | Visual Treatment                        | Label Format                  |
+| -------- | ------------ | --------------------------------------- | ----------------------------- |
+| Session  | `'session'`  | Default tab styling                     | Session name or "New Session" |
+| SubAgent | `'subagent'` | `.tab--subagent` CSS class (color tint) | `{agentType}-{shortId}`       |
 
 **Tab interface extension:**
+
 ```typescript
 interface Tab {
   id: string
   type: 'session' | 'subagent'
-  sessionId: string           // Parent session ID
-  agentId?: string            // Only for subagent type
+  sessionId: string // Parent session ID
+  agentId?: string // Only for subagent type
   label: string
-  conversationPath: string    // Path to JSONL file
+  conversationPath: string // Path to JSONL file
 }
 ```
 
 #### Code Naming Conventions
 
-| Element | Convention | Example |
-|---------|------------|---------|
-| React components | PascalCase | `SessionList`, `ConversationView` |
-| Component files | PascalCase.tsx | `SessionList.tsx`, `ChatInput.tsx` |
-| Test files | PascalCase.test.ts | `SessionList.test.ts` |
-| Hooks | camelCase, use prefix | `useSessionStore`, `useInstanceState` |
-| Utilities | camelCase | `formatTimestamp`, `parseStreamEvent` |
-| Constants | SCREAMING_SNAKE_CASE | `DB_VERSION`, `DEFAULT_TIMEOUT` |
-| Types/Interfaces | PascalCase | `Session`, `InstanceState`, `SpawnRequest` |
-| Zod schemas | PascalCase + Schema | `SpawnRequestSchema`, `SessionSchema` |
-| Zustand stores | use + Name + Store | `useUIStore`, `useSessionStore` |
+| Element          | Convention            | Example                                    |
+| ---------------- | --------------------- | ------------------------------------------ |
+| React components | PascalCase            | `SessionList`, `ConversationView`          |
+| Component files  | PascalCase.tsx        | `SessionList.tsx`, `ChatInput.tsx`         |
+| Test files       | PascalCase.test.ts    | `SessionList.test.ts`                      |
+| Hooks            | camelCase, use prefix | `useSessionStore`, `useInstanceState`      |
+| Utilities        | camelCase             | `formatTimestamp`, `parseStreamEvent`      |
+| Constants        | SCREAMING_SNAKE_CASE  | `DB_VERSION`, `DEFAULT_TIMEOUT`            |
+| Types/Interfaces | PascalCase            | `Session`, `InstanceState`, `SpawnRequest` |
+| Zod schemas      | PascalCase + Schema   | `SpawnRequestSchema`, `SessionSchema`      |
+| Zustand stores   | use + Name + Store    | `useUIStore`, `useSessionStore`            |
 
 ### Structure Patterns
 
 #### Project Organization
 
-| Content Type | Location | Example |
-|--------------|----------|---------|
-| React components | Feature folder | `plugins/sessions/src/renderer/SessionList.tsx` |
-| Component tests | Colocated | `plugins/sessions/src/renderer/SessionList.test.ts` |
-| Zustand stores | `shared/store/` | `src/renderer/src/shared/store/useUIStore.ts` |
-| Shared hooks | `shared/hooks/` | `src/renderer/src/shared/hooks/usePolling.ts` |
-| Shared types | `src/shared/types/` | `src/shared/types/ipc.ts` |
-| Zod schemas | With types | `src/shared/types/ipc.ts` |
-| DB schema | `src/shared/db/` | `src/shared/db/schema.sql` |
-| Main process | `src/main/` | `src/main/db.ts`, `src/main/ipc-handlers.ts` |
-| Plugin main | `plugins/{name}/src/main/` | `plugins/sessions/src/main/instance-manager.ts` |
-| Plugin renderer | `plugins/{name}/src/renderer/` | `plugins/sessions/src/renderer/SessionList.tsx` |
+| Content Type     | Location                       | Example                                             |
+| ---------------- | ------------------------------ | --------------------------------------------------- |
+| React components | Feature folder                 | `plugins/sessions/src/renderer/SessionList.tsx`     |
+| Component tests  | Colocated                      | `plugins/sessions/src/renderer/SessionList.test.ts` |
+| Zustand stores   | `shared/store/`                | `src/renderer/src/shared/store/useUIStore.ts`       |
+| Shared hooks     | `shared/hooks/`                | `src/renderer/src/shared/hooks/usePolling.ts`       |
+| Shared types     | `src/shared/types/`            | `src/shared/types/ipc.ts`                           |
+| Zod schemas      | With types                     | `src/shared/types/ipc.ts`                           |
+| DB schema        | `src/shared/db/`               | `src/shared/db/schema.sql`                          |
+| Main process     | `src/main/`                    | `src/main/db.ts`, `src/main/ipc-handlers.ts`        |
+| Plugin main      | `plugins/{name}/src/main/`     | `plugins/sessions/src/main/instance-manager.ts`     |
+| Plugin renderer  | `plugins/{name}/src/renderer/` | `plugins/sessions/src/renderer/SessionList.tsx`     |
 
 #### File Naming Patterns
 
-| File Type | Convention | Example |
-|-----------|------------|---------|
-| React component | `{ComponentName}.tsx` | `SessionList.tsx` |
-| Test file | `{ComponentName}.test.ts` | `SessionList.test.ts` |
-| Zustand store | `use{Name}Store.ts` | `useUIStore.ts` |
-| Hook | `use{Name}.ts` | `usePolling.ts` |
-| Utility | `{name}.ts` | `formatters.ts`, `parsers.ts` |
-| Types | `{domain}.ts` or `types.ts` | `ipc.ts`, `types.ts` |
-| Constants | `constants.ts` | `constants.ts` |
-| Index exports | `index.ts` | `index.ts` |
+| File Type       | Convention                  | Example                       |
+| --------------- | --------------------------- | ----------------------------- |
+| React component | `{ComponentName}.tsx`       | `SessionList.tsx`             |
+| Test file       | `{ComponentName}.test.ts`   | `SessionList.test.ts`         |
+| Zustand store   | `use{Name}Store.ts`         | `useUIStore.ts`               |
+| Hook            | `use{Name}.ts`              | `usePolling.ts`               |
+| Utility         | `{name}.ts`                 | `formatters.ts`, `parsers.ts` |
+| Types           | `{domain}.ts` or `types.ts` | `ipc.ts`, `types.ts`          |
+| Constants       | `constants.ts`              | `constants.ts`                |
+| Index exports   | `index.ts`                  | `index.ts`                    |
 
 ### Format Patterns
 
 #### IPC Response Format
 
 **Success response:**
+
 ```typescript
 // Direct return - no wrapper for simple responses
 return sessions // Session[]
@@ -1356,6 +1387,7 @@ return { success: true }
 ```
 
 **Error response:**
+
 ```typescript
 // Throw error - IPC rejects, renderer catches
 throw new Error('Spawn failed: process exited with code 1')
@@ -1364,22 +1396,23 @@ throw new Error('Spawn failed: process exited with code 1')
 const AppErrorSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('spawn_failed'), message: z.string(), code: z.number().optional() }),
   z.object({ type: z.literal('network_error'), message: z.string() }),
-  z.object({ type: z.literal('validation_error'), message: z.string(), field: z.string() }),
+  z.object({ type: z.literal('validation_error'), message: z.string(), field: z.string() })
 ])
 ```
 
 #### Data Exchange Formats
 
-| Data Type | Format | Example |
-|-----------|--------|---------|
-| Timestamps | Unix milliseconds (INTEGER) | `1705123456789` |
-| UUIDs | String | `"550e8400-e29b-41d4-a716-446655440000"` |
-| Booleans (DB) | INTEGER 0/1 | `archived INTEGER DEFAULT 0` |
-| Booleans (JSON) | true/false | `{ "archived": false }` |
-| JSON fields | camelCase | `{ "folderPath": "/path", "createdAt": 1705123456789 }` |
-| SQL fields | snake_case | `folder_path`, `created_at` |
+| Data Type       | Format                      | Example                                                 |
+| --------------- | --------------------------- | ------------------------------------------------------- |
+| Timestamps      | Unix milliseconds (INTEGER) | `1705123456789`                                         |
+| UUIDs           | String                      | `"550e8400-e29b-41d4-a716-446655440000"`                |
+| Booleans (DB)   | INTEGER 0/1                 | `archived INTEGER DEFAULT 0`                            |
+| Booleans (JSON) | true/false                  | `{ "archived": false }`                                 |
+| JSON fields     | camelCase                   | `{ "folderPath": "/path", "createdAt": 1705123456789 }` |
+| SQL fields      | snake_case                  | `folder_path`, `created_at`                             |
 
 **TypeScript ↔ SQLite mapping:**
+
 ```typescript
 // Transform snake_case DB rows to camelCase TypeScript
 function toSession(row: DBSessionRow): Session {
@@ -1414,9 +1447,9 @@ interface Folder {
   path: string
   isPinned: boolean
   lastAccessedAt: number | null
-  sessionCount: number        // Computed: direct sessions in this folder
-  totalSessionCount: number   // Computed: including nested folders
-  exists: boolean             // Runtime check: does folder still exist on disk
+  sessionCount: number // Computed: direct sessions in this folder
+  totalSessionCount: number // Computed: including nested folders
+  exists: boolean // Runtime check: does folder still exist on disk
 }
 
 interface FolderTreeNode {
@@ -1425,7 +1458,7 @@ interface FolderTreeNode {
   isDirectory: boolean
   children?: FolderTreeNode[]
   isExpanded?: boolean
-  changeCount?: number        // Number of AI edits (for files) or sum of children (for folders)
+  changeCount?: number // Number of AI edits (for files) or sum of children (for folders)
 }
 
 // src/shared/types/file-edit.ts
@@ -1527,6 +1560,7 @@ interface SubAgentInfo {
 #### Event System Patterns
 
 **IPC event structure:**
+
 ```typescript
 // Main → Renderer events
 interface InstanceStateEvent {
@@ -1538,12 +1572,13 @@ interface InstanceStateEvent {
 
 interface ResponseReadyEvent {
   sessionId: string
-  newEvents: ConversationEvent[]  // New events parsed from session file
+  newEvents: ConversationEvent[] // New events parsed from session file
   timestamp: number
 }
 ```
 
 **Event emission pattern:**
+
 ```typescript
 // Main process
 mainWindow.webContents.send('instance:stateChanged', {
@@ -1562,6 +1597,7 @@ window.grimoireAPI.onInstanceStateChange((event) => {
 #### State Management Patterns
 
 **Zustand store pattern:**
+
 ```typescript
 // Separate stores per domain
 // src/renderer/src/shared/store/useUIStore.ts
@@ -1583,6 +1619,7 @@ export const useUIStore = create<UIState>((set) => ({
 ```
 
 **State update pattern:**
+
 ```typescript
 // Always use set() with partial state (immutable updates)
 set({ leftPanelOpen: false })
@@ -1601,6 +1638,7 @@ set((state) => ({
 #### Error Handling Patterns
 
 **Renderer error handling:**
+
 ```typescript
 // Wrap IPC calls in try/catch
 async function spawnSession(sessionId: string, message: string) {
@@ -1619,6 +1657,7 @@ async function spawnSession(sessionId: string, message: string) {
 ```
 
 **Main process error handling:**
+
 ```typescript
 // IPC handlers - let errors propagate as rejections
 ipcMain.handle('sessions:spawn', async (_, req) => {
@@ -1644,12 +1683,13 @@ class InstanceManager {
 #### Loading State Patterns
 
 **Loading state naming:**
+
 ```typescript
 // Per-operation loading states in stores
 interface SessionState {
   sessions: Session[]
-  isLoading: boolean        // Initial load
-  isRefreshing: boolean     // Background refresh
+  isLoading: boolean // Initial load
+  isRefreshing: boolean // Background refresh
   error: string | null
 }
 
@@ -1661,6 +1701,7 @@ interface InstanceState {
 ```
 
 **Loading UI pattern:**
+
 ```typescript
 // Show loading only on initial load, not refreshes
 {isLoading && sessions.length === 0 && <LoadingSpinner />}
@@ -1682,6 +1723,7 @@ interface InstanceState {
 8. Use PascalCase for React components and their files
 
 **Pattern Verification:**
+
 - `npm run validate` catches type mismatches
 - ESLint rules enforce naming conventions
 - PR review checks file placement
@@ -1965,99 +2007,99 @@ grimoire/
 
 #### Component Boundaries
 
-| Boundary | Owner | Consumers | Communication |
-|----------|-------|-----------|---------------|
-| Shell layout | `core/shell/` | All plugins | Props, Zustand |
-| Settings UI | `core/settings/` | All plugins | Plugin settings interface |
-| Session state | `plugins/sessions/` | Shell (indicators) | Zustand + IPC events |
-| Instance lifecycle | `plugins/sessions/main/` | Renderer via IPC | Events |
-| Database | `src/main/db.ts` | All main process code | Function calls |
+| Boundary           | Owner                    | Consumers             | Communication             |
+| ------------------ | ------------------------ | --------------------- | ------------------------- |
+| Shell layout       | `core/shell/`            | All plugins           | Props, Zustand            |
+| Settings UI        | `core/settings/`         | All plugins           | Plugin settings interface |
+| Session state      | `plugins/sessions/`      | Shell (indicators)    | Zustand + IPC events      |
+| Instance lifecycle | `plugins/sessions/main/` | Renderer via IPC      | Events                    |
+| Database           | `src/main/db.ts`         | All main process code | Function calls            |
 
 #### Data Boundaries
 
-| Data Type | Location | Access Pattern |
-|-----------|----------|----------------|
-| Sessions | `CLAUDE_CONFIG_DIR/.claude/` | Read on process exit |
-| App metadata | SQLite `sessions` table | Main process only |
-| Settings | SQLite `settings` table | Main process only |
-| UI state | Zustand stores | Renderer only |
-| Instance state | In-memory Map | Main process, emits events |
+| Data Type      | Location                     | Access Pattern             |
+| -------------- | ---------------------------- | -------------------------- |
+| Sessions       | `CLAUDE_CONFIG_DIR/.claude/` | Read on process exit       |
+| App metadata   | SQLite `sessions` table      | Main process only          |
+| Settings       | SQLite `settings` table      | Main process only          |
+| UI state       | Zustand stores               | Renderer only              |
+| Instance state | In-memory Map                | Main process, emits events |
 
 ### Requirements to Structure Mapping
 
 #### FR1-7: Application Shell → `src/renderer/src/core/shell/`
 
-| FR | File | Purpose |
-|----|------|---------|
-| FR1 | `Shell.tsx` | Multi-panel layout container |
-| FR2 | `Ribbon.tsx` | Left navigation ribbon |
-| FR3 | `LeftPanel.tsx`, `RightPanel.tsx` | Collapsible panels |
-| FR4 | `ResizableDivider.tsx` | Panel resize handles |
-| FR5-7 | `TabBar.tsx` | Tab system, one-per-session |
+| FR    | File                              | Purpose                      |
+| ----- | --------------------------------- | ---------------------------- |
+| FR1   | `Shell.tsx`                       | Multi-panel layout container |
+| FR2   | `Ribbon.tsx`                      | Left navigation ribbon       |
+| FR3   | `LeftPanel.tsx`, `RightPanel.tsx` | Collapsible panels           |
+| FR4   | `ResizableDivider.tsx`            | Panel resize handles         |
+| FR5-7 | `TabBar.tsx`                      | Tab system, one-per-session  |
 
 #### FR8-19: Application Lifecycle → `src/renderer/src/core/loading/`
 
-| FR | File | Purpose |
-|----|------|---------|
-| FR8-11 | `LoadingScreen.tsx` | Loading UI |
-| FR12-15 | `useAppInit.ts` | CC verification, auth check |
-| FR16-19 | `src/main/db.ts` | State persistence, startup |
+| FR      | File                | Purpose                     |
+| ------- | ------------------- | --------------------------- |
+| FR8-11  | `LoadingScreen.tsx` | Loading UI                  |
+| FR12-15 | `useAppInit.ts`     | CC verification, auth check |
+| FR16-19 | `src/main/db.ts`    | State persistence, startup  |
 
 #### FR20-24: Plugin System → `src/renderer/src/core/settings/`
 
-| FR | File | Purpose |
-|----|------|---------|
+| FR      | File                                         | Purpose                         |
+| ------- | -------------------------------------------- | ------------------------------- |
 | FR20-24 | `SettingsDialog.tsx`, `SettingsCategory.tsx` | Plugin enable/disable, settings |
 
 #### FR25-32: Session Management → `plugins/sessions/`
 
-| FR | File | Purpose |
-|----|------|---------|
-| FR25-27 | `SessionList.tsx` | List from CLAUDE_CONFIG_DIR |
-| FR28 | `SessionListItem.tsx` | State indicators (3-state) |
-| FR29-32 | `session-scanner.ts` | Archive, metadata |
+| FR      | File                  | Purpose                     |
+| ------- | --------------------- | --------------------------- |
+| FR25-27 | `SessionList.tsx`     | List from CLAUDE_CONFIG_DIR |
+| FR28    | `SessionListItem.tsx` | State indicators (3-state)  |
+| FR29-32 | `session-scanner.ts`  | Archive, metadata           |
 
 #### FR33-42: Conversation Display → `plugins/sessions/renderer/`
 
-| FR | File | Purpose |
-|----|------|---------|
-| FR33 | `MessageBubble.tsx` | User/assistant messages |
-| FR34 | `ToolCallCard.tsx` | Tool call display |
-| FR35 | `SubAgentContainer.tsx` | Collapsible sub-agents |
-| FR36 | `EventTimeline.tsx` | Navigation map |
-| FR37-42 | `ConversationView.tsx` | Streaming, errors, indicators |
+| FR      | File                    | Purpose                       |
+| ------- | ----------------------- | ----------------------------- |
+| FR33    | `MessageBubble.tsx`     | User/assistant messages       |
+| FR34    | `ToolCallCard.tsx`      | Tool call display             |
+| FR35    | `SubAgentContainer.tsx` | Collapsible sub-agents        |
+| FR36    | `EventTimeline.tsx`     | Navigation map                |
+| FR37-42 | `ConversationView.tsx`  | Streaming, errors, indicators |
 
 #### FR43-46: Session Information → `plugins/sessions/renderer/`
 
-| FR | File | Purpose |
-|----|------|---------|
+| FR      | File              | Purpose               |
+| ------- | ----------------- | --------------------- |
 | FR43-46 | `SessionInfo.tsx` | Token usage, metadata |
 
 #### FR47-60: Session Interaction → `plugins/sessions/`
 
-| FR | File | Purpose |
-|----|------|---------|
-| FR47-53 | `ChatInput.tsx` | Input, send, abort |
-| FR54-55 | `instance-manager.ts` | Spawn on send, process management |
+| FR      | File                     | Purpose                              |
+| ------- | ------------------------ | ------------------------------------ |
+| FR47-53 | `ChatInput.tsx`          | Input, send, abort                   |
+| FR54-55 | `instance-manager.ts`    | Spawn on send, process management    |
 | FR56-60 | `session-file-reader.ts` | Response retrieval from session file |
 
 #### FR61-67: CC Integration → `plugins/sessions/main/`
 
-| FR | File | Purpose |
-|----|------|---------|
-| FR61-64 | `instance-manager.ts` | CLAUDE_CONFIG_DIR spawn with `-p` flag |
+| FR      | File                     | Purpose                                   |
+| ------- | ------------------------ | ----------------------------------------- |
+| FR61-64 | `instance-manager.ts`    | CLAUDE_CONFIG_DIR spawn with `-p` flag    |
 | FR65-67 | `session-file-reader.ts` | Session file parsing, response extraction |
 
 ### Integration Points
 
 #### Internal Communication
 
-| From | To | Method | Channel/Pattern |
-|------|-----|--------|-----------------|
-| Renderer | Main | IPC invoke | `sessions:list`, `sessions:sendMessage` |
-| Main | Renderer | IPC send | `instance:stateChanged`, `instance:responseReady` |
-| Components | Components | Zustand | `useSessionStore`, `useUIStore` |
-| Plugin | Core | Props | Shell passes plugin components |
+| From       | To         | Method     | Channel/Pattern                                   |
+| ---------- | ---------- | ---------- | ------------------------------------------------- |
+| Renderer   | Main       | IPC invoke | `sessions:list`, `sessions:sendMessage`           |
+| Main       | Renderer   | IPC send   | `instance:stateChanged`, `instance:responseReady` |
+| Components | Components | Zustand    | `useSessionStore`, `useUIStore`                   |
+| Plugin     | Core       | Props      | Shell passes plugin components                    |
 
 #### Data Flow
 
@@ -2089,19 +2131,22 @@ stream-parser.ts (NDJSON events)
 
 ### Distribution Strategy (MVP)
 
-| Phase | Method | Signing | Auto-Update |
-|-------|--------|---------|-------------|
-| Development | `npm run dev` | No | No |
-| Friend testing | GitHub clone or unsigned DMG | No | No |
-| Public release | Signed + notarized DMG | Yes | Yes |
+| Phase          | Method                       | Signing | Auto-Update |
+| -------------- | ---------------------------- | ------- | ----------- |
+| Development    | `npm run dev`                | No      | No          |
+| Friend testing | GitHub clone or unsigned DMG | No      | No          |
+| Public release | Signed + notarized DMG       | Yes     | Yes         |
 
 **For friend testing (unsigned DMG):**
+
 ```bash
 npm run make  # Creates dist/Grimoire-x.x.x.dmg
 ```
+
 Friend runs `xattr -cr /Applications/Grimoire.app` to bypass Gatekeeper.
 
 **For developer friends:**
+
 ```bash
 git clone https://github.com/you/grimoire
 cd grimoire
@@ -2128,6 +2173,7 @@ Project structure supports all architectural decisions. Electron process separat
 All 67 functional requirements mapped to specific files in the project structure. Each FR category has a designated location with clear file responsibilities.
 
 **Non-Functional Requirements Coverage:**
+
 - Performance: DB-first startup, on-send spawn, client-side expansions
 - Reliability: SQLite + .claude folder dual truth, graceful shutdown
 - Integration: CLAUDE_CONFIG_DIR isolation, `-p` request-response mode, session file reading
@@ -2135,18 +2181,21 @@ All 67 functional requirements mapped to specific files in the project structure
 ### Implementation Readiness Validation ✅
 
 **Decision Completeness:**
+
 - All critical decisions documented with rationale
 - Technology stack fully specified
 - Integration patterns (IPC, state, events) complete with examples
 - Performance strategies defined
 
 **Structure Completeness:**
+
 - Complete directory tree with all files listed
 - Component boundaries clearly defined
 - FR → file mapping comprehensive
 - Data flow diagrams included
 
 **Pattern Completeness:**
+
 - 6 naming pattern categories defined
 - Good/anti-pattern examples provided
 - 8 enforcement guidelines for AI agents
@@ -2157,10 +2206,12 @@ All 67 functional requirements mapped to specific files in the project structure
 **Critical Gaps:** None
 
 **Important Gaps (Acceptable for MVP):**
+
 - Package versions not pinned (rely on package-lock.json)
 - ESLint config uses electron-vite defaults
 
 **Deferred Items:**
+
 - CI/CD pipeline (before public release)
 - Auto-updates (before public release)
 - Code signing (before public release)
@@ -2169,24 +2220,28 @@ All 67 functional requirements mapped to specific files in the project structure
 ### Architecture Completeness Checklist
 
 **✅ Requirements Analysis**
+
 - [x] Project context thoroughly analyzed
 - [x] Scale and complexity assessed (Medium - Desktop App)
 - [x] Technical constraints identified (Electron, CC CLI, macOS primary)
 - [x] Cross-cutting concerns mapped (7 concerns documented)
 
 **✅ Architectural Decisions**
+
 - [x] Critical decisions documented with rationale
 - [x] Technology stack fully specified
 - [x] Integration patterns defined (IPC, Zustand, SQLite)
 - [x] Performance considerations addressed
 
 **✅ Implementation Patterns**
+
 - [x] Naming conventions established (6 categories)
 - [x] Structure patterns defined (file organization)
 - [x] Communication patterns specified (IPC, events)
 - [x] Process patterns documented (error, loading)
 
 **✅ Project Structure**
+
 - [x] Complete directory structure defined
 - [x] Component boundaries established
 - [x] Integration points mapped
@@ -2199,12 +2254,14 @@ All 67 functional requirements mapped to specific files in the project structure
 **Confidence Level:** High
 
 **Key Strengths:**
+
 - Clear separation between core and plugins
 - Comprehensive pattern documentation prevents AI agent conflicts
 - All FRs mapped to specific implementation files
 - 3-state machine fully documented with spawn-child decisions
 
 **Areas for Future Enhancement:**
+
 - Dynamic plugin loading when second plugin needed
 - Event-driven data fetching if polling causes issues
 - CI/CD and code signing before public release
@@ -2212,6 +2269,7 @@ All 67 functional requirements mapped to specific files in the project structure
 ### Implementation Handoff
 
 **AI Agent Guidelines:**
+
 1. Follow all architectural decisions exactly as documented
 2. Use implementation patterns consistently across all components
 3. Respect project structure and boundaries
@@ -2219,6 +2277,7 @@ All 67 functional requirements mapped to specific files in the project structure
 5. Run `npm run validate` after any code changes
 
 **First Implementation Steps:**
+
 ```bash
 # 1. Create project with electron-vite
 npm create @quick-start/electron@latest grimoire -- --template react-ts

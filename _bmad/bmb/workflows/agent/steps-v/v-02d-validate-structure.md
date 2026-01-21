@@ -53,6 +53,7 @@ Append to `{validationReport}`:
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL}
 
 **Checks:**
+
 - [ ] Valid YAML syntax
 - [ ] Required fields present (name, description, type, persona)
 - [ ] Field types correct (arrays, strings)

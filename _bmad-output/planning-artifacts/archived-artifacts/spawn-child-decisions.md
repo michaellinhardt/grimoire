@@ -19,10 +19,10 @@ Grimoire is an application that wraps Claude Code CLI to provide a multi-session
 
 **Decision:** Hybrid approach - folder is truth, DB adds metadata
 
-| Responsibility | Source of Truth | Purpose |
-|----------------|-----------------|---------|
-| Session existence | `.claude` folder | Claude Code is authoritative |
-| App metadata/stats | Database | Links app data to sessions |
+| Responsibility     | Source of Truth  | Purpose                      |
+| ------------------ | ---------------- | ---------------------------- |
+| Session existence  | `.claude` folder | Claude Code is authoritative |
+| App metadata/stats | Database         | Links app data to sessions   |
 
 **Why:** Claude Code creates sessions, not us. We only record in DB after Claude confirms session creation (first response/error). This prevents phantom sessions.
 
@@ -34,12 +34,12 @@ Grimoire is an application that wraps Claude Code CLI to provide a multi-session
 
 **Decision:** DB-First with Background Validation (Pattern 3)
 
-| Step | Action |
-|------|--------|
-| 1 | Query DB → Show session list immediately (fast startup) |
-| 2 | Background: Scan `.claude` folder |
-| 3 | Compare → Flag discrepancies |
-| 4 | Notify user of "discovered" sessions if any |
+| Step | Action                                                  |
+| ---- | ------------------------------------------------------- |
+| 1    | Query DB → Show session list immediately (fast startup) |
+| 2    | Background: Scan `.claude` folder                       |
+| 3    | Compare → Flag discrepancies                            |
+| 4    | Notify user of "discovered" sessions if any             |
 
 **Why:** Respects that `.claude` is truth while keeping startup fast and UI clean. User can optionally sync discovered sessions.
 
@@ -51,12 +51,12 @@ Grimoire is an application that wraps Claude Code CLI to provide a multi-session
 
 **Decision:** Each user message spawns a new process that exits after response.
 
-| Event | Behavior |
-|-------|----------|
-| User sends message | Spawn `claude` process with `-p` flag |
-| Process running | State = Working, "Thinking..." indicator shown |
-| Process exits (code 0) | Read session file, display response, State = Idle |
-| Process exits (non-zero) | State = Error, show error in chat |
+| Event                    | Behavior                                          |
+| ------------------------ | ------------------------------------------------- |
+| User sends message       | Spawn `claude` process with `-p` flag             |
+| Process running          | State = Working, "Thinking..." indicator shown    |
+| Process exits (code 0)   | Read session file, display response, State = Idle |
+| Process exits (non-zero) | State = Error, show error in chat                 |
 
 **Why:** The `-p` flag provides complete functionality without streaming complexity. Process exit is a clear completion signal. No timeout management needed.
 
@@ -68,21 +68,21 @@ Idle → Working → Idle (success)
        Error
 ```
 
-| State | Description |
-|-------|-------------|
-| Idle | No process running, ready for input |
+| State   | Description                                    |
+| ------- | ---------------------------------------------- |
+| Idle    | No process running, ready for input            |
 | Working | Process running, "Thinking..." indicator shown |
-| Error | Process failed, error message displayed |
+| Error   | Process failed, error message displayed        |
 
 **Why:** Simplified from 6-state machine. Request-response pattern eliminates Spawning, Pending, and Terminating states.
 
 ### 3.3 Error Handling (Simplified)
 
-| Error Type | Handling |
-|------------|----------|
-| Spawn failure (ENOENT) | Show immediately - CC not installed |
-| Non-zero exit code | Show error in chat, session returns to Idle |
-| Process timeout (optional) | Configurable max runtime, default none |
+| Error Type                 | Handling                                    |
+| -------------------------- | ------------------------------------------- |
+| Spawn failure (ENOENT)     | Show immediately - CC not installed         |
+| Non-zero exit code         | Show error in chat, session returns to Idle |
+| Process timeout (optional) | Configurable max runtime, default none      |
 
 **Why:** With request-response pattern, error handling is simpler. No stream state to manage.
 
@@ -118,11 +118,11 @@ Process exits → Display response
 
 **Decision:** Color bar + Icon + Animation (triple redundancy for accessibility)
 
-| State | Visual |
-|-------|--------|
-| Idle | No decoration |
+| State   | Visual                                |
+| ------- | ------------------------------------- |
+| Idle    | No decoration                         |
 | Working | ⚡ + animated `···` + green color bar |
-| Error | ⚠️ icon + red color bar |
+| Error   | ⚠️ icon + red color bar               |
 
 Left color accent bar for quick scanning + icons for explicit state.
 
@@ -194,7 +194,7 @@ async function getResponseAfterProcess(sessionId: string): Promise<ConversationE
 
   // Return only new events since last read
   const lastKnownUuid = getLastKnownEventUuid(sessionId)
-  return events.slice(events.findIndex(e => e.uuid === lastKnownUuid) + 1)
+  return events.slice(events.findIndex((e) => e.uuid === lastKnownUuid) + 1)
 }
 ```
 
@@ -291,11 +291,11 @@ interface ResponseState {
 
 The following settings were removed with the switch to request-response pattern:
 
-| Setting | Previous Purpose | Why Removed |
-|---------|------------------|-------------|
-| Unfocused timeout | Kill idle instances after 3 min | Processes exit after each response |
-| Focused timeout | Kill idle instances after 10 min | Processes exit after each response |
-| Never close option | Keep instances alive indefinitely | No persistent instances |
+| Setting            | Previous Purpose                  | Why Removed                        |
+| ------------------ | --------------------------------- | ---------------------------------- |
+| Unfocused timeout  | Kill idle instances after 3 min   | Processes exit after each response |
+| Focused timeout    | Kill idle instances after 10 min  | Processes exit after each response |
+| Never close option | Keep instances alive indefinitely | No persistent instances            |
 
 ---
 
@@ -304,6 +304,7 @@ The following settings were removed with the switch to request-response pattern:
 **Decision:** Use `CLAUDE_CONFIG_DIR` environment variable per-process
 
 **Why chosen over alternatives:**
+
 - Docker: Too much friction for users (requires install, 500MB+)
 - HOME override: Breaks developer toolchain (git, ssh, npm, etc.)
 - Symlink swap: Risky if user runs standalone Claude Code, messy with heavy `.claude` folders
@@ -312,6 +313,7 @@ The following settings were removed with the switch to request-response pattern:
 ### Implementation
 
 **When spawning Claude Code instance:**
+
 ```bash
 CLAUDE_CONFIG_DIR=~/Library/Application\ Support/Grimoire/.claude \
 claude --session-id <uuid> \
@@ -319,60 +321,59 @@ claude --session-id <uuid> \
 ```
 
 **In Node.js/Electron:**
+
 ```typescript
-const child = spawn('claude', [
-  '--session-id', sessionId,
-  '-p', message
-], {
+const child = spawn('claude', ['--session-id', sessionId, '-p', message], {
   env: {
     ...process.env,
     CLAUDE_CONFIG_DIR: path.join(app.getPath('userData'), '.claude')
   }
-});
+})
 
 // Handle process completion
 child.on('exit', async (code) => {
   if (code === 0) {
-    const newEvents = await getResponseAfterProcess(sessionId);
-    emitResponseReady(sessionId, newEvents);
+    const newEvents = await getResponseAfterProcess(sessionId)
+    emitResponseReady(sessionId, newEvents)
   } else {
-    emitError(sessionId, `Process exited with code ${code}`);
+    emitError(sessionId, `Process exited with code ${code}`)
   }
-});
+})
 ```
 
 ### Grimoire Data Location
 
-| Platform | Path |
-|----------|------|
-| macOS | `~/Library/Application Support/Grimoire/.claude/` |
-| Windows | `%APPDATA%/Grimoire/.claude/` |
-| Linux | `~/.local/share/grimoire/.claude/` |
+| Platform | Path                                              |
+| -------- | ------------------------------------------------- |
+| macOS    | `~/Library/Application Support/Grimoire/.claude/` |
+| Windows  | `%APPDATA%/Grimoire/.claude/`                     |
+| Linux    | `~/.local/share/grimoire/.claude/`                |
 
 ### CLAUDE_CONFIG_DIR Behavior
 
-| Component | Uses CLAUDE_CONFIG_DIR? |
-|-----------|------------------------|
-| Sessions storage | Yes |
-| Credentials/API keys | Yes |
-| Skills/agents | Yes |
-| CLAUDE.md files | Yes |
-| MCP config | Yes |
-| `/ide` command | Broken (ignores it) |
+| Component              | Uses CLAUDE_CONFIG_DIR?           |
+| ---------------------- | --------------------------------- |
+| Sessions storage       | Yes                               |
+| Credentials/API keys   | Yes                               |
+| Skills/agents          | Yes                               |
+| CLAUDE.md files        | Yes                               |
+| MCP config             | Yes                               |
+| `/ide` command         | Broken (ignores it)               |
 | Some install detection | May still create local `.claude/` |
 
 **Why this is acceptable for Grimoire:**
+
 - Grimoire doesn't use `/ide` command
 - Install detection edge case is minor and doesn't affect core functionality
 - All session/config features work correctly
 
 ### Known Limitations
 
-| Issue | Impact | Mitigation |
-|-------|--------|------------|
-| `/ide` command broken | None - Grimoire doesn't use it | N/A |
+| Issue                                          | Impact                          | Mitigation                      |
+| ---------------------------------------------- | ------------------------------- | ------------------------------- |
+| `/ide` command broken                          | None - Grimoire doesn't use it  | N/A                             |
 | May create local `.claude/` on some operations | Minor - doesn't affect sessions | Ignore or clean up periodically |
-| GitHub issues #3833, #4739 | Edge cases | Monitor issues, update if fixed |
+| GitHub issues #3833, #4739                     | Edge cases                      | Monitor issues, update if fixed |
 
 ### Benefits Over Symlink Swap
 
@@ -385,6 +386,7 @@ child.on('exit', async (code) => {
 ### First Run Setup
 
 On first Grimoire launch:
+
 1. Create Grimoire's `.claude` directory in app data folder
 2. Initialize with default CLAUDE.md if desired
 3. No user warning needed - completely transparent
@@ -403,13 +405,13 @@ On first Grimoire launch:
 
 ### 8.2 Tab Management
 
-| Scenario | Behavior |
-|----------|----------|
-| Click session in list | Open tab (or focus if already open) |
-| Click same session again | Focus existing tab |
-| Close tab while Idle | Tab closes immediately |
-| Close tab while Working | Confirmation dialog, kill process if confirmed |
-| Close app | All active processes terminate (graceful shutdown) |
+| Scenario                 | Behavior                                           |
+| ------------------------ | -------------------------------------------------- |
+| Click session in list    | Open tab (or focus if already open)                |
+| Click same session again | Focus existing tab                                 |
+| Close tab while Idle     | Tab closes immediately                             |
+| Close tab while Working  | Confirmation dialog, kill process if confirmed     |
+| Close app                | All active processes terminate (graceful shutdown) |
 
 ### 8.3 Close While Working - Confirmation Dialog
 
@@ -445,16 +447,16 @@ When user closes a tab with a Working process:
 
 **Completed:** All core architecture decisions for Spawn Child feature
 
-| Section | Topic | Status |
-|---------|-------|--------|
-| 1 | Session ID Management | ✅ |
-| 2 | App Startup Pattern | ✅ |
-| 3 | Instance Lifecycle | ✅ Updated for request-response |
-| 4 | UI/UX Indicators | ✅ Updated for 3-state |
-| 5 | CC Communication | ✅ Updated for request-response |
-| 6 | Settings Architecture | ✅ Documented removed settings |
-| 7 | Isolation | ✅ Updated spawn code |
-| 8 | Tab Behavior | ✅ Updated for new states |
-| 9 | Data Export/Backup | ✅ |
+| Section | Topic                 | Status                          |
+| ------- | --------------------- | ------------------------------- |
+| 1       | Session ID Management | ✅                              |
+| 2       | App Startup Pattern   | ✅                              |
+| 3       | Instance Lifecycle    | ✅ Updated for request-response |
+| 4       | UI/UX Indicators      | ✅ Updated for 3-state          |
+| 5       | CC Communication      | ✅ Updated for request-response |
+| 6       | Settings Architecture | ✅ Documented removed settings  |
+| 7       | Isolation             | ✅ Updated spawn code           |
+| 8       | Tab Behavior          | ✅ Updated for new states       |
+| 9       | Data Export/Backup    | ✅                              |
 
 **Architecture Change:** 2026-01-22 - Changed from NDJSON streaming to `-p` request-response pattern. See `sprint-change-proposal-cc-integration.md` for details.

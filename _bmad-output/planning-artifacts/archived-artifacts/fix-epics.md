@@ -26,6 +26,7 @@ And the session transitions to Idle state
 **Correct (Per PRD):** FR28a and FR28b are marked [REMOVED] - "No persistent instances to disconnect with request-response model"
 
 **Fix Required:**
+
 - Remove the entire acceptance criteria block about disconnect button
 - Remove references to FR28a, FR28b from the story
 - The request-response model means processes exit naturally; no disconnect needed
@@ -47,6 +48,7 @@ Also references "Pending state" multiple times.
 **Correct (Per PRD):** 3-state model only: Idle, Working, Error
 
 **Fix Required:**
+
 - Change "6-state" to "3-state"
 - Update state transitions to: Idle → Working → Idle (or Idle → Working → Error → Idle)
 - Remove all acceptance criteria mentioning "Pending" state
@@ -54,6 +56,7 @@ Also references "Pending state" multiple times.
 - Simplify the state machine description
 
 **Acceptance criteria to remove/modify:**
+
 - "CC reaches a point waiting for user input (FR54)" - REMOVE
 - "session transitions to Pending state" - REMOVE
 - "UI shows amber indicator" for Pending - REMOVE
@@ -78,10 +81,12 @@ When the idle timeout elapses (default 3 minutes)
 ```
 
 **Correct (Per PRD):** FR55a-55e are ALL marked [REMOVED]:
+
 - FR55a: [REMOVED - On-send spawn instead]
 - FR55b-55e: [REMOVED - No timeout needed]
 
 **Fix Required:**
+
 - **Rewrite or remove Story 3b.4 entirely**
 - If keeping, rename to "On-Send Spawn" and simplify to:
   - Process spawns when user sends message (not on keystroke)
@@ -93,6 +98,7 @@ When the idle timeout elapses (default 3 minutes)
 ### Issue 4: FR Coverage Map Includes Removed FRs (MEDIUM)
 
 **Current (Wrong):** The "Detailed FR to Epic Mapping" section lists:
+
 - FR28a: Epic 2a - Disconnect button
 - FR28b: Epic 2a - Warning on Working disconnect
 - FR54: Epic 3b - Stop on wait for input
@@ -101,6 +107,7 @@ When the idle timeout elapses (default 3 minutes)
 **Correct:** These FRs are [REMOVED] and should not be mapped.
 
 **Fix Required:**
+
 - Remove FR28a, FR28b from mapping
 - Remove FR54, FR55a, FR55b, FR55c, FR55d, FR55e from mapping
 - Update Epic 2a FR count (currently claims 14 FRs)
@@ -111,10 +118,12 @@ When the idle timeout elapses (default 3 minutes)
 ### Issue 5: Requirements Inventory Lists Removed FRs (MEDIUM)
 
 **Current (Wrong):** The "Requirements Inventory" section at the top lists:
+
 - FR28a, FR28b with [REMOVED] notes
 - FR54, FR55a-55e with [REMOVED] notes
 
 **Fix Required:**
+
 - Either remove these entries entirely, OR
 - Keep them clearly marked as [REMOVED] for traceability but exclude from story coverage
 
@@ -123,10 +132,12 @@ When the idle timeout elapses (default 3 minutes)
 ### Issue 6: Epic Summary FR Counts (MINOR)
 
 **Current:**
+
 - Epic 2a: 14 FRs (includes FR28a, FR28b)
 - Epic 3b: 17 FRs (includes FR54, FR55a-55e)
 
 **Fix Required:**
+
 - Epic 2a: Should be 12 FRs (remove 2)
 - Epic 3b: Should be 11 FRs (remove 6)
 - Update total from 125 to 117
@@ -135,20 +146,20 @@ When the idle timeout elapses (default 3 minutes)
 
 ## Stories to Modify
 
-| Story | Action |
-|-------|--------|
-| **2a.3** | Remove disconnect button acceptance criteria |
-| **3b.3** | Rewrite for 3-state model, remove Pending references |
+| Story    | Action                                                                        |
+| -------- | ----------------------------------------------------------------------------- |
+| **2a.3** | Remove disconnect button acceptance criteria                                  |
+| **3b.3** | Rewrite for 3-state model, remove Pending references                          |
 | **3b.4** | Major rewrite or removal - remove first-keystroke spawn and all timeout logic |
 
 ## Sections to Update
 
-| Section | Action |
-|---------|--------|
-| Requirements Inventory | Mark removed FRs clearly or remove |
-| FR Coverage Map | Remove FR28a, FR28b, FR54, FR55a-55e |
-| Detailed FR to Epic Mapping | Remove mappings for removed FRs |
-| Epic Summary table | Update FR counts |
+| Section                     | Action                               |
+| --------------------------- | ------------------------------------ |
+| Requirements Inventory      | Mark removed FRs clearly or remove   |
+| FR Coverage Map             | Remove FR28a, FR28b, FR54, FR55a-55e |
+| Detailed FR to Epic Mapping | Remove mappings for removed FRs      |
+| Epic Summary table          | Update FR counts                     |
 
 ## New Content Needed
 
@@ -180,6 +191,7 @@ And the next message will spawn a fresh process
 ## Validation
 
 After fixes, verify:
+
 1. No acceptance criteria reference "disconnect button"
 2. No acceptance criteria reference "Pending" state
 3. No acceptance criteria reference "first-keystroke spawn"

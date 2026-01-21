@@ -99,6 +99,7 @@ compilationRules = read(agentCompilation)
 ```
 
 **Action:** Present a brief status message:
+
 ```
 🔍 LOADING VALIDATION FRAMEWORK
    Agent Type: {detected type}
@@ -111,23 +112,27 @@ compilationRules = read(agentCompilation)
 Run systematic checks against the validation checklist:
 
 ### A. YAML Syntax Validation
+
 - Parse YAML without errors
 - Check indentation consistency
 - Validate proper escaping of special characters
 - Verify no duplicate keys
 
 ### B. Frontmatter Validation
+
 - All required fields present
 - Field values correct type (string, boolean, array)
 - No empty required fields
 - Proper array formatting
 
 ### C. Section Completeness
+
 - All required sections present (based on agent type)
 - Sections not empty unless explicitly optional
 - Proper markdown heading hierarchy
 
 ### D. Field-Level Validation
+
 - Path references exist and are valid
 - Boolean fields are actual booleans (not strings)
 - Array fields properly formatted
@@ -136,11 +141,13 @@ Run systematic checks against the validation checklist:
 ### E. Agent Type Specific Checks
 
 **For Simple Agents:**
+
 - No sidecar requirements
 - Basic fields complete
 - No advanced configuration
 
 **For Expert Agents:**
+
 - Sidecar flag set correctly
 - Sidecar folder path specified
 - All expert fields present
@@ -154,17 +161,22 @@ Present findings in structured format:
 # 🎯 STRUCTURAL VALIDATION REPORT
 
 ## Agent: {agent-name}
+
 Type: {simple|expert}
 File: {builtYaml}
 
 ---
 
 ## ✅ PASSED CHECKS ({count})
+
 {List of all validations that passed}
 
-## ⚠️  ISSUES FOUND ({count})
+## ⚠️ ISSUES FOUND ({count})
+
 {If any issues, list each with:}
+
 ### Issue #{number}: {type}
+
 **Severity:** [CRITICAL|MODERATE|MINOR]
 **Location:** Line {line} or Section {section}
 **Problem:** {clear description}
@@ -174,6 +186,7 @@ File: {builtYaml}
 ---
 
 ## 📊 VALIDATION SUMMARY
+
 **Overall Status:** [PASSED|FAILED|CONDITIONAL]
 **Critical Issues:** {count}
 **Moderate Issues:** {count}
@@ -183,12 +196,16 @@ File: {builtYaml}
 ---
 
 {If PASSED}
+
 ## 🎉 VALIDATION SUCCESSFUL
+
 Your agent YAML is structurally sound and ready for use!
 All required fields present and correctly formatted.
 
 {If ISSUES FOUND}
+
 ## 🔧 RECOMMENDED ACTIONS
+
 1. Address critical issues first
 2. Review moderate issues
 3. Minor issues can be deferred
@@ -214,6 +231,7 @@ Display: "**Select an Option:** [A] Advanced Elicitation [F] Fix Findings [P] Pa
 - User can chat or ask questions - always respond and then end with display again of the menu options
 
 If [F] selected: Work through issues systematically
+
 - Load specific section needing fix
 - Present current state
 - Apply auto-fixes or guide user through corrections
@@ -221,6 +239,7 @@ If [F] selected: Work through issues systematically
 - Confirm resolution and re-present menu
 
 If [C] selected:
+
 - Warn about implications if issues exist
 - Get explicit confirmation if critical issues
 - Document acceptance of issues
@@ -253,6 +272,7 @@ else:
 ```
 
 **Action:** Present routing decision and transition:
+
 ```markdown
 # 🚀 VALIDATION COMPLETE - ROUTING DECISION
 
@@ -274,10 +294,11 @@ ONLY WHEN [C continue option] is selected and [validation complete with any find
 2. ✅ All critical issues resolved or explicitly accepted
 3. ✅ User informed of routing decision
 4. ✅ Next step file path determined correctly
-5. ⚠️  **CRITICAL:** For expert agents, verify hasSidecar is TRUE before routing to 7F
-6. ⚠️  **CRITICAL:** For simple agents, verify hasSidecar is FALSE before routing to 8
+5. ⚠️ **CRITICAL:** For expert agents, verify hasSidecar is TRUE before routing to 7F
+6. ⚠️ **CRITICAL:** For simple agents, verify hasSidecar is FALSE before routing to 8
 
 **DO NOT PROCEED IF:**
+
 - YAML has critical syntax errors preventing loading
 - User has not acknowledged validation results
 - Routing logic is unclear or conflicting
@@ -285,6 +306,7 @@ ONLY WHEN [C continue option] is selected and [validation complete with any find
 # SUCCESS METRICS
 
 ## Step Complete When:
+
 - [ ] Validation report generated and presented
 - [ ] User has reviewed findings
 - [ ] Critical issues resolved or accepted
@@ -292,6 +314,7 @@ ONLY WHEN [C continue option] is selected and [validation complete with any find
 - [ ] Next step path verified and ready
 
 ## Quality Indicators:
+
 - Validation thoroughness (all checklist items covered)
 - Issue identification clarity and specificity
 - User satisfaction with resolution process
@@ -299,6 +322,7 @@ ONLY WHEN [C continue option] is selected and [validation complete with any find
 - Clear transition to next step
 
 ## Failure Modes:
+
 - Skipping validation checks
 - Auto-fixing without permission
 - Incorrect routing (simple→7F or expert→8 with sidecar)

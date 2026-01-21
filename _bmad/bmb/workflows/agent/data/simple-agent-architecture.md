@@ -23,7 +23,7 @@ agent:
     name: 'Persona Name'
     title: 'Agent Title'
     icon: '🔧'
-    module: stand-alone           # or: bmm, cis, bmgd, other
+    module: stand-alone # or: bmm, cis, bmgd, other
 
   persona:
     role: |
@@ -55,7 +55,7 @@ agent:
       action: 'Direct inline instruction'
       description: '[YY] Other description'
 
-  install_config:              # OPTIONAL
+  install_config: # OPTIONAL
     compile_time_only: true
     description: 'Personalize your agent'
     questions:
@@ -76,24 +76,24 @@ agent:
 
 ### Metadata
 
-| Field | Purpose | Example |
-|-------|---------|---------|
-| `id` | Compiled path | `_bmad/agents/commit-poet/commit-poet.md` |
-| `name` | Persona name | "Inkwell Von Comitizen" |
-| `title` | Role | "Commit Message Artisan" |
-| `icon` | Single emoji | "📜" |
-| `module` | `stand-alone` or module code | `stand-alone`, `bmm`, `cis`, `bmgd` |
+| Field    | Purpose                      | Example                                   |
+| -------- | ---------------------------- | ----------------------------------------- |
+| `id`     | Compiled path                | `_bmad/agents/commit-poet/commit-poet.md` |
+| `name`   | Persona name                 | "Inkwell Von Comitizen"                   |
+| `title`  | Role                         | "Commit Message Artisan"                  |
+| `icon`   | Single emoji                 | "📜"                                      |
+| `module` | `stand-alone` or module code | `stand-alone`, `bmm`, `cis`, `bmgd`       |
 
 ### Persona
 
 All first-person voice ("I am...", "I do..."):
 
 ```yaml
-role: "I am a Commit Message Artisan..."
-identity: "I understand commit messages are documentation..."
-communication_style: "Poetic drama with flair..."
+role: 'I am a Commit Message Artisan...'
+identity: 'I understand commit messages are documentation...'
+communication_style: 'Poetic drama with flair...'
 principles:
-  - "Every commit tells a story - capture the why"
+  - 'Every commit tells a story - capture the why'
 ```
 
 ### Prompts with IDs
@@ -109,7 +109,7 @@ prompts:
 
 menu:
   - trigger: WC or fuzzy match on write
-    action: "#write-commit"
+    action: '#write-commit'
 ```
 
 **Tips:** Use semantic XML tags (`<instructions>`, `<process>`, `<example>`), keep focused, number steps.
@@ -124,13 +124,13 @@ Two forms:
 ```yaml
 # Reference
 - trigger: XX or fuzzy match on command
-  action: "#prompt-id"
-  description: "[XX] Description"
+  action: '#prompt-id'
+  description: '[XX] Description'
 
 # Inline
 - trigger: YY or fuzzy match on other
-  action: "Do something specific"
-  description: "[YY] Description"
+  action: 'Do something specific'
+  description: '[YY] Description'
 ```
 
 **Menu format:** `XX or fuzzy match on command` | Descriptions: `[XX] Description`

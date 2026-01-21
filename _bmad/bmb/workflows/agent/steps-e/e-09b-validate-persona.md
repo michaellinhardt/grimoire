@@ -49,10 +49,10 @@ Perform checks on role, identity, communication_style, principles.
 Append to editPlan frontmatter:
 
 ```yaml
-  persona:
-    status: [pass|fail|warning]
-    findings:
-      - {check}: [pass|fail]
+persona:
+  status: [pass|fail|warning]
+  findings:
+    - { check }: [pass|fail]
 ```
 
 ### 4. Auto-Advance

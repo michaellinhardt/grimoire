@@ -27,12 +27,14 @@ Validate that the agent's metadata properties (name, description, version, tags,
 ## EXECUTION PROTOCOLS
 
 ### Protocol 1: Load and Compare
+
 1. Read the metadata validation reference from `{agentMetadata}`
 2. Read the built agent YAML from `{builtYaml}`
 3. Extract the metadata section from the builtYaml
 4. Compare actual metadata against validation rules
 
 ### Protocol 2: Validation Checks
+
 Perform these checks systematically:
 
 1. **Required Fields Existence**
@@ -60,9 +62,11 @@ Perform these checks systematically:
    - [ ] Consistent formatting with other agents
 
 ### Protocol 3: Report Findings
+
 Organize your report into three sections:
 
 **PASSING CHECKS** (List what passed)
+
 ```
 ✓ Required fields present
 ✓ Version format valid (1.0.0)
@@ -70,12 +74,14 @@ Organize your report into three sections:
 ```
 
 **WARNINGS** (Non-blocking issues)
+
 ```
 ⚠ Description is brief (45 chars, recommended 50-200)
 ⚠ Only 2 tags provided, 3-7 recommended
 ```
 
 **FAILURES** (Blocking issues that must be fixed)
+
 ```
 ✗ Missing required field: version
 ✗ Invalid version format: "v1.0" (should be "1.0.0")
@@ -106,17 +112,20 @@ Display: "**Select an Option:** [A] Advanced Elicitation [F] Fix Findings [P] Pa
 ## CONTEXT BOUNDARIES
 
 **IN SCOPE:**
+
 - Metadata section of agent.yaml (name, description, version, tags, category, author, license, etc.)
 - Referencing the agentMetadata.md validation rules
 - Comparing against BMAD standards
 
 **OUT OF SCOPE:**
+
 - Persona fields (handled in step-07c)
 - Menu items (handled in step-07d)
 - System architecture (handled in step-07e)
 - Capability implementation (handled in step-07f)
 
 **DO NOT:**
+
 - Validate persona properties in this step
 - Suggest major feature additions
 - Question the agent's core purpose

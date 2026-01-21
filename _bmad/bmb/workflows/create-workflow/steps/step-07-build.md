@@ -73,7 +73,7 @@ To generate all the workflow files (workflow.md, step files, templates, and supp
 - When building continuable step-01-init.md files, use template `{project-root}/_bmad/bmb/docs/workflows/templates/step-01-init-continuable-template.md`
 - When building continuation steps, use template `{project-root}/_bmad/bmb/docs/workflows/templates/step-1b-template.md`
 - When building the main workflow.md file, you must follow template `{project-root}/_bmad/bmb/docs/workflows/templates/workflow-template.md`
-- Example step files from {project-root}/_bmad/bmb/reference/workflows/meal-prep-nutrition/workflow.md for patterns - this is an idealized workflow so all files can give good insight into format and structure to be followed
+- Example step files from {project-root}/\_bmad/bmb/reference/workflows/meal-prep-nutrition/workflow.md for patterns - this is an idealized workflow so all files can give good insight into format and structure to be followed
 
 ## FILE GENERATION SEQUENCE:
 
@@ -118,7 +118,7 @@ Load and follow {workflowTemplate}:
 
 - Create workflow.md using template structure
 - Insert workflow name and description
-- Configure all path variables ({project-root}, _bmad, {workflow_path})
+- Configure all path variables ({project-root}, \_bmad, {workflow_path})
 - Set web_bundle flag to true unless user has indicated otherwise
 - Define role and goal
 - Include initialization path to step-01
@@ -184,6 +184,7 @@ For document workflows:
 - Ensure variable naming consistency
 
 Remember that the output format design we aligned on chose one of the following - and what it means practically when creating the workflow steps:
+
 1. **Strict Template** - Must follow exact format with specific fields
    1. This is similar to the example where there are multiple template fragements that are specific with all fields to be in the final output.
    2. generally there will be 1 fragment to a step to complete in the overall template.

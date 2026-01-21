@@ -30,15 +30,15 @@ The `recurse` utility provides:
 **Implementation**:
 
 ```typescript
-import { test } from '@seontechnologies/playwright-utils/recurse/fixtures';
+import { test } from '@seontechnologies/playwright-utils/recurse/fixtures'
 
 test('should wait for job completion', async ({ recurse, apiRequest }) => {
   // Start job
   const { body } = await apiRequest({
     method: 'POST',
     path: '/api/jobs',
-    body: { type: 'export' },
-  });
+    body: { type: 'export' }
+  })
 
   // Poll until ready
   const result = await recurse(
@@ -47,12 +47,12 @@ test('should wait for job completion', async ({ recurse, apiRequest }) => {
     {
       timeout: 60000, // 60 seconds max
       interval: 2000, // Check every 2 seconds
-      log: 'Waiting for export job to complete',
-    },
-  );
+      log: 'Waiting for export job to complete'
+    }
+  )
 
-  expect(result.body.downloadUrl).toBeDefined();
-});
+  expect(result.body.downloadUrl).toBeDefined()
+})
 ```
 
 **Key Points**:
@@ -73,24 +73,24 @@ test('should poll with assertions', async ({ recurse, apiRequest }) => {
   await apiRequest({
     method: 'POST',
     path: '/api/events',
-    body: { type: 'user-created', userId: '123' },
-  });
+    body: { type: 'user-created', userId: '123' }
+  })
 
   // Poll with assertions in predicate
   await recurse(
     async () => {
-      const { body } = await apiRequest({ method: 'GET', path: '/api/events/123' });
-      return body;
+      const { body } = await apiRequest({ method: 'GET', path: '/api/events/123' })
+      return body
     },
     (event) => {
       // Use assertions instead of boolean returns
-      expect(event.processed).toBe(true);
-      expect(event.timestamp).toBeDefined();
+      expect(event.processed).toBe(true)
+      expect(event.timestamp).toBeDefined()
       // If assertions pass, predicate succeeds
     },
-    { timeout: 30000 },
-  );
-});
+    { timeout: 30000 }
+  )
+})
 ```
 
 **Key Points**:
@@ -114,15 +114,15 @@ test('custom error on timeout', async ({ recurse, apiRequest }) => {
       (res) => res.body.ready === true,
       {
         timeout: 10000,
-        error: 'System failed to become ready within 10 seconds - check background workers',
-      },
-    );
+        error: 'System failed to become ready within 10 seconds - check background workers'
+      }
+    )
   } catch (error) {
     // Error message includes custom context
-    expect(error.message).toContain('check background workers');
-    throw error;
+    expect(error.message).toContain('check background workers')
+    throw error
   }
-});
+})
 ```
 
 **Key Points**:
@@ -147,15 +147,15 @@ test('post-poll processing', async ({ recurse, apiRequest }) => {
       timeout: 60000,
       post: (result) => {
         // Runs after successful polling
-        console.log(`Job completed in ${result.body.duration}ms`);
-        console.log(`Processed ${result.body.itemsProcessed} items`);
-        return result.body;
-      },
-    },
-  );
+        console.log(`Job completed in ${result.body.duration}ms`)
+        console.log(`Processed ${result.body.itemsProcessed} items`)
+        return result.body
+      }
+    }
+  )
 
-  expect(finalResult.itemsProcessed).toBeGreaterThan(0);
-});
+  expect(finalResult.itemsProcessed).toBeGreaterThan(0)
+})
 ```
 
 **Key Points**:
@@ -172,33 +172,33 @@ test('post-poll processing', async ({ recurse, apiRequest }) => {
 **Implementation**:
 
 ```typescript
-import { test } from '@seontechnologies/playwright-utils/fixtures';
+import { test } from '@seontechnologies/playwright-utils/fixtures'
 
 test('end-to-end polling', async ({ apiRequest, recurse }) => {
   // Trigger async operation
   const { body: createResp } = await apiRequest({
     method: 'POST',
     path: '/api/data-import',
-    body: { source: 's3://bucket/data.csv' },
-  });
+    body: { source: 's3://bucket/data.csv' }
+  })
 
   // Poll until import completes
   const importResult = await recurse(
     () => apiRequest({ method: 'GET', path: `/api/data-import/${createResp.importId}` }),
     (response) => {
-      const { status, rowsImported } = response.body;
-      return status === 'completed' && rowsImported > 0;
+      const { status, rowsImported } = response.body
+      return status === 'completed' && rowsImported > 0
     },
     {
       timeout: 120000, // 2 minutes for large imports
       interval: 5000, // Check every 5 seconds
-      log: `Polling import ${createResp.importId}`,
-    },
-  );
+      log: `Polling import ${createResp.importId}`
+    }
+  )
 
-  expect(importResult.body.rowsImported).toBeGreaterThan(1000);
-  expect(importResult.body.errors).toHaveLength(0);
-});
+  expect(importResult.body.rowsImported).toBeGreaterThan(1000)
+  expect(importResult.body.errors).toHaveLength(0)
+})
 ```
 
 **Key Points**:
@@ -259,20 +259,20 @@ Error: Predicate failed: Cannot read property 'status' of undefined
 **❌ Using hard waits instead of polling:**
 
 ```typescript
-await page.click('#export');
-await page.waitForTimeout(5000); // Arbitrary wait
-expect(await page.textContent('#status')).toBe('Ready');
+await page.click('#export')
+await page.waitForTimeout(5000) // Arbitrary wait
+expect(await page.textContent('#status')).toBe('Ready')
 ```
 
 **✅ Poll for actual condition:**
 
 ```typescript
-await page.click('#export');
+await page.click('#export')
 await recurse(
   () => page.textContent('#status'),
   (status) => status === 'Ready',
-  { timeout: 10000 },
-);
+  { timeout: 10000 }
+)
 ```
 
 **❌ Polling too frequently:**
@@ -281,8 +281,8 @@ await recurse(
 await recurse(
   () => apiRequest({ method: 'GET', path: '/status' }),
   (res) => res.body.ready,
-  { interval: 100 }, // Hammers API every 100ms!
-);
+  { interval: 100 } // Hammers API every 100ms!
+)
 ```
 
 **✅ Reasonable interval for API calls:**
@@ -291,6 +291,6 @@ await recurse(
 await recurse(
   () => apiRequest({ method: 'GET', path: '/status' }),
   (res) => res.body.ready,
-  { interval: 2000 }, // Check every 2 seconds (reasonable)
-);
+  { interval: 2000 } // Check every 2 seconds (reasonable)
+)
 ```

@@ -49,10 +49,10 @@ Read `{expertValidation}` and `{editPlan}` to get agent type.
 Append to editPlan frontmatter:
 
 ```yaml
-  sidecar:
-    status: [pass|fail|warning|n/a]
-    findings:
-      - {check}: [pass|fail|n/a]
+sidecar:
+  status: [pass|fail|warning|n/a]
+  findings:
+    - { check }: [pass|fail|n/a]
 ```
 
 ### 4. Auto-Advance

@@ -29,11 +29,11 @@
  *   mkdir -p dot-claude/.claude  # for config files
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
+const { spawn } = require('child_process')
+const path = require('path')
 
 // Custom HOME directory - Claude will look for config at dot-claude/.claude/
-const GRIMOIRE_CLAUDE_HOME = path.join(__dirname, '..', 'dot-claude');
+const GRIMOIRE_CLAUDE_HOME = path.join(__dirname, '..', 'dot-claude')
 
 function spawnClaude(args = [], options = {}) {
   const claudeProcess = spawn('claude', args, {
@@ -42,30 +42,30 @@ function spawnClaude(args = [], options = {}) {
       // Override HOME so Claude uses isolated config
       HOME: GRIMOIRE_CLAUDE_HOME,
       // Prepend fake HOME's .local/bin to PATH (fixes installation path check)
-      PATH: `${path.join(GRIMOIRE_CLAUDE_HOME, '.local', 'bin')}:${process.env.PATH}`,
+      PATH: `${path.join(GRIMOIRE_CLAUDE_HOME, '.local', 'bin')}:${process.env.PATH}`
     },
     // Use caller's working directory, not the script's location
     cwd: options.cwd || process.cwd(),
     // 'inherit' makes Claude interactive and visible in terminal
-    stdio: options.stdio || 'inherit',
-  });
+    stdio: options.stdio || 'inherit'
+  })
 
-  return claudeProcess;
+  return claudeProcess
 }
 
 // CLI usage
 if (require.main === module) {
-  const args = process.argv.slice(2);
-  const claude = spawnClaude(args);
+  const args = process.argv.slice(2)
+  const claude = spawnClaude(args)
 
   claude.on('close', (code) => {
-    process.exit(code);
-  });
+    process.exit(code)
+  })
 
   claude.on('error', (err) => {
-    console.error('Failed to start Claude:', err.message);
-    process.exit(1);
-  });
+    console.error('Failed to start Claude:', err.message)
+    process.exit(1)
+  })
 }
 
-module.exports = { spawnClaude, GRIMOIRE_CLAUDE_HOME };
+module.exports = { spawnClaude, GRIMOIRE_CLAUDE_HOME }

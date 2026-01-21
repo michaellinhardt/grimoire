@@ -12,10 +12,11 @@ Every menu item requires:
 - trigger: XX or fuzzy match on command-name
   [handler]: [value]
   description: '[XX] Display text here'
-  data: [optional]   # Pass file to workflow
+  data: [optional] # Pass file to workflow
 ```
 
 **Required fields:**
+
 - `trigger` - Format: `XX or fuzzy match on command-name` (XX = 2-letter code, command-name = what user says)
 - `description` - Must start with `[XX]` code
 - Handler - Either `action` (Simple/Expert) or `exec` (Module)
@@ -120,12 +121,14 @@ exec: '../../../core/workflows/brainstorming/workflow.yaml'
 ```
 
 **Available variables:**
+
 - `{project-root}` - Project root directory
 - `{output_folder}` - Document output location
 - `{user_name}` - User's name from config
 - `{communication_language}` - Language preference
 
 **Expert Agent sidecar paths:**
+
 ```yaml
 # Agent YAML referencing sidecar files
 action: 'Update {project-root}/_bmad/_memory/journal-keeper-sidecar/memories.md with insights'
@@ -144,6 +147,7 @@ When creating menu items, follow this sequence:
 5. **Write description** → `[LC] Lint code for issues`
 
 Result:
+
 ```yaml
 - trigger: LC or fuzzy match on lint-code
   action: 'Check code for common issues and anti-patterns'

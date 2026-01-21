@@ -53,6 +53,7 @@ Apply all planned edits to the Module agent YAML file and manage workflow integr
 ### 1. Load Reference Documents
 
 Read all files before editing:
+
 - `{expertTemplate}` - Module uses expert as baseline
 - `{expertArch}`, `{moduleArch}` - Architecture references
 - `{agentCompilation}`, `{agentMetadata}`, `{personaProperties}`, `{principlesCrafting}`
@@ -71,19 +72,23 @@ ALWAYS backup before editing:
 ### 4. Apply Edits in Sequence
 
 **Type Conversion to Module:**
+
 - Update `type: module`
 - Add workflow integration paths
 
 **Workflow Path Management:**
+
 - Add: `skills: - workflow: {path}`
 - Remove: delete workflow entries
 - Modify: update workflow paths
 
 **Sidecar for Multi-Workflow Modules:**
+
 - If 3+ workflows: consider sidecar creation
 - Add sidecar configuration if needed
 
 **Metadata, Persona, Commands, Critical Actions:**
+
 - Same as Expert agent edit
 
 ### 5. Validate Workflow Paths
@@ -117,4 +122,4 @@ When all edits applied successfully, load and execute `{nextStepFile}` immediate
 
 ---
 
-**Auto-advancing to post-edit validation...
+\*\*Auto-advancing to post-edit validation...

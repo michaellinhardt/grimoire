@@ -28,6 +28,7 @@ Validate that the agent's persona (role, tone, expertise, principles, constraint
 ## EXECUTION PROTOCOLS
 
 ### Protocol 1: Load and Compare
+
 1. Read the persona validation reference from `{personaProperties}`
 2. Read the principles crafting guide from `{principlesCrafting}`
 3. Read the built agent YAML from `{builtYaml}`
@@ -35,6 +36,7 @@ Validate that the agent's persona (role, tone, expertise, principles, constraint
 5. Compare actual persona against validation rules
 
 ### Protocol 2: Validation Checks
+
 Perform these checks systematically:
 
 1. **Required Fields Existence**
@@ -82,9 +84,11 @@ Perform these checks systematically:
    - [ ] Language and terminology consistent
 
 ### Protocol 3: Report Findings
+
 Organize your report into three sections:
 
 **PASSING CHECKS** (List what passed)
+
 ```
 ✓ Role is specific and well-defined
 ✓ Tone clearly articulated and appropriate
@@ -93,6 +97,7 @@ Organize your report into three sections:
 ```
 
 **WARNINGS** (Non-blocking issues)
+
 ```
 ⚠ Only 2 principles provided, 3-7 recommended for richer guidance
 ⚠ No constraints defined - consider adding boundaries
@@ -100,6 +105,7 @@ Organize your report into three sections:
 ```
 
 **FAILURES** (Blocking issues that must be fixed)
+
 ```
 ✗ Role is generic ("assistant") - needs specificity
 ✗ Tone undefined - creates inconsistent behavior
@@ -131,18 +137,21 @@ Display: "**Select an Option:** [A] Advanced Elicitation [F] Fix Findings [P] Pa
 ## CONTEXT BOUNDARIES
 
 **IN SCOPE:**
+
 - Persona section of agent.yaml (role, tone, expertise, principles, constraints)
 - Referencing personaProperties.md and principlesCrafting.md
 - Evaluating persona clarity, specificity, and consistency
 - Checking alignment between persona elements
 
 **OUT OF SCOPE:**
+
 - Metadata fields (handled in step-07b)
 - Menu items (handled in step-07d)
 - System architecture (handled in step-07e)
 - Technical implementation details
 
 **DO NOT:**
+
 - Validate metadata properties in this step
 - Question the agent's core purpose (that's for earlier steps)
 - Suggest additional menu items

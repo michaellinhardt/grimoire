@@ -23,6 +23,7 @@ The success gate is clear: if Grimoire isn't faster than CLI for managing sessio
 ### Target Users
 
 **Primary User: Power User (Creator)**
+
 - Solo developer running Claude Code across diverse domains
 - Multiple sessions daily, from quick questions to complex multi-agent workflows
 - Technical proficiency: intermediate-to-advanced CLI user
@@ -66,16 +67,17 @@ The core interaction: **Type a message, hit Enter, work happens with full visibi
 
 **Zero-Click to First Action Principle:** The app anticipates user intent and is ready immediately. When Grimoire launches, it opens to a new session with the cursor already in the input box. No clicks required to start working.
 
-| Interaction | Clicks Required | Implementation |
-|-------------|-----------------|----------------|
-| Start new session on app launch | 0 | App opens → cursor in input → type → Enter |
-| Start new session while using app | 1 | Click "+" → cursor in input → type → Enter |
-| Continue any session | 1 | Click session → cursor in input → type → Enter |
-| Navigate long session | 1 | Click event in timeline → instant scroll |
-| Understand sub-agent | 1 | Click bubble → inline expansion |
-| Compare sessions | 2 | Right-click → "Open in new tab" (or drag) |
+| Interaction                       | Clicks Required | Implementation                                 |
+| --------------------------------- | --------------- | ---------------------------------------------- |
+| Start new session on app launch   | 0               | App opens → cursor in input → type → Enter     |
+| Start new session while using app | 1               | Click "+" → cursor in input → type → Enter     |
+| Continue any session              | 1               | Click session → cursor in input → type → Enter |
+| Navigate long session             | 1               | Click event in timeline → instant scroll       |
+| Understand sub-agent              | 1               | Click bubble → inline expansion                |
+| Compare sessions                  | 2               | Right-click → "Open in new tab" (or drag)      |
 
 **Micro-interaction Details:**
+
 - Input box always auto-focused when session is selected
 - Enter sends message (Shift+Enter for newline)
 - Escape clears input or closes expanded elements
@@ -112,6 +114,7 @@ The core interaction: **Type a message, hit Enter, work happens with full visibi
 Users should feel that everything is exactly where they expect it, they always understand what's happening, and they are completely in control. The interface should feel like an extension of their intent, not a barrier to overcome.
 
 **Supporting Emotions:**
+
 - **Relief** - "Finally I can see what Claude Code is actually doing"
 - **Confidence** - "I understand exactly what each agent did and why"
 - **Efficiency** - "This is genuinely faster than terminal"
@@ -119,18 +122,19 @@ Users should feel that everything is exactly where they expect it, they always u
 
 ### Emotional Journey Mapping
 
-| Stage | Desired Emotion |
-|-------|-----------------|
-| App launch | Anticipation → Immediate readiness (cursor in input, ready to work) |
-| Starting work | Confidence → "I know exactly what to do" |
-| During workflow | Engaged clarity → Watching with full understanding |
-| Workflow complete | Satisfaction → "I saw everything, I understand what happened" |
-| Error occurs | Calm curiosity → "Let me drill into this" (not panic) |
-| Returning later | Familiarity → "Everything is where I left it" |
+| Stage             | Desired Emotion                                                     |
+| ----------------- | ------------------------------------------------------------------- |
+| App launch        | Anticipation → Immediate readiness (cursor in input, ready to work) |
+| Starting work     | Confidence → "I know exactly what to do"                            |
+| During workflow   | Engaged clarity → Watching with full understanding                  |
+| Workflow complete | Satisfaction → "I saw everything, I understand what happened"       |
+| Error occurs      | Calm curiosity → "Let me drill into this" (not panic)               |
+| Returning later   | Familiarity → "Everything is where I left it"                       |
 
 ### Micro-Emotions
 
 **Emotions to Cultivate:**
+
 - Confidence over confusion
 - Trust over skepticism
 - Accomplishment over frustration
@@ -138,6 +142,7 @@ Users should feel that everything is exactly where they expect it, they always u
 - Curiosity over avoidance
 
 **Emotions to Prevent:**
+
 - Confused about UX/UI or where things are
 - Confused about feature purpose or usage
 - Frustrated by perceived slowness
@@ -146,14 +151,14 @@ Users should feel that everything is exactly where they expect it, they always u
 
 ### Design Implications
 
-| Desired Emotion | Design Approach |
-|-----------------|-----------------|
-| Effortless | Self-evident UI. Buttons where expected. No hunting for controls. |
-| In control | Always show system state. Active indicators. Clear feedback loops. |
-| Confident | Progressive disclosure - depth available but never forced. |
-| Relieved | Visibility that terminal cannot provide (sub-agents, tool details). |
-| Calm on error | Errors highlighted clearly but not alarmingly. Actionable messaging. |
-| Curious | Drill-down is inviting. "Click to explore" not "click to reveal wall of text." |
+| Desired Emotion | Design Approach                                                                |
+| --------------- | ------------------------------------------------------------------------------ |
+| Effortless      | Self-evident UI. Buttons where expected. No hunting for controls.              |
+| In control      | Always show system state. Active indicators. Clear feedback loops.             |
+| Confident       | Progressive disclosure - depth available but never forced.                     |
+| Relieved        | Visibility that terminal cannot provide (sub-agents, tool details).            |
+| Calm on error   | Errors highlighted clearly but not alarmingly. Actionable messaging.           |
+| Curious         | Drill-down is inviting. "Click to explore" not "click to reveal wall of text." |
 
 ### Emotional Design Principles
 
@@ -174,6 +179,7 @@ Users should feel that everything is exactly where they expect it, they always u
 **Obsidian (Primary Inspiration - Phase 1)**
 
 Obsidian provides the foundational UX mental model for Grimoire. Key qualities:
+
 - Clean, focused interface that scales from simple notes to complex knowledge management
 - Flexible panel system that adapts to different work styles
 - Power-user friendly with extensive keyboard shortcuts
@@ -183,6 +189,7 @@ Obsidian provides the foundational UX mental model for Grimoire. Key qualities:
 **N8N (Future Inspiration - Workflow Builder)**
 
 N8N's node-based visual workflow system will inform future workflow builder features:
+
 - Canvas-based workflow visualization
 - Clear node-to-node connections showing data/control flow
 - Click-to-configure node parameters
@@ -191,55 +198,59 @@ N8N's node-based visual workflow system will inform future workflow builder feat
 
 **From Obsidian:**
 
-| Pattern | Grimoire Implementation |
-|---------|------------------------|
-| Ribbon navigation | Vertical icon bar (left edge) for switching between app sections |
-| Flexible panel system | Left panel (sessions), Middle panel (conversation), Right panel (toggleable content) |
-| Panel content switching | Right panel toggles: session info OR event timeline |
-| Show/hide panels | Collapsible left and right panels for focused work |
-| Progressive disclosure | Sub-agents and tool calls collapsed by default, expand on click |
-| Keyboard shortcuts | Cmd+N (new session), Cmd+/ (toggle panels), arrow navigation |
-| Plugin architecture | Core features (Sessions) built on same system future plugins will use |
+| Pattern                 | Grimoire Implementation                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| Ribbon navigation       | Vertical icon bar (left edge) for switching between app sections                     |
+| Flexible panel system   | Left panel (sessions), Middle panel (conversation), Right panel (toggleable content) |
+| Panel content switching | Right panel toggles: session info OR event timeline                                  |
+| Show/hide panels        | Collapsible left and right panels for focused work                                   |
+| Progressive disclosure  | Sub-agents and tool calls collapsed by default, expand on click                      |
+| Keyboard shortcuts      | Cmd+N (new session), Cmd+/ (toggle panels), arrow navigation                         |
+| Plugin architecture     | Core features (Sessions) built on same system future plugins will use                |
 
 **Future Patterns (N8N):**
 
-| Pattern | Future Implementation |
-|---------|----------------------|
-| Node canvas | Visual workflow builder for agent chains |
-| Connection visualization | Agent-to-agent data/control flow |
-| Click-to-configure | Inline agent/tool parameter editing |
+| Pattern                  | Future Implementation                    |
+| ------------------------ | ---------------------------------------- |
+| Node canvas              | Visual workflow builder for agent chains |
+| Connection visualization | Agent-to-agent data/control flow         |
+| Click-to-configure       | Inline agent/tool parameter editing      |
 
 ### Anti-Patterns to Avoid
 
-| Anti-Pattern | Risk | Prevention |
-|--------------|------|------------|
-| Hidden navigation | Users can't find features | Ribbon always visible, self-evident icons |
-| Mystery icons | Users guess button purposes | Tooltips on hover, clear iconography |
-| Modal overload | Interrupts flow, loses context | Prefer inline expansion over modals |
-| Nested menus | Cognitive load, slow access | Flat hierarchy, direct panel access |
-| Slow transitions | Breaks flow, feels sluggish | Instant switches, minimal animation |
-| Forced complexity | Overwhelms on first use | Progressive disclosure, clean defaults |
-| Inconsistent behavior | Breaks trust, creates confusion | Same interaction patterns throughout |
+| Anti-Pattern          | Risk                            | Prevention                                |
+| --------------------- | ------------------------------- | ----------------------------------------- |
+| Hidden navigation     | Users can't find features       | Ribbon always visible, self-evident icons |
+| Mystery icons         | Users guess button purposes     | Tooltips on hover, clear iconography      |
+| Modal overload        | Interrupts flow, loses context  | Prefer inline expansion over modals       |
+| Nested menus          | Cognitive load, slow access     | Flat hierarchy, direct panel access       |
+| Slow transitions      | Breaks flow, feels sluggish     | Instant switches, minimal animation       |
+| Forced complexity     | Overwhelms on first use         | Progressive disclosure, clean defaults    |
+| Inconsistent behavior | Breaks trust, creates confusion | Same interaction patterns throughout      |
 
 ### Design Inspiration Strategy
 
 **Adopt Directly:**
+
 - Ribbon + panel layout (proven, familiar to Obsidian users)
 - Progressive disclosure pattern (collapse/expand)
 - Keyboard shortcut philosophy (everything accessible via keyboard)
 - Dark-first color scheme
 
 **Adapt for Grimoire:**
+
 - Panel content is conversation-focused, not document-focused
 - Right panel serves dual purpose (info OR navigation) via toggle
 - Event timeline is unique to Grimoire (no direct Obsidian equivalent)
 
 **Avoid:**
+
 - Obsidian's file-tree complexity (Grimoire has simpler session list)
 - Graph view (not relevant for Phase 1)
 - Tag/backlink systems (not applicable to sessions)
 
 **Unique to Grimoire:**
+
 - Event Timeline navigation (condensed one-line-per-event view)
 - Sub-agent inline expansion in conversation
 - Child process lifecycle visualization
@@ -250,16 +261,16 @@ N8N's node-based visual workflow system will inform future workflow builder feat
 
 The design system must support Grimoire's core UX needs:
 
-| Requirement | Priority | Rationale |
-|-------------|----------|-----------|
-| Dark mode as primary | Critical | Core design decision - all color choices, contrast, hierarchy built dark-first |
-| Panel-based layout | Critical | Obsidian-inspired ribbon + collapsible left/middle/right panels |
-| Keyboard accessibility | Critical | Power users expect full keyboard navigation |
-| Progressive disclosure | Critical | Collapse/expand for sub-agents, tool calls, session info |
-| Conversation UI | Critical | Custom components: message bubbles, tool cards, sub-agent containers |
-| Minimal aesthetic | High | Clean, not overwhelming - professional developer tool feel |
-| Fast rendering | High | Must handle 100+ message sessions with fast response display |
-| Theming support | Medium | CSS variables or equivalent for future light mode, user themes |
+| Requirement            | Priority | Rationale                                                                      |
+| ---------------------- | -------- | ------------------------------------------------------------------------------ |
+| Dark mode as primary   | Critical | Core design decision - all color choices, contrast, hierarchy built dark-first |
+| Panel-based layout     | Critical | Obsidian-inspired ribbon + collapsible left/middle/right panels                |
+| Keyboard accessibility | Critical | Power users expect full keyboard navigation                                    |
+| Progressive disclosure | Critical | Collapse/expand for sub-agents, tool calls, session info                       |
+| Conversation UI        | Critical | Custom components: message bubbles, tool cards, sub-agent containers           |
+| Minimal aesthetic      | High     | Clean, not overwhelming - professional developer tool feel                     |
+| Fast rendering         | High     | Must handle 100+ message sessions with fast response display                   |
+| Theming support        | Medium   | CSS variables or equivalent for future light mode, user themes                 |
 
 ### Evaluation Criteria
 
@@ -278,11 +289,13 @@ During Architecture planning, evaluate design system options against:
 **Utility-first CSS + Headless Components**
 
 The UX requirements point toward a system that provides:
+
 - Utility classes for rapid styling (Tailwind-style)
 - Headless/unstyled accessible primitives (Radix-style)
 - Full ownership of component code (not locked into library aesthetics)
 
 This approach enables:
+
 - Custom Obsidian-inspired visual language
 - Dark-first color system without fighting framework defaults
 - Conversation UI components built to exact specifications
@@ -294,16 +307,16 @@ This approach enables:
 
 Components not typically found in design systems that Grimoire requires:
 
-| Component | Purpose |
-|-----------|---------|
-| Message Bubble | User/Claude conversation display |
-| Tool Call Card | Collapsible tool usage display |
+| Component           | Purpose                                  |
+| ------------------- | ---------------------------------------- |
+| Message Bubble      | User/Claude conversation display         |
+| Tool Call Card      | Collapsible tool usage display           |
 | Sub-Agent Container | Nested conversation with expand/collapse |
-| Event Timeline Item | One-line event for navigation panel |
-| Session List Item | Session preview with status indicators |
-| Panel Toggle | Show/hide panel controls |
-| Tab Bar | Multi-session tab management |
-| Status Indicator | Working/idle/error session states |
+| Event Timeline Item | One-line event for navigation panel      |
+| Session List Item   | Session preview with status indicators   |
+| Panel Toggle        | Show/hide panel controls                 |
+| Tab Bar             | Multi-session tab management             |
+| Status Indicator    | Working/idle/error session states        |
 
 ## Defining Experience
 
@@ -319,40 +332,43 @@ Grimoire's defining experience is bringing the full power of Claude Code's CLI i
 
 Users come from terminal-based Claude Code with this mental model:
 
-| Terminal Experience | Grimoire Experience |
-|--------------------|---------------------|
-| Powerful but opaque | Powerful AND clear |
-| Expert-only access | Accessible to everyone |
-| Text wall, hunt for info | Structured, scannable, organized |
-| "What just happened?" | "I saw exactly what happened" |
+| Terminal Experience           | Grimoire Experience                   |
+| ----------------------------- | ------------------------------------- |
+| Powerful but opaque           | Powerful AND clear                    |
+| Expert-only access            | Accessible to everyone                |
+| Text wall, hunt for info      | Structured, scannable, organized      |
+| "What just happened?"         | "I saw exactly what happened"         |
 | Lost context in long sessions | Event timeline for instant navigation |
-| Sub-agents invisible | Sub-agents visible and explorable |
+| Sub-agents invisible          | Sub-agents visible and explorable     |
 
 **Key Mental Model Shift:** From "power requires complexity" to "power with clarity."
 
 ### Success Criteria
 
-| Criterion | Success Indicator |
-|-----------|-------------------|
-| Simplicity | First-time user starts and completes a workflow without confusion or documentation |
-| Visibility | Every sub-agent, tool call, and decision is accessible within one click |
-| Power | 100% of CLI capabilities available, 0% of CLI friction experienced |
-| Speed | Faster to start/continue a session than opening terminal and typing `claude` |
-| Understanding | User can explain what happened in a workflow immediately after completion |
+| Criterion     | Success Indicator                                                                  |
+| ------------- | ---------------------------------------------------------------------------------- |
+| Simplicity    | First-time user starts and completes a workflow without confusion or documentation |
+| Visibility    | Every sub-agent, tool call, and decision is accessible within one click            |
+| Power         | 100% of CLI capabilities available, 0% of CLI friction experienced                 |
+| Speed         | Faster to start/continue a session than opening terminal and typing `claude`       |
+| Understanding | User can explain what happened in a workflow immediately after completion          |
 
 ### Novel UX Patterns
 
 **Established Patterns (Adopt):**
+
 - Chat interface for conversation (familiar from ChatGPT, Slack)
 - Panel layout (familiar from Obsidian, VS Code)
 - Collapsible sections (familiar from any tree view)
 
 **Novel Patterns (Innovate):**
+
 - **Sub-agent inline expansion** - Nested conversations that expand in place without losing parent context
 - **Event Timeline navigation** - One-line-per-event summary for instant navigation in long sessions
 - **Unified session interaction** - Historical and live sessions use identical interaction model (click, type, go)
 
 **Teaching Novel Patterns:**
+
 - Self-evident visual affordances (expand arrows, click targets)
 - Consistent behavior everywhere (click to expand, always)
 - No documentation required - if it needs explaining, redesign it
@@ -361,40 +377,40 @@ Users come from terminal-based Claude Code with this mental model:
 
 **1. Initiation - Start a Workflow**
 
-| Step | Action | System Response |
-|------|--------|-----------------|
-| 1 | Open Grimoire | New session ready, cursor in input |
-| 2 | Type prompt | Text appears in input box |
-| 3 | Press Enter | CC child spawns, "Thinking..." indicator |
-| 4 | — | Process completes, response appears |
+| Step | Action        | System Response                          |
+| ---- | ------------- | ---------------------------------------- |
+| 1    | Open Grimoire | New session ready, cursor in input       |
+| 2    | Type prompt   | Text appears in input box                |
+| 3    | Press Enter   | CC child spawns, "Thinking..." indicator |
+| 4    | —             | Process completes, response appears      |
 
 **2. Interaction - Watch it Unfold**
 
-| Element | Behavior |
-|---------|----------|
-| Claude messages | Appear as bubbles after process completion |
-| Sub-agent spawns | Appear as collapsible containers, collapsed by default |
-| Tool calls | Appear as compact cards with summary, expandable for details |
-| Event timeline | Updates after response, each event as one-line item |
-| Status indicator | Shows idle/working/error state |
+| Element          | Behavior                                                     |
+| ---------------- | ------------------------------------------------------------ |
+| Claude messages  | Appear as bubbles after process completion                   |
+| Sub-agent spawns | Appear as collapsible containers, collapsed by default       |
+| Tool calls       | Appear as compact cards with summary, expandable for details |
+| Event timeline   | Updates after response, each event as one-line item          |
+| Status indicator | Shows idle/working/error state                               |
 
 **3. Feedback - Understand Everything**
 
-| Feedback Type | Implementation |
-|---------------|----------------|
-| Visual hierarchy | Message types instantly distinguishable by shape/color |
-| Progressive depth | Click anything to see more, never forced |
-| System state | Always visible: what's running, what's waiting, what failed |
-| Error clarity | Red indicator + actionable message, never just stack trace |
+| Feedback Type     | Implementation                                              |
+| ----------------- | ----------------------------------------------------------- |
+| Visual hierarchy  | Message types instantly distinguishable by shape/color      |
+| Progressive depth | Click anything to see more, never forced                    |
+| System state      | Always visible: what's running, what's waiting, what failed |
+| Error clarity     | Red indicator + actionable message, never just stack trace  |
 
 **4. Completion - Continue Anytime**
 
-| Scenario | Experience |
-|----------|------------|
+| Scenario           | Experience                                                 |
+| ------------------ | ---------------------------------------------------------- |
 | Workflow completes | User already understands what happened (watched it unfold) |
-| Resume later | Click session → type → Enter → continues seamlessly |
-| Review old session | Same UI, same interactions, same clarity |
-| Compare sessions | Open in tabs, view side by side |
+| Resume later       | Click session → type → Enter → continues seamlessly        |
+| Review old session | Same UI, same interactions, same clarity                   |
+| Compare sessions   | Open in tabs, view side by side                            |
 
 ## Visual Design Foundation
 
@@ -402,43 +418,43 @@ Users come from terminal-based Claude Code with this mental model:
 
 **Dark Theme (Primary)**
 
-| Role | Value | Usage |
-|------|-------|-------|
-| Background (base) | `hsl(240, 10%, 10%)` | Main app background |
-| Background (elevated) | `hsl(240, 10%, 13%)` | Panels, cards |
-| Background (hover) | `hsl(240, 10%, 16%)` | Interactive hover states |
-| Text (primary) | `hsl(0, 0%, 90%)` | Main content |
-| Text (muted) | `hsl(0, 0%, 60%)` | Secondary info, timestamps |
-| Border | `hsl(240, 10%, 20%)` | Subtle separation |
+| Role                  | Value                | Usage                      |
+| --------------------- | -------------------- | -------------------------- |
+| Background (base)     | `hsl(240, 10%, 10%)` | Main app background        |
+| Background (elevated) | `hsl(240, 10%, 13%)` | Panels, cards              |
+| Background (hover)    | `hsl(240, 10%, 16%)` | Interactive hover states   |
+| Text (primary)        | `hsl(0, 0%, 90%)`    | Main content               |
+| Text (muted)          | `hsl(0, 0%, 60%)`    | Secondary info, timestamps |
+| Border                | `hsl(240, 10%, 20%)` | Subtle separation          |
 
 **Accent Color: Purple**
 
-| Role | Value | Usage |
-|------|-------|-------|
+| Role             | Value                | Usage                       |
+| ---------------- | -------------------- | --------------------------- |
 | Accent (primary) | `hsl(270, 60%, 55%)` | Interactive elements, focus |
-| Accent (hover) | `hsl(270, 60%, 65%)` | Hover state |
-| Accent (active) | `hsl(270, 60%, 45%)` | Active/pressed state |
+| Accent (hover)   | `hsl(270, 60%, 65%)` | Hover state                 |
+| Accent (active)  | `hsl(270, 60%, 45%)` | Active/pressed state        |
 
 Rationale: Purple differentiates Grimoire from blue-dominated developer tools (VS Code, etc.), aligns with Obsidian's aesthetic, and provides excellent contrast in dark UI without clashing with semantic colors.
 
 **Semantic Colors**
 
-| Role | Value | Usage |
-|------|-------|-------|
-| Success | `hsl(142, 50%, 45%)` | Completed, working |
-| Warning | `hsl(38, 90%, 50%)` | Attention needed |
-| Error | `hsl(0, 65%, 50%)` | Failures (calm, not alarming) |
-| Info | `hsl(210, 60%, 50%)` | Informational states |
+| Role    | Value                | Usage                         |
+| ------- | -------------------- | ----------------------------- |
+| Success | `hsl(142, 50%, 45%)` | Completed, working            |
+| Warning | `hsl(38, 90%, 50%)`  | Attention needed              |
+| Error   | `hsl(0, 65%, 50%)`   | Failures (calm, not alarming) |
+| Info    | `hsl(210, 60%, 50%)` | Informational states          |
 
 **Message Type Visual Language**
 
-| Type | Visual Treatment |
-|------|------------------|
-| User input | Elevated background, right-aligned |
-| Claude response | Base background, left-aligned |
-| Sub-agent | Purple accent border (left), collapsed by default |
-| Tool call | Muted background, monospace font, compact card |
-| Error | Red left border, error background tint |
+| Type            | Visual Treatment                                  |
+| --------------- | ------------------------------------------------- |
+| User input      | Elevated background, right-aligned                |
+| Claude response | Base background, left-aligned                     |
+| Sub-agent       | Purple accent border (left), collapsed by default |
+| Tool call       | Muted background, monospace font, compact card    |
+| Error           | Red left border, error background tint            |
 
 ### Typography System
 
@@ -453,35 +469,35 @@ Rationale: System fonts provide native feel, zero loading time, optimal renderin
 
 **Type Scale**
 
-| Token | Size | Weight | Usage |
-|-------|------|--------|-------|
-| `--text-xs` | 11px | 400 | Timestamps, metadata |
-| `--text-sm` | 13px | 400 | Secondary text, labels |
-| `--text-base` | 14px | 400 | Body text, messages |
-| `--text-md` | 16px | 500 | Emphasized text |
-| `--text-lg` | 18px | 600 | Section headers |
-| `--text-xl` | 24px | 600 | Page titles |
+| Token         | Size | Weight | Usage                  |
+| ------------- | ---- | ------ | ---------------------- |
+| `--text-xs`   | 11px | 400    | Timestamps, metadata   |
+| `--text-sm`   | 13px | 400    | Secondary text, labels |
+| `--text-base` | 14px | 400    | Body text, messages    |
+| `--text-md`   | 16px | 500    | Emphasized text        |
+| `--text-lg`   | 18px | 600    | Section headers        |
+| `--text-xl`   | 24px | 600    | Page titles            |
 
 **Line Heights**
 
-| Context | Line Height |
-|---------|-------------|
-| UI elements | 1.2 |
-| Body text | 1.5 |
-| Code/mono | 1.4 |
+| Context     | Line Height |
+| ----------- | ----------- |
+| UI elements | 1.2         |
+| Body text   | 1.5         |
+| Code/mono   | 1.4         |
 
 ### Spacing & Layout Foundation
 
 **Base Unit: 8px**
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-xs` | 4px | Tight gaps, icon padding |
-| `--space-sm` | 8px | Default element spacing |
-| `--space-md` | 16px | Section gaps, card padding |
-| `--space-lg` | 24px | Panel padding, major sections |
-| `--space-xl` | 32px | Page margins, large gaps |
-| `--space-2xl` | 48px | Major layout divisions |
+| Token         | Value | Usage                         |
+| ------------- | ----- | ----------------------------- |
+| `--space-xs`  | 4px   | Tight gaps, icon padding      |
+| `--space-sm`  | 8px   | Default element spacing       |
+| `--space-md`  | 16px  | Section gaps, card padding    |
+| `--space-lg`  | 24px  | Panel padding, major sections |
+| `--space-xl`  | 32px  | Page margins, large gaps      |
+| `--space-2xl` | 48px  | Major layout divisions        |
 
 **Compact Mode**
 
@@ -489,32 +505,32 @@ Compact mode multiplier: `0.75x` - reduces all spacing proportionally for power 
 
 **Panel Layout**
 
-| Panel | Default Width | Collapsible |
-|-------|---------------|-------------|
-| Ribbon | 48px fixed | No |
-| Left (Sessions) | 280px | Yes |
-| Middle (Conversation) | Flex (remaining) | No |
-| Right (Info/Events) | 300px | Yes |
+| Panel                 | Default Width    | Collapsible |
+| --------------------- | ---------------- | ----------- |
+| Ribbon                | 48px fixed       | No          |
+| Left (Sessions)       | 280px            | Yes         |
+| Middle (Conversation) | Flex (remaining) | No          |
+| Right (Info/Events)   | 300px            | Yes         |
 
 **Border Radius**
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--radius-sm` | 4px | Buttons, inputs |
-| `--radius-md` | 8px | Cards, panels |
-| `--radius-lg` | 12px | Modals, dialogs |
-| `--radius-full` | 9999px | Pills, avatars |
+| Token           | Value  | Usage           |
+| --------------- | ------ | --------------- |
+| `--radius-sm`   | 4px    | Buttons, inputs |
+| `--radius-md`   | 8px    | Cards, panels   |
+| `--radius-lg`   | 12px   | Modals, dialogs |
+| `--radius-full` | 9999px | Pills, avatars  |
 
 ### Accessibility Considerations
 
 **Contrast Requirements**
 
-| Element | Minimum Ratio | Target |
-|---------|---------------|--------|
-| Body text on background | 4.5:1 | 7:1+ |
-| Large text (18px+) | 3:1 | 4.5:1+ |
-| Interactive elements | 3:1 | 4.5:1+ |
-| Focus indicators | 3:1 | Visible |
+| Element                 | Minimum Ratio | Target  |
+| ----------------------- | ------------- | ------- |
+| Body text on background | 4.5:1         | 7:1+    |
+| Large text (18px+)      | 3:1           | 4.5:1+  |
+| Interactive elements    | 3:1           | 4.5:1+  |
+| Focus indicators        | 3:1           | Visible |
 
 **Keyboard Accessibility**
 
@@ -534,6 +550,7 @@ Compact mode multiplier: `0.75x` - reduces all spacing proportionally for power 
 ### Design Directions Explored
 
 Six design directions were evaluated, all respecting mandatory elements:
+
 - Ribbon + two side panels + middle area layout
 - Tab system for session management
 - Panel top bars with plugin-specific controls
@@ -541,6 +558,7 @@ Six design directions were evaluated, all respecting mandatory elements:
 - Chat-style event timeline with token counts
 
 Directions explored:
+
 1. **Classic Clean** - Comfortable spacing, clean separation, professional
 2. **Compact Dense** - Maximum density, border accents, power-user focused
 3. **Rounded Modern** - Soft aesthetics, pill-shaped bubbles, chat-app style
@@ -552,13 +570,13 @@ Directions explored:
 
 **Classic Clean** with selective elements from Rounded Modern:
 
-| Element | Source | Implementation |
-|---------|--------|----------------|
-| Overall layout | Classic Clean | Ribbon + 3 panels, comfortable spacing |
-| Conversation bubbles | Classic Clean | Split bubbles per action, timestamps |
-| Event timeline | Classic Clean (modified) | Chat-style bubbles WITHOUT icons, token counts |
-| Session list items | Rounded Modern | Rounded corners, subtle border on active state |
-| Visual hierarchy | Classic Clean | Clear separation, professional aesthetic |
+| Element              | Source                   | Implementation                                 |
+| -------------------- | ------------------------ | ---------------------------------------------- |
+| Overall layout       | Classic Clean            | Ribbon + 3 panels, comfortable spacing         |
+| Conversation bubbles | Classic Clean            | Split bubbles per action, timestamps           |
+| Event timeline       | Classic Clean (modified) | Chat-style bubbles WITHOUT icons, token counts |
+| Session list items   | Rounded Modern           | Rounded corners, subtle border on active state |
+| Visual hierarchy     | Classic Clean            | Clear separation, professional aesthetic       |
 
 ### Design Rationale
 
@@ -569,6 +587,7 @@ Directions explored:
 ### Implementation Approach
 
 The chosen direction provides:
+
 1. **Obsidian familiarity** - Users of Obsidian will feel immediately at home
 2. **Clear message separation** - Each action (tool, agent, response) gets its own bubble
 3. **Scannable timeline** - Chat-style events with token counts enable quick navigation
@@ -614,15 +633,16 @@ flowchart TD
 
 **Key Interactions:**
 
-| Step | User Action | System Response |
-|------|-------------|-----------------|
-| Launch | Double-click app | Loading screen appears |
-| Ready | None (automatic) | New session view, cursor in input |
-| Send | Type + Enter | UUID generated, CC spawns |
-| Wait | Watch response | Real-time streaming |
-| Complete | Response finishes | Process exits, session idle |
+| Step     | User Action       | System Response                   |
+| -------- | ----------------- | --------------------------------- |
+| Launch   | Double-click app  | Loading screen appears            |
+| Ready    | None (automatic)  | New session view, cursor in input |
+| Send     | Type + Enter      | UUID generated, CC spawns         |
+| Wait     | Watch response    | Real-time streaming               |
+| Complete | Response finishes | Process exits, session idle       |
 
 **Success Criteria:**
+
 - Launch → typing: < 3 seconds
 - No clicks required to start first message
 - Errors are actionable (Retry button)
@@ -659,14 +679,15 @@ flowchart TD
 
 **Key Interactions:**
 
-| Step | User Action | System Response |
-|------|-------------|-----------------|
-| Select | Click session | Load conversation, scroll to end |
-| Focus | Click input box | Cursor ready |
-| Send | Type + Enter | CC spawns with session ID |
-| Continue | Watch response | Conversation continues seamlessly |
+| Step     | User Action     | System Response                   |
+| -------- | --------------- | --------------------------------- |
+| Select   | Click session   | Load conversation, scroll to end  |
+| Focus    | Click input box | Cursor ready                      |
+| Send     | Type + Enter    | CC spawns with session ID         |
+| Continue | Watch response  | Conversation continues seamlessly |
 
 **Design Decision:**
+
 - NO auto-focus on input for existing sessions
 - Scroll to latest message automatically
 - User consciously clicks to engage
@@ -703,15 +724,16 @@ flowchart TD
 
 **Key Interactions:**
 
-| Step | User Action | System Response |
-|------|-------------|-----------------|
-| Load | Click session | Full conversation displayed |
-| Scan | Visual scan | Error indicators visible (red) |
-| Navigate | Click event in timeline | Conversation scrolls to that point |
-| Drill | Click sub-agent bubble | Expands inline with full conversation |
-| Understand | Read expanded content | Root cause identified |
+| Step       | User Action             | System Response                       |
+| ---------- | ----------------------- | ------------------------------------- |
+| Load       | Click session           | Full conversation displayed           |
+| Scan       | Visual scan             | Error indicators visible (red)        |
+| Navigate   | Click event in timeline | Conversation scrolls to that point    |
+| Drill      | Click sub-agent bubble  | Expands inline with full conversation |
+| Understand | Read expanded content   | Root cause identified                 |
 
 **Event Timeline Usage:**
+
 - One-line summaries for quick scanning
 - Token counts show conversation growth
 - Click to jump directly to that point
@@ -749,23 +771,24 @@ flowchart TD
 
 **Interaction Pattern:**
 
-| Entry Point | Action | Result |
-|-------------|--------|--------|
-| Collapsed bubble click | Single click | Inline expansion (existing) |
-| [↗] button on bubble | Click | Opens sub-agent in new tab |
-| Event timeline click | Click sub-agent event | Opens sub-agent in new tab |
-| Expanded bubble [↗] | Click | Opens sub-agent in new tab |
+| Entry Point            | Action                | Result                      |
+| ---------------------- | --------------------- | --------------------------- |
+| Collapsed bubble click | Single click          | Inline expansion (existing) |
+| [↗] button on bubble   | Click                 | Opens sub-agent in new tab  |
+| Event timeline click   | Click sub-agent event | Opens sub-agent in new tab  |
+| Expanded bubble [↗]    | Click                 | Opens sub-agent in new tab  |
 
 **Expansion Behavior:**
 
-| State | Display | Action |
-|-------|---------|--------|
-| Collapsed | Agent name + status badge + [↗] on hover | Click to expand, [↗] to open tab |
-| Expanded | Full conversation inline + [↗] visible | Click header to collapse, [↗] to open tab |
-| Tool (collapsed) | Tool name + summary | Click to expand |
-| Tool (expanded) | Full input/output | Click to collapse |
+| State            | Display                                  | Action                                    |
+| ---------------- | ---------------------------------------- | ----------------------------------------- |
+| Collapsed        | Agent name + status badge + [↗] on hover | Click to expand, [↗] to open tab          |
+| Expanded         | Full conversation inline + [↗] visible   | Click header to collapse, [↗] to open tab |
+| Tool (collapsed) | Tool name + summary                      | Click to expand                           |
+| Tool (expanded)  | Full input/output                        | Click to collapse                         |
 
 **Design Principle:**
+
 - Progressive disclosure: summary → detail → dedicated tab
 - Never lose context (inline expansion preserves parent view)
 - Clear visual hierarchy (agent → tools → details)
@@ -801,31 +824,34 @@ flowchart TD
 
 **Settings Scope (Sessions Plugin):**
 
-| Setting | Options | Default |
-|---------|---------|---------|
+| Setting                | Options              | Default   |
+| ---------------------- | -------------------- | --------- |
 | Sub-agent default view | Collapsed / Expanded | Collapsed |
-| Tool call display | Summary / Full | Summary |
-| Sessions list count | 20 / 50 / 100 | 50 |
-| Show token counts | On / Off | On |
-| Advanced info toggle | Visible / Hidden | Visible |
+| Tool call display      | Summary / Full       | Summary   |
+| Sessions list count    | 20 / 50 / 100        | 50        |
+| Show token counts      | On / Off             | On        |
+| Advanced info toggle   | Visible / Hidden     | Visible   |
 
 ---
 
 ### Journey Patterns
 
 **Navigation Patterns:**
+
 - **Click-to-act**: All navigation via single click
 - **Scroll-to-context**: Existing sessions scroll to latest
 - **Panel toggle**: Door button reveals/hides panels
 - **Tab switching**: Multiple open sessions via tabs
 
 **Feedback Patterns:**
+
 - **Inline expansion**: Sub-agents and tools expand in place
 - **Status indicators**: 3-state machine (Idle, Working, Error) with triple redundancy (color bar + icon + animation)
 - **Thinking indicator**: "Thinking..." shown while process runs, response appears on completion
 - **Token counts**: Cumulative in timeline, per-message optional
 
 **Error Patterns:**
+
 - **Inline errors**: Error bubble in conversation flow
 - **Retry action**: Button to retry failed operations
 - **Actionable messaging**: Clear explanation + action button
@@ -848,16 +874,17 @@ flowchart TD
 
 **Foundation Layer (from headless/utility system):**
 
-| Component | Usage | Notes |
-|-----------|-------|-------|
-| Button | Actions, toggles | Styled with utility classes |
-| Input/Textarea | Chat input, search | Custom styling for dark theme |
-| Tooltip | Icon explanations | Accessible, keyboard-triggered |
-| Dropdown Menu | Context menus (3-dot) | Session actions |
-| Toggle | Plugin enable/disable | Settings page |
-| Scroll Area | Conversation, lists | Custom scrollbar styling |
+| Component      | Usage                 | Notes                          |
+| -------------- | --------------------- | ------------------------------ |
+| Button         | Actions, toggles      | Styled with utility classes    |
+| Input/Textarea | Chat input, search    | Custom styling for dark theme  |
+| Tooltip        | Icon explanations     | Accessible, keyboard-triggered |
+| Dropdown Menu  | Context menus (3-dot) | Session actions                |
+| Toggle         | Plugin enable/disable | Settings page                  |
+| Scroll Area    | Conversation, lists   | Custom scrollbar styling       |
 
 **Why Headless + Utility:**
+
 - Full control over visual styling (dark-first, purple accent)
 - Accessible primitives without fighting default styles
 - Build exactly what we need, nothing extra
@@ -871,18 +898,20 @@ flowchart TD
 **Purpose:** Primary app-level navigation between sections
 **Location:** Fixed left edge, always visible
 
-| Property | Value |
-|----------|-------|
-| Width | 48px fixed |
+| Property   | Value                      |
+| ---------- | -------------------------- |
+| Width      | 48px fixed                 |
 | Background | `--bg-base` darker variant |
-| Items | Icon buttons, 34×34px |
+| Items      | Icon buttons, 34×34px      |
 
 **States:**
+
 - Default: Muted icon color
 - Hover: Elevated background, primary text
 - Active: Accent background, accent color
 
 **Behavior:**
+
 - Click switches app section
 - Tooltip on hover shows section name
 - Keyboard: Tab to focus, Enter to activate
@@ -895,6 +924,7 @@ flowchart TD
 **Variants:** Left panel (280px), Right panel (300px)
 
 **Left Panel Anatomy:**
+
 ```
 ┌─────────────────────────────────┐
 │ [Sessions] [Folders]  [🔍] [🚪] │  ← Topbar (40px) with view toggle
@@ -912,6 +942,7 @@ flowchart TD
 ```
 
 **Right Panel Anatomy:**
+
 ```
 ┌─────────────────────────────────┐
 │ [Info] [Events] [Files]  [🚪]  │  ← Topbar with view tabs
@@ -927,19 +958,23 @@ flowchart TD
 ```
 
 **Left Panel Views:**
+
 - **Sessions**: Session list with folder path below each name
 - **Folders**: Hierarchical folder tree with session counts
 
 **Right Panel Views:**
+
 - **Info**: Session metadata, token usage (existing)
 - **Events**: Event timeline for navigation (existing)
 - **Files**: Folder tree when viewing conversation, File edit history when viewing file
 
 **States:**
+
 - Expanded: Full width, content visible
 - Collapsed: Only door button visible (extends from middle panel topbar)
 
 **Door Button Behavior:**
+
 - Position: Right side of topbar
 - Click: Toggle panel visibility
 - When collapsed: Button remains accessible in extended middle topbar
@@ -952,6 +987,7 @@ flowchart TD
 **Style:** Rounded Modern (from design direction)
 
 **Anatomy:**
+
 ```
 ┌────────────────────────────────┐
 │ [⚡] Session Name           [⋮] │
@@ -960,11 +996,13 @@ flowchart TD
 ```
 
 **Elements:**
+
 - Left: State indicator (⚡ for connected, ⚠️ for error, none for idle)
 - Center: Session name + timestamp
 - Right: ⋮ menu
 
 **States:**
+
 - Default: Subtle background
 - Hover: Elevated background, 3-dot menu appears
 - Active: Accent border, accent-tinted background
@@ -973,12 +1011,14 @@ flowchart TD
 - Error: ⚠️ icon, red color bar
 
 **Interaction:**
+
 - Click: Load session in middle panel
 - Hover: Reveal 3-dot context menu and pin icon
 - 3-dot click: Open dropdown (archive, delete, etc.)
 - Pin click: Toggle pinned state
 
 **Session List Item with Folder Path:**
+
 ```
 ┌────────────────────────────────┐
 │ [📌][⚡] Session Name       [⋮] │
@@ -1002,6 +1042,7 @@ Orphaned session:
 **Style:** Matches Session List Item with tree indentation
 
 **Anatomy:**
+
 ```
 ┌────────────────────────────────────┐
 │ [▶] [📁] /projects/grimoire   (12)│  ← Collapsed folder
@@ -1024,12 +1065,14 @@ Orphaned session:
 ```
 
 **Elements:**
+
 - Left: Chevron (expand/collapse) OR pin icon (if pinned)
 - Icon: 📁 folder icon, ⚠️ if folder doesn't exist
 - Center: Folder path (truncated from left if needed)
 - Right: Session count badge (direct + recursive)
 
 **States:**
+
 - Default: Subtle background
 - Hover: Elevated background, pin icon appears (top-left overlay)
 - Active: Accent border (when folder is selected/filtering)
@@ -1038,6 +1081,7 @@ Orphaned session:
 - Orphaned: ⚠️ icon, red tint border
 
 **Interaction:**
+
 - Click chevron: Expand/collapse children
 - Click folder name: Filter session list to this folder
 - Hover: Reveal pin icon overlay
@@ -1052,6 +1096,7 @@ Orphaned session:
 **Style:** Obsidian-like file explorer
 
 **Anatomy:**
+
 ```
 ┌─────────────────────────────────────┐
 │ Files          [⊟] [⊞] [🔍] [🚪]   │  ← Header with collapse/expand all
@@ -1069,22 +1114,26 @@ Orphaned session:
 ```
 
 **Header Actions:**
+
 - [⊟] Collapse All: Collapse all folder nodes
 - [⊞] Expand All: Expand all folder nodes
 - [🔍] Search files (future enhancement)
 
 **Elements:**
+
 - Chevron: Expand/collapse (folders only)
 - Icon: 📁 folder / 📄 file (can use file-type specific icons)
 - Name: File or folder name
 - Change indicator: Edit count (right side, accent color if > 0)
 
 **Change Indicator Logic:**
+
 - Files: Number of AI edits in current session
 - Folders: Sum of all descendant file edits (bubble up)
 - Color: Accent color when count > 0, muted when 0 or absent
 
 **States:**
+
 - Default: Base background
 - Hover: Elevated background
 - Selected: Accent border (file currently open in preview)
@@ -1098,6 +1147,7 @@ Orphaned session:
 | Click file | Open file preview in middle panel tab |
 
 **Performance:**
+
 - Load tree structure (paths only) on session open
 - Lazy load file contents on click
 - Respect `.gitignore` to exclude `node_modules`, `dist`, etc.
@@ -1111,6 +1161,7 @@ Orphaned session:
 **Style:** Minimal, non-intrusive when collapsed
 
 **Anatomy - Collapsed:**
+
 ```
 ┌─────────────────────────────────┐
 │ [Sessions] [Folders]  [🔍] [🚪] │  ← 🔍 is clickable icon button
@@ -1118,6 +1169,7 @@ Orphaned session:
 ```
 
 **Anatomy - Expanded:**
+
 ```
 ┌─────────────────────────────────┐
 │ [🔍 Search sessions...     ] [×]│  ← Full-width input with clear button
@@ -1146,10 +1198,12 @@ Orphaned session:
 | `abc-123` | Match session ID |
 
 **Searchable Fields:**
+
 - Session list: Session name/summary, folder path, session ID
 - Folder hierarchy: Folder path, session names within folder
 
 **States:**
+
 - Collapsed: 🔍 icon only (default)
 - Expanded: Full input visible, icon becomes part of input
 - Has query: Show clear × button
@@ -1164,6 +1218,7 @@ Orphaned session:
 **Style:** Chat-style event list matching Event Timeline
 
 **Anatomy:**
+
 ```
 ┌─────────────────────────────────────┐
 │ src/components/Button.tsx    [🚪]  │  ← File path header
@@ -1185,12 +1240,14 @@ Orphaned session:
 ```
 
 **Edit Event Card:**
+
 - Tool type: Edit / Write / NotebookEdit
 - Line range (if applicable)
 - Session name (clickable)
 - Timestamp
 
 **Interaction:**
+
 - Click session name → Opens that session in new tab
 - Click event card → Opens session and scrolls to that tool call
 
@@ -1202,6 +1259,7 @@ Orphaned session:
 **Style:** Subtle hover-reveal pattern
 
 **Anatomy:**
+
 ```
 Default (not hovered):
 ┌────────────────────────────┐
@@ -1220,15 +1278,18 @@ Pinned:
 ```
 
 **States:**
+
 - Hidden: Not hovered, not pinned
 - Visible (muted): Hovered, not pinned
 - Visible (accent): Pinned (always visible)
 
 **Interaction:**
+
 - Click pin icon: Toggle pinned state
 - Pinned items sort to top of their list
 
 **Usage:**
+
 - Session list items: Pin any session
 - Folder hierarchy: Pin root folders only (nested folders cannot be pinned)
 
@@ -1240,6 +1301,7 @@ Pinned:
 **Location:** Top of middle panel
 
 **Anatomy:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ [Tab 1 ×] [Tab 2 ×] [+]              [🚪] [🚪] │
@@ -1247,17 +1309,20 @@ Pinned:
 ```
 
 **Tab States:**
+
 - Default: Muted text
 - Hover: Primary text, close button visible
 - Active: Primary text, accent underline
 
 **Behavior:**
+
 - Click tab: Switch to that session
 - Click ×: Close tab
 - Click +: New session
 - Door buttons: Toggle left/right panels
 
 **Sub-Agent Tab Variant:**
+
 ```
 ┌────────────────────────────────────────────────────────┐
 │ [Session ×] [Explore-a8b2 ×] [+]              [🚪] [🚪] │
@@ -1266,6 +1331,7 @@ Pinned:
 ```
 
 **Sub-Agent Tab States:**
+
 - Default: Muted text, subtle purple tint background
 - Hover: Primary text, close button visible
 - Active: Primary text, accent underline, purple tint
@@ -1275,6 +1341,7 @@ Pinned:
 **CSS Class:** `.tab--subagent` applied when `tab.type === 'subagent'`
 
 **File Preview Tab Variant:**
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ [Session ×] [Button.tsx ×] [+]                    [🚪] [🚪] │
@@ -1283,6 +1350,7 @@ Pinned:
 ```
 
 **File Preview Tab States:**
+
 - Default: Muted text, subtle blue tint background
 - Hover: Primary text, close button visible
 - Active: Primary text, accent underline, blue tint
@@ -1292,6 +1360,7 @@ Pinned:
 **CSS Class:** `.tab--file` applied when `tab.type === 'file'`
 
 **File Preview Tab Behavior:**
+
 - Opens when user clicks file in Folder Tree (right panel)
 - Shows read-only file content with syntax highlighting
 - Right panel switches to File Edit History view when file tab is active
@@ -1299,11 +1368,11 @@ Pinned:
 
 **Tab Type Summary:**
 
-| Type | CSS Class | Background | Use Case |
-|------|-----------|------------|----------|
-| Session | `.tab--session` | Default | Main conversation tabs |
-| Sub-Agent | `.tab--subagent` | Purple tint | Nested agent conversations |
-| File | `.tab--file` | Blue tint | File preview from folder tree |
+| Type      | CSS Class        | Background  | Use Case                      |
+| --------- | ---------------- | ----------- | ----------------------------- |
+| Session   | `.tab--session`  | Default     | Main conversation tabs        |
+| Sub-Agent | `.tab--subagent` | Purple tint | Nested agent conversations    |
+| File      | `.tab--file`     | Blue tint   | File preview from folder tree |
 
 ---
 
@@ -1313,6 +1382,7 @@ Pinned:
 **Variants:** User, Claude, Tool, Sub-Agent
 
 **User Bubble:**
+
 ```
 Default:
 ┌─────────────────────────────────┐
@@ -1326,6 +1396,7 @@ On hover (non-first message):
 └─────────────────────────────────┘
                             14:32
 ```
+
 - Alignment: Right
 - Background: Accent muted + accent border
 - Border radius: Rounded, bottom-right smaller
@@ -1333,23 +1404,27 @@ On hover (non-first message):
 - **Rewind click:** Opens Rewind Modal (see component below)
 
 **Claude Bubble:**
+
 ```
 ┌─────────────────────────────────┐
 │ Message content here...         │
 └─────────────────────────────────┘
 14:32
 ```
+
 - Alignment: Left
 - Background: Elevated + subtle border
 - Border radius: Rounded, bottom-left smaller
 
 **Tool Bubble:**
+
 ```
 ┌─────────────────────────────────┐
 │ Read  src/api/routes/index.ts   │
 └─────────────────────────────────┘
 14:33
 ```
+
 - Alignment: Left
 - Background: Tool background (blue-tinted)
 - Border: Tool border (blue)
@@ -1357,12 +1432,14 @@ On hover (non-first message):
 - Expandable: Click to see input/output
 
 **Sub-Agent Bubble:**
+
 ```
 ┌─────────────────────────────────────────┐
 │ [A] Code Analysis Agent    Done    [↗] │
 └─────────────────────────────────────────┘
 14:32
 ```
+
 - Alignment: Left
 - Background: Agent background (purple-tinted)
 - Border: Agent border (purple)
@@ -1371,11 +1448,11 @@ On hover (non-first message):
 
 **Interaction States:**
 
-| State | Display |
-|-------|---------|
-| Collapsed | Agent name + status + [↗] on hover |
-| Expanded (inline) | Summary conversation + [↗] always visible |
-| Running | Animated `···` indicator + [↗] to open live view in tab |
+| State             | Display                                                 |
+| ----------------- | ------------------------------------------------------- |
+| Collapsed         | Agent name + status + [↗] on hover                      |
+| Expanded (inline) | Summary conversation + [↗] always visible               |
+| Running           | Animated `···` indicator + [↗] to open live view in tab |
 
 ---
 
@@ -1385,6 +1462,7 @@ On hover (non-first message):
 **Style:** Chat-style bubbles, left/right aligned
 
 **User Event:**
+
 ```
                     ┌──────────────────────┐
                     │ I need to refactor...│ 1.2k
@@ -1393,6 +1471,7 @@ On hover (non-first message):
 ```
 
 **System Event (Claude/Tool/Agent):**
+
 ```
 ┌──────────────────────┐
 │ Read routes/index.ts │ 3.4k
@@ -1401,12 +1480,14 @@ On hover (non-first message):
 ```
 
 **Properties:**
+
 - No icons (per design decision)
 - Token count displayed like timestamp
 - Click: Scroll conversation to that event
 - Color-coded by type (subtle background differences)
 
 **Sub-Agent Events:**
+
 - Display: Agent type + short ID (e.g., "Explore-a8b2")
 - Click behavior: Opens sub-agent in dedicated tab (not inline scroll)
 - Visual: Purple-tinted background (matches sub-agent bubble)
@@ -1419,12 +1500,14 @@ On hover (non-first message):
 **Size:** 28×28px
 
 **States:**
+
 - Default: Muted color
 - Hover: Elevated background
 - Active: Accent background + color
 - Disabled: 50% opacity, no interaction
 
 **Usage:**
+
 - Left panel: Sessions icon (active), Workflows icon (disabled), Advanced toggle
 - Right panel: Info tab, Events tab
 - Door buttons: Panel collapse/expand
@@ -1438,13 +1521,14 @@ On hover (non-first message):
 
 **3-State Machine:**
 
-| State | Visual | Icon | Animation | Usage |
-|-------|--------|------|-----------|-------|
-| Idle | No decoration | - | - | No process running |
-| Working | Green bar | ⚡ | `···` dots | CC processing ("Thinking...") |
-| Error | Red bar | ⚠️ | - | Failed operation |
+| State   | Visual        | Icon | Animation  | Usage                         |
+| ------- | ------------- | ---- | ---------- | ----------------------------- |
+| Idle    | No decoration | -    | -          | No process running            |
+| Working | Green bar     | ⚡   | `···` dots | CC processing ("Thinking...") |
+| Error   | Red bar       | ⚠️   | -          | Failed operation              |
 
 **Icon meanings:**
+
 - ⚡ = Working (process running)
 - ⚠️ = Error state (click for details)
 
@@ -1456,6 +1540,7 @@ On hover (non-first message):
 **Location:** Bottom of middle panel
 
 **Anatomy:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ ┌─────────────────────────────────────────┐ [→] │
@@ -1465,6 +1550,7 @@ On hover (non-first message):
 ```
 
 **Behavior:**
+
 - Auto-focus on new session
 - NO auto-focus on existing session
 - Enter: Send message
@@ -1474,6 +1560,7 @@ On hover (non-first message):
 - **Hidden when viewing sub-agent tab** (`tab.type === 'subagent'`)
 
 **Sub-Agent Tab Behavior:**
+
 - When `tab.type === 'subagent'`, hide chat input completely
 - Conversation view expands to fill available space
 - Reinforces read-only nature of sub-agent views
@@ -1486,6 +1573,7 @@ On hover (non-first message):
 **Trigger:** Click [↺] rewind icon on user message bubble
 
 **Anatomy:**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │                                                     │
@@ -1507,6 +1595,7 @@ On hover (non-first message):
 ```
 
 **Elements:**
+
 - Darkened overlay background (click outside closes)
 - Modal container (centered, max-width 500px)
 - Title: "Rewind Conversation"
@@ -1525,12 +1614,14 @@ On hover (non-first message):
 | Click Send (with text) | Trigger rewind operation |
 
 **Rewind Operation Flow:**
+
 1. Call `sessions:rewind` IPC with checkpoint UUID + new message
 2. Show loading state on Send button
 3. On success: Close modal, display new forked session
 4. On error: Show error message in modal
 
 **Keyboard:**
+
 - Escape: Close modal
 - Enter: Send (when text area not focused on newline)
 - Tab: Navigate between text area and buttons
@@ -1540,12 +1631,14 @@ On hover (non-first message):
 ### Component Implementation Strategy
 
 **Approach:**
+
 1. Build all components using design system tokens (colors, spacing, typography)
 2. Use headless primitives for accessible behavior (focus, keyboard nav)
 3. Style with utility classes for consistency
 4. Create React components with TypeScript for type safety
 
 **Token Usage:**
+
 ```css
 /* All components reference design tokens */
 --bg-base, --bg-elevated, --bg-hover
@@ -1556,6 +1649,7 @@ On hover (non-first message):
 ```
 
 **Accessibility Standards:**
+
 - All interactive elements focusable
 - Visible focus indicators (accent color ring)
 - ARIA labels for icon-only buttons
@@ -1568,39 +1662,39 @@ On hover (non-first message):
 
 **Phase 1 - Core Components (MVP):**
 
-| Component | Priority | Needed For |
-|-----------|----------|------------|
-| Ribbon | P0 | App navigation |
-| Panel + Door Toggle | P0 | Layout system |
-| Tab Bar | P0 | Multi-session |
-| Session List Item | P0 | Session selection |
-| Message Bubble (all variants) | P0 | Conversation display |
-| Chat Input Area | P0 | User interaction |
-| Status Indicator | P0 | Process feedback |
-| Folder Hierarchy | P0 | Folder navigation |
-| Folder Hierarchy Item | P0 | Folder display |
-| Folder Tree | P0 | File navigation |
-| Rewind Modal | P0 | Conversation rewind |
+| Component                     | Priority | Needed For           |
+| ----------------------------- | -------- | -------------------- |
+| Ribbon                        | P0       | App navigation       |
+| Panel + Door Toggle           | P0       | Layout system        |
+| Tab Bar                       | P0       | Multi-session        |
+| Session List Item             | P0       | Session selection    |
+| Message Bubble (all variants) | P0       | Conversation display |
+| Chat Input Area               | P0       | User interaction     |
+| Status Indicator              | P0       | Process feedback     |
+| Folder Hierarchy              | P0       | Folder navigation    |
+| Folder Hierarchy Item         | P0       | Folder display       |
+| Folder Tree                   | P0       | File navigation      |
+| Rewind Modal                  | P0       | Conversation rewind  |
 
 **Phase 2 - Enhancement Components:**
 
-| Component | Priority | Needed For |
-|-----------|----------|------------|
-| Event Timeline Item | P1 | Session navigation |
-| Topbar Icon Buttons | P1 | Panel controls |
-| Context Menu (3-dot) | P1 | Session actions |
-| Search Bar | P1 | Session/folder filtering |
-| File Edit History | P1 | Cross-session tracking |
-| Pin Button | P1 | Quick access |
-| Orphan Warning | P1 | Data integrity feedback |
+| Component            | Priority | Needed For               |
+| -------------------- | -------- | ------------------------ |
+| Event Timeline Item  | P1       | Session navigation       |
+| Topbar Icon Buttons  | P1       | Panel controls           |
+| Context Menu (3-dot) | P1       | Session actions          |
+| Search Bar           | P1       | Session/folder filtering |
+| File Edit History    | P1       | Cross-session tracking   |
+| Pin Button           | P1       | Quick access             |
+| Orphan Warning       | P1       | Data integrity feedback  |
 
 **Phase 3 - Polish Components:**
 
-| Component | Priority | Needed For |
-|-----------|----------|------------|
-| Thinking Indicator | P2 | Response feedback |
-| Error Bubble + Retry | P2 | Error handling |
-| Loading States | P2 | Process feedback |
+| Component            | Priority | Needed For        |
+| -------------------- | -------- | ----------------- |
+| Thinking Indicator   | P2       | Response feedback |
+| Error Bubble + Retry | P2       | Error handling    |
+| Loading States       | P2       | Process feedback  |
 
 ## UX Consistency Patterns
 
@@ -1608,19 +1702,20 @@ On hover (non-first message):
 
 **Click Behavior:**
 
-| Element | Single Click | Double Click | Right Click |
-|---------|--------------|--------------|-------------|
-| Session item | Select & load | - | Context menu |
-| Tab | Switch to session | - | Context menu |
-| Message bubble | - | - | Copy text |
-| Sub-agent (collapsed) | Expand inline | - | - |
-| Sub-agent (expanded) | Collapse | - | - |
-| Tool call (collapsed) | Expand details | - | - |
-| Event timeline item | Scroll to event | - | - |
-| Ribbon icon | Switch section | - | - |
-| Door button | Toggle panel | - | - |
+| Element               | Single Click      | Double Click | Right Click  |
+| --------------------- | ----------------- | ------------ | ------------ |
+| Session item          | Select & load     | -            | Context menu |
+| Tab                   | Switch to session | -            | Context menu |
+| Message bubble        | -                 | -            | Copy text    |
+| Sub-agent (collapsed) | Expand inline     | -            | -            |
+| Sub-agent (expanded)  | Collapse          | -            | -            |
+| Tool call (collapsed) | Expand details    | -            | -            |
+| Event timeline item   | Scroll to event   | -            | -            |
+| Ribbon icon           | Switch section    | -            | -            |
+| Door button           | Toggle panel      | -            | -            |
 
 **Expand/Collapse Pattern:**
+
 - Click header to toggle
 - Chevron icon indicates state (collapsed, expanded)
 - Animation: 150ms ease-out
@@ -1629,17 +1724,17 @@ On hover (non-first message):
 
 **Keyboard Navigation:**
 
-| Key | Action |
-|-----|--------|
-| Tab | Move to next focusable element |
-| Shift+Tab | Move to previous focusable |
-| Enter | Activate focused element |
-| Space | Toggle (checkboxes, expand/collapse) |
-| Escape | Close expanded element, clear input |
-| Arrow Up/Down | Navigate list items |
-| Cmd+N | New session |
-| Cmd+W | Close current tab |
-| Cmd+1-9 | Switch to tab by number |
+| Key           | Action                               |
+| ------------- | ------------------------------------ |
+| Tab           | Move to next focusable element       |
+| Shift+Tab     | Move to previous focusable           |
+| Enter         | Activate focused element             |
+| Space         | Toggle (checkboxes, expand/collapse) |
+| Escape        | Close expanded element, clear input  |
+| Arrow Up/Down | Navigate list items                  |
+| Cmd+N         | New session                          |
+| Cmd+W         | Close current tab                    |
+| Cmd+1-9       | Switch to tab by number              |
 
 ---
 
@@ -1647,23 +1742,26 @@ On hover (non-first message):
 
 **Status Indicators (3-State Machine):**
 
-| State | Visual | Color | Location |
-|-------|--------|-------|----------|
-| Idle | No indicator | - | - |
-| Working | ⚡ + `···` animation | Green | Session list, tab |
-| Error | ⚠️ icon | Red | Session list, tab, bubble |
+| State   | Visual               | Color | Location                  |
+| ------- | -------------------- | ----- | ------------------------- |
+| Idle    | No indicator         | -     | -                         |
+| Working | ⚡ + `···` animation | Green | Session list, tab         |
+| Error   | ⚠️ icon              | Red   | Session list, tab, bubble |
 
 **Thinking Feedback:**
+
 - "Thinking..." indicator in chat while process runs
 - Indicator disappears when response appears
 - No blocking UI during processing
 
 **Success Feedback:**
+
 - Operation completes silently (no toast for normal operations)
 - Visual state change is sufficient feedback
 - Success messages only for significant actions (e.g., "Session archived")
 
 **Completion Notification (Session):**
+
 - Brief flash highlight on session completion
 - Settles to red dot badge in session list
 - Red dot clears when session is focused
@@ -1671,6 +1769,7 @@ On hover (non-first message):
 - Optional completion sound (off by default, configurable in settings)
 
 **Error Feedback:**
+
 - Inline in conversation flow (error bubble)
 - Red left border + subtle red tint background
 - Clear error message (human-readable, not stack trace)
@@ -1678,6 +1777,7 @@ On hover (non-first message):
 - Never modal unless action is destructive
 
 **Loading Feedback:**
+
 - Skeleton states for content loading
 - "connecting..." indicator when spawning (subtle, non-blocking)
 - Progress indication for long operations
@@ -1688,6 +1788,7 @@ On hover (non-first message):
 ### Navigation Patterns
 
 **Panel Toggle (Door Button):**
+
 - Position: Right side of panel topbar
 - Icon: Door/sidebar icon
 - Click: Slide panel closed (200ms ease)
@@ -1696,13 +1797,14 @@ On hover (non-first message):
 
 **Panel Toggle Behavior:**
 
-| State | Layout |
-|-------|--------|
+| State               | Layout                                                          |
+| ------------------- | --------------------------------------------------------------- |
 | Both panels visible | Left Panel + Middle + Right Panel (door buttons in each topbar) |
-| Left panel hidden | Middle expands left, left door button moves to middle topbar |
-| Both panels hidden | Middle full width, both door buttons in middle topbar |
+| Left panel hidden   | Middle expands left, left door button moves to middle topbar    |
+| Both panels hidden  | Middle full width, both door buttons in middle topbar           |
 
 **Tab Navigation:**
+
 - Tabs scroll horizontally if too many
 - Active tab always visible
 - New tab opens at end, becomes active
@@ -1710,6 +1812,7 @@ On hover (non-first message):
 - Cmd+W closes current tab
 
 **Timeline Navigation:**
+
 - Click event: Smooth scroll conversation to that point
 - Active event highlighted (matching scroll position)
 - Scroll conversation: Timeline selection updates
@@ -1720,38 +1823,38 @@ On hover (non-first message):
 
 **Empty States:**
 
-| Context | Empty State Display |
-|---------|---------------------|
-| No sessions | "No sessions yet. Start typing to begin." |
-| Session list (filtered) | "No sessions match your filter." |
+| Context                   | Empty State Display                               |
+| ------------------------- | ------------------------------------------------- |
+| No sessions               | "No sessions yet. Start typing to begin."         |
+| Session list (filtered)   | "No sessions match your filter."                  |
 | New session (no messages) | Input focused, placeholder "Type your message..." |
-| Events panel (no events) | "Events will appear as conversation progresses." |
+| Events panel (no events)  | "Events will appear as conversation progresses."  |
 
 **Loading States:**
 
-| Context | Loading Display |
-|---------|-----------------|
-| App startup | Loading screen with logo + progress |
+| Context         | Loading Display                       |
+| --------------- | ------------------------------------- |
+| App startup     | Loading screen with logo + progress   |
 | Session loading | Skeleton bubbles in conversation area |
-| CC processing | "Thinking..." indicator in chat |
+| CC processing   | "Thinking..." indicator in chat       |
 
 **Error States:**
 
-| Context | Error Display |
-|---------|---------------|
+| Context          | Error Display                                 |
+| ---------------- | --------------------------------------------- |
 | CC not installed | Modal: "Claude Code not found" + instructions |
-| Auth failed | Modal: "Authentication required" + action |
-| Spawn failed | Inline bubble: Error message + Retry button |
-| Network error | Inline bubble: Error message + Retry button |
+| Auth failed      | Modal: "Authentication required" + action     |
+| Spawn failed     | Inline bubble: Error message + Retry button   |
+| Network error    | Inline bubble: Error message + Retry button   |
 
 **Session States:**
 
-| State | Session List | Tab | Conversation |
-|-------|--------------|-----|--------------|
-| New (unsaved) | Not in list yet | "New Session" | Input focused |
-| Working | Green dot + ⚡ | Green dot | "Thinking..." indicator |
-| Idle | No dot | No dot | Ready for input |
-| Error | Red dot | Red dot | Error bubble visible |
+| State         | Session List    | Tab           | Conversation            |
+| ------------- | --------------- | ------------- | ----------------------- |
+| New (unsaved) | Not in list yet | "New Session" | Input focused           |
+| Working       | Green dot + ⚡  | Green dot     | "Thinking..." indicator |
+| Idle          | No dot          | No dot        | Ready for input         |
+| Error         | Red dot         | Red dot       | Error bubble visible    |
 
 ---
 
@@ -1761,14 +1864,15 @@ On hover (non-first message):
 
 **Application:**
 
-| Element | Collapsed (default) | Expanded (on click) |
-|---------|---------------------|---------------------|
-| Sub-agent | Name + status badge | Full conversation |
-| Tool call | Tool name + summary | Input + output |
-| Error | Error type + message | Stack trace (if helpful) |
-| Session info | Basic metadata | Full details |
+| Element      | Collapsed (default)  | Expanded (on click)      |
+| ------------ | -------------------- | ------------------------ |
+| Sub-agent    | Name + status badge  | Full conversation        |
+| Tool call    | Tool name + summary  | Input + output           |
+| Error        | Error type + message | Stack trace (if helpful) |
+| Session info | Basic metadata       | Full details             |
 
 **Visual Hierarchy:**
+
 1. **Always visible:** Status, name, timestamp
 2. **On hover:** Additional metadata, actions
 3. **On click:** Full content, details
@@ -1778,21 +1882,23 @@ On hover (non-first message):
 ### Animation & Motion
 
 **Principles:**
+
 - Minimal animation (perceived speed > visual flair)
 - Functional motion only (guides attention)
 - Respect `prefers-reduced-motion`
 
 **Timings:**
 
-| Animation | Duration | Easing |
-|-----------|----------|--------|
-| Panel slide | 200ms | ease-out |
-| Expand/collapse | 150ms | ease-out |
-| Hover states | 100ms | ease |
-| Tab switch | Instant | - |
-| Scroll-to-event | 300ms | ease-out |
+| Animation       | Duration | Easing   |
+| --------------- | -------- | -------- |
+| Panel slide     | 200ms    | ease-out |
+| Expand/collapse | 150ms    | ease-out |
+| Hover states    | 100ms    | ease     |
+| Tab switch      | Instant  | -        |
+| Scroll-to-event | 300ms    | ease-out |
 
 **When NOT to animate:**
+
 - Tab switching (instant)
 - Session loading (show skeleton immediately)
 - Error display (show immediately)
@@ -1821,19 +1927,21 @@ Grimoire is a desktop Electron application. Phase 1 targets macOS only. Mobile a
 
 Grimoire adapts to window resizing within desktop context:
 
-| Window Size | Behavior |
-|-------------|----------|
-| Full screen | All panels visible, maximum content |
-| Normal (1200px+) | All panels visible, comfortable spacing |
-| Narrow (900-1200px) | Consider auto-collapsing one panel |
-| Minimum (800px) | Enforce minimum, prevent unusable state |
+| Window Size         | Behavior                                |
+| ------------------- | --------------------------------------- |
+| Full screen         | All panels visible, maximum content     |
+| Normal (1200px+)    | All panels visible, comfortable spacing |
+| Narrow (900-1200px) | Consider auto-collapsing one panel      |
+| Minimum (800px)     | Enforce minimum, prevent unusable state |
 
 **Minimum Window Dimensions:**
+
 - Width: 800px minimum
 - Height: 600px minimum
 - Rationale: Below these sizes, three-panel layout becomes unusable
 
 **Panel Collapse Behavior at Narrow Widths:**
+
 - User-controlled via door buttons (not auto-collapse)
 - If window approaches minimum with panels open, allow manual collapse
 - Never force-collapse without user action
@@ -1844,22 +1952,23 @@ Grimoire adapts to window resizing within desktop context:
 
 **Desktop-Only Breakpoints:**
 
-| Breakpoint | Width | Layout Behavior |
-|------------|-------|-----------------|
-| Compact | 800-1000px | Recommend collapsing one panel |
-| Standard | 1000-1400px | All panels comfortable |
-| Wide | 1400px+ | Extra breathing room, larger text areas |
+| Breakpoint | Width       | Layout Behavior                         |
+| ---------- | ----------- | --------------------------------------- |
+| Compact    | 800-1000px  | Recommend collapsing one panel          |
+| Standard   | 1000-1400px | All panels comfortable                  |
+| Wide       | 1400px+     | Extra breathing room, larger text areas |
 
 **Panel Width Behavior:**
 
-| Panel | Fixed/Flexible | Minimum | Maximum |
-|-------|----------------|---------|---------|
-| Ribbon | Fixed | 48px | 48px |
-| Left Panel | Fixed | 240px | 320px |
-| Middle Panel | Flexible | 400px | Unlimited |
-| Right Panel | Fixed | 260px | 340px |
+| Panel        | Fixed/Flexible | Minimum | Maximum   |
+| ------------ | -------------- | ------- | --------- |
+| Ribbon       | Fixed          | 48px    | 48px      |
+| Left Panel   | Fixed          | 240px   | 320px     |
+| Middle Panel | Flexible       | 400px   | Unlimited |
+| Right Panel  | Fixed          | 260px   | 340px     |
 
 **Future Considerations (Post-MVP):**
+
 - Windows/Linux may have different default font sizes
 - High-DPI display scaling support
 - Multi-monitor behavior
@@ -1874,21 +1983,21 @@ Grimoire Phase 1 targets power users (intermediate-to-advanced CLI users). Full 
 
 **Implemented in Phase 1:**
 
-| Feature | Status | Notes |
-|---------|--------|-------|
+| Feature             | Status   | Notes                                |
+| ------------------- | -------- | ------------------------------------ |
 | Keyboard navigation | Included | Full keyboard access to all features |
-| Focus indicators | Included | Visible accent-color focus rings |
-| Color contrast | Included | Dark theme designed for readability |
-| Semantic structure | Included | Proper heading hierarchy, landmarks |
+| Focus indicators    | Included | Visible accent-color focus rings     |
+| Color contrast      | Included | Dark theme designed for readability  |
+| Semantic structure  | Included | Proper heading hierarchy, landmarks  |
 
 **Deferred to Phase 2+:**
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Screen reader optimization | Deferred | ARIA labels, live regions |
-| WCAG AA compliance | Deferred | Full audit and remediation |
-| High contrast mode | Deferred | System preference detection |
-| Reduced motion | Partial | Minimal animation already |
+| Feature                    | Status   | Notes                       |
+| -------------------------- | -------- | --------------------------- |
+| Screen reader optimization | Deferred | ARIA labels, live regions   |
+| WCAG AA compliance         | Deferred | Full audit and remediation  |
+| High contrast mode         | Deferred | System preference detection |
+| Reduced motion             | Partial  | Minimal animation already   |
 
 ---
 
@@ -1898,17 +2007,18 @@ Grimoire Phase 1 targets power users (intermediate-to-advanced CLI users). Full 
 
 All features accessible without mouse:
 
-| Area | Keyboard Support |
-|------|------------------|
-| Ribbon navigation | Tab + Enter |
-| Session list | Arrow keys + Enter |
-| Tab bar | Cmd+1-9, Cmd+W |
-| Conversation | Arrow keys to scroll |
-| Expand/collapse | Enter or Space |
-| Input area | Tab to focus, Enter to send |
-| Panel toggle | Keyboard shortcut (TBD) |
+| Area              | Keyboard Support            |
+| ----------------- | --------------------------- |
+| Ribbon navigation | Tab + Enter                 |
+| Session list      | Arrow keys + Enter          |
+| Tab bar           | Cmd+1-9, Cmd+W              |
+| Conversation      | Arrow keys to scroll        |
+| Expand/collapse   | Enter or Space              |
+| Input area        | Tab to focus, Enter to send |
+| Panel toggle      | Keyboard shortcut (TBD)     |
 
 **Focus Management:**
+
 - Logical tab order (left to middle to right)
 - Focus trapped in modals (when open)
 - Escape returns focus to previous element
@@ -1920,14 +2030,15 @@ All features accessible without mouse:
 
 **Contrast Ratios:**
 
-| Element | Background | Foreground | Ratio | Target |
-|---------|------------|------------|-------|--------|
-| Body text | `--bg-base` | `--text-primary` | ~12:1 | 4.5:1 |
-| Muted text | `--bg-base` | `--text-muted` | ~6:1 | 4.5:1 |
-| Accent on dark | `--bg-base` | `--accent` | ~5:1 | 3:1 |
-| Error text | `--bg-base` | `--error` | ~5:1 | 3:1 |
+| Element        | Background  | Foreground       | Ratio | Target |
+| -------------- | ----------- | ---------------- | ----- | ------ |
+| Body text      | `--bg-base` | `--text-primary` | ~12:1 | 4.5:1  |
+| Muted text     | `--bg-base` | `--text-muted`   | ~6:1  | 4.5:1  |
+| Accent on dark | `--bg-base` | `--accent`       | ~5:1  | 3:1    |
+| Error text     | `--bg-base` | `--error`        | ~5:1  | 3:1    |
 
 **Color Independence:**
+
 - Status not conveyed by color alone (dot + position/context)
 - Error states have border + background, not just color
 - Active states have multiple visual indicators
@@ -1938,20 +2049,20 @@ All features accessible without mouse:
 
 **Phase 1 Testing:**
 
-| Test Type | Scope | Tools |
-|-----------|-------|-------|
-| Window resize | Manual | macOS window controls |
-| Keyboard nav | Manual | Keyboard-only testing |
-| Color contrast | Automated | Contrast checker tools |
-| Focus visibility | Manual | Visual inspection |
+| Test Type        | Scope     | Tools                  |
+| ---------------- | --------- | ---------------------- |
+| Window resize    | Manual    | macOS window controls  |
+| Keyboard nav     | Manual    | Keyboard-only testing  |
+| Color contrast   | Automated | Contrast checker tools |
+| Focus visibility | Manual    | Visual inspection      |
 
 **Phase 2+ Testing (Future):**
 
-| Test Type | Scope | Tools |
-|-----------|-------|-------|
-| Screen reader | VoiceOver (macOS) | Native screen reader |
-| WCAG audit | Full compliance check | axe, Lighthouse |
-| User testing | Users with disabilities | Recruited testers |
+| Test Type     | Scope                   | Tools                |
+| ------------- | ----------------------- | -------------------- |
+| Screen reader | VoiceOver (macOS)       | Native screen reader |
+| WCAG audit    | Full compliance check   | axe, Lighthouse      |
+| User testing  | Users with disabilities | Recruited testers    |
 
 ---
 
@@ -1980,6 +2091,7 @@ All features accessible without mouse:
    - Test with color blindness simulators
 
 **Future-Proofing:**
+
 - Structure components for easy ARIA addition
 - Keep interactive elements as native HTML where possible
 - Document accessibility debt for Phase 2 planning

@@ -52,7 +52,7 @@ validationAfter:
   metadata:
     status: [pass|fail|warning]
     findings:
-      - {check}: [pass|fail]
+      - { check }: [pass|fail]
 ```
 
 ### 4. Auto-Advance

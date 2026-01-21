@@ -40,12 +40,12 @@ context_file: 'requests/02.brainstorm.subtab.md'
 
 **Main vs Sub-Agent Differences:**
 
-| Aspect | Main Conversation | Sub-Agent Conversation |
-|--------|-------------------|------------------------|
-| Location | `{sessionId}.jsonl` | `{sessionId}/subagents/agent-{agentId}.jsonl` |
-| isSidechain | `false` | `true` |
-| agentId | absent | present |
-| parentUuid | null | UUID of spawning message in parent |
+| Aspect      | Main Conversation   | Sub-Agent Conversation                        |
+| ----------- | ------------------- | --------------------------------------------- |
+| Location    | `{sessionId}.jsonl` | `{sessionId}/subagents/agent-{agentId}.jsonl` |
+| isSidechain | `false`             | `true`                                        |
+| agentId     | absent              | present                                       |
+| parentUuid  | null                | UUID of spawning message in parent            |
 
 **Key Insight:** No explicit parent conversation ID in sub-agents. Linkage via shared `sessionId` + `parentUuid` pointing to tool_use message.
 
@@ -55,15 +55,15 @@ context_file: 'requests/02.brainstorm.subtab.md'
 
 ### Parameter Decisions
 
-| Parameter | Options Considered | Decision |
-|-----------|-------------------|----------|
-| Tab identification | Color tint / Different icon / Badge | **Color tint** via `.tab--subagent` CSS class |
-| Tab label | Agent type / Agent ID / Type + ID | **Type + short ID** ("Explore-a8b2") |
-| How to open | Bubble click / Events list / Both | **Both** |
-| Conversation loader | Multiple loaders / Single + path | **Single loader + path param** |
-| Sub-agent discovery | Scan parent / Index on load / Lazy | **Index on session load** |
-| Live updates | File watcher / Stream / Polling | **Stream from child process** (existing) |
-| Nesting support | V1 skip / Full support | **Full support** - uniform handling |
+| Parameter           | Options Considered                  | Decision                                      |
+| ------------------- | ----------------------------------- | --------------------------------------------- |
+| Tab identification  | Color tint / Different icon / Badge | **Color tint** via `.tab--subagent` CSS class |
+| Tab label           | Agent type / Agent ID / Type + ID   | **Type + short ID** ("Explore-a8b2")          |
+| How to open         | Bubble click / Events list / Both   | **Both**                                      |
+| Conversation loader | Multiple loaders / Single + path    | **Single loader + path param**                |
+| Sub-agent discovery | Scan parent / Index on load / Lazy  | **Index on session load**                     |
+| Live updates        | File watcher / Stream / Polling     | **Stream from child process** (existing)      |
+| Nesting support     | V1 skip / Full support              | **Full support** - uniform handling           |
 
 ---
 
@@ -91,12 +91,15 @@ Example: `Explore-a8b2`, `Bash-f3c1`
 ### 3. Sub-Agent Index Structure
 
 ```ts
-Map<agentId, {
-  path: string,           // Path to JSONL file
-  parentId: string,       // sessionId OR agentId (for nested)
-  parentMessageUuid: string,
-  label: string           // "Type-shortId"
-}>
+Map<
+  agentId,
+  {
+    path: string // Path to JSONL file
+    parentId: string // sessionId OR agentId (for nested)
+    parentMessageUuid: string
+    label: string // "Type-shortId"
+  }
+>
 ```
 
 - Built on session load
@@ -106,15 +109,18 @@ Map<agentId, {
 ### 4. Opening Sub-Agent Tabs
 
 **Triggers:**
+
 - Click on bubble (tool_use) in parent conversation
 - Click on action in events list
 
 **Action:**
+
 ```ts
 openSubAgentTab(agentId) → lookup index → open tab with path
 ```
 
 **Behavior:**
+
 - Opens as new tab
 - Parent tab remains open
 - No navigation back needed (parent already open)
@@ -133,12 +139,12 @@ loadConversation(path: string): Conversation
 
 ### 6. Data Flow
 
-| Scenario | Source |
-|----------|--------|
+| Scenario             | Source                            |
+| -------------------- | --------------------------------- |
 | Running conversation | Stream from spawned child process |
-| Historical/completed | Read JSONL file once |
-| Sub-agent running | Stream from its child process |
-| Sub-agent completed | Read its JSONL file once |
+| Historical/completed | Read JSONL file once              |
+| Sub-agent running    | Stream from its child process     |
+| Sub-agent completed  | Read its JSONL file once          |
 
 **No file watcher needed** - app spawns all processes, stream provides real-time data.
 

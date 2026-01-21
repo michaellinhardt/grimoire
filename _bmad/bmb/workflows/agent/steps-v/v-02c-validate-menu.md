@@ -53,6 +53,7 @@ Append to `{validationReport}`:
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL}
 
 **Checks:**
+
 - [ ] A/P/C convention followed
 - [ ] Command names clear and descriptive
 - [ ] Command descriptions specific and actionable

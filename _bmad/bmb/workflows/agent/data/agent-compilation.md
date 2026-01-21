@@ -12,6 +12,7 @@ You write: **YAML source file** (`agent-name.agent.yaml`)
 Compiler produces: **Markdown with XML** (`agent-name.md`) for LLM consumption
 
 The compiler transforms your clean YAML into a fully functional agent by adding:
+
 - Frontmatter (name, description)
 - XML activation block with numbered steps
 - Menu handlers (workflow, exec, action)
@@ -63,15 +64,18 @@ agent:
 ## What COMPILER Adds (DO NOT Include)
 
 ### 1. Frontmatter
+
 ```markdown
 ---
-name: "architect"
-description: "Architect"
+name: 'architect'
+description: 'Architect'
 ---
 ```
+
 **DO NOT add** frontmatter to your YAML.
 
 ### 2. XML Activation Block
+
 ```xml
 <activation critical="MANDATORY">
   <step n="1">Load persona from this current agent file</step>
@@ -86,19 +90,22 @@ description: "Architect"
   <rules>...</rules>
 </activation>
 ```
+
 **DO NOT create** activation sections—the compiler builds them.
 
 ### 3. Auto-Injected Menu Items
+
 Every agent gets these 4 items automatically. **DO NOT add them to your YAML:**
 
-| Code | Trigger | Description |
-|------|---------|-------------|
-| MH | menu or help | Redisplay Menu Help |
-| CH | chat | Chat with the Agent about anything |
-| PM | party-mode | Start Party Mode |
-| DA | exit, leave, goodbye, dismiss agent | Dismiss Agent |
+| Code | Trigger                             | Description                        |
+| ---- | ----------------------------------- | ---------------------------------- |
+| MH   | menu or help                        | Redisplay Menu Help                |
+| CH   | chat                                | Chat with the Agent about anything |
+| PM   | party-mode                          | Start Party Mode                   |
+| DA   | exit, leave, goodbye, dismiss agent | Dismiss Agent                      |
 
 ### 4. Menu Handlers
+
 ```xml
 <handler type="workflow">
   When menu item has: workflow="path/to/workflow.yaml"
@@ -109,6 +116,7 @@ Every agent gets these 4 items automatically. **DO NOT add them to your YAML:**
   → Load and execute the file at that path
 </handler>
 ```
+
 **DO NOT add** handlers—the compiler detects and generates them.
 
 ---
@@ -116,10 +124,11 @@ Every agent gets these 4 items automatically. **DO NOT add them to your YAML:**
 ## Before/After Example: Architect Agent
 
 ### Source: `architect.agent.yaml` (32 lines - YOU WRITE)
+
 ```yaml
 agent:
   metadata:
-    id: "_bmad/bmm/agents/architect.md"
+    id: '_bmad/bmm/agents/architect.md'
     name: Winston
     title: Architect
     icon: 🏗️
@@ -128,29 +137,30 @@ agent:
   persona:
     role: System Architect + Technical Design Leader
     identity: Senior architect with expertise in distributed systems...
-    communication_style: "Speaks in calm, pragmatic tones..."
+    communication_style: 'Speaks in calm, pragmatic tones...'
     principles: |
       - User journeys drive technical decisions...
 
   menu:
     - trigger: WS or fuzzy match on workflow-status
-      workflow: "{project-root}/_bmad/bmm/workflows/workflow-status/workflow.yaml"
-      description: "[WS] Get workflow status..."
+      workflow: '{project-root}/_bmad/bmm/workflows/workflow-status/workflow.yaml'
+      description: '[WS] Get workflow status...'
 
     - trigger: CA or fuzzy match on create-architecture
-      exec: "{project-root}/_bmad/bmm/workflows/3-solutioning/create-architecture/workflow.md"
-      description: "[CA] Create an Architecture Document"
+      exec: '{project-root}/_bmad/bmm/workflows/3-solutioning/create-architecture/workflow.md'
+      description: '[CA] Create an Architecture Document'
 
     - trigger: IR or fuzzy match on implementation-readiness
-      exec: "{project-root}/_bmad/bmm/workflows/3-solutioning/check-implementation-readiness/workflow.md"
-      description: "[IR] Implementation Readiness Review"
+      exec: '{project-root}/_bmad/bmm/workflows/3-solutioning/check-implementation-readiness/workflow.md'
+      description: '[IR] Implementation Readiness Review'
 ```
 
 ### Compiled: `architect.md` (69 lines - COMPILER PRODUCES)
-```markdown
+
+````markdown
 ---
-name: "architect"
-description: "Architect"
+name: 'architect'
+description: 'Architect'
 ---
 
 You must fully embody this agent's persona...
@@ -199,6 +209,8 @@ You must fully embody this agent's persona...
 </menu>
 </agent>
 ```
+````
+
 **Key additions by compiler:** Frontmatter, activation block, handlers, rules, MH/CH/PM/DA menu items.
 
 ---
@@ -218,6 +230,7 @@ When building agent YAML, **DO NOT:**
 - [ ] Duplicate any auto-injected content
 
 **DO:**
+
 - [ ] Define metadata (id, name, title, icon, module)
 - [ ] Define persona (role, identity, communication_style, principles)
 - [ ] Define critical_actions (Expert agents only)
@@ -234,9 +247,9 @@ For Expert agents with sidecars, your `critical_actions` become activation steps
 
 ```yaml
 critical_actions:
-  - "Load COMPLETE file ./agent-sidecar/memories.md"
-  - "Load COMPLETE file ./agent-sidecar/instructions.md"
-  - "ONLY read/write files in ./agent-sidecar/"
+  - 'Load COMPLETE file ./agent-sidecar/memories.md'
+  - 'Load COMPLETE file ./agent-sidecar/instructions.md'
+  - 'ONLY read/write files in ./agent-sidecar/'
 ```
 
 The compiler injects these as steps 4, 5, 6 in the activation block:
@@ -252,15 +265,15 @@ The compiler injects these as steps 4, 5, 6 in the activation block:
 
 ## Division of Responsibilities
 
-| Aspect | YOU Provide (YAML) | COMPILER Adds |
-|--------|-------------------|---------------|
-| Agent identity | metadata + persona | Wrapped in XML |
-| Memory/actions | critical_actions | Inserted as activation steps |
-| Prompts | prompts with IDs | Referenced by menu actions |
-| Menu items | Your custom commands only | + MH, CH, PM, DA (auto) |
-| Activation | — | Full XML block with handlers |
-| Rules | — | Standardized rules section |
-| Frontmatter | — | name/description header |
+| Aspect         | YOU Provide (YAML)        | COMPILER Adds                |
+| -------------- | ------------------------- | ---------------------------- |
+| Agent identity | metadata + persona        | Wrapped in XML               |
+| Memory/actions | critical_actions          | Inserted as activation steps |
+| Prompts        | prompts with IDs          | Referenced by menu actions   |
+| Menu items     | Your custom commands only | + MH, CH, PM, DA (auto)      |
+| Activation     | —                         | Full XML block with handlers |
+| Rules          | —                         | Standardized rules section   |
+| Frontmatter    | —                         | name/description header      |
 
 ---
 

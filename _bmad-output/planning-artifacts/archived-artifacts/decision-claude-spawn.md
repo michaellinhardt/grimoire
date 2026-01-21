@@ -21,12 +21,12 @@ REWIND/EDIT (10%):
 
 ## Why Hybrid?
 
-| `-p` mode | SDK |
-|-----------|-----|
+| `-p` mode                  | SDK                                              |
+| -------------------------- | ------------------------------------------------ |
 | ✅ Simple request-response | ✅ Has `resumeSessionAt` for conversation rewind |
-| ✅ Clean process lifecycle | ✅ Has `rewindFiles()` for file restore |
-| ✅ No zombie processes | ✅ Handles complexity internally |
-| ❌ No native rewind | ❌ Adds dependency, sends "Continue." artifact |
+| ✅ Clean process lifecycle | ✅ Has `rewindFiles()` for file restore          |
+| ✅ No zombie processes     | ✅ Handles complexity internally                 |
+| ❌ No native rewind        | ❌ Adds dependency, sends "Continue." artifact   |
 
 ---
 
@@ -37,33 +37,38 @@ REWIND/EDIT (10%):
 ```javascript
 const args = [
   '-p',
-  '--input-format', 'stream-json',   // Required for replay-user-messages
-  '--output-format', 'stream-json',
+  '--input-format',
+  'stream-json', // Required for replay-user-messages
+  '--output-format',
+  'stream-json',
   '--verbose',
-  '--replay-user-messages',          // Get checkpoint UUIDs
-  '--dangerously-skip-permissions',
-];
-if (sessionId) args.push('--resume', sessionId);
+  '--replay-user-messages', // Get checkpoint UUIDs
+  '--dangerously-skip-permissions'
+]
+if (sessionId) args.push('--resume', sessionId)
 
 const claude = spawn('claude', args, {
-  env: { ...process.env,
-    CLAUDE_CONFIG_DIR: '/path/to/config',  // Optional isolation
-    CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING: '1',
+  env: {
+    ...process.env,
+    CLAUDE_CONFIG_DIR: '/path/to/config', // Optional isolation
+    CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING: '1'
   },
   cwd: projectDirectory,
-  stdio: ['pipe', 'pipe', 'pipe'],
-});
+  stdio: ['pipe', 'pipe', 'pipe']
+})
 
 // Send prompt via stdin (NOT CLI arg)
-claude.stdin.write(JSON.stringify({
-  type: 'user',
-  message: { role: 'user', content: 'Your prompt here' },
-}) + '\n');
-claude.stdin.end();
+claude.stdin.write(
+  JSON.stringify({
+    type: 'user',
+    message: { role: 'user', content: 'Your prompt here' }
+  }) + '\n'
+)
+claude.stdin.end()
 
 // Parse real-time JSONL from stdout
 for await (const line of readline.createInterface({ input: claude.stdout })) {
-  const msg = JSON.parse(line);
+  const msg = JSON.parse(line)
   // Capture: msg.session_id (for resume), msg.uuid (for checkpoints)
 }
 ```
@@ -82,10 +87,10 @@ for await (const line of readline.createInterface({ input: claude.stdout })) {
 With `--replay-user-messages`, every user message has `uuid` field = rewind point.
 
 ```javascript
-const checkpoints = [];
+const checkpoints = []
 for await (const msg of parseStream(claude.stdout)) {
   if (msg.type === 'user' && msg.uuid) {
-    checkpoints.push({ uuid: msg.uuid, timestamp: new Date().toISOString() });
+    checkpoints.push({ uuid: msg.uuid, timestamp: new Date().toISOString() })
   }
 }
 ```
@@ -100,22 +105,22 @@ for await (const msg of parseStream(claude.stdout)) {
 ### Conversation Rewind (SDK)
 
 ```javascript
-const { query } = require('@anthropic-ai/claude-agent-sdk');
+const { query } = require('@anthropic-ai/claude-agent-sdk')
 
 const response = query({
-  prompt: 'Continue.',  // Non-empty required
+  prompt: 'Continue.', // Non-empty required
   options: {
     resume: originalSessionId,
-    resumeSessionAt: checkpointUuid,  // Truncates here
-    forkSession: true,                // Always creates new session
+    resumeSessionAt: checkpointUuid, // Truncates here
+    forkSession: true, // Always creates new session
     permissionMode: 'bypassPermissions',
-    maxTurns: 1,
-  },
-});
+    maxTurns: 1
+  }
+})
 
-let newSessionId;
+let newSessionId
 for await (const msg of response) {
-  if (msg.session_id) newSessionId = msg.session_id;
+  if (msg.session_id) newSessionId = msg.session_id
 }
 // Use newSessionId for subsequent -p calls
 ```
@@ -129,13 +134,13 @@ const response = query({
     resume: sessionId,
     resumeSessionAt: checkpointUuid,
     enableFileCheckpointing: true,
-    forkSession: true,
-  },
-});
+    forkSession: true
+  }
+})
 
 for await (const msg of response) {
   if (msg.type === 'system') {
-    await response.rewindFiles(checkpointUuid);  // Restore files
+    await response.rewindFiles(checkpointUuid) // Restore files
   }
 }
 ```
@@ -156,20 +161,20 @@ claude --resume <session-id> --rewind-files <uuid> -p "" --output-format json
 ```javascript
 async function editMessage(messageUuid, newContent) {
   // 1. Find checkpoint BEFORE the message
-  const idx = checkpoints.findIndex(c => c.uuid === messageUuid);
-  const priorCheckpoint = checkpoints[idx - 1].uuid;
+  const idx = checkpoints.findIndex((c) => c.uuid === messageUuid)
+  const priorCheckpoint = checkpoints[idx - 1].uuid
 
   // 2. Rewind to prior checkpoint (truncates conversation, creates new session)
   const response = query({
     prompt: 'Continue.',
-    options: { resume: sessionId, resumeSessionAt: priorCheckpoint, forkSession: true },
-  });
+    options: { resume: sessionId, resumeSessionAt: priorCheckpoint, forkSession: true }
+  })
   for await (const msg of response) {
-    if (msg.session_id) sessionId = msg.session_id;
+    if (msg.session_id) sessionId = msg.session_id
   }
 
   // 3. Send edited message via -p mode
-  return sendMessage(newContent);
+  return sendMessage(newContent)
 }
 ```
 
@@ -193,6 +198,7 @@ async function editMessage(messageUuid, newContent) {
 **Key finding:** `resumeSessionAt` ALWAYS creates new session, even with `forkSession: false`.
 
 **Implication:** Every rewind/edit creates new session file. Grimoire must:
+
 - Track "active" session ID
 - Optionally hide/archive old sessions
 - Store session lineage if needed
@@ -203,26 +209,26 @@ async function editMessage(messageUuid, newContent) {
 
 ### Stream (stdout) provides:
 
-| Data | Example |
-|------|---------|
-| Tool calls (full) | `{"name":"Task","input":{...}}` |
-| Tool results (summary) | `{"content":"2 + 2 = 4"}` |
-| Sub-agent ID/metadata | `agentId`, `totalDurationMs`, `totalTokens` |
-| `parent_tool_use_id` | Links sub-agent to parent tool call |
-| Session ID, message UUIDs, costs | For resume, checkpoints, billing |
+| Data                             | Example                                     |
+| -------------------------------- | ------------------------------------------- |
+| Tool calls (full)                | `{"name":"Task","input":{...}}`             |
+| Tool results (summary)           | `{"content":"2 + 2 = 4"}`                   |
+| Sub-agent ID/metadata            | `agentId`, `totalDurationMs`, `totalTokens` |
+| `parent_tool_use_id`             | Links sub-agent to parent tool call         |
+| Session ID, message UUIDs, costs | For resume, checkpoints, billing            |
 
 ### Folder required for:
 
-| Data | Location |
-|------|----------|
-| Sub-agent's full conversation | `{session-id}/subagents/agent-{id}.jsonl` |
-| Sub-agent's internal tool calls | Same file |
-| File history snapshots | `~/.claude/file-history/{session-id}/` |
+| Data                            | Location                                  |
+| ------------------------------- | ----------------------------------------- |
+| Sub-agent's full conversation   | `{session-id}/subagents/agent-{id}.jsonl` |
+| Sub-agent's internal tool calls | Same file                                 |
+| File history snapshots          | `~/.claude/file-history/{session-id}/`    |
 
 ```javascript
 // Read sub-agent conversation after getting agentId from stream
-const subagentFile = path.join(sessionDir, sessionId, 'subagents', `agent-${agentId}.jsonl`);
-const messages = fs.readFileSync(subagentFile, 'utf8').split('\n').filter(Boolean).map(JSON.parse);
+const subagentFile = path.join(sessionDir, sessionId, 'subagents', `agent-${agentId}.jsonl`)
+const messages = fs.readFileSync(subagentFile, 'utf8').split('\n').filter(Boolean).map(JSON.parse)
 ```
 
 ---
@@ -231,13 +237,13 @@ const messages = fs.readFileSync(subagentFile, 'utf8').split('\n').filter(Boolea
 
 **Location:** `/Users/teazyou/dev/grimoire/prototype/`
 
-| File | Purpose |
-|------|---------|
-| `hybrid-session.js` | Main class: `sendMessage()`, `rewind()`, `editMessage()`, `getRewindPoints()` |
-| `test-hybrid.js` | Conversation rewind test (42 vs 99) ✅ |
-| `test-file-rewind.js` | File restore test (ORIGINAL vs MODIFIED) ✅ |
-| `test-edit-message.js` | Message edit test (mike → ilan) ✅ |
-| `test-edit-helper.js` | editMessage() helper test ✅ |
+| File                   | Purpose                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `hybrid-session.js`    | Main class: `sendMessage()`, `rewind()`, `editMessage()`, `getRewindPoints()` |
+| `test-hybrid.js`       | Conversation rewind test (42 vs 99) ✅                                        |
+| `test-file-rewind.js`  | File restore test (ORIGINAL vs MODIFIED) ✅                                   |
+| `test-edit-message.js` | Message edit test (mike → ilan) ✅                                            |
+| `test-edit-helper.js`  | editMessage() helper test ✅                                                  |
 
 ### GrimoireSession API
 
@@ -255,13 +261,13 @@ session.getSessionId();     // 'abc123-...'
 
 ## Known Limitations
 
-| Issue | Workaround |
-|-------|------------|
-| "Continue." artifact in rewind | Doesn't affect AI memory, just visible in history |
-| Session proliferation | Cleanup orphaned sessions, show only "active" branch |
-| First message can't be edited | No prior checkpoint; hide edit button on first msg |
-| Bash file changes not tracked | Document limitation or implement own tracking |
-| `--replay-user-messages` requires both formats | Use stdin JSON input, not CLI arg |
+| Issue                                          | Workaround                                           |
+| ---------------------------------------------- | ---------------------------------------------------- |
+| "Continue." artifact in rewind                 | Doesn't affect AI memory, just visible in history    |
+| Session proliferation                          | Cleanup orphaned sessions, show only "active" branch |
+| First message can't be edited                  | No prior checkpoint; hide edit button on first msg   |
+| Bash file changes not tracked                  | Document limitation or implement own tracking        |
+| `--replay-user-messages` requires both formats | Use stdin JSON input, not CLI arg                    |
 
 ---
 
@@ -269,22 +275,22 @@ session.getSessionId();     // 'abc123-...'
 
 ### CLI Flags
 
-| Flag | Purpose |
-|------|---------|
-| `-p` | Print mode (non-interactive) |
-| `--input-format stream-json` | Accept JSON via stdin |
-| `--output-format stream-json` | Output JSONL to stdout |
-| `--verbose` | Required for stream-json |
-| `--replay-user-messages` | Include user messages with UUIDs |
-| `--resume <id>` | Resume session |
-| `--rewind-files <uuid>` | Restore files to checkpoint (CLI) |
-| `--dangerously-skip-permissions` | Bypass prompts |
+| Flag                             | Purpose                           |
+| -------------------------------- | --------------------------------- |
+| `-p`                             | Print mode (non-interactive)      |
+| `--input-format stream-json`     | Accept JSON via stdin             |
+| `--output-format stream-json`    | Output JSONL to stdout            |
+| `--verbose`                      | Required for stream-json          |
+| `--replay-user-messages`         | Include user messages with UUIDs  |
+| `--resume <id>`                  | Resume session                    |
+| `--rewind-files <uuid>`          | Restore files to checkpoint (CLI) |
+| `--dangerously-skip-permissions` | Bypass prompts                    |
 
 ### Environment Variables
 
-| Variable | Purpose |
-|----------|---------|
-| `CLAUDE_CONFIG_DIR` | Isolate config/sessions |
+| Variable                                    | Purpose                 |
+| ------------------------------------------- | ----------------------- |
+| `CLAUDE_CONFIG_DIR`                         | Isolate config/sessions |
 | `CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING` | Enable file checkpoints |
 
 ### SDK Options

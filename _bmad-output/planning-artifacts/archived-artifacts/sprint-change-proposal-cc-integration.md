@@ -13,13 +13,13 @@ This proposal documents a significant simplification to Grimoire's Claude Code i
 
 ### The Change
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| CC invocation | `--output-format stream-json --include-partial-messages -p "msg"` | `--session-id <uuid> -p "msg"` |
-| Response delivery | NDJSON streaming events | Process exit + session file read |
-| State machine | 6 states (Idle, Spawning, Working, Pending, Terminating, Error) | 3 states (Idle, Working, Error) |
-| Instance lifecycle | Persistent with tiered timeouts | Per-message (exits after response) |
-| User feedback | Real-time streaming text | "Thinking..." indicator + full response |
+| Aspect             | Before                                                            | After                                   |
+| ------------------ | ----------------------------------------------------------------- | --------------------------------------- |
+| CC invocation      | `--output-format stream-json --include-partial-messages -p "msg"` | `--session-id <uuid> -p "msg"`          |
+| Response delivery  | NDJSON streaming events                                           | Process exit + session file read        |
+| State machine      | 6 states (Idle, Spawning, Working, Pending, Terminating, Error)   | 3 states (Idle, Working, Error)         |
+| Instance lifecycle | Persistent with tiered timeouts                                   | Per-message (exits after response)      |
+| User feedback      | Real-time streaming text                                          | "Thinking..." indicator + full response |
 
 ### Why This Change
 
@@ -34,35 +34,35 @@ This proposal documents a significant simplification to Grimoire's Claude Code i
 
 ### Artifacts Affected
 
-| Artifact | Sections Modified | Edit Count |
-|----------|-------------------|------------|
-| spawn-child-decisions.md | 10 sections | 10 edits |
-| architecture.md | 25+ sections | 43 edits |
-| epics.md | 15+ sections | 28 edits |
-| prd.md | 12 sections | 17 edits |
-| ux-design-specification.md | 15 sections | 18 edits |
+| Artifact                   | Sections Modified | Edit Count |
+| -------------------------- | ----------------- | ---------- |
+| spawn-child-decisions.md   | 10 sections       | 10 edits   |
+| architecture.md            | 25+ sections      | 43 edits   |
+| epics.md                   | 15+ sections      | 28 edits   |
+| prd.md                     | 12 sections       | 17 edits   |
+| ux-design-specification.md | 15 sections       | 18 edits   |
 
 ### Components Removed
 
-| Component | Reason |
-|-----------|--------|
-| NDJSON stream parser | No streaming with `-p` mode |
-| File watcher | Read file on process exit instead |
-| Tiered timeout system | Processes exit naturally |
-| Pending state | No waiting state - process exits |
-| Spawning state | Simplified to Working |
-| Terminating state | Process exits naturally |
-| 🔌 Disconnect button | No persistent instances to disconnect |
-| First-keystroke spawn | No warmup benefit with `-p` |
+| Component             | Reason                                |
+| --------------------- | ------------------------------------- |
+| NDJSON stream parser  | No streaming with `-p` mode           |
+| File watcher          | Read file on process exit instead     |
+| Tiered timeout system | Processes exit naturally              |
+| Pending state         | No waiting state - process exits      |
+| Spawning state        | Simplified to Working                 |
+| Terminating state     | Process exits naturally               |
+| 🔌 Disconnect button  | No persistent instances to disconnect |
+| First-keystroke spawn | No warmup benefit with `-p`           |
 
 ### Components Added/Modified
 
-| Component | Change |
-|-----------|--------|
-| Session file reader | New - reads JSONL after process exit |
-| "Thinking..." indicator | New - shows while process runs |
-| 3-state machine | Simplified from 6 states |
-| On-send spawn | Replaces first-keystroke spawn |
+| Component               | Change                               |
+| ----------------------- | ------------------------------------ |
+| Session file reader     | New - reads JSONL after process exit |
+| "Thinking..." indicator | New - shows while process runs       |
+| 3-state machine         | Simplified from 6 states             |
+| On-send spawn           | Replaces first-keystroke spawn       |
 
 ---
 
@@ -71,24 +71,21 @@ This proposal documents a significant simplification to Grimoire's Claude Code i
 ### New CC Invocation Pattern
 
 ```typescript
-const child = spawn('claude', [
-  '--session-id', sessionId,
-  '-p', message
-], {
+const child = spawn('claude', ['--session-id', sessionId, '-p', message], {
   env: {
     ...process.env,
     CLAUDE_CONFIG_DIR: path.join(app.getPath('userData'), '.claude')
   }
-});
+})
 
 child.on('exit', async (code) => {
   if (code === 0) {
-    const newEvents = await readSessionFile(sessionId);
-    emitResponseReady(sessionId, newEvents);
+    const newEvents = await readSessionFile(sessionId)
+    emitResponseReady(sessionId, newEvents)
   } else {
-    emitError(sessionId, code);
+    emitError(sessionId, code)
   }
-});
+})
 ```
 
 ### New State Machine
@@ -101,10 +98,10 @@ Idle → Working → Idle (success)
 
 ### New IPC Channels
 
-| Old Channel | New Channel |
-|-------------|-------------|
+| Old Channel            | New Channel              |
+| ---------------------- | ------------------------ |
 | `instance:streamChunk` | `instance:responseReady` |
-| `sessions:spawn` | `sessions:sendMessage` |
+| `sessions:spawn`       | `sessions:sendMessage`   |
 
 ### New Data Flow
 
@@ -198,22 +195,22 @@ State: Idle
 
 ### Reduced Implementation Scope
 
-| Removed Work | Estimated Savings |
-|--------------|-------------------|
-| NDJSON stream parser | Moderate complexity |
-| Stream state management | High complexity |
-| File watcher setup | Low complexity |
-| Tiered timeout logic | Moderate complexity |
-| Disconnect button UI | Low complexity |
+| Removed Work            | Estimated Savings   |
+| ----------------------- | ------------------- |
+| NDJSON stream parser    | Moderate complexity |
+| Stream state management | High complexity     |
+| File watcher setup      | Low complexity      |
+| Tiered timeout logic    | Moderate complexity |
+| Disconnect button UI    | Low complexity      |
 | 6-state machine testing | Moderate complexity |
 
 ### New Implementation Work
 
-| Added Work | Estimated Effort |
-|------------|------------------|
-| Session file reader | Low complexity |
-| "Thinking..." indicator | Low complexity |
-| 3-state machine | Low complexity (simpler than 6-state) |
+| Added Work              | Estimated Effort                      |
+| ----------------------- | ------------------------------------- |
+| Session file reader     | Low complexity                        |
+| "Thinking..." indicator | Low complexity                        |
+| 3-state machine         | Low complexity (simpler than 6-state) |
 
 ### Net Impact
 
@@ -223,11 +220,11 @@ State: Idle
 
 ## Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| No real-time feedback | Low | Medium | "Thinking..." indicator provides feedback |
-| Long responses feel slow | Low | Low | CC processes quickly; indicator shows activity |
-| Session file parsing errors | Low | Medium | CC writes valid JSONL; add error handling |
+| Risk                        | Likelihood | Impact | Mitigation                                     |
+| --------------------------- | ---------- | ------ | ---------------------------------------------- |
+| No real-time feedback       | Low        | Medium | "Thinking..." indicator provides feedback      |
+| Long responses feel slow    | Low        | Low    | CC processes quickly; indicator shows activity |
+| Session file parsing errors | Low        | Medium | CC writes valid JSONL; add error handling      |
 
 ---
 

@@ -43,6 +43,7 @@ Read `{editPlan}` to get agent file path and commands.
 ### 2. Validate Menu
 
 Perform checks on:
+
 - **A/P/C convention**: each menu has Advanced Elicitation, Party Mode, Continue
 - **Command names**: clear, descriptive
 - **Command descriptions**: specific, actionable
@@ -53,11 +54,11 @@ Perform checks on:
 Append to editPlan frontmatter:
 
 ```yaml
-  menu:
-    status: [pass|fail|warning]
-    findings:
-      - {check}: [pass|fail]
-      - {check}: [pass|fail]
+menu:
+  status: [pass|fail|warning]
+  findings:
+    - { check }: [pass|fail]
+    - { check }: [pass|fail]
 ```
 
 ### 4. Auto-Advance

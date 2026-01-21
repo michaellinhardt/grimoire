@@ -42,11 +42,13 @@ Read `{expertValidation}` and `{validationReport}` to get agent type.
 ### 2. Conditional Validation
 
 **IF agentType == expert:**
+
 - Check metadata.sidecar-folder present
 - Check sidecar-path correct format
 - Verify sidecar files exist
 
 **IF agentType != expert:**
+
 - Mark as N/A
 
 ### 3. Append Findings to Report
@@ -59,6 +61,7 @@ Append to `{validationReport}`:
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL / N/A}
 
 **Checks:**
+
 - [ ] metadata.sidecar-folder present (Expert only)
 - [ ] sidecar-path format correct
 - [ ] Sidecar files exist at specified path

@@ -18,6 +18,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ### Functional Requirements
 
 **Application Shell (FR1-FR7c)**
+
 - FR1: User can view application in multi-panel layout with navigation ribbon (left panel, middle panel, right panel)
 - FR2: User can collapse/expand left and right panels
 - FR3: User can navigate between app sections via ribbon icons
@@ -30,6 +31,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR7c: System terminates all child processes gracefully on application quit
 
 **Application Lifecycle (FR8-FR19)**
+
 - FR8: System displays loading screen with app logo during startup
 - FR9: System verifies Claude Code installation on startup
 - FR10: System verifies CLAUDE_CONFIG_DIR environment configuration on startup
@@ -48,6 +50,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR19: User can configure which plugin displays on startup (in settings)
 
 **Plugin System (FR20-FR24)**
+
 - FR20: User can view list of installed plugins in settings
 - FR21: User can enable/disable individual plugins
 - FR22: User can access plugin-specific settings for each plugin
@@ -55,6 +58,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR24: Core plugins use the same architecture as future community plugins
 
 **Session Management (FR25-FR32b)**
+
 - FR25: User can view list of all CC sessions from CLAUDE_CONFIG_DIR folder (app data path)
 - FR26: User can select a session to view its conversation
 - FR27: User can create a new session (requires folder selection when initiated from within app)
@@ -71,6 +75,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR32b: System updates sub-agent index when new sub-agents are discovered after response
 
 **Conversation Display (FR33-FR42)**
+
 - FR33: User can view conversation as sequential message bubbles (user/Claude)
 - FR34: User can distinguish tool calls from regular messages visually
 - FR35: User can expand tool calls to see full input/output details
@@ -87,6 +92,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR42: System displays "Loading Claude Code" indicator when spawning child
 
 **Session Information (FR43-FR46)**
+
 - FR43: User can view session information in right panel (context-dependent view)
 - FR43a: Right panel shows session info/events when viewing a conversation
 - FR43b: Right panel shows file edit history when viewing a file
@@ -96,6 +102,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR46: User can see all metadata available from Claude Code session files
 
 **Session Interaction (FR47-FR60)**
+
 - FR47: User can type messages in chat input at bottom of conversation view
 - FR48: User can paste multi-line content into chat input
 - FR49: User can send message to spawn/resume CC child process
@@ -117,6 +124,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR60: Chat input displays placeholder "Type anything to continue..." on started sessions
 
 **CC Integration (FR61-FR67b)**
+
 - FR61: System spawns CC child processes with CLAUDE_CONFIG_DIR environment variable for isolation
 - FR62: System spawns CC with session ID argument for session continuity
 - FR63: System passes user input to CC child process as terminal input
@@ -135,6 +143,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR67i: System hides chat input when viewing sub-agent conversation tab
 
 **Folder Management (FR68-FR77)**
+
 - FR68: System requires folder selection when creating new session from within app (folder picker dialog)
 - FR69: System uses implicit folder from CLI argument when launched via `grimoire <path>` or OS context menu
 - FR70: User can view hierarchical folder tree in left panel showing folders that contain sessions
@@ -147,6 +156,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR77: User can relocate orphaned folder via "Relocate folder" action
 
 **Folder Tree - Right Panel (FR78-FR84)**
+
 - FR78: User can view full file tree of active session's folder in right panel
 - FR79: System respects .gitignore when building folder tree (excludes node_modules, etc.)
 - FR80: User can expand/collapse folders in file tree
@@ -156,6 +166,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR84: System bubbles up change indicators to parent folders (if any descendant has changes)
 
 **Search Feature (FR85-FR90)**
+
 - FR85: User can access expandable search bar in session list panel header
 - FR86: User can access expandable search bar in folder hierarchy panel header
 - FR87: System filters list instantly per keystroke (no confirmation needed)
@@ -164,12 +175,14 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR90: User can collapse search bar by clicking outside or clicking search icon again
 
 **Pinning (FR91-FR94)**
+
 - FR91: User can pin any session (pinned sessions appear at top of session list)
 - FR92: User can pin root folders only (pinned folders appear at top of folder hierarchy)
 - FR93: System reveals pin icon on hover (top-left of item)
 - FR94: User can toggle pin state by clicking pin icon
 
 **File Edit Tracking (FR95-FR98)**
+
 - FR95: System tracks all AI file edits with session ID, timestamp, tool type, and line range
 - FR96: User can view file edit history in right panel when viewing a file (not conversation)
 - FR97: System displays file edits from all sessions that modified that file (cross-session)
@@ -178,6 +191,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ### Non-Functional Requirements
 
 **Performance**
+
 - NFR1: App startup < 3 seconds (faster than opening terminal + typing `claude`)
 - NFR2: Session load (100+ messages) < 1 second (instant-feel navigation)
 - NFR3: Sub-agent expansion < 100ms (perceived as instant)
@@ -187,6 +201,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - NFR7: Tab switching instant (no reload delay)
 
 **Reliability**
+
 - NFR8: Zero session data loss under any circumstance
 - NFR9: User input preserved even if CC spawn fails
 - NFR10: Application state persists across crashes/restarts
@@ -200,6 +215,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - NFR18: Memory usage remains stable during long sessions
 
 **Integration**
+
 - NFR19: Reads session files from CLAUDE_CONFIG_DIR folder (platform-specific app data path)
 - NFR20: Spawns CC with --session-id and -p arguments (request-response mode)
 - NFR21: Passes user message to CC child process via -p argument
@@ -214,67 +230,79 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ### Additional Requirements
 
 **From Architecture - Starter Template & Setup**
+
 - AR1: Use electron-vite with react-ts template as starter
 - AR2: Technology stack: React + TypeScript + Tailwind CSS v4 + Radix UI + Zustand + SQLite (better-sqlite3) + Zod + Vitest
 - AR3: Database location at ~/.grimoire/grimoire.db
 - AR4: Schema version tracking with recreate-on-change for MVP
 
 **From Architecture - State Management**
+
 - AR5: SQLite for persistent data (sessions, settings, plugin config)
 - AR6: Zustand for runtime UI state (panel visibility, selected tab, transient state)
 - AR7: Plain objects in main process for child process registry and watcher status
 
 **From Architecture - IPC & Communication**
+
 - AR8: Typed contextBridge via shared types (GrimoireAPI interface)
 - AR9: IPC channels follow namespace:action pattern (e.g., sessions:list, sessions:spawn)
 - AR10: Zod validation at IPC boundary (renderer → main only)
 - AR11: Polling with 1-2 second interval for data fetching (MVP pattern)
 
 **From Architecture - Plugin System**
+
 - AR12: Static imports with folder convention for MVP (no dynamic runtime loading)
 - AR13: Plugins organized under plugins/ directory with main/renderer/shared structure
 - AR14: Plugin loader statically imports enabled plugins
 
 **From Architecture - Spawn Child System**
+
 - AR15: 3-state instance machine: Idle → Working → Idle (or Idle → Working → Error → Idle)
 - AR16: [REMOVED - No timeouts needed with request-response model]
 - AR17: [REMOVED - On-send spawn instead of first-keystroke]
 - AR18: Error categorization: Network/transient (auto-retry 2x), Spawn failure (show immediately), Claude error (show in chat), Crash/fatal (terminate, show error)
 
 **From Architecture - Stream Communication**
+
 - AR19: NDJSON stream-json protocol via CC CLI with --include-partial-messages
 - AR20: Stream state management for text and tool call assembly
 - AR21: Response tracking with status (sending, streaming, complete, error)
 - AR22: Handle known issue: final result event may not emit, use stop_reason instead
 
 **From Architecture - Sub-Agent Index**
+
 - AR23: In-memory sub-agent index with agentId, path, parentId, parentMessageUuid, agentType, label
 - AR24: Index populated on session load, updated during streaming, discarded on app quit
 
 **From Architecture - Data Patterns**
+
 - AR25: Hybrid session ID management: .claude folder is truth, DB adds metadata
 - AR26: DB-first startup pattern: query DB first, background scan folder, flag discrepancies
 - AR27: Unified conversation loader handles both main and sub-agent conversations
 - AR28: Snake_case in DB, camelCase in TypeScript with transform functions
 
 **From Architecture - Project Structure**
+
 - AR29: Feature-based folder organization with colocated tests
 - AR30: Plugins kept flat (2-3 levels max)
 - AR31: Shared UI extracted only when second consumer appears
 
 **From Architecture - Database Schema**
+
 - AR32: Sessions table with id, folder_path, created_at, updated_at, last_accessed_at, archived, is_pinned
 - AR33: Folders table with path, is_pinned, last_accessed_at
 - AR34: File_edits table with id, file_path, session_id, timestamp, tool_type, line_start, line_end
 - AR35: Settings table with key, value, updated_at
 
 **From UX Design - Visual Design**
+
 - UX1: Dark-first design with purple accent color (hsl 270, 60%, 55%)
 - UX2: Color system with base, elevated, hover backgrounds
 - UX3: System fonts (system-ui stack) for native feel
 - UX4: 8px base spacing unit with defined scale (xs through 2xl)
 
 **From UX Design - Core Components**
+
 - UX5: Ribbon navigation (48px fixed, left edge)
 - UX6: Collapsible panels with door button toggle
 - UX7: Tab bar for multi-session management
@@ -283,6 +311,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - UX10: Status indicators with 3-state visual mapping (Idle, Working, Error - color bar + icon + animation)
 
 **From UX Design - Interaction Patterns**
+
 - UX11: Zero-click to first action principle (cursor in input on new session)
 - UX12: Progressive disclosure (summary first, detail on click)
 - UX13: Inline expansion preferred over modals
@@ -290,6 +319,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - UX15: Minimal animation (150-200ms transitions, instant tab switch)
 
 **From UX Design - Panel Layout**
+
 - UX16: Left panel 280px default (sessions list or folder hierarchy)
 - UX17: Right panel 300px default (info/events/files tabs)
 - UX18: Middle panel flex (conversation view)
@@ -297,21 +327,21 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 
 ### FR Coverage Map
 
-| FR Range | Epic | Description |
-|----------|------|-------------|
-| FR1-FR7c | Epic 1 | Application Shell - multi-panel layout, tabs, ribbon |
-| FR8-FR19 | Epic 4 | Application Lifecycle - startup, verification, persistence |
-| FR20-FR24 | Epic 7 | Plugin System - settings, enable/disable |
-| FR25-FR32b | Epic 2a | Session List & Basic Display |
-| FR33-FR42 | Epic 2b | Conversation Rendering - bubbles, tools, sub-agents |
-| FR43-FR46 | Epic 2c | Session Info & Timeline |
-| FR47-FR53, FR57-FR60 | Epic 3a | Chat Input & Basic Send |
-| FR55-FR56, FR61-FR67b | Epic 3b | CC Integration & Instance Management |
-| FR68-FR77 | Epic 5a | Folder Hierarchy |
-| FR78-FR84 | Epic 5b | File Tree & Change Indicators |
-| FR85-FR90 | Epic 6 | Search Feature |
-| FR91-FR94 | Epic 6 | Pinning |
-| FR95-FR98 | Epic 6 | File Edit Tracking |
+| FR Range              | Epic    | Description                                                |
+| --------------------- | ------- | ---------------------------------------------------------- |
+| FR1-FR7c              | Epic 1  | Application Shell - multi-panel layout, tabs, ribbon       |
+| FR8-FR19              | Epic 4  | Application Lifecycle - startup, verification, persistence |
+| FR20-FR24             | Epic 7  | Plugin System - settings, enable/disable                   |
+| FR25-FR32b            | Epic 2a | Session List & Basic Display                               |
+| FR33-FR42             | Epic 2b | Conversation Rendering - bubbles, tools, sub-agents        |
+| FR43-FR46             | Epic 2c | Session Info & Timeline                                    |
+| FR47-FR53, FR57-FR60  | Epic 3a | Chat Input & Basic Send                                    |
+| FR55-FR56, FR61-FR67b | Epic 3b | CC Integration & Instance Management                       |
+| FR68-FR77             | Epic 5a | Folder Hierarchy                                           |
+| FR78-FR84             | Epic 5b | File Tree & Change Indicators                              |
+| FR85-FR90             | Epic 6  | Search Feature                                             |
+| FR91-FR94             | Epic 6  | Pinning                                                    |
+| FR95-FR98             | Epic 6  | File Edit Tracking                                         |
 
 **Detailed FR to Epic Mapping:**
 
@@ -451,6 +481,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ## Epic List
 
 ### Epic 1: Project Bootstrap & Core Shell
+
 **User Outcome:** Launch Grimoire and see the Obsidian-inspired interface with ribbon navigation, collapsible panels, and a tab system ready to hold sessions.
 
 **FRs Covered:** FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR7a, FR7b, FR7c (10 FRs)
@@ -460,6 +491,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 2a: Session List & Basic Display
+
 **User Outcome:** Browse all CC sessions from CLAUDE_CONFIG_DIR and select one to view its details.
 
 **FRs Covered:** FR25, FR26, FR27, FR28, FR29, FR29a, FR29b, FR30, FR31, FR32, FR32a, FR32b (12 FRs)
@@ -469,6 +501,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 2b: Conversation Rendering
+
 **User Outcome:** View conversation as message bubbles with tool calls and sub-agents clearly displayed and expandable.
 
 **FRs Covered:** FR33, FR34, FR35, FR36, FR37, FR37a, FR37b, FR37c, FR37d, FR38, FR39, FR40, FR41, FR42 (14 FRs)
@@ -478,6 +511,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 2c: Session Info & Timeline
+
 **User Outcome:** See session metadata, token usage, and navigate via event timeline in the right panel.
 
 **FRs Covered:** FR43, FR43a, FR43b, FR43c, FR44, FR45, FR46 (7 FRs)
@@ -487,6 +521,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 3a: Chat Input & Basic Send
+
 **User Outcome:** Type messages in chat input, send them, and see responses appear in the conversation.
 
 **FRs Covered:** FR47, FR48, FR49, FR50, FR51, FR52, FR53, FR57, FR58, FR59, FR60 (11 FRs)
@@ -496,6 +531,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 3b: CC Integration & Instance Management
+
 **User Outcome:** Spawn CC instances, stream responses in real-time, and manage instance lifecycle with request-response model.
 
 **FRs Covered:** FR55, FR56, FR61, FR62, FR63, FR64, FR65, FR66, FR67, FR67a, FR67b (11 FRs)
@@ -505,6 +541,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 4: Application Lifecycle & Persistence
+
 **User Outcome:** Grimoire starts reliably, verifies CC is configured correctly, shows clear errors if something's wrong, and remembers open sessions and preferences.
 
 **FRs Covered:** FR8, FR9, FR10, FR11, FR12, FR13, FR14, FR15, FR16, FR17, FR17a, FR17b, FR17c, FR17d, FR18, FR19 (16 FRs)
@@ -514,6 +551,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 5a: Folder Hierarchy
+
 **User Outcome:** View folders containing sessions in a hierarchical tree and filter sessions by clicking a folder.
 
 **FRs Covered:** FR68, FR69, FR70, FR71, FR72, FR73, FR74, FR75, FR76, FR77 (10 FRs)
@@ -521,6 +559,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 5b: File Tree & Change Indicators
+
 **User Outcome:** Browse project files in the right panel with AI-change indicators showing which files were modified.
 
 **FRs Covered:** FR78, FR79, FR80, FR81, FR82, FR83, FR84 (7 FRs)
@@ -528,6 +567,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 6: Search, Pinning & File Edit Tracking
+
 **User Outcome:** Search for sessions using fuzzy matching, pin favorites for quick access, and track AI file edits across all sessions.
 
 **FRs Covered:** FR85, FR86, FR87, FR88, FR89, FR90, FR91, FR92, FR93, FR94, FR95, FR96, FR97, FR98 (14 FRs)
@@ -535,6 +575,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 ---
 
 ### Epic 7: Plugin System & Settings
+
 **User Outcome:** Configure plugins and adjust settings to customize Grimoire's behavior.
 
 **FRs Covered:** FR20, FR21, FR22, FR23, FR24 (5 FRs)
@@ -545,20 +586,20 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 
 ## Epic Summary
 
-| Epic | Title | FRs | Complexity |
-|------|-------|-----|------------|
-| 1 | Project Bootstrap & Core Shell | 10 | Low |
-| 2a | Session List & Basic Display | 12 | Medium |
-| 2b | Conversation Rendering | 14 | Medium |
-| 2c | Session Info & Timeline | 7 | Low |
-| 3a | Chat Input & Basic Send | 11 | Medium |
-| 3b | CC Integration & Instance Mgmt | 11 | Medium |
-| 4 | Application Lifecycle & Persistence | 16 | Medium |
-| 5a | Folder Hierarchy | 10 | Low |
-| 5b | File Tree & Change Indicators | 7 | Low |
-| 6 | Search, Pinning & File Tracking | 14 | Low |
-| 7 | Plugin System & Settings | 5 | Low |
-| **Total** | | **117** | |
+| Epic      | Title                               | FRs     | Complexity |
+| --------- | ----------------------------------- | ------- | ---------- |
+| 1         | Project Bootstrap & Core Shell      | 10      | Low        |
+| 2a        | Session List & Basic Display        | 12      | Medium     |
+| 2b        | Conversation Rendering              | 14      | Medium     |
+| 2c        | Session Info & Timeline             | 7       | Low        |
+| 3a        | Chat Input & Basic Send             | 11      | Medium     |
+| 3b        | CC Integration & Instance Mgmt      | 11      | Medium     |
+| 4         | Application Lifecycle & Persistence | 16      | Medium     |
+| 5a        | Folder Hierarchy                    | 10      | Low        |
+| 5b        | File Tree & Change Indicators       | 7       | Low        |
+| 6         | Search, Pinning & File Tracking     | 14      | Low        |
+| 7         | Plugin System & Settings            | 5       | Low        |
+| **Total** |                                     | **117** |            |
 
 ---
 
@@ -1057,6 +1098,7 @@ So that **I can understand the session's context, duration, and resource usage**
 **Given** the Info tab is selected (FR43)
 **When** a session is loaded
 **Then** the following metadata is displayed:
+
 - Session ID
 - Folder path (clickable to reveal in Finder)
 - Created date/time
@@ -1890,6 +1932,7 @@ So that **I can customize each plugin's behavior to my preferences**.
 **Given** the Sessions plugin settings
 **When** viewing configuration options
 **Then** available settings include:
+
 - Sub-agent default view (Collapsed/Expanded)
 - Tool call display (Summary/Full)
 - Show token counts (On/Off)

@@ -47,41 +47,41 @@ This constraint was discovered during a brainstorming session researching Claude
 
 #### PRD Impact
 
-| Area | Impact Level | Change Required |
-|------|--------------|-----------------|
-| Session Management (FR25-32) | Moderate | Add folder path display, orphan warnings |
-| Session Creation (FR27) | Moderate | Require folder selection for in-app new session |
-| Session Information (FR43-46) | Moderate | Right panel context switching |
-| New: Folder Management | **Addition** | 10 new FRs (FR68-77) |
-| New: Folder Tree | **Addition** | 7 new FRs (FR78-84) |
-| New: Search Feature | **Addition** | 6 new FRs (FR85-90) |
-| New: Pinning | **Addition** | 4 new FRs (FR91-94) |
-| New: File Edit Tracking | **Addition** | 4 new FRs (FR95-98) |
+| Area                          | Impact Level | Change Required                                 |
+| ----------------------------- | ------------ | ----------------------------------------------- |
+| Session Management (FR25-32)  | Moderate     | Add folder path display, orphan warnings        |
+| Session Creation (FR27)       | Moderate     | Require folder selection for in-app new session |
+| Session Information (FR43-46) | Moderate     | Right panel context switching                   |
+| New: Folder Management        | **Addition** | 10 new FRs (FR68-77)                            |
+| New: Folder Tree              | **Addition** | 7 new FRs (FR78-84)                             |
+| New: Search Feature           | **Addition** | 6 new FRs (FR85-90)                             |
+| New: Pinning                  | **Addition** | 4 new FRs (FR91-94)                             |
+| New: File Edit Tracking       | **Addition** | 4 new FRs (FR95-98)                             |
 
 **Total:** 31 new functional requirements, 5 modified requirements
 
 #### Architecture Impact
 
-| Area | Impact Level | Change Required |
-|------|--------------|-----------------|
-| Session data model | Moderate | Add `folder_path`, `is_pinned`, `last_accessed_at` |
-| Database schema | Moderate | Add `folders` table, `file_edits` table |
-| IPC channels | Moderate | Add 12 new channels for folder/search/file operations |
-| Project structure | Addition | Add 12 new renderer components, 4 new main services |
-| TypeScript interfaces | Addition | Add `Folder`, `FolderTreeNode`, `FileEdit` types |
+| Area                  | Impact Level | Change Required                                       |
+| --------------------- | ------------ | ----------------------------------------------------- |
+| Session data model    | Moderate     | Add `folder_path`, `is_pinned`, `last_accessed_at`    |
+| Database schema       | Moderate     | Add `folders` table, `file_edits` table               |
+| IPC channels          | Moderate     | Add 12 new channels for folder/search/file operations |
+| Project structure     | Addition     | Add 12 new renderer components, 4 new main services   |
+| TypeScript interfaces | Addition     | Add `Folder`, `FolderTreeNode`, `FileEdit` types      |
 
 #### UX Design Impact
 
-| Area | Impact Level | Change Required |
-|------|--------------|-----------------|
-| Left Panel | Moderate | Add Folders view toggle, folder hierarchy |
-| Right Panel | Moderate | Add Files tab (folder tree + file edit history) |
-| Session List Item | Minor | Add folder path display, orphan warning |
-| New: Folder Hierarchy Item | **Addition** | New component |
-| New: Folder Tree | **Addition** | New component |
-| New: Search Bar | **Addition** | New component |
-| New: Pin Button | **Addition** | New component |
-| New: File Edit History | **Addition** | New component |
+| Area                       | Impact Level | Change Required                                 |
+| -------------------------- | ------------ | ----------------------------------------------- |
+| Left Panel                 | Moderate     | Add Folders view toggle, folder hierarchy       |
+| Right Panel                | Moderate     | Add Files tab (folder tree + file edit history) |
+| Session List Item          | Minor        | Add folder path display, orphan warning         |
+| New: Folder Hierarchy Item | **Addition** | New component                                   |
+| New: Folder Tree           | **Addition** | New component                                   |
+| New: Search Bar            | **Addition** | New component                                   |
+| New: Pin Button            | **Addition** | New component                                   |
+| New: File Edit History     | **Addition** | New component                                   |
 
 ### Technical Impact
 
@@ -107,21 +107,21 @@ Add new features to existing planning documents without restructuring. Folder fe
 
 ### Effort Estimate
 
-| Document | Changes | Effort |
-|----------|---------|--------|
-| PRD | 31 new FRs, 5 modified | Low |
-| Architecture | Schema + types + IPC + structure | Medium |
-| UX Design | 5 new components, 2 modified sections | Medium |
+| Document     | Changes                               | Effort |
+| ------------ | ------------------------------------- | ------ |
+| PRD          | 31 new FRs, 5 modified                | Low    |
+| Architecture | Schema + types + IPC + structure      | Medium |
+| UX Design    | 5 new components, 2 modified sections | Medium |
 
 **Overall:** Medium effort, localized to planning artifacts
 
 ### Risk Assessment
 
-| Risk | Likelihood | Mitigation |
-|------|------------|------------|
-| Scope creep during implementation | Medium | Clear FR boundaries, defer enhancements |
-| Performance with large folder trees | Low | .gitignore filtering, lazy loading |
-| Orphan detection edge cases | Low | Graceful handling, user-actionable warnings |
+| Risk                                | Likelihood | Mitigation                                  |
+| ----------------------------------- | ---------- | ------------------------------------------- |
+| Scope creep during implementation   | Medium     | Clear FR boundaries, defer enhancements     |
+| Performance with large folder trees | Low        | .gitignore filtering, lazy loading          |
+| Orphan detection edge cases         | Low        | Graceful handling, user-actionable warnings |
 
 ### Timeline Impact
 
@@ -268,6 +268,7 @@ CREATE TABLE file_edits (
 #### New Components
 
 **Renderer:**
+
 - FolderHierarchy.tsx, FolderHierarchyItem.tsx
 - FolderTree.tsx, FolderTreeNode.tsx
 - FileEditHistory.tsx
@@ -276,12 +277,14 @@ CREATE TABLE file_edits (
 - OrphanWarning.tsx
 
 **Main:**
+
 - folder-service.ts
 - folder-tree-builder.ts
 - file-edit-tracker.ts
 - search-service.ts
 
 **Stores:**
+
 - useFolderStore.ts
 - useSearchStore.ts
 
@@ -321,9 +324,9 @@ CREATE TABLE file_edits (
 
 ### Handoff Recipients
 
-| Role | Responsibility |
-|------|----------------|
-| Development Team | Implement changes per this proposal |
+| Role                   | Responsibility                                  |
+| ---------------------- | ----------------------------------------------- |
+| Development Team       | Implement changes per this proposal             |
 | Epic Creation Workflow | Incorporate folder features when creating epics |
 
 ### Implementation Sequence
@@ -353,12 +356,12 @@ CREATE TABLE file_edits (
 All decisions in this proposal derive from:
 `_bmad-output/analysis/brainstorming-session-folders-2026-01-21.md`
 
-| Decision | Proposal Section |
-|----------|------------------|
-| Decision 1: Folder Selection UX | FR68-69 |
-| Decision 2: Data Model | Architecture schema |
-| Decision 3: Right Panel Folder Tree | FR78-84, Folder Tree component |
-| Decision 4: Left Panel Folder Hierarchy | FR70-77, Folder Hierarchy component |
-| Decision 5: Search Feature | FR85-90, Search Bar component |
-| Decision 6: File History Tracking | FR95-98, File Edit History component |
-| Decision 7: Pinning Feature | FR91-94, Pin Button component |
+| Decision                                | Proposal Section                     |
+| --------------------------------------- | ------------------------------------ |
+| Decision 1: Folder Selection UX         | FR68-69                              |
+| Decision 2: Data Model                  | Architecture schema                  |
+| Decision 3: Right Panel Folder Tree     | FR78-84, Folder Tree component       |
+| Decision 4: Left Panel Folder Hierarchy | FR70-77, Folder Hierarchy component  |
+| Decision 5: Search Feature              | FR85-90, Search Bar component        |
+| Decision 6: File History Tracking       | FR95-98, File Edit History component |
+| Decision 7: Pinning Feature             | FR91-94, Pin Button component        |

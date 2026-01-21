@@ -35,6 +35,7 @@ Transform discovered capabilities into structured menu commands following BMAD m
 ## Load Menu Patterns
 
 Read agentMenuPatterns file to understand:
+
 - Command structure requirements
 - YAML formatting standards
 - Handler/action patterns
@@ -43,12 +44,14 @@ Read agentMenuPatterns file to understand:
 ## Capability Discovery Conversation
 
 Guide collaborative conversation to:
+
 1. Review capabilities from previous step
 2. Identify which capabilities become commands
 3. Group related capabilities
 4. Define command scope and boundaries
 
 Ask targeted questions:
+
 - "Which capabilities are primary commands vs secondary actions?"
 - "Can related capabilities be grouped under single commands?"
 - "What should each command accomplish?"
@@ -87,28 +90,31 @@ Create structured menu YAML following format from agent-menu-patterns.md:
 ```yaml
 menu:
   commands:
-    - trigger: "/command-name"
-      description: "Clear description of what command does"
-      handler: "specific_capability_or_skill"
+    - trigger: '/command-name'
+      description: 'Clear description of what command does'
+      handler: 'specific_capability_or_skill'
       parameters:
-        - name: "param_name"
-          description: "Parameter description"
+        - name: 'param_name'
+          description: 'Parameter description'
           required: true/false
 ```
 
 ## Menu [A][P][C] Verification
 
 **[A]ccuracy**
+
 - All commands match defined capabilities
 - Triggers are clear and intuitive
 - Handlers reference actual capabilities
 
 **[P]attern Compliance**
+
 - Follows agent-menu-patterns.md structure
 - YAML formatting is correct
 - No help/exit commands included
 
 **[C]ompleteness**
+
 - All primary capabilities have commands
 - Commands cover agent's core functions
 - Menu is ready for next step

@@ -83,7 +83,7 @@ stepsCompleted:
 
 ## Validation Findings
 
-*This section will be populated by validation steps*
+_This section will be populated by validation steps_
 ```
 
 Write to `{validationReport}`.

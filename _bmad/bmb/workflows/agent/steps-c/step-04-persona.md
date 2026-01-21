@@ -25,12 +25,14 @@ Develop a complete four-field persona that defines the agent's personality, expe
 # MANDATORY EXECUTION RULES
 
 **CRITICAL: Field Purity Enforcement**
+
 - Each persona field has ONE specific purpose
 - NO mixing concepts between fields
 - NO overlapping responsibilities
 - Every field must be distinct and non-redundant
 
 **Output Requirements:**
+
 - Produce structured YAML block ready for agent.yaml
 - Follow principles-crafting guidance exactly
 - First principle MUST be the "expert activator"
@@ -41,6 +43,7 @@ Develop a complete four-field persona that defines the agent's personality, expe
 ## Protocol 1: Load Reference Materials
 
 Read and integrate:
+
 - `personaProperties.md` - Field definitions and boundaries
 - `principlesCrafting.md` - Principles composition guidance
 - `communicationPresets.csv` - Style options and templates
@@ -51,24 +54,28 @@ Read and integrate:
 Explain each field clearly:
 
 **1. Role (WHAT they do)**
+
 - Professional identity and expertise domain
 - Capabilities and knowledge areas
 - NOT personality or communication style
 - Pure functional definition
 
 **2. Identity (WHO they are)**
+
 - Character, personality, attitude
 - Emotional intelligence and worldview
 - NOT job description or communication format
 - Pure personality definition
 
 **3. Communication Style (HOW they speak)**
+
 - Language patterns, tone, voice
 - Formality, verbosity, linguistic preferences
 - NOT expertise or personality traits
 - Pure expression definition
 
 **4. Principles (WHY they act)**
+
 - Decision-making framework and values
 - Behavioral constraints and priorities
 - First principle = expert activator (core mission)
@@ -77,45 +84,54 @@ Explain each field clearly:
 ## Protocol 3: Progressive Field Development
 
 ### 3.1 Role Development
+
 - Define primary expertise domain
 - Specify capabilities and knowledge areas
 - Identify what makes them an "expert"
 - Keep it functional, not personal
 
 **Role Quality Checks:**
+
 - Can I describe their job without personality?
 - Would this fit in a job description?
 - Is it purely about WHAT they do?
 
 ### 3.2 Identity Development
+
 - Define personality type and character
 - Establish emotional approach
 - Set worldview and attitude
 - Keep it personal, not functional
 
 **Identity Quality Checks:**
+
 - Can I describe their character without job title?
 - Would this fit in a character profile?
 - Is it purely about WHO they are?
 
 ### 3.3 Communication Style Development
+
 - Review preset options from CSV
 - Select or customize style pattern
 - Define tone, formality, voice
 - Set linguistic preferences
 
 **Communication Quality Checks:**
+
 - Can I describe their speech patterns without expertise?
 - Is it purely about HOW they express themselves?
 - Would this fit in a voice acting script?
 
 ### 3.4 Principles Development
+
 Follow `principlesCrafting.md` guidance:
+
 1. **Principle 1: Expert Activator** - Core mission and primary directive
 2. **Principle 2-5: Decision Framework** - Values that guide choices
 3. **Principle 6+: Behavioral Constraints** - Operational boundaries
 
 **Principles Quality Checks:**
+
 - Does first principle activate expertise immediately?
 - Do principles create decision-making clarity?
 - Would following these produce the desired behavior?
@@ -145,12 +161,14 @@ principles:
 # CONTEXT BOUNDARIES
 
 **Include in Persona:**
+
 - Professional expertise and capabilities (role)
 - Personality traits and character (identity)
 - Language patterns and tone (communication)
 - Decision-making values (principles)
 
 **Exclude from Persona:**
+
 - Technical skills (belongs in knowledge)
 - Tool usage (belongs in commands)
 - Workflow steps (belongs in orchestration)
@@ -195,6 +213,7 @@ ONLY WHEN [C continue option] is selected and [all four persona fields populated
 # SUCCESS METRICS
 
 **Completion Indicators:**
+
 - Four distinct, non-overlapping persona fields
 - First principle activates expert capabilities
 - Communication style is specific and actionable
@@ -202,6 +221,7 @@ ONLY WHEN [C continue option] is selected and [all four persona fields populated
 - User confirms persona accurately reflects vision
 
 **Failure Indicators:**
+
 - Role includes personality traits
 - Identity includes job descriptions
 - Communication includes expertise details

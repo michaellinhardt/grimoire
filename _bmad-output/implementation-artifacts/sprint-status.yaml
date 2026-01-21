@@ -36,7 +36,7 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   # Epic 1: Project Bootstrap & Core Shell
   epic-1: in-progress
-  1-1-project-scaffold-with-electron-vite: in-progress
+  1-1-project-scaffold-with-electron-vite: review
   1-2-core-shell-layout-with-ribbon-and-panels: backlog
   1-3-tab-system-for-sessions: backlog
   epic-1-retrospective: optional

@@ -22,6 +22,7 @@ Pre-implementation research and prototyping (documented in `decision-claude-spaw
 ### Trigger
 
 Research completion revealing that `-p --output-format stream-json` provides:
+
 - Immediate session ID
 - Real-time message content
 - User message UUIDs (checkpoint capability)
@@ -34,35 +35,37 @@ Research completion revealing that `-p --output-format stream-json` provides:
 
 ### Epic Impact
 
-| Epic | Impact | Details |
-|------|--------|---------|
-| **Epic 3b** | Modify | Stream parsing replaces post-exit file reading |
-| **Epic 2a** | Add | New DB fields for session forking (forked_from_session_id, is_hidden) |
-| **Epic 2b** | Add | Rewind UI on user message hover |
-| **Epic 2c** | Modify | Info panel displays cost metadata from DB |
+| Epic        | Impact | Details                                                               |
+| ----------- | ------ | --------------------------------------------------------------------- |
+| **Epic 3b** | Modify | Stream parsing replaces post-exit file reading                        |
+| **Epic 2a** | Add    | New DB fields for session forking (forked_from_session_id, is_hidden) |
+| **Epic 2b** | Add    | Rewind UI on user message hover                                       |
+| **Epic 2c** | Modify | Info panel displays cost metadata from DB                             |
 
 ### Artifact Conflicts
 
 #### PRD Changes
 
-| Change Type | Details |
-|-------------|---------|
-| Modify FR50 | "responses displayed after process completion" → "responses streamed in real-time" |
+| Change Type | Details                                                                                             |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| Modify FR50 | "responses displayed after process completion" → "responses streamed in real-time"                  |
 | Modify FR64 | "reads session file after process exit" → "parses NDJSON stream; file reading only at startup sync" |
-| Add FR | Session forking: track lineage via forked_from_session_id |
-| Add FR | Hidden sessions: is_hidden flag for forked-from sessions |
-| Add FR | Rewind UI: hover action on user messages |
-| Add FR | Sub-agent read-only: hide input on sub-agent tabs |
+| Add FR      | Session forking: track lineage via forked_from_session_id                                           |
+| Add FR      | Hidden sessions: is_hidden flag for forked-from sessions                                            |
+| Add FR      | Rewind UI: hover action on user messages                                                            |
+| Add FR      | Sub-agent read-only: hide input on sub-agent tabs                                                   |
 
 #### Architecture Changes
 
 **Spawn Pattern (Replace):**
+
 ```
 OLD: spawn → process runs → exit → read file → display
 NEW: spawn → stream JSON → parse real-time → display → exit
 ```
 
 **CLI Arguments:**
+
 ```bash
 claude -p \
   --input-format stream-json \
@@ -74,6 +77,7 @@ claude -p \
 ```
 
 **Database Schema Additions:**
+
 ```sql
 -- Add to sessions table
 ALTER TABLE sessions ADD COLUMN forked_from_session_id TEXT;
@@ -92,14 +96,16 @@ CREATE TABLE session_metadata (
 ```
 
 **New IPC Channels:**
+
 ```typescript
-'sessions:rewind'        // Rewind to checkpoint UUID, fork session
-'sessions:getMetadata'   // Get cost/token data for info panel
+'sessions:rewind' // Rewind to checkpoint UUID, fork session
+'sessions:getMetadata' // Get cost/token data for info panel
 ```
 
 #### UX Changes
 
 **User Message Bubble - Add Rewind Icon:**
+
 ```
 ┌─────────────────────────────────┐
 │ Message content here...     [↺] │  ← Appears on hover
@@ -107,6 +113,7 @@ CREATE TABLE session_metadata (
 ```
 
 **Rewind Modal (New Component):**
+
 ```
 ┌─────────────────────────────────────────┐
 │         Rewind Conversation             │
@@ -121,18 +128,19 @@ CREATE TABLE session_metadata (
 ```
 
 **Sub-Agent Tabs:**
+
 - Hide chat input completely when `tab.type === 'subagent'`
 - Rationale: Cleaner UI, reinforces read-only nature
 
 ### Technical Impact
 
-| Area | Change |
-|------|--------|
-| `stream-parser.ts` | New file: parse NDJSON from stdout in real-time |
-| `instance-manager.ts` | Update spawn args, handle stdin JSON input |
-| `session-file-reader.ts` | Reduce scope to startup sync only |
-| `conversation-loader.ts` | Can use stream data directly during session |
-| Database | New columns and table as specified above |
+| Area                     | Change                                          |
+| ------------------------ | ----------------------------------------------- |
+| `stream-parser.ts`       | New file: parse NDJSON from stdout in real-time |
+| `instance-manager.ts`    | Update spawn args, handle stdin JSON input      |
+| `session-file-reader.ts` | Reduce scope to startup sync only               |
+| `conversation-loader.ts` | Can use stream data directly during session     |
+| Database                 | New columns and table as specified above        |
 
 ---
 
@@ -152,20 +160,20 @@ Modify and add stories within existing epic structure.
 
 ### Alternatives Considered
 
-| Alternative | Why Not Selected |
-|-------------|------------------|
-| Keep file-reading approach | Inferior UX, misses rewind capability |
-| Defer rewind to post-MVP | Rewind is natural extension of stream data, minimal extra effort |
-| Add rewind as separate epic | Too small, fits naturally in Epic 2b |
+| Alternative                 | Why Not Selected                                                 |
+| --------------------------- | ---------------------------------------------------------------- |
+| Keep file-reading approach  | Inferior UX, misses rewind capability                            |
+| Defer rewind to post-MVP    | Rewind is natural extension of stream data, minimal extra effort |
+| Add rewind as separate epic | Too small, fits naturally in Epic 2b                             |
 
 ### Effort & Risk Assessment
 
-| Dimension | Rating | Notes |
-|-----------|--------|-------|
-| Implementation Effort | Low | Stream parsing well-understood, prototype exists |
-| Timeline Impact | Minimal | No scope increase, just implementation change |
-| Technical Risk | Low | CLI flags are stable, SDK is documented |
-| UX Complexity | Low | Modal pattern is standard, icon is unobtrusive |
+| Dimension             | Rating  | Notes                                            |
+| --------------------- | ------- | ------------------------------------------------ |
+| Implementation Effort | Low     | Stream parsing well-understood, prototype exists |
+| Timeline Impact       | Minimal | No scope increase, just implementation change    |
+| Technical Risk        | Low     | CLI flags are stable, SDK is documented          |
+| UX Complexity         | Low     | Modal pattern is standard, icon is unobtrusive   |
 
 ---
 
@@ -181,6 +189,7 @@ Modify and add stories within existing epic structure.
 **NEW Description:** Parse NDJSON from stdout in real-time using stream-json format. Capture session_id, message UUIDs (for checkpoints), tool calls, and cost metadata as they arrive.
 
 **NEW Acceptance Criteria (additions):**
+
 - System sends message via stdin JSON (not CLI arg)
 - System captures session_id from first `system.init` message
 - System captures UUID from each user message (checkpoint capability)
@@ -194,21 +203,25 @@ Modify and add stories within existing epic structure.
 **Modify spawn arguments:**
 
 **OLD:**
+
 ```typescript
-const args = ['--session-id', sessionId, '-p', message];
+const args = ['--session-id', sessionId, '-p', message]
 ```
 
 **NEW:**
+
 ```typescript
 const args = [
   '-p',
-  '--input-format', 'stream-json',
-  '--output-format', 'stream-json',
+  '--input-format',
+  'stream-json',
+  '--output-format',
+  'stream-json',
   '--verbose',
   '--replay-user-messages',
-  '--dangerously-skip-permissions',
-];
-if (sessionId) args.push('--resume', sessionId);
+  '--dangerously-skip-permissions'
+]
+if (sessionId) args.push('--resume', sessionId)
 // Message sent via stdin, not CLI arg
 ```
 
@@ -223,6 +236,7 @@ if (sessionId) args.push('--resume', sessionId);
 **So that** rewind operations preserve history while keeping the UI clean.
 
 **Acceptance Criteria:**
+
 - Database has `forked_from_session_id` column in sessions table
 - Database has `is_hidden` column in sessions table (default 0)
 - When session is forked, new session records parent ID
@@ -239,6 +253,7 @@ if (sessionId) args.push('--resume', sessionId);
 **So that** I can track my Claude Code usage.
 
 **Acceptance Criteria:**
+
 - Database has session_metadata table with cost/token fields
 - System updates metadata after each response from stream
 - Info panel displays: total input tokens, output tokens, estimated cost
@@ -255,6 +270,7 @@ if (sessionId) args.push('--resume', sessionId);
 **So that** I can explore different paths without losing history.
 
 **Acceptance Criteria:**
+
 - Hovering over user message reveals [↺] rewind icon (top-right)
 - Clicking [↺] opens modal with text input
 - Modal has darkened overlay background
@@ -277,6 +293,7 @@ if (sessionId) args.push('--resume', sessionId);
 **So that** I understand this is a historical view, not interactive.
 
 **Acceptance Criteria:**
+
 - When `tab.type === 'subagent'`, chat input area is hidden
 - Conversation view expands to fill available space
 - No "disabled input" message needed (cleaner)
@@ -288,6 +305,7 @@ if (sessionId) args.push('--resume', sessionId);
 #### Story 2c.2: Session Info View
 
 **Add to Acceptance Criteria:**
+
 - Info panel displays cost/token data from session_metadata table
 - Format: "Tokens: 12.5k in / 8.2k out"
 - Format: "Est. Cost: $0.42"
@@ -324,9 +342,9 @@ if (sessionId) args.push('--resume', sessionId);
 
 ### Handoff Recipients
 
-| Role | Responsibility |
-|------|----------------|
-| Dev Team | Implement all changes |
+| Role      | Responsibility                       |
+| --------- | ------------------------------------ |
+| Dev Team  | Implement all changes                |
 | QA (self) | Validate against acceptance criteria |
 
 ---
@@ -336,6 +354,7 @@ if (sessionId) args.push('--resume', sessionId);
 **Recommendation:** Approve and proceed with implementation
 
 **Changes are:**
+
 - Well-researched with working prototype
 - Low risk and effort
 - Improve user experience
@@ -347,6 +366,7 @@ if (sessionId) args.push('--resume', sessionId);
 **Document Status:** Ready for Review
 
 **Next Steps on Approval:**
+
 1. Update PRD with new/modified FRs
 2. Update Architecture document
 3. Update UX specification

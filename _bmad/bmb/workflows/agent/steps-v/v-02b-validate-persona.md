@@ -54,6 +54,7 @@ Append to `{validationReport}`:
 **Status:** {✅ PASS / ⚠️ WARNING / ❌ FAIL}
 
 **Checks:**
+
 - [ ] role: specific, not generic
 - [ ] identity: defines who agent is
 - [ ] communication_style: speech patterns only

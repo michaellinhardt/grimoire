@@ -34,11 +34,13 @@ Validate Module agents meet BMAD quality standards.
 ### Module Agent Can Be Simple OR Expert
 
 **If Simple-structure Module Agent:**
+
 - [ ] Single .agent.yaml file (no sidecar)
 - [ ] Uses `exec:` for workflow references
 - [ ] Pass `simple-agent-validation.md` first
 
 **If Expert-structure Module Agent:**
+
 - [ ] Has sidecar folder
 - [ ] Uses `exec:` for workflow references
 - [ ] Sidecar paths use `{project-root}/_bmad/_memory/{sidecar-folder}/` format
@@ -92,6 +94,7 @@ Validate Module agents meet BMAD quality standards.
 ## What the Compiler Adds (DO NOT validate presence)
 
 These are auto-injected, don't validate for them:
+
 - Frontmatter (`---name/description---`)
 - XML activation block
 - Menu items: MH (menu/help), CH (chat), PM (party-mode), DA (dismiss/exit)

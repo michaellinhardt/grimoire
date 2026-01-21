@@ -1,6 +1,6 @@
 # Story 1.1: Project Scaffold with Electron-Vite
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -23,92 +23,94 @@ so that **I have a solid foundation to build Grimoire's features upon**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Initialize project with electron-vite react-ts template (AC: 1)
-  - [ ] Run `npm create @quick-start/electron@latest grimoire -- --template react-ts`
-  - [ ] Verify project structure exists with src/main, src/preload, src/renderer
-  - [ ] Verify `npm run dev` launches Electron window
+- [x] Task 1: Initialize project with electron-vite react-ts template (AC: 1)
+  - [x] Run `npm create @quick-start/electron@latest grimoire -- --template react-ts`
+  - [x] Verify project structure exists with src/main, src/preload, src/renderer
+  - [x] Verify `npm run dev` launches Electron window
 
-- [ ] Task 2: Install and configure Tailwind CSS v4 (AC: 2)
-  - [ ] Run `npm install -D tailwindcss @tailwindcss/vite`
-  - [ ] Configure vite plugin in electron.vite.config.ts
-  - [ ] Create main CSS with Tailwind import and CSS variables for color system
-  - [ ] Set up dark-first color tokens (see Dev Notes for exact values)
-  - [ ] Verify Tailwind classes apply correctly in a test component
+- [x] Task 2: Install and configure Tailwind CSS v4 (AC: 2)
+  - [x] Run `npm install -D tailwindcss @tailwindcss/vite`
+  - [x] Configure vite plugin in electron.vite.config.ts
+  - [x] Create main CSS with Tailwind import and CSS variables for color system
+  - [x] Set up dark-first color tokens (see Dev Notes for exact values)
+  - [x] Verify Tailwind classes apply correctly in a test component
 
-- [ ] Task 3: Install Radix UI primitives (AC: 3)
-  - [ ] Run `npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-tooltip @radix-ui/react-scroll-area @radix-ui/react-tabs`
-  - [ ] Verify imports work in renderer process
+- [x] Task 3: Install Radix UI primitives (AC: 3)
+  - [x] Run `npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-tooltip @radix-ui/react-scroll-area @radix-ui/react-tabs`
+  - [x] Verify imports work in renderer process
 
-- [ ] Task 4: Install and configure Zustand (AC: 4)
-  - [ ] Run `npm install zustand`
-  - [ ] Create initial store structure at `src/renderer/src/shared/store/useUIStore.ts`
-  - [ ] Export placeholder UI state store following architecture pattern
+- [x] Task 4: Install and configure Zustand (AC: 4)
+  - [x] Run `npm install zustand`
+  - [x] Create initial store structure at `src/renderer/src/shared/store/useUIStore.ts`
+  - [x] Export placeholder UI state store following architecture pattern
 
-- [ ] Task 5: Install and configure SQLite with better-sqlite3 (AC: 5, 8)
-  - [ ] Run `npm install better-sqlite3`
-  - [ ] Run `npm install -D @types/better-sqlite3`
-  - [ ] Run `npx electron-rebuild -f -w better-sqlite3`
-  - [ ] Create schema file at `src/shared/db/schema.sql`
-  - [ ] Create database initialization module at `src/main/db.ts`
-  - [ ] Implement version-aware schema recreation logic
-  - [ ] Verify database creates at ~/.grimoire/grimoire.db on first run
+- [x] Task 5: Install and configure SQLite with better-sqlite3 (AC: 5, 8)
+  - [x] Run `npm install better-sqlite3`
+  - [x] Run `npm install -D @types/better-sqlite3`
+  - [x] Run `npx electron-rebuild -f -w better-sqlite3`
+  - [x] Create schema file at `src/shared/db/schema.sql`
+  - [x] Create database initialization module at `src/main/db.ts`
+  - [x] Implement version-aware schema recreation logic
+  - [x] Verify database creates at ~/.grimoire/grimoire.db on first run
 
-- [ ] Task 6: Install Zod for validation (AC: 6)
-  - [ ] Run `npm install zod`
-  - [ ] Create shared types file at `src/shared/types/ipc.ts` with example schema
+- [x] Task 6: Install Zod for validation (AC: 6)
+  - [x] Run `npm install zod`
+  - [x] Create shared types file at `src/shared/types/ipc.ts` with example schema
 
-- [ ] Task 7: Configure Vitest testing (AC: 7, 10)
-  - [ ] Run `npm install -D vitest @testing-library/react jsdom`
-  - [ ] Create vitest.config.ts with jsdom environment for renderer tests
-  - [ ] Add environment separation for main vs renderer tests
-  - [ ] Create a sample test to verify setup works
-  - [ ] Add `"validate"` script to package.json: `"tsc --noEmit && vitest run && npm run lint"`
+- [x] Task 7: Configure Vitest testing (AC: 7, 10)
+  - [x] Run `npm install -D vitest @testing-library/react jsdom`
+  - [x] Create vitest.config.ts with jsdom environment for renderer tests
+  - [x] Add environment separation for main vs renderer tests
+  - [x] Create a sample test to verify setup works
+  - [x] Add `"validate"` script to package.json: `"tsc --noEmit && vitest run && npm run lint"`
 
-- [ ] Task 8: Reorganize to feature-based structure (AC: 1)
-  - [ ] Create directory structure per architecture document
-  - [ ] Create src/renderer/src/core/shell/ placeholder
-  - [ ] Create src/renderer/src/core/settings/ placeholder
-  - [ ] Create src/renderer/src/core/loading/ placeholder
-  - [ ] Create plugins/sessions/ directory structure
-  - [ ] Create src/renderer/src/shared/hooks/ directory
-  - [ ] Create src/renderer/src/shared/store/ directory
-  - [ ] Create src/renderer/src/shared/utils/ directory
+- [x] Task 8: Reorganize to feature-based structure (AC: 1)
+  - [x] Create directory structure per architecture document
+  - [x] Create src/renderer/src/core/shell/ placeholder
+  - [x] Create src/renderer/src/core/settings/ placeholder
+  - [x] Create src/renderer/src/core/loading/ placeholder
+  - [x] Create plugins/sessions/ directory structure
+  - [x] Create src/renderer/src/shared/hooks/ directory
+  - [x] Create src/renderer/src/shared/store/ directory
+  - [x] Create src/renderer/src/shared/utils/ directory
 
-- [ ] Task 9: Final validation (AC: 9, 10)
-  - [ ] Verify `npm run dev` launches the Electron app
-  - [ ] Verify `npm run validate` passes (tsc + vitest + lint)
-  - [ ] Verify database file is created at ~/.grimoire/grimoire.db
+- [x] Task 9: Final validation (AC: 9, 10)
+  - [x] Verify `npm run dev` launches the Electron app
+  - [x] Verify `npm run validate` passes (tsc + vitest + lint)
+  - [x] Verify database file is created at ~/.grimoire/grimoire.db
 
 ## Dev Notes
 
 ### Technology Stack Summary
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Electron | Latest via electron-vite | Desktop app shell |
-| electron-vite | react-ts template | Build tooling with HMR |
-| React + TypeScript | Latest | UI framework |
-| Tailwind CSS | v4.x (stable release 2025-01-22) | Utility-first CSS |
-| Radix UI | Latest | Headless accessible primitives |
-| Zustand | Latest | Runtime UI state management |
-| better-sqlite3 | Latest | SQLite database |
-| Zod | Latest | Runtime validation |
-| Vitest | Latest | Testing framework |
+| Technology         | Version                          | Purpose                        |
+| ------------------ | -------------------------------- | ------------------------------ |
+| Electron           | Latest via electron-vite         | Desktop app shell              |
+| electron-vite      | react-ts template                | Build tooling with HMR         |
+| React + TypeScript | Latest                           | UI framework                   |
+| Tailwind CSS       | v4.x (stable release 2025-01-22) | Utility-first CSS              |
+| Radix UI           | Latest                           | Headless accessible primitives |
+| Zustand            | Latest                           | Runtime UI state management    |
+| better-sqlite3     | Latest                           | SQLite database                |
+| Zod                | Latest                           | Runtime validation             |
+| Vitest             | Latest                           | Testing framework              |
 
 ### Critical Technical Details
 
 #### Tailwind CSS v4 Configuration
 
 Tailwind v4 is now stable (released 2025-01-22). Key v4 changes:
+
 - CSS-first configuration (no tailwind.config.js required for basic setup)
 - Uses `@import "tailwindcss"` in CSS instead of directives
 - Lightning CSS engine for faster builds
 - Automatic content detection
 
 **CSS Variables for Dark-First Color System:**
+
 ```css
 /* src/renderer/src/assets/main.css */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   /* Background colors (dark theme primary) */
@@ -175,10 +177,7 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()]
   },
   renderer: {
-    plugins: [
-      react(),
-      tailwindcss()
-    ]
+    plugins: [react(), tailwindcss()]
   }
 })
 ```
@@ -193,11 +192,13 @@ npx electron-rebuild -f -w better-sqlite3
 ```
 
 If you encounter NODE_MODULE_VERSION mismatch errors:
+
 1. Delete node_modules
 2. Run `npm install`
 3. Run `npx electron-rebuild -f -w better-sqlite3`
 
 **Database Path:**
+
 ```typescript
 // src/main/db.ts
 import { app } from 'electron'
@@ -221,7 +222,9 @@ export function initDatabase() {
   const currentVersion = db.pragma('user_version', { simple: true }) as number
 
   if (currentVersion !== DB_VERSION) {
-    console.warn(`Database schema changed (${currentVersion} → ${DB_VERSION}). Recreating database.`)
+    console.warn(
+      `Database schema changed (${currentVersion} → ${DB_VERSION}). Recreating database.`
+    )
     // Read schema from file
     const schemaPath = path.join(__dirname, '../shared/db/schema.sql')
     const schema = fs.readFileSync(schemaPath, 'utf-8')
@@ -353,6 +356,7 @@ export default defineConfig({
 ### Project Structure Requirements
 
 **Directory Structure to Create:**
+
 ```
 grimoire/
 ├── src/
@@ -427,17 +431,20 @@ grimoire/
 ### Web Research Summary (2026-01-22)
 
 **Tailwind CSS v4:**
+
 - Stable release as of 2025-01-22
 - 5x faster full builds, 100x faster incremental builds
 - CSS-first configuration, automatic content detection
 - Uses `@import "tailwindcss"` syntax
 
 **electron-vite:**
+
 - electron-vite-react template actively maintained (last update Jan 2026)
 - Supports native addons, debugger configuration included
 - Use `npm create @quick-start/electron@latest grimoire -- --template react-ts`
 
 **better-sqlite3 + Electron:**
+
 - Always run `npx electron-rebuild -f -w better-sqlite3` after install
 - NODE_MODULE_VERSION mismatch is common - delete node_modules and reinstall if encountered
 - electron-builder with `install-app-deps` also works: `npx electron-builder install-app-deps`
@@ -446,16 +453,74 @@ grimoire/
 
 ### Agent Model Used
 
-(To be filled by dev agent)
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
-(To be filled by dev agent)
+- better-sqlite3 requires electron-rebuild after installation: `npx electron-rebuild -f -w better-sqlite3`
+- Schema embedded directly in db.ts due to path resolution issues with external SQL files in electron-vite bundled output
+- ESLint config updated to ignore non-src directories (_bmad, prototype, test, docs, agts, requests, dot-claude)
 
 ### Completion Notes List
 
-(To be filled by dev agent)
+- Created electron-vite react-ts project from scratch using template
+- Configured Tailwind CSS v4 with dark-first color system (purple accent hsl 270, 60%, 55%)
+- Installed all 5 Radix UI primitives: dialog, dropdown-menu, tooltip, scroll-area, tabs
+- Created Zustand store at src/renderer/src/shared/store/useUIStore.ts
+- SQLite database initializes at ~/.grimoire/grimoire.db with all 5 tables (sessions, session_metadata, folders, file_edits, settings)
+- Zod schemas created at src/shared/types/ipc.ts with SessionIdSchema, SpawnRequestSchema, SessionSchema, FolderSchema
+- Vitest configured with environment separation (node for main/preload, jsdom for renderer)
+- 9 Zod schema tests pass
+- `npm run validate` passes (typecheck + vitest + lint)
+- `npm run dev` launches Electron app successfully
+- Feature-based directory structure created with core/shell, core/settings, core/loading, plugins/sessions
+
+### Change Log
+
+- 2026-01-22: Story completed - all 9 tasks implemented and validated
 
 ### File List
 
-(To be filled by dev agent)
+**New Files:**
+- electron.vite.config.ts
+- vitest.config.ts
+- eslint.config.mjs
+- electron-builder.yml
+- package.json
+- tsconfig.json
+- tsconfig.node.json
+- tsconfig.web.json
+- .editorconfig
+- .prettierrc.yaml
+- .prettierignore
+- src/main/index.ts
+- src/main/db.ts
+- src/preload/index.ts
+- src/preload/index.d.ts
+- src/renderer/index.html
+- src/renderer/src/App.tsx
+- src/renderer/src/main.tsx
+- src/renderer/src/env.d.ts
+- src/renderer/src/assets/main.css
+- src/renderer/src/shared/store/useUIStore.ts
+- src/shared/types/ipc.ts
+- src/shared/types/ipc.test.ts
+- src/shared/db/schema.sql
+- src/renderer/src/core/shell/.gitkeep
+- src/renderer/src/core/settings/.gitkeep
+- src/renderer/src/core/loading/.gitkeep
+- src/renderer/src/shared/hooks/.gitkeep
+- src/renderer/src/shared/utils/.gitkeep
+- plugins/sessions/src/main/.gitkeep
+- plugins/sessions/src/renderer/.gitkeep
+- build/entitlements.mac.plist
+- build/icon.icns
+- build/icon.ico
+- build/icon.png
+- resources/icon.png
+- .vscode/extensions.json
+- .vscode/launch.json
+- .vscode/settings.json
+
+**Modified Files:**
+- .gitignore (added node_modules, dist, out, .DS_Store, .eslintcache, *.log*)

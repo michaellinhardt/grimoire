@@ -22,6 +22,7 @@ The MVP delivers five features in priority order: a **Core UI Shell** (Obsidian-
 ### Problem Statement
 
 Claude Code is a powerful agentic CLI, but its terminal-based output creates observability blindspots:
+
 - **Sub-agent opacity**: When workflows spawn multiple sub-agents, tracing their individual conversations and decisions is nearly impossible
 - **Tool usage buried in noise**: Tool calls (file reads, writes, searches) are mixed with conversational output, making debugging difficult
 - **No token visibility**: Context window consumption and token usage per agent is invisible
@@ -30,6 +31,7 @@ Claude Code is a powerful agentic CLI, but its terminal-based output creates obs
 ### Problem Impact
 
 For power users running complex multi-agent workflows, these gaps make it difficult to:
+
 - Debug why a workflow failed or produced unexpected results
 - Understand what each sub-agent actually did
 - Optimize workflows by identifying context window bloat
@@ -38,6 +40,7 @@ For power users running complex multi-agent workflows, these gaps make it diffic
 ### Why Existing Solutions Fall Short
 
 Claude Code itself provides no UI beyond the terminal. There is no existing tool that:
+
 - Parses CC session data into a visual format
 - Provides hierarchical sub-agent navigation
 - Offers progressive disclosure of tool call details
@@ -48,12 +51,14 @@ Claude Code itself provides no UI beyond the terminal. There is no existing tool
 An Electron app with an Obsidian-inspired panel layout as the **foundational UI framework**:
 
 **Core UI Shell (MVP Foundation):**
+
 - **Ribbon**: Vertical icon navigation (left edge) for switching between app screens
 - **Left Panel**: Collapsible, ~20-30% width, with top bar for panel-specific actions
 - **Middle Panel**: Main content area, ~60-70% width, tab-capable
 - **Right Panel**: Collapsible, mirrors left panel structure, context-specific content
 
 **CC Conversation Reader (MVP Feature using Core UI):**
+
 - **Left Panel content**: Session list with search/filter, session info toggle
 - **Middle Panel content**: Conversation view with:
   - User/Claude message bubbles
@@ -62,6 +67,7 @@ An Electron app with an Obsidian-inspired panel layout as the **foundational UI 
 - **Right Panel content**: Navigation map (message rectangles for quick scroll)
 
 **Loading Screen (MVP Feature):**
+
 - App logo display during startup
 - Claude Code installation verification
 - Authentication check (credentials in app's isolated `.claude` folder)
@@ -83,24 +89,28 @@ An Electron app with an Obsidian-inspired panel layout as the **foundational UI 
 **Persona: Power User (Self)**
 
 **Profile:**
+
 - Solo developer/creator running Claude Code for diverse tasks
 - Uses CC across domains: coding, brainstorming, content creation, marketing, finance, legal
 - Runs multiple sessions daily - quick questions to complex multi-agent workflows
 - Technical proficiency: intermediate to advanced CLI user
 
 **Problem Experience:**
+
 - Runs workflows with sub-agents but can't trace their individual conversations
 - Tool usage details buried in terminal output
 - CLI review commands exist but don't provide the visibility needed
 - No way to visually navigate or search past sessions
 
 **Success Vision:**
+
 - Open Grimoire, see session list, click one, instantly understand the conversation flow
 - Distinguish messages from tool calls at a glance
 - Click a sub-agent bubble, see exactly what it did
 - Find past sessions by project or timeframe
 
 **Key Workflow:**
+
 1. Run CC session (from terminal or eventually from Grimoire)
 2. Open Grimoire CC Reader
 3. Select session from list
@@ -120,15 +130,16 @@ N/A for MVP - single user, no discovery/onboarding required. User builds and use
 ## Success Metrics
 
 **Core Success Test:**
+
 > "Do I open Grimoire instead of defaulting to CLI?"
 
 ### User Success Indicators
 
-| Metric | Success State |
-|--------|---------------|
+| Metric               | Success State                                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
 | Sub-agent visibility | "I can finally see what that sub-agent did" - click a sub-agent bubble, understand its full conversation |
-| Session retrieval | "I found a past session in 10 seconds instead of 2 minutes" - list → click → done |
-| Token understanding | "I understand my token usage now" - visible context consumption per session/agent |
+| Session retrieval    | "I found a past session in 10 seconds instead of 2 minutes" - list → click → done                        |
+| Token understanding  | "I understand my token usage now" - visible context consumption per session/agent                        |
 
 ### Usage Indicators
 
@@ -140,12 +151,12 @@ N/A for MVP - single user, no discovery/onboarding required. User builds and use
 
 If any of these happen, the user falls back to CLI:
 
-| Failure Mode | Result |
-|--------------|--------|
-| Slow startup | "I'll just run claude, faster than waiting for app" |
-| Missing sessions | "It didn't pick up my session, useless" |
-| Unreadable UI | "I can't tell what's a tool vs message, terminal was clearer" |
-| Sub-agent drill-down broken | "I still can't see what the agent did" |
+| Failure Mode                | Result                                                        |
+| --------------------------- | ------------------------------------------------------------- |
+| Slow startup                | "I'll just run claude, faster than waiting for app"           |
+| Missing sessions            | "It didn't pick up my session, useless"                       |
+| Unreadable UI               | "I can't tell what's a tool vs message, terminal was clearer" |
+| Sub-agent drill-down broken | "I still can't see what the agent did"                        |
 
 ### Business Objectives
 
@@ -162,28 +173,33 @@ N/A - No quantitative KPIs. Success is qualitative: "I use it instead of CLI."
 ### Core Features
 
 **1. Core UI Shell (Foundation)**
+
 - Ribbon: Vertical icon navigation for app screens
 - Left Panel: Collapsible, ~20-30% width, top action bar
 - Middle Panel: Main content, ~60-70% width, tab-capable
 - Right Panel: Collapsible, mirrors left structure
 
 **2. Loading Screen**
+
 - App logo display during startup
 - Claude Code installation verification
 - Authentication check (app's isolated `.claude` folder)
 - Pre-loading for performance
 
 **3. CC Conversation Reader (Historical)**
+
 - Left: Session list with search/filter, session info toggle
 - Middle: Conversation view with user/Claude bubbles, collapsed sub-agent bubbles (click to expand), tool indicators (click for detail modal)
 - Right: Navigation map (message rectangles, click to scroll)
 
 **4. Live Session Viewing**
+
 - Same UI as historical reader, but watching active session
 - Real-time message/tool display as CC runs
 - Sub-agent visibility as they spawn
 
 **5. Run CC from Grimoire (Final MVP Iteration)**
+
 - Spawn CC instance from within app
 - Session appears in live view automatically
 - Uses app's isolated `.claude` folder (HOME redirect)

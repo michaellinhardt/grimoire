@@ -12,6 +12,7 @@ sidecarFolder: '{bmb_creations_output_folder}/{agent-name}/{agent-name}-sidecar/
 advancedElicitationTask: '{project-root}/_bmad/core/workflows/advanced-elicitation/workflow.xml'
 partyModeWorkflow: '{project-root}/_bmad/core/workflows/party-mode/workflow.md'
 ---
+
 # STEP GOAL
 
 Validate the sidecar folder structure and referenced paths for Expert agents to ensure all sidecar files exist, are properly structured, and paths in the main agent YAML correctly reference them.
@@ -97,6 +98,7 @@ criticalActionsRef = read(criticalActions)
 ```
 
 **Action:** Present discovery status:
+
 ```markdown
 🔍 SIDECAR VALIDATION INITIALIZED
 
@@ -121,12 +123,14 @@ Status: {✅ Folder Found | ❌ Folder Missing}
 ```
 
 If missing:
+
 ```markdown
 ❌ **CRITICAL ISSUE:** Sidecar folder not found!
 
 **Expected Location:** {sidecarPath}
 
 **Possible Causes:**
+
 1. Build process didn't create sidecar
 2. Sidecar path misconfigured in agent YAML
 3. Folder moved or deleted after build
@@ -140,6 +144,7 @@ If missing:
 ### B. Sidecar File Inventory
 
 If folder exists, list all files:
+
 ```bash
 sidecarFiles = listFiles(sidecarPath)
 ```
@@ -150,12 +155,14 @@ sidecarFiles = listFiles(sidecarPath)
 Found {count} files in sidecar:
 
 {For each file:}
+
 - {filename} ({size} bytes)
 ```
 
 ### C. Cross-Reference Validation
 
 Extract all sidecar path references from agent YAML:
+
 ```yaml
 # Common sidecar reference patterns
 sidecar:
@@ -165,6 +172,7 @@ sidecar:
 ```
 
 Validate each reference:
+
 ```markdown
 ## 🔗 PATH REFERENCE VALIDATION
 
@@ -173,7 +181,7 @@ Validate each reference:
 {For each reference:}
 **Source:** {field in agent YAML}
 **Expected Path:** {referenced path}
-**Status:** [✅ Found | ❌ Missing | ⚠️  Wrong Location]
+**Status:** [✅ Found | ❌ Missing | ⚠️ Wrong Location]
 ```
 
 ## 3. Validate Sidecar File Contents
@@ -181,19 +189,23 @@ Validate each reference:
 For each sidecar file found, check:
 
 ### A. File Completeness
+
 ```markdown
 ## 📋 FILE CONTENT VALIDATION
 
 {For each file:}
+
 ### {filename}
+
 **Size:** {bytes}
-**Status:** [✅ Complete | ⚠️  Empty | ❌ Too Small]
+**Status:** [✅ Complete | ⚠️ Empty | ❌ Too Small]
 **Last Modified:** {timestamp}
 ```
 
 ### B. Critical Actions File (if present)
 
 Special validation for critical-actions.md:
+
 ```markdown
 ## 🎯 CRITICAL ACTIONS VALIDATION
 
@@ -213,14 +225,17 @@ Special validation for critical-actions.md:
 ### C. Module Files (if present)
 
 If sidecar contains modules:
+
 ```markdown
 ## 📚 MODULE VALIDATION
 
 **Modules Found:** {count}
 
 {For each module:}
+
 ### {module-filename}
-**Status:** [✅ Valid | ⚠️  Issues Found]
+
+**Status:** [✅ Valid | ⚠️ Issues Found]
 **Checks:**
 [ ] Frontmatter complete
 [ ] Content present
@@ -229,10 +244,11 @@ If sidecar contains modules:
 
 ## 4. Generate Validation Report
 
-```markdown
+````markdown
 # 🎯 SIDECAR VALIDATION REPORT
 
 ## Agent: {agent-name}
+
 Sidecar Path: {sidecarPath}
 Validation Date: {timestamp}
 
@@ -241,37 +257,45 @@ Validation Date: {timestamp}
 ## ✅ VALIDATION CHECKS PASSED
 
 **Folder Structure:**
+
 - [x] Sidecar folder exists
 - [x] Located at expected path
 - [x] Accessible and readable
 
 **File Completeness:**
+
 - [x] All referenced files present
 - [x] No broken path references
 - [x] Files have content (not empty)
 
 **Content Quality:**
+
 - [x] Critical actions complete
 - [x] Module files structured
 - [x] No obvious corruption
 
 ---
 
-## ⚠️  ISSUES IDENTIFIED ({count})
+## ⚠️ ISSUES IDENTIFIED ({count})
 
 {If issues:}
+
 ### Issue #{number}: {issue type}
+
 **Severity:** [CRITICAL|MODERATE|MINOR]
 **Component:** {file or folder}
 **Problem:** {clear description}
 **Impact:** {what this breaks}
 **Remediation:**
+
 1. {specific step 1}
 2. {specific step 2}
 3. {specific step 3}
 
 {If no issues:}
+
 ### 🎉 NO ISSUES FOUND
+
 Your agent's sidecar is complete and properly structured!
 All path references are valid and files are in place.
 
@@ -311,6 +335,7 @@ Display: "**Select an Option:** [A] Advanced Elicitation [F] Fix Findings [P] Pa
 Work through each issue systematically:
 
 **For Missing Files:**
+
 ```markdown
 ### 🔧 FIXING: Missing {filename}
 
@@ -318,22 +343,27 @@ Work through each issue systematically:
 **Purpose:** {why it's needed}
 
 **Option 1:** Re-run Build
+
 - Sidecar may not have been created completely
 - Return to build step and re-execute
 
 **Option 2:** Manual Creation
+
 - Create file at: {full path}
 - Use template from: {template reference}
 - Minimum required content: {specification}
 
 **Option 3:** Update References
+
 - Remove reference from agent YAML if not truly needed
 - Update path if file exists in different location
 
 Which option? [1/2/3]:
 ```
+````
 
 **For Broken Path References:**
+
 ```markdown
 ### 🔧 FIXING: Invalid Path Reference
 
@@ -343,6 +373,7 @@ Which option? [1/2/3]:
 **Actual Location:** {where file actually is}
 
 **Fix Options:**
+
 1. Update path in agent YAML to: {correct path}
 2. Move file to expected location: {expected path}
 3. Remove reference if file not needed
@@ -351,6 +382,7 @@ Which option? [1/2/3]:
 ```
 
 **For Empty/Malformed Files:**
+
 ```markdown
 ### 🔧 FIXING: {filename} - {Issue}
 
@@ -358,6 +390,7 @@ Which option? [1/2/3]:
 **Location:** {full path}
 
 **Remediation:**
+
 - View current content
 - Compare to template/standard
 - Add missing sections
@@ -367,6 +400,7 @@ Ready to view and fix? [Y/N]:
 ```
 
 After each fix:
+
 - Re-validate the specific component
 - Confirm resolution
 - Move to next issue
@@ -409,10 +443,11 @@ ONLY WHEN [C continue option] is selected and [validation complete with any find
 4. ✅ File contents checked for completeness
 5. ✅ User informed of validation status
 6. ✅ Issues resolved or explicitly accepted
-7. ⚠️  **CRITICAL:** Only Expert agents should reach this step
-8. ⚠️  **CRITICAL:** Sidecar must be complete for agent to function
+7. ⚠️ **CRITICAL:** Only Expert agents should reach this step
+8. ⚠️ **CRITICAL:** Sidecar must be complete for agent to function
 
 **DO NOT PROCEED IF:**
+
 - Sidecar folder completely missing
 - Critical files absent (actions, core modules)
 - User unaware of sidecar issues
@@ -421,6 +456,7 @@ ONLY WHEN [C continue option] is selected and [validation complete with any find
 # SUCCESS METRICS
 
 ## Step Complete When:
+
 - [ ] Sidecar folder validated
 - [ ] All path references checked
 - [ ] File contents verified
@@ -429,6 +465,7 @@ ONLY WHEN [C continue option] is selected and [validation complete with any find
 - [ ] User ready to proceed
 
 ## Quality Indicators:
+
 - Thoroughness of file inventory
 - Accuracy of path reference validation
 - Clarity of issue identification
@@ -436,6 +473,7 @@ ONLY WHEN [C continue option] is selected and [validation complete with any find
 - User confidence in sidecar completeness
 
 ## Failure Modes:
+
 - Missing sidecar folder completely
 - Skipping file existence checks
 - Not validating path references
@@ -448,12 +486,14 @@ ONLY WHEN [C continue option] is selected and [validation complete with any find
 ## 🎓 NOTE: Expert Agent Sidecars
 
 Sidecars are what make Expert agents powerful. They enable:
+
 - Modular architecture
 - Separation of concerns
 - Easier updates and maintenance
 - Shared components across agents
 
 A validated sidecar ensures your Expert agent will:
+
 - Load correctly at runtime
 - Find all referenced resources
 - Execute critical actions as defined

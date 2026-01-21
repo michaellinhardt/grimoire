@@ -43,11 +43,13 @@ Read `{editPlan}` to get agent type.
 ### 2. Conditional Validation
 
 **IF agentType == expert:**
+
 - Check metadata.sidecar-folder is present
 - Check sidecar-path is correct format
 - Verify sidecar files exist at specified path
 
 **IF agentType != expert:**
+
 - Mark as N/A (not applicable)
 - Skip detailed checks
 
@@ -56,11 +58,11 @@ Read `{editPlan}` to get agent type.
 Append to editPlan frontmatter:
 
 ```yaml
-  sidecar:
-    status: [pass|fail|warning|n/a]
-    findings:
-      - {check}: [pass|fail|n/a]
-      - {check}: [pass|fail|n/a]
+sidecar:
+  status: [pass|fail|warning|n/a]
+  findings:
+    - { check }: [pass|fail|n/a]
+    - { check }: [pass|fail|n/a]
 ```
 
 ### 4. Auto-Advance

@@ -1,2533 +1,2604 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Grimoire Design Directions</title>
     <style>
-        :root {
-            /* Dark Theme Foundation */
-            --bg-base: hsl(240, 10%, 10%);
-            --bg-elevated: hsl(240, 10%, 13%);
-            --bg-hover: hsl(240, 10%, 16%);
-            --bg-active: hsl(240, 10%, 20%);
-
-            /* Purple Accent */
-            --accent: hsl(270, 60%, 55%);
-            --accent-hover: hsl(270, 60%, 65%);
-            --accent-active: hsl(270, 60%, 45%);
-            --accent-muted: hsl(270, 40%, 25%);
-
-            /* Text */
-            --text-primary: hsl(0, 0%, 90%);
-            --text-muted: hsl(0, 0%, 60%);
-            --text-accent: hsl(270, 80%, 80%);
-
-            /* Borders */
-            --border: hsl(240, 10%, 20%);
-            --border-subtle: hsl(240, 10%, 15%);
-
-            /* Semantic */
-            --success: hsl(142, 50%, 45%);
-            --warning: hsl(38, 90%, 50%);
-            --error: hsl(0, 65%, 50%);
-            --info: hsl(210, 60%, 50%);
-
-            /* Spacing */
-            --space-xs: 4px;
-            --space-sm: 8px;
-            --space-md: 16px;
-            --space-lg: 24px;
-            --space-xl: 32px;
-
-            /* Typography */
-            --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            --font-mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
-
-            /* Radius */
-            --radius-sm: 4px;
-            --radius-md: 8px;
-            --radius-lg: 12px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: var(--font-family);
-            background: var(--bg-base);
-            color: var(--text-primary);
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        /* Navigation */
-        .nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: var(--bg-elevated);
-            border-bottom: 1px solid var(--border);
-            z-index: 1000;
-            padding: var(--space-md) var(--space-lg);
-        }
-
-        .nav-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .nav h1 {
-            font-size: 18px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        .nav h1 span {
-            color: var(--accent);
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: var(--space-xs);
-        }
-
-        .nav-tab {
-            padding: var(--space-sm) var(--space-md);
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-radius: var(--radius-sm);
-            font-size: 13px;
-            transition: all 0.15s ease;
-        }
-
-        .nav-tab:hover {
-            background: var(--bg-hover);
-            color: var(--text-primary);
-        }
-
-        .nav-tab.active {
-            background: var(--accent-muted);
-            color: var(--accent-hover);
-        }
-
-        /* Main Content */
-        .main {
-            padding-top: 80px;
-        }
-
-        .direction {
-            display: none;
-            min-height: 100vh;
-            padding: var(--space-xl);
-        }
-
-        .direction.active {
-            display: block;
-        }
-
-        .direction-header {
-            max-width: 1200px;
-            margin: 0 auto var(--space-xl);
-            padding-bottom: var(--space-lg);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .direction-header h2 {
-            font-size: 24px;
-            margin-bottom: var(--space-sm);
-        }
-
-        .direction-header p {
-            color: var(--text-muted);
-            max-width: 700px;
-        }
-
-        .direction-tags {
-            display: flex;
-            gap: var(--space-sm);
-            margin-top: var(--space-md);
-        }
-
-        .tag {
-            padding: var(--space-xs) var(--space-sm);
-            background: var(--bg-hover);
-            border-radius: var(--radius-sm);
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .tag.accent {
-            background: var(--accent-muted);
-            color: var(--accent-hover);
-        }
-
-        /* Mockup Container */
-        .mockup-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            border: 1px solid var(--border);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-        }
-
-        /* ========== DIRECTION 1: Classic Obsidian ========== */
-        .d1-app {
-            display: flex;
-            height: 700px;
-            background: var(--bg-base);
-        }
-
-        .d1-ribbon {
-            width: 48px;
-            background: hsl(240, 10%, 8%);
-            border-right: 1px solid var(--border);
-            padding: var(--space-sm) 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .d1-ribbon-icon {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            color: var(--text-muted);
-            margin-bottom: var(--space-xs);
-            transition: all 0.15s ease;
-        }
-
-        .d1-ribbon-icon:hover {
-            background: var(--bg-hover);
-            color: var(--text-primary);
-        }
-
-        .d1-ribbon-icon.active {
-            background: var(--accent-muted);
-            color: var(--accent);
-        }
-
-        .d1-left-panel {
-            width: 280px;
-            background: var(--bg-elevated);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .d1-panel-header {
-            padding: var(--space-md);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .d1-panel-title {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-        }
-
-        .d1-new-btn {
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .d1-session-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: var(--space-sm);
-        }
-
-        .d1-session-item {
-            padding: var(--space-sm) var(--space-md);
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            margin-bottom: var(--space-xs);
-        }
-
-        .d1-session-item:hover {
-            background: var(--bg-hover);
-        }
-
-        .d1-session-item.active {
-            background: var(--accent-muted);
-        }
-
-        .d1-session-name {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .d1-session-item.active .d1-session-name {
-            color: var(--accent-hover);
-        }
-
-        .d1-session-meta {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .d1-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .d1-tab-bar {
-            background: var(--bg-elevated);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            padding: 0 var(--space-sm);
-        }
-
-        .d1-tab {
-            padding: var(--space-sm) var(--space-md);
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 13px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        .d1-tab.active {
-            color: var(--text-primary);
-        }
-
-        .d1-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: var(--space-md);
-            right: var(--space-md);
-            height: 2px;
-            background: var(--accent);
-            border-radius: 2px 2px 0 0;
-        }
-
-        .d1-tab-close {
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-size: 10px;
-            opacity: 0;
-            transition: opacity 0.15s;
-        }
-
-        .d1-tab:hover .d1-tab-close {
-            opacity: 1;
-        }
-
-        .d1-tab-close:hover {
-            background: var(--bg-hover);
-        }
-
-        .d1-conversation {
-            flex: 1;
-            overflow-y: auto;
-            padding: var(--space-lg);
-        }
-
-        .d1-message {
-            margin-bottom: var(--space-md);
-            max-width: 85%;
-        }
-
-        .d1-message.user {
-            margin-left: auto;
-        }
-
-        .d1-message-content {
-            padding: var(--space-md);
-            border-radius: var(--radius-md);
-            line-height: 1.6;
-        }
-
-        .d1-message.user .d1-message-content {
-            background: var(--accent-muted);
-            border: 1px solid hsl(270, 40%, 30%);
-        }
-
-        .d1-message.claude .d1-message-content {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-        }
-
-        .d1-message-meta {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: var(--space-xs);
-            padding: 0 var(--space-xs);
-        }
-
-        .d1-message.user .d1-message-meta {
-            text-align: right;
-        }
-
-        .d1-subagent {
-            margin: var(--space-md) 0;
-            border-left: 3px solid var(--accent);
-            padding-left: var(--space-md);
-        }
-
-        .d1-subagent-header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            padding: var(--space-sm);
-            background: var(--bg-hover);
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .d1-subagent-icon {
-            color: var(--accent);
-        }
-
-        .d1-subagent-name {
-            font-weight: 500;
-        }
-
-        .d1-subagent-status {
-            margin-left: auto;
-            font-size: 11px;
-            color: var(--success);
-        }
-
-        .d1-tool-card {
-            margin: var(--space-sm) 0;
-            padding: var(--space-sm) var(--space-md);
-            background: hsl(240, 10%, 8%);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-sm);
-            font-family: var(--font-mono);
-            font-size: 12px;
-        }
-
-        .d1-tool-name {
-            color: var(--info);
-            font-weight: 500;
-        }
-
-        .d1-input-area {
-            padding: var(--space-md);
-            border-top: 1px solid var(--border);
-            background: var(--bg-elevated);
-        }
-
-        .d1-input-wrapper {
-            display: flex;
-            gap: var(--space-sm);
-            align-items: flex-end;
-        }
-
-        .d1-input {
-            flex: 1;
-            padding: var(--space-md);
-            background: var(--bg-base);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 14px;
-            resize: none;
-            min-height: 48px;
-        }
-
-        .d1-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .d1-send-btn {
-            width: 48px;
-            height: 48px;
-            background: var(--accent);
-            border: none;
-            border-radius: var(--radius-md);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-
-        .d1-right-panel {
-            width: 300px;
-            background: var(--bg-elevated);
-            border-left: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .d1-right-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .d1-right-tab {
-            flex: 1;
-            padding: var(--space-sm) var(--space-md);
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .d1-right-tab.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-        }
-
-        .d1-timeline {
-            flex: 1;
-            overflow-y: auto;
-            padding: var(--space-sm);
-        }
-
-        .d1-event {
-            padding: var(--space-sm);
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            font-size: 13px;
-        }
-
-        .d1-event:hover {
-            background: var(--bg-hover);
-        }
-
-        .d1-event-icon {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-        }
-
-        .d1-event-icon.user {
-            background: var(--accent-muted);
-            color: var(--accent);
-        }
-
-        .d1-event-icon.claude {
-            background: var(--bg-hover);
-            color: var(--text-muted);
-        }
-
-        .d1-event-icon.tool {
-            background: hsl(210, 40%, 20%);
-            color: var(--info);
-        }
-
-        .d1-event-icon.agent {
-            background: hsl(270, 40%, 20%);
-            color: var(--accent);
-        }
-
-        .d1-event-text {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .d1-event-time {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        /* ========== DIRECTION 2: Minimal Focus ========== */
-        .d2-app {
-            display: flex;
-            height: 700px;
-            background: hsl(0, 0%, 7%);
-        }
-
-        .d2-sidebar {
-            width: 60px;
-            background: hsl(0, 0%, 5%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: var(--space-md) 0;
-            gap: var(--space-sm);
-        }
-
-        .d2-sidebar-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            cursor: pointer;
-            color: hsl(0, 0%, 50%);
-            transition: all 0.2s ease;
-        }
-
-        .d2-sidebar-icon:hover {
-            color: hsl(0, 0%, 80%);
-            background: hsl(0, 0%, 12%);
-        }
-
-        .d2-sidebar-icon.active {
-            color: var(--accent);
-            background: var(--accent-muted);
-        }
-
-        .d2-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: var(--space-xl);
-        }
-
-        .d2-header {
-            text-align: center;
-            margin-bottom: var(--space-xl);
-        }
-
-        .d2-header h1 {
-            font-size: 16px;
-            font-weight: 500;
-            color: hsl(0, 0%, 70%);
-        }
-
-        .d2-conversation {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .d2-message {
-            margin-bottom: var(--space-lg);
-        }
-
-        .d2-message-author {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: var(--space-sm);
-            color: hsl(0, 0%, 50%);
-        }
-
-        .d2-message.user .d2-message-author {
-            color: var(--accent);
-        }
-
-        .d2-message-content {
-            font-size: 15px;
-            line-height: 1.7;
-            color: hsl(0, 0%, 85%);
-        }
-
-        .d2-nested {
-            margin-top: var(--space-md);
-            padding: var(--space-md);
-            border-left: 2px solid hsl(0, 0%, 20%);
-            background: hsl(0, 0%, 8%);
-        }
-
-        .d2-nested-label {
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--accent-hover);
-            margin-bottom: var(--space-sm);
-        }
-
-        .d2-input-area {
-            margin-top: var(--space-xl);
-        }
-
-        .d2-input {
-            width: 100%;
-            padding: var(--space-lg);
-            background: hsl(0, 0%, 10%);
-            border: 1px solid hsl(0, 0%, 15%);
-            border-radius: var(--radius-lg);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 15px;
-            resize: none;
-        }
-
-        .d2-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .d2-input-hint {
-            text-align: center;
-            margin-top: var(--space-sm);
-            font-size: 12px;
-            color: hsl(0, 0%, 40%);
-        }
-
-        /* ========== DIRECTION 3: Dense Power User ========== */
-        .d3-app {
-            display: flex;
-            height: 700px;
-            background: hsl(220, 15%, 8%);
-            font-size: 13px;
-        }
-
-        .d3-sidebar {
-            width: 240px;
-            background: hsl(220, 15%, 6%);
-            border-right: 1px solid hsl(220, 15%, 15%);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .d3-sidebar-header {
-            padding: var(--space-sm) var(--space-md);
-            border-bottom: 1px solid hsl(220, 15%, 15%);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .d3-sidebar-title {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: hsl(220, 10%, 50%);
-        }
-
-        .d3-sessions {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .d3-session {
-            padding: var(--space-xs) var(--space-md);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            border-left: 2px solid transparent;
-        }
-
-        .d3-session:hover {
-            background: hsl(220, 15%, 10%);
-        }
-
-        .d3-session.active {
-            background: hsl(270, 30%, 12%);
-            border-left-color: var(--accent);
-        }
-
-        .d3-session-status {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: hsl(220, 10%, 30%);
-        }
-
-        .d3-session.active .d3-session-status {
-            background: var(--success);
-        }
-
-        .d3-session-name {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .d3-session-count {
-            font-size: 11px;
-            color: hsl(220, 10%, 40%);
-        }
-
-        .d3-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .d3-toolbar {
-            padding: var(--space-xs) var(--space-md);
-            background: hsl(220, 15%, 10%);
-            border-bottom: 1px solid hsl(220, 15%, 15%);
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-        }
-
-        .d3-toolbar-group {
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-        }
-
-        .d3-toolbar-btn {
-            padding: var(--space-xs) var(--space-sm);
-            background: transparent;
-            border: 1px solid hsl(220, 15%, 20%);
-            border-radius: var(--radius-sm);
-            color: hsl(220, 10%, 60%);
-            cursor: pointer;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-        }
-
-        .d3-toolbar-btn:hover {
-            background: hsl(220, 15%, 15%);
-            color: var(--text-primary);
-        }
-
-        .d3-toolbar-btn.active {
-            background: var(--accent-muted);
-            border-color: var(--accent);
-            color: var(--accent-hover);
-        }
-
-        .d3-conversation {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
-
-        .d3-chat {
-            flex: 1;
-            overflow-y: auto;
-            padding: var(--space-md);
-        }
-
-        .d3-msg {
-            margin-bottom: var(--space-sm);
-            display: flex;
-            gap: var(--space-sm);
-        }
-
-        .d3-msg-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-
-        .d3-msg.user .d3-msg-avatar {
-            background: var(--accent-muted);
-            color: var(--accent);
-        }
-
-        .d3-msg.claude .d3-msg-avatar {
-            background: hsl(220, 15%, 15%);
-            color: hsl(220, 10%, 60%);
-        }
-
-        .d3-msg-body {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .d3-msg-header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            margin-bottom: 2px;
-        }
-
-        .d3-msg-name {
-            font-weight: 600;
-            font-size: 12px;
-        }
-
-        .d3-msg.user .d3-msg-name {
-            color: var(--accent-hover);
-        }
-
-        .d3-msg-time {
-            font-size: 10px;
-            color: hsl(220, 10%, 40%);
-        }
-
-        .d3-msg-text {
-            line-height: 1.5;
-        }
-
-        .d3-agent-block {
-            margin: var(--space-xs) 0;
-            background: hsl(270, 20%, 10%);
-            border: 1px solid hsl(270, 30%, 20%);
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-        }
-
-        .d3-agent-header {
-            padding: var(--space-xs) var(--space-sm);
-            background: hsl(270, 20%, 12%);
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .d3-agent-icon {
-            color: var(--accent);
-        }
-
-        .d3-agent-name {
-            font-weight: 500;
-            color: var(--accent-hover);
-        }
-
-        .d3-agent-badge {
-            margin-left: auto;
-            padding: 2px 6px;
-            background: hsl(142, 40%, 15%);
-            color: var(--success);
-            border-radius: 10px;
-            font-size: 10px;
-        }
-
-        .d3-tool-line {
-            padding: var(--space-xs) var(--space-sm);
-            background: hsl(220, 15%, 6%);
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--info);
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        .d3-timeline {
-            width: 200px;
-            background: hsl(220, 15%, 6%);
-            border-left: 1px solid hsl(220, 15%, 15%);
-            overflow-y: auto;
-        }
-
-        .d3-event {
-            padding: var(--space-xs) var(--space-sm);
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            cursor: pointer;
-            font-size: 11px;
-            border-left: 2px solid transparent;
-        }
-
-        .d3-event:hover {
-            background: hsl(220, 15%, 10%);
-        }
-
-        .d3-event.active {
-            background: hsl(270, 30%, 12%);
-            border-left-color: var(--accent);
-        }
-
-        .d3-event-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-        }
-
-        .d3-event-dot.user { background: var(--accent); }
-        .d3-event-dot.claude { background: hsl(220, 10%, 50%); }
-        .d3-event-dot.tool { background: var(--info); }
-        .d3-event-dot.agent { background: var(--accent); }
-
-        .d3-event-text {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .d3-input-area {
-            padding: var(--space-sm);
-            background: hsl(220, 15%, 10%);
-            border-top: 1px solid hsl(220, 15%, 15%);
-        }
-
-        .d3-input {
-            width: 100%;
-            padding: var(--space-sm);
-            background: hsl(220, 15%, 6%);
-            border: 1px solid hsl(220, 15%, 20%);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 13px;
-            resize: none;
-        }
-
-        .d3-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        /* ========== DIRECTION 4: Card-Based ========== */
-        .d4-app {
-            display: flex;
-            height: 700px;
-            background: hsl(240, 8%, 8%);
-        }
-
-        .d4-nav {
-            width: 56px;
-            background: hsl(240, 8%, 5%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: var(--space-md) 0;
-        }
-
-        .d4-nav-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            color: hsl(240, 5%, 45%);
-            margin-bottom: var(--space-sm);
-        }
-
-        .d4-nav-icon:hover {
-            background: hsl(240, 8%, 15%);
-            color: var(--text-primary);
-        }
-
-        .d4-nav-icon.active {
-            background: var(--accent);
-            color: white;
-        }
-
-        .d4-sidebar {
-            width: 300px;
-            padding: var(--space-md);
-            overflow-y: auto;
-        }
-
-        .d4-sidebar-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--space-md);
-        }
-
-        .d4-sidebar-title {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .d4-new-btn {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-        }
-
-        .d4-session-card {
-            background: hsl(240, 8%, 12%);
-            border-radius: var(--radius-md);
-            padding: var(--space-md);
-            margin-bottom: var(--space-sm);
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.15s ease;
-        }
-
-        .d4-session-card:hover {
-            background: hsl(240, 8%, 15%);
-        }
-
-        .d4-session-card.active {
-            border-color: var(--accent);
-            background: hsl(270, 20%, 12%);
-        }
-
-        .d4-card-header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            margin-bottom: var(--space-sm);
-        }
-
-        .d4-card-status {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: hsl(240, 5%, 30%);
-        }
-
-        .d4-session-card.active .d4-card-status {
-            background: var(--success);
-        }
-
-        .d4-card-name {
-            flex: 1;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .d4-card-preview {
-            font-size: 13px;
-            color: var(--text-muted);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .d4-card-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: var(--space-sm);
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .d4-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: hsl(240, 8%, 10%);
-            margin: var(--space-md);
-            margin-left: 0;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-        }
-
-        .d4-header {
-            padding: var(--space-md) var(--space-lg);
-            background: hsl(240, 8%, 12%);
-            border-bottom: 1px solid hsl(240, 8%, 18%);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .d4-session-name {
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .d4-header-actions {
-            display: flex;
-            gap: var(--space-sm);
-        }
-
-        .d4-header-btn {
-            padding: var(--space-sm) var(--space-md);
-            background: hsl(240, 8%, 18%);
-            border: none;
-            border-radius: var(--radius-sm);
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .d4-header-btn:hover {
-            background: hsl(240, 8%, 22%);
-            color: var(--text-primary);
-        }
-
-        .d4-conversation {
-            flex: 1;
-            overflow-y: auto;
-            padding: var(--space-lg);
-        }
-
-        .d4-message {
-            margin-bottom: var(--space-lg);
-        }
-
-        .d4-message.user {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .d4-message-bubble {
-            max-width: 70%;
-            padding: var(--space-md) var(--space-lg);
-            border-radius: var(--radius-lg);
-            line-height: 1.6;
-        }
-
-        .d4-message.user .d4-message-bubble {
-            background: var(--accent);
-            color: white;
-            border-bottom-right-radius: var(--radius-sm);
-        }
-
-        .d4-message.claude .d4-message-bubble {
-            background: hsl(240, 8%, 15%);
-            border-bottom-left-radius: var(--radius-sm);
-        }
-
-        .d4-agent-card {
-            background: hsl(240, 8%, 12%);
-            border: 1px solid hsl(270, 30%, 25%);
-            border-radius: var(--radius-md);
-            margin: var(--space-md) 0;
-            overflow: hidden;
-        }
-
-        .d4-agent-header {
-            padding: var(--space-sm) var(--space-md);
-            background: hsl(270, 25%, 15%);
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            cursor: pointer;
-        }
-
-        .d4-agent-icon {
-            width: 24px;
-            height: 24px;
-            background: var(--accent);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-
-        .d4-agent-name {
-            font-weight: 500;
-            color: var(--accent-hover);
-        }
-
-        .d4-agent-status {
-            margin-left: auto;
-            padding: var(--space-xs) var(--space-sm);
-            background: hsl(142, 40%, 15%);
-            color: var(--success);
-            border-radius: var(--radius-sm);
-            font-size: 11px;
-        }
-
-        .d4-tool-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-xs);
-            padding: var(--space-xs) var(--space-sm);
-            background: hsl(210, 30%, 15%);
-            border-radius: var(--radius-sm);
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--info);
-            margin: var(--space-xs);
-        }
-
-        .d4-input-area {
-            padding: var(--space-md) var(--space-lg);
-            background: hsl(240, 8%, 12%);
-        }
-
-        .d4-input-wrapper {
-            display: flex;
-            gap: var(--space-sm);
-        }
-
-        .d4-input {
-            flex: 1;
-            padding: var(--space-md);
-            background: hsl(240, 8%, 8%);
-            border: 1px solid hsl(240, 8%, 20%);
-            border-radius: var(--radius-lg);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 14px;
-            resize: none;
-        }
-
-        .d4-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .d4-send-btn {
-            width: 48px;
-            height: 48px;
-            background: var(--accent);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-
-        /* ========== DIRECTION 5: Split View Focus ========== */
-        .d5-app {
-            display: flex;
-            height: 700px;
-            background: hsl(230, 12%, 9%);
-        }
-
-        .d5-rail {
-            width: 52px;
-            background: hsl(230, 12%, 6%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: var(--space-sm) 0;
-        }
-
-        .d5-rail-btn {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            color: hsl(230, 10%, 45%);
-            margin-bottom: var(--space-xs);
-        }
-
-        .d5-rail-btn:hover {
-            background: hsl(230, 12%, 15%);
-            color: var(--text-primary);
-        }
-
-        .d5-rail-btn.active {
-            color: var(--accent);
-        }
-
-        .d5-panel-left {
-            width: 260px;
-            background: hsl(230, 12%, 7%);
-            border-right: 1px solid hsl(230, 12%, 15%);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .d5-search {
-            padding: var(--space-sm);
-            border-bottom: 1px solid hsl(230, 12%, 15%);
-        }
-
-        .d5-search-input {
-            width: 100%;
-            padding: var(--space-sm);
-            background: hsl(230, 12%, 11%);
-            border: 1px solid hsl(230, 12%, 18%);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            font-size: 13px;
-        }
-
-        .d5-search-input::placeholder {
-            color: hsl(230, 10%, 40%);
-        }
-
-        .d5-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .d5-item {
-            padding: var(--space-sm) var(--space-md);
-            cursor: pointer;
-            border-left: 2px solid transparent;
-        }
-
-        .d5-item:hover {
-            background: hsl(230, 12%, 11%);
-        }
-
-        .d5-item.active {
-            background: hsl(270, 25%, 12%);
-            border-left-color: var(--accent);
-        }
-
-        .d5-item-name {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 2px;
-        }
-
-        .d5-item.active .d5-item-name {
-            color: var(--accent-hover);
-        }
-
-        .d5-item-preview {
-            font-size: 12px;
-            color: hsl(230, 10%, 50%);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .d5-content {
-            flex: 1;
-            display: flex;
-        }
-
-        .d5-chat {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid hsl(230, 12%, 15%);
-        }
-
-        .d5-chat-header {
-            padding: var(--space-sm) var(--space-md);
-            background: hsl(230, 12%, 11%);
-            border-bottom: 1px solid hsl(230, 12%, 15%);
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        .d5-chat-title {
-            font-weight: 500;
-        }
-
-        .d5-chat-status {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-        }
-
-        .d5-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: var(--space-md);
-        }
-
-        .d5-msg {
-            margin-bottom: var(--space-md);
-        }
-
-        .d5-msg-header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            margin-bottom: var(--space-xs);
-        }
-
-        .d5-msg-author {
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        .d5-msg.user .d5-msg-author {
-            color: var(--accent-hover);
-        }
-
-        .d5-msg-time {
-            font-size: 11px;
-            color: hsl(230, 10%, 40%);
-        }
-
-        .d5-msg-content {
-            padding: var(--space-sm) var(--space-md);
-            background: hsl(230, 12%, 12%);
-            border-radius: var(--radius-sm);
-            line-height: 1.6;
-        }
-
-        .d5-msg.user .d5-msg-content {
-            background: var(--accent-muted);
-            border: 1px solid hsl(270, 40%, 25%);
-        }
-
-        .d5-collapsed {
-            margin: var(--space-sm) 0;
-            padding: var(--space-sm);
-            background: hsl(270, 20%, 11%);
-            border-left: 2px solid var(--accent);
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            font-size: 13px;
-        }
-
-        .d5-collapsed-icon {
-            color: var(--accent);
-        }
-
-        .d5-collapsed-text {
-            color: var(--accent-hover);
-        }
-
-        .d5-collapsed-badge {
-            margin-left: auto;
-            padding: 2px 6px;
-            background: hsl(142, 40%, 12%);
-            color: var(--success);
-            border-radius: 8px;
-            font-size: 10px;
-        }
-
-        .d5-input-area {
-            padding: var(--space-sm);
-            border-top: 1px solid hsl(230, 12%, 15%);
-        }
-
-        .d5-input {
-            width: 100%;
-            padding: var(--space-sm) var(--space-md);
-            background: hsl(230, 12%, 7%);
-            border: 1px solid hsl(230, 12%, 18%);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 14px;
-            resize: none;
-        }
-
-        .d5-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .d5-detail {
-            width: 320px;
-            background: hsl(230, 12%, 7%);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .d5-detail-tabs {
-            display: flex;
-            border-bottom: 1px solid hsl(230, 12%, 15%);
-        }
-
-        .d5-detail-tab {
-            flex: 1;
-            padding: var(--space-sm);
-            background: transparent;
-            border: none;
-            color: hsl(230, 10%, 50%);
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .d5-detail-tab.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-        }
-
-        .d5-detail-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: var(--space-sm);
-        }
-
-        .d5-timeline-item {
-            padding: var(--space-xs) var(--space-sm);
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            cursor: pointer;
-            border-radius: var(--radius-sm);
-            font-size: 12px;
-        }
-
-        .d5-timeline-item:hover {
-            background: hsl(230, 12%, 12%);
-        }
-
-        .d5-timeline-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .d5-timeline-dot.user { background: var(--accent); }
-        .d5-timeline-dot.claude { background: hsl(230, 10%, 40%); }
-        .d5-timeline-dot.tool { background: var(--info); }
-        .d5-timeline-dot.agent { background: var(--accent); }
-
-        .d5-timeline-text {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* ========== DIRECTION 6: Terminal-Inspired ========== */
-        .d6-app {
-            display: flex;
-            height: 700px;
-            background: hsl(0, 0%, 5%);
-            font-family: var(--font-mono);
-        }
-
-        .d6-sidebar {
-            width: 280px;
-            background: hsl(0, 0%, 3%);
-            border-right: 1px solid hsl(0, 0%, 15%);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .d6-sidebar-header {
-            padding: var(--space-sm) var(--space-md);
-            border-bottom: 1px solid hsl(0, 0%, 15%);
-            color: var(--accent);
-            font-size: 12px;
-        }
-
-        .d6-sessions {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .d6-session {
-            padding: var(--space-xs) var(--space-md);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            font-size: 12px;
-        }
-
-        .d6-session:hover {
-            background: hsl(0, 0%, 8%);
-        }
-
-        .d6-session.active {
-            background: hsl(270, 30%, 10%);
-            color: var(--accent-hover);
-        }
-
-        .d6-session::before {
-            content: '>';
-            color: hsl(0, 0%, 30%);
-        }
-
-        .d6-session.active::before {
-            color: var(--accent);
-        }
-
-        .d6-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .d6-header {
-            padding: var(--space-sm) var(--space-md);
-            background: hsl(0, 0%, 8%);
-            border-bottom: 1px solid hsl(0, 0%, 15%);
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-            font-size: 12px;
-        }
-
-        .d6-header-path {
-            color: var(--accent);
-        }
-
-        .d6-header-status {
-            color: var(--success);
-        }
-
-        .d6-terminal {
-            flex: 1;
-            overflow-y: auto;
-            padding: var(--space-md);
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .d6-line {
-            margin-bottom: var(--space-sm);
-        }
-
-        .d6-prompt {
-            color: var(--accent);
-        }
-
-        .d6-user-input {
-            color: var(--text-primary);
-        }
-
-        .d6-response {
-            color: hsl(0, 0%, 70%);
-            padding-left: var(--space-md);
-            border-left: 1px solid hsl(0, 0%, 20%);
-            margin: var(--space-sm) 0;
-        }
-
-        .d6-agent-block {
-            background: hsl(270, 25%, 8%);
-            border: 1px solid hsl(270, 30%, 20%);
-            margin: var(--space-sm) 0;
-            padding: var(--space-sm);
-        }
-
-        .d6-agent-label {
-            color: var(--accent);
-            font-size: 11px;
-            margin-bottom: var(--space-xs);
-        }
-
-        .d6-agent-content {
-            color: hsl(0, 0%, 60%);
-            font-size: 12px;
-        }
-
-        .d6-tool {
-            color: var(--info);
-            font-size: 12px;
-        }
-
-        .d6-tool::before {
-            content: '$ ';
-            color: hsl(0, 0%, 40%);
-        }
-
-        .d6-error {
-            color: var(--error);
-        }
-
-        .d6-success {
-            color: var(--success);
-        }
-
-        .d6-input-area {
-            padding: var(--space-md);
-            background: hsl(0, 0%, 3%);
-            border-top: 1px solid hsl(0, 0%, 15%);
-        }
-
-        .d6-input-line {
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        .d6-input-prompt {
-            color: var(--accent);
-            font-size: 13px;
-        }
-
-        .d6-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 13px;
-        }
-
-        .d6-input:focus {
-            outline: none;
-        }
-
-        .d6-panel {
-            width: 250px;
-            background: hsl(0, 0%, 3%);
-            border-left: 1px solid hsl(0, 0%, 15%);
-            font-size: 11px;
-            overflow-y: auto;
-        }
-
-        .d6-panel-header {
-            padding: var(--space-sm) var(--space-md);
-            border-bottom: 1px solid hsl(0, 0%, 15%);
-            color: var(--accent);
-        }
-
-        .d6-event-line {
-            padding: var(--space-xs) var(--space-md);
-            cursor: pointer;
-            display: flex;
-            gap: var(--space-sm);
-        }
-
-        .d6-event-line:hover {
-            background: hsl(0, 0%, 8%);
-        }
-
-        .d6-event-type {
-            width: 12px;
-            text-align: center;
-        }
-
-        .d6-event-type.user { color: var(--accent); }
-        .d6-event-type.claude { color: hsl(0, 0%, 50%); }
-        .d6-event-type.tool { color: var(--info); }
-        .d6-event-type.agent { color: var(--accent); }
-
-        .d6-event-text {
-            flex: 1;
-            color: hsl(0, 0%, 60%);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Comparison View */
-        .compare-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--space-lg);
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .compare-item {
-            background: var(--bg-elevated);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .compare-item h3 {
-            padding: var(--space-md);
-            background: var(--bg-hover);
-            font-size: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .compare-preview {
-            height: 350px;
-            overflow: hidden;
-            transform: scale(0.5);
-            transform-origin: top left;
-            width: 200%;
-            height: 700px;
-        }
+      :root {
+        /* Dark Theme Foundation */
+        --bg-base: hsl(240, 10%, 10%);
+        --bg-elevated: hsl(240, 10%, 13%);
+        --bg-hover: hsl(240, 10%, 16%);
+        --bg-active: hsl(240, 10%, 20%);
+
+        /* Purple Accent */
+        --accent: hsl(270, 60%, 55%);
+        --accent-hover: hsl(270, 60%, 65%);
+        --accent-active: hsl(270, 60%, 45%);
+        --accent-muted: hsl(270, 40%, 25%);
+
+        /* Text */
+        --text-primary: hsl(0, 0%, 90%);
+        --text-muted: hsl(0, 0%, 60%);
+        --text-accent: hsl(270, 80%, 80%);
+
+        /* Borders */
+        --border: hsl(240, 10%, 20%);
+        --border-subtle: hsl(240, 10%, 15%);
+
+        /* Semantic */
+        --success: hsl(142, 50%, 45%);
+        --warning: hsl(38, 90%, 50%);
+        --error: hsl(0, 65%, 50%);
+        --info: hsl(210, 60%, 50%);
+
+        /* Spacing */
+        --space-xs: 4px;
+        --space-sm: 8px;
+        --space-md: 16px;
+        --space-lg: 24px;
+        --space-xl: 32px;
+
+        /* Typography */
+        --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+
+        /* Radius */
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background: var(--bg-base);
+        color: var(--text-primary);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      /* Navigation */
+      .nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-elevated);
+        border-bottom: 1px solid var(--border);
+        z-index: 1000;
+        padding: var(--space-md) var(--space-lg);
+      }
+
+      .nav-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .nav h1 {
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+
+      .nav h1 span {
+        color: var(--accent);
+      }
+
+      .nav-tabs {
+        display: flex;
+        gap: var(--space-xs);
+      }
+
+      .nav-tab {
+        padding: var(--space-sm) var(--space-md);
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        transition: all 0.15s ease;
+      }
+
+      .nav-tab:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+      }
+
+      .nav-tab.active {
+        background: var(--accent-muted);
+        color: var(--accent-hover);
+      }
+
+      /* Main Content */
+      .main {
+        padding-top: 80px;
+      }
+
+      .direction {
+        display: none;
+        min-height: 100vh;
+        padding: var(--space-xl);
+      }
+
+      .direction.active {
+        display: block;
+      }
+
+      .direction-header {
+        max-width: 1200px;
+        margin: 0 auto var(--space-xl);
+        padding-bottom: var(--space-lg);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .direction-header h2 {
+        font-size: 24px;
+        margin-bottom: var(--space-sm);
+      }
+
+      .direction-header p {
+        color: var(--text-muted);
+        max-width: 700px;
+      }
+
+      .direction-tags {
+        display: flex;
+        gap: var(--space-sm);
+        margin-top: var(--space-md);
+      }
+
+      .tag {
+        padding: var(--space-xs) var(--space-sm);
+        background: var(--bg-hover);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .tag.accent {
+        background: var(--accent-muted);
+        color: var(--accent-hover);
+      }
+
+      /* Mockup Container */
+      .mockup-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      }
+
+      /* ========== DIRECTION 1: Classic Obsidian ========== */
+      .d1-app {
+        display: flex;
+        height: 700px;
+        background: var(--bg-base);
+      }
+
+      .d1-ribbon {
+        width: 48px;
+        background: hsl(240, 10%, 8%);
+        border-right: 1px solid var(--border);
+        padding: var(--space-sm) 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .d1-ribbon-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        color: var(--text-muted);
+        margin-bottom: var(--space-xs);
+        transition: all 0.15s ease;
+      }
+
+      .d1-ribbon-icon:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+      }
+
+      .d1-ribbon-icon.active {
+        background: var(--accent-muted);
+        color: var(--accent);
+      }
+
+      .d1-left-panel {
+        width: 280px;
+        background: var(--bg-elevated);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d1-panel-header {
+        padding: var(--space-md);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .d1-panel-title {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+      }
+
+      .d1-new-btn {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .d1-session-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-sm);
+      }
+
+      .d1-session-item {
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        margin-bottom: var(--space-xs);
+      }
+
+      .d1-session-item:hover {
+        background: var(--bg-hover);
+      }
+
+      .d1-session-item.active {
+        background: var(--accent-muted);
+      }
+
+      .d1-session-name {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .d1-session-item.active .d1-session-name {
+        color: var(--accent-hover);
+      }
+
+      .d1-session-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .d1-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d1-tab-bar {
+        background: var(--bg-elevated);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        padding: 0 var(--space-sm);
+      }
+
+      .d1-tab {
+        padding: var(--space-sm) var(--space-md);
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 13px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+
+      .d1-tab.active {
+        color: var(--text-primary);
+      }
+
+      .d1-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: var(--space-md);
+        right: var(--space-md);
+        height: 2px;
+        background: var(--accent);
+        border-radius: 2px 2px 0 0;
+      }
+
+      .d1-tab-close {
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 10px;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+
+      .d1-tab:hover .d1-tab-close {
+        opacity: 1;
+      }
+
+      .d1-tab-close:hover {
+        background: var(--bg-hover);
+      }
+
+      .d1-conversation {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-lg);
+      }
+
+      .d1-message {
+        margin-bottom: var(--space-md);
+        max-width: 85%;
+      }
+
+      .d1-message.user {
+        margin-left: auto;
+      }
+
+      .d1-message-content {
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        line-height: 1.6;
+      }
+
+      .d1-message.user .d1-message-content {
+        background: var(--accent-muted);
+        border: 1px solid hsl(270, 40%, 30%);
+      }
+
+      .d1-message.claude .d1-message-content {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+      }
+
+      .d1-message-meta {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: var(--space-xs);
+        padding: 0 var(--space-xs);
+      }
+
+      .d1-message.user .d1-message-meta {
+        text-align: right;
+      }
+
+      .d1-subagent {
+        margin: var(--space-md) 0;
+        border-left: 3px solid var(--accent);
+        padding-left: var(--space-md);
+      }
+
+      .d1-subagent-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm);
+        background: var(--bg-hover);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 13px;
+      }
+
+      .d1-subagent-icon {
+        color: var(--accent);
+      }
+
+      .d1-subagent-name {
+        font-weight: 500;
+      }
+
+      .d1-subagent-status {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--success);
+      }
+
+      .d1-tool-card {
+        margin: var(--space-sm) 0;
+        padding: var(--space-sm) var(--space-md);
+        background: hsl(240, 10%, 8%);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+
+      .d1-tool-name {
+        color: var(--info);
+        font-weight: 500;
+      }
+
+      .d1-input-area {
+        padding: var(--space-md);
+        border-top: 1px solid var(--border);
+        background: var(--bg-elevated);
+      }
+
+      .d1-input-wrapper {
+        display: flex;
+        gap: var(--space-sm);
+        align-items: flex-end;
+      }
+
+      .d1-input {
+        flex: 1;
+        padding: var(--space-md);
+        background: var(--bg-base);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 14px;
+        resize: none;
+        min-height: 48px;
+      }
+
+      .d1-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .d1-send-btn {
+        width: 48px;
+        height: 48px;
+        background: var(--accent);
+        border: none;
+        border-radius: var(--radius-md);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+
+      .d1-right-panel {
+        width: 300px;
+        background: var(--bg-elevated);
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d1-right-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .d1-right-tab {
+        flex: 1;
+        padding: var(--space-sm) var(--space-md);
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .d1-right-tab.active {
+        color: var(--accent);
+        border-bottom: 2px solid var(--accent);
+      }
+
+      .d1-timeline {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-sm);
+      }
+
+      .d1-event {
+        padding: var(--space-sm);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 13px;
+      }
+
+      .d1-event:hover {
+        background: var(--bg-hover);
+      }
+
+      .d1-event-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+      }
+
+      .d1-event-icon.user {
+        background: var(--accent-muted);
+        color: var(--accent);
+      }
+
+      .d1-event-icon.claude {
+        background: var(--bg-hover);
+        color: var(--text-muted);
+      }
+
+      .d1-event-icon.tool {
+        background: hsl(210, 40%, 20%);
+        color: var(--info);
+      }
+
+      .d1-event-icon.agent {
+        background: hsl(270, 40%, 20%);
+        color: var(--accent);
+      }
+
+      .d1-event-text {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .d1-event-time {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      /* ========== DIRECTION 2: Minimal Focus ========== */
+      .d2-app {
+        display: flex;
+        height: 700px;
+        background: hsl(0, 0%, 7%);
+      }
+
+      .d2-sidebar {
+        width: 60px;
+        background: hsl(0, 0%, 5%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--space-md) 0;
+        gap: var(--space-sm);
+      }
+
+      .d2-sidebar-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+        color: hsl(0, 0%, 50%);
+        transition: all 0.2s ease;
+      }
+
+      .d2-sidebar-icon:hover {
+        color: hsl(0, 0%, 80%);
+        background: hsl(0, 0%, 12%);
+      }
+
+      .d2-sidebar-icon.active {
+        color: var(--accent);
+        background: var(--accent-muted);
+      }
+
+      .d2-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: var(--space-xl);
+      }
+
+      .d2-header {
+        text-align: center;
+        margin-bottom: var(--space-xl);
+      }
+
+      .d2-header h1 {
+        font-size: 16px;
+        font-weight: 500;
+        color: hsl(0, 0%, 70%);
+      }
+
+      .d2-conversation {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .d2-message {
+        margin-bottom: var(--space-lg);
+      }
+
+      .d2-message-author {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: var(--space-sm);
+        color: hsl(0, 0%, 50%);
+      }
+
+      .d2-message.user .d2-message-author {
+        color: var(--accent);
+      }
+
+      .d2-message-content {
+        font-size: 15px;
+        line-height: 1.7;
+        color: hsl(0, 0%, 85%);
+      }
+
+      .d2-nested {
+        margin-top: var(--space-md);
+        padding: var(--space-md);
+        border-left: 2px solid hsl(0, 0%, 20%);
+        background: hsl(0, 0%, 8%);
+      }
+
+      .d2-nested-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--accent-hover);
+        margin-bottom: var(--space-sm);
+      }
+
+      .d2-input-area {
+        margin-top: var(--space-xl);
+      }
+
+      .d2-input {
+        width: 100%;
+        padding: var(--space-lg);
+        background: hsl(0, 0%, 10%);
+        border: 1px solid hsl(0, 0%, 15%);
+        border-radius: var(--radius-lg);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 15px;
+        resize: none;
+      }
+
+      .d2-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .d2-input-hint {
+        text-align: center;
+        margin-top: var(--space-sm);
+        font-size: 12px;
+        color: hsl(0, 0%, 40%);
+      }
+
+      /* ========== DIRECTION 3: Dense Power User ========== */
+      .d3-app {
+        display: flex;
+        height: 700px;
+        background: hsl(220, 15%, 8%);
+        font-size: 13px;
+      }
+
+      .d3-sidebar {
+        width: 240px;
+        background: hsl(220, 15%, 6%);
+        border-right: 1px solid hsl(220, 15%, 15%);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d3-sidebar-header {
+        padding: var(--space-sm) var(--space-md);
+        border-bottom: 1px solid hsl(220, 15%, 15%);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .d3-sidebar-title {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: hsl(220, 10%, 50%);
+      }
+
+      .d3-sessions {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .d3-session {
+        padding: var(--space-xs) var(--space-md);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        border-left: 2px solid transparent;
+      }
+
+      .d3-session:hover {
+        background: hsl(220, 15%, 10%);
+      }
+
+      .d3-session.active {
+        background: hsl(270, 30%, 12%);
+        border-left-color: var(--accent);
+      }
+
+      .d3-session-status {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: hsl(220, 10%, 30%);
+      }
+
+      .d3-session.active .d3-session-status {
+        background: var(--success);
+      }
+
+      .d3-session-name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .d3-session-count {
+        font-size: 11px;
+        color: hsl(220, 10%, 40%);
+      }
+
+      .d3-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d3-toolbar {
+        padding: var(--space-xs) var(--space-md);
+        background: hsl(220, 15%, 10%);
+        border-bottom: 1px solid hsl(220, 15%, 15%);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+      }
+
+      .d3-toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+      }
+
+      .d3-toolbar-btn {
+        padding: var(--space-xs) var(--space-sm);
+        background: transparent;
+        border: 1px solid hsl(220, 15%, 20%);
+        border-radius: var(--radius-sm);
+        color: hsl(220, 10%, 60%);
+        cursor: pointer;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+      }
+
+      .d3-toolbar-btn:hover {
+        background: hsl(220, 15%, 15%);
+        color: var(--text-primary);
+      }
+
+      .d3-toolbar-btn.active {
+        background: var(--accent-muted);
+        border-color: var(--accent);
+        color: var(--accent-hover);
+      }
+
+      .d3-conversation {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+      }
+
+      .d3-chat {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-md);
+      }
+
+      .d3-msg {
+        margin-bottom: var(--space-sm);
+        display: flex;
+        gap: var(--space-sm);
+      }
+
+      .d3-msg-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+
+      .d3-msg.user .d3-msg-avatar {
+        background: var(--accent-muted);
+        color: var(--accent);
+      }
+
+      .d3-msg.claude .d3-msg-avatar {
+        background: hsl(220, 15%, 15%);
+        color: hsl(220, 10%, 60%);
+      }
+
+      .d3-msg-body {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .d3-msg-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: 2px;
+      }
+
+      .d3-msg-name {
+        font-weight: 600;
+        font-size: 12px;
+      }
+
+      .d3-msg.user .d3-msg-name {
+        color: var(--accent-hover);
+      }
+
+      .d3-msg-time {
+        font-size: 10px;
+        color: hsl(220, 10%, 40%);
+      }
+
+      .d3-msg-text {
+        line-height: 1.5;
+      }
+
+      .d3-agent-block {
+        margin: var(--space-xs) 0;
+        background: hsl(270, 20%, 10%);
+        border: 1px solid hsl(270, 30%, 20%);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+      }
+
+      .d3-agent-header {
+        padding: var(--space-xs) var(--space-sm);
+        background: hsl(270, 20%, 12%);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .d3-agent-icon {
+        color: var(--accent);
+      }
+
+      .d3-agent-name {
+        font-weight: 500;
+        color: var(--accent-hover);
+      }
+
+      .d3-agent-badge {
+        margin-left: auto;
+        padding: 2px 6px;
+        background: hsl(142, 40%, 15%);
+        color: var(--success);
+        border-radius: 10px;
+        font-size: 10px;
+      }
+
+      .d3-tool-line {
+        padding: var(--space-xs) var(--space-sm);
+        background: hsl(220, 15%, 6%);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--info);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+
+      .d3-timeline {
+        width: 200px;
+        background: hsl(220, 15%, 6%);
+        border-left: 1px solid hsl(220, 15%, 15%);
+        overflow-y: auto;
+      }
+
+      .d3-event {
+        padding: var(--space-xs) var(--space-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        cursor: pointer;
+        font-size: 11px;
+        border-left: 2px solid transparent;
+      }
+
+      .d3-event:hover {
+        background: hsl(220, 15%, 10%);
+      }
+
+      .d3-event.active {
+        background: hsl(270, 30%, 12%);
+        border-left-color: var(--accent);
+      }
+
+      .d3-event-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+
+      .d3-event-dot.user {
+        background: var(--accent);
+      }
+      .d3-event-dot.claude {
+        background: hsl(220, 10%, 50%);
+      }
+      .d3-event-dot.tool {
+        background: var(--info);
+      }
+      .d3-event-dot.agent {
+        background: var(--accent);
+      }
+
+      .d3-event-text {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .d3-input-area {
+        padding: var(--space-sm);
+        background: hsl(220, 15%, 10%);
+        border-top: 1px solid hsl(220, 15%, 15%);
+      }
+
+      .d3-input {
+        width: 100%;
+        padding: var(--space-sm);
+        background: hsl(220, 15%, 6%);
+        border: 1px solid hsl(220, 15%, 20%);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 13px;
+        resize: none;
+      }
+
+      .d3-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      /* ========== DIRECTION 4: Card-Based ========== */
+      .d4-app {
+        display: flex;
+        height: 700px;
+        background: hsl(240, 8%, 8%);
+      }
+
+      .d4-nav {
+        width: 56px;
+        background: hsl(240, 8%, 5%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--space-md) 0;
+      }
+
+      .d4-nav-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        color: hsl(240, 5%, 45%);
+        margin-bottom: var(--space-sm);
+      }
+
+      .d4-nav-icon:hover {
+        background: hsl(240, 8%, 15%);
+        color: var(--text-primary);
+      }
+
+      .d4-nav-icon.active {
+        background: var(--accent);
+        color: white;
+      }
+
+      .d4-sidebar {
+        width: 300px;
+        padding: var(--space-md);
+        overflow-y: auto;
+      }
+
+      .d4-sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-md);
+      }
+
+      .d4-sidebar-title {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .d4-new-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 18px;
+      }
+
+      .d4-session-card {
+        background: hsl(240, 8%, 12%);
+        border-radius: var(--radius-md);
+        padding: var(--space-md);
+        margin-bottom: var(--space-sm);
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.15s ease;
+      }
+
+      .d4-session-card:hover {
+        background: hsl(240, 8%, 15%);
+      }
+
+      .d4-session-card.active {
+        border-color: var(--accent);
+        background: hsl(270, 20%, 12%);
+      }
+
+      .d4-card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-sm);
+      }
+
+      .d4-card-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: hsl(240, 5%, 30%);
+      }
+
+      .d4-session-card.active .d4-card-status {
+        background: var(--success);
+      }
+
+      .d4-card-name {
+        flex: 1;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .d4-card-preview {
+        font-size: 13px;
+        color: var(--text-muted);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .d4-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--space-sm);
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .d4-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: hsl(240, 8%, 10%);
+        margin: var(--space-md);
+        margin-left: 0;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+      }
+
+      .d4-header {
+        padding: var(--space-md) var(--space-lg);
+        background: hsl(240, 8%, 12%);
+        border-bottom: 1px solid hsl(240, 8%, 18%);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .d4-session-name {
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .d4-header-actions {
+        display: flex;
+        gap: var(--space-sm);
+      }
+
+      .d4-header-btn {
+        padding: var(--space-sm) var(--space-md);
+        background: hsl(240, 8%, 18%);
+        border: none;
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 13px;
+      }
+
+      .d4-header-btn:hover {
+        background: hsl(240, 8%, 22%);
+        color: var(--text-primary);
+      }
+
+      .d4-conversation {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-lg);
+      }
+
+      .d4-message {
+        margin-bottom: var(--space-lg);
+      }
+
+      .d4-message.user {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .d4-message-bubble {
+        max-width: 70%;
+        padding: var(--space-md) var(--space-lg);
+        border-radius: var(--radius-lg);
+        line-height: 1.6;
+      }
+
+      .d4-message.user .d4-message-bubble {
+        background: var(--accent);
+        color: white;
+        border-bottom-right-radius: var(--radius-sm);
+      }
+
+      .d4-message.claude .d4-message-bubble {
+        background: hsl(240, 8%, 15%);
+        border-bottom-left-radius: var(--radius-sm);
+      }
+
+      .d4-agent-card {
+        background: hsl(240, 8%, 12%);
+        border: 1px solid hsl(270, 30%, 25%);
+        border-radius: var(--radius-md);
+        margin: var(--space-md) 0;
+        overflow: hidden;
+      }
+
+      .d4-agent-header {
+        padding: var(--space-sm) var(--space-md);
+        background: hsl(270, 25%, 15%);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        cursor: pointer;
+      }
+
+      .d4-agent-icon {
+        width: 24px;
+        height: 24px;
+        background: var(--accent);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+
+      .d4-agent-name {
+        font-weight: 500;
+        color: var(--accent-hover);
+      }
+
+      .d4-agent-status {
+        margin-left: auto;
+        padding: var(--space-xs) var(--space-sm);
+        background: hsl(142, 40%, 15%);
+        color: var(--success);
+        border-radius: var(--radius-sm);
+        font-size: 11px;
+      }
+
+      .d4-tool-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        padding: var(--space-xs) var(--space-sm);
+        background: hsl(210, 30%, 15%);
+        border-radius: var(--radius-sm);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--info);
+        margin: var(--space-xs);
+      }
+
+      .d4-input-area {
+        padding: var(--space-md) var(--space-lg);
+        background: hsl(240, 8%, 12%);
+      }
+
+      .d4-input-wrapper {
+        display: flex;
+        gap: var(--space-sm);
+      }
+
+      .d4-input {
+        flex: 1;
+        padding: var(--space-md);
+        background: hsl(240, 8%, 8%);
+        border: 1px solid hsl(240, 8%, 20%);
+        border-radius: var(--radius-lg);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 14px;
+        resize: none;
+      }
+
+      .d4-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .d4-send-btn {
+        width: 48px;
+        height: 48px;
+        background: var(--accent);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+
+      /* ========== DIRECTION 5: Split View Focus ========== */
+      .d5-app {
+        display: flex;
+        height: 700px;
+        background: hsl(230, 12%, 9%);
+      }
+
+      .d5-rail {
+        width: 52px;
+        background: hsl(230, 12%, 6%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--space-sm) 0;
+      }
+
+      .d5-rail-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        color: hsl(230, 10%, 45%);
+        margin-bottom: var(--space-xs);
+      }
+
+      .d5-rail-btn:hover {
+        background: hsl(230, 12%, 15%);
+        color: var(--text-primary);
+      }
+
+      .d5-rail-btn.active {
+        color: var(--accent);
+      }
+
+      .d5-panel-left {
+        width: 260px;
+        background: hsl(230, 12%, 7%);
+        border-right: 1px solid hsl(230, 12%, 15%);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d5-search {
+        padding: var(--space-sm);
+        border-bottom: 1px solid hsl(230, 12%, 15%);
+      }
+
+      .d5-search-input {
+        width: 100%;
+        padding: var(--space-sm);
+        background: hsl(230, 12%, 11%);
+        border: 1px solid hsl(230, 12%, 18%);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        font-size: 13px;
+      }
+
+      .d5-search-input::placeholder {
+        color: hsl(230, 10%, 40%);
+      }
+
+      .d5-list {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .d5-item {
+        padding: var(--space-sm) var(--space-md);
+        cursor: pointer;
+        border-left: 2px solid transparent;
+      }
+
+      .d5-item:hover {
+        background: hsl(230, 12%, 11%);
+      }
+
+      .d5-item.active {
+        background: hsl(270, 25%, 12%);
+        border-left-color: var(--accent);
+      }
+
+      .d5-item-name {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+
+      .d5-item.active .d5-item-name {
+        color: var(--accent-hover);
+      }
+
+      .d5-item-preview {
+        font-size: 12px;
+        color: hsl(230, 10%, 50%);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .d5-content {
+        flex: 1;
+        display: flex;
+      }
+
+      .d5-chat {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid hsl(230, 12%, 15%);
+      }
+
+      .d5-chat-header {
+        padding: var(--space-sm) var(--space-md);
+        background: hsl(230, 12%, 11%);
+        border-bottom: 1px solid hsl(230, 12%, 15%);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+
+      .d5-chat-title {
+        font-weight: 500;
+      }
+
+      .d5-chat-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success);
+      }
+
+      .d5-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-md);
+      }
+
+      .d5-msg {
+        margin-bottom: var(--space-md);
+      }
+
+      .d5-msg-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-xs);
+      }
+
+      .d5-msg-author {
+        font-weight: 600;
+        font-size: 13px;
+      }
+
+      .d5-msg.user .d5-msg-author {
+        color: var(--accent-hover);
+      }
+
+      .d5-msg-time {
+        font-size: 11px;
+        color: hsl(230, 10%, 40%);
+      }
+
+      .d5-msg-content {
+        padding: var(--space-sm) var(--space-md);
+        background: hsl(230, 12%, 12%);
+        border-radius: var(--radius-sm);
+        line-height: 1.6;
+      }
+
+      .d5-msg.user .d5-msg-content {
+        background: var(--accent-muted);
+        border: 1px solid hsl(270, 40%, 25%);
+      }
+
+      .d5-collapsed {
+        margin: var(--space-sm) 0;
+        padding: var(--space-sm);
+        background: hsl(270, 20%, 11%);
+        border-left: 2px solid var(--accent);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 13px;
+      }
+
+      .d5-collapsed-icon {
+        color: var(--accent);
+      }
+
+      .d5-collapsed-text {
+        color: var(--accent-hover);
+      }
+
+      .d5-collapsed-badge {
+        margin-left: auto;
+        padding: 2px 6px;
+        background: hsl(142, 40%, 12%);
+        color: var(--success);
+        border-radius: 8px;
+        font-size: 10px;
+      }
+
+      .d5-input-area {
+        padding: var(--space-sm);
+        border-top: 1px solid hsl(230, 12%, 15%);
+      }
+
+      .d5-input {
+        width: 100%;
+        padding: var(--space-sm) var(--space-md);
+        background: hsl(230, 12%, 7%);
+        border: 1px solid hsl(230, 12%, 18%);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 14px;
+        resize: none;
+      }
+
+      .d5-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .d5-detail {
+        width: 320px;
+        background: hsl(230, 12%, 7%);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d5-detail-tabs {
+        display: flex;
+        border-bottom: 1px solid hsl(230, 12%, 15%);
+      }
+
+      .d5-detail-tab {
+        flex: 1;
+        padding: var(--space-sm);
+        background: transparent;
+        border: none;
+        color: hsl(230, 10%, 50%);
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .d5-detail-tab.active {
+        color: var(--accent);
+        border-bottom: 2px solid var(--accent);
+      }
+
+      .d5-detail-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-sm);
+      }
+
+      .d5-timeline-item {
+        padding: var(--space-xs) var(--space-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        cursor: pointer;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+      }
+
+      .d5-timeline-item:hover {
+        background: hsl(230, 12%, 12%);
+      }
+
+      .d5-timeline-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      .d5-timeline-dot.user {
+        background: var(--accent);
+      }
+      .d5-timeline-dot.claude {
+        background: hsl(230, 10%, 40%);
+      }
+      .d5-timeline-dot.tool {
+        background: var(--info);
+      }
+      .d5-timeline-dot.agent {
+        background: var(--accent);
+      }
+
+      .d5-timeline-text {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* ========== DIRECTION 6: Terminal-Inspired ========== */
+      .d6-app {
+        display: flex;
+        height: 700px;
+        background: hsl(0, 0%, 5%);
+        font-family: var(--font-mono);
+      }
+
+      .d6-sidebar {
+        width: 280px;
+        background: hsl(0, 0%, 3%);
+        border-right: 1px solid hsl(0, 0%, 15%);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d6-sidebar-header {
+        padding: var(--space-sm) var(--space-md);
+        border-bottom: 1px solid hsl(0, 0%, 15%);
+        color: var(--accent);
+        font-size: 12px;
+      }
+
+      .d6-sessions {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .d6-session {
+        padding: var(--space-xs) var(--space-md);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 12px;
+      }
+
+      .d6-session:hover {
+        background: hsl(0, 0%, 8%);
+      }
+
+      .d6-session.active {
+        background: hsl(270, 30%, 10%);
+        color: var(--accent-hover);
+      }
+
+      .d6-session::before {
+        content: '>';
+        color: hsl(0, 0%, 30%);
+      }
+
+      .d6-session.active::before {
+        color: var(--accent);
+      }
+
+      .d6-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d6-header {
+        padding: var(--space-sm) var(--space-md);
+        background: hsl(0, 0%, 8%);
+        border-bottom: 1px solid hsl(0, 0%, 15%);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        font-size: 12px;
+      }
+
+      .d6-header-path {
+        color: var(--accent);
+      }
+
+      .d6-header-status {
+        color: var(--success);
+      }
+
+      .d6-terminal {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-md);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .d6-line {
+        margin-bottom: var(--space-sm);
+      }
+
+      .d6-prompt {
+        color: var(--accent);
+      }
+
+      .d6-user-input {
+        color: var(--text-primary);
+      }
+
+      .d6-response {
+        color: hsl(0, 0%, 70%);
+        padding-left: var(--space-md);
+        border-left: 1px solid hsl(0, 0%, 20%);
+        margin: var(--space-sm) 0;
+      }
+
+      .d6-agent-block {
+        background: hsl(270, 25%, 8%);
+        border: 1px solid hsl(270, 30%, 20%);
+        margin: var(--space-sm) 0;
+        padding: var(--space-sm);
+      }
+
+      .d6-agent-label {
+        color: var(--accent);
+        font-size: 11px;
+        margin-bottom: var(--space-xs);
+      }
+
+      .d6-agent-content {
+        color: hsl(0, 0%, 60%);
+        font-size: 12px;
+      }
+
+      .d6-tool {
+        color: var(--info);
+        font-size: 12px;
+      }
+
+      .d6-tool::before {
+        content: '$ ';
+        color: hsl(0, 0%, 40%);
+      }
+
+      .d6-error {
+        color: var(--error);
+      }
+
+      .d6-success {
+        color: var(--success);
+      }
+
+      .d6-input-area {
+        padding: var(--space-md);
+        background: hsl(0, 0%, 3%);
+        border-top: 1px solid hsl(0, 0%, 15%);
+      }
+
+      .d6-input-line {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+
+      .d6-input-prompt {
+        color: var(--accent);
+        font-size: 13px;
+      }
+
+      .d6-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 13px;
+      }
+
+      .d6-input:focus {
+        outline: none;
+      }
+
+      .d6-panel {
+        width: 250px;
+        background: hsl(0, 0%, 3%);
+        border-left: 1px solid hsl(0, 0%, 15%);
+        font-size: 11px;
+        overflow-y: auto;
+      }
+
+      .d6-panel-header {
+        padding: var(--space-sm) var(--space-md);
+        border-bottom: 1px solid hsl(0, 0%, 15%);
+        color: var(--accent);
+      }
+
+      .d6-event-line {
+        padding: var(--space-xs) var(--space-md);
+        cursor: pointer;
+        display: flex;
+        gap: var(--space-sm);
+      }
+
+      .d6-event-line:hover {
+        background: hsl(0, 0%, 8%);
+      }
+
+      .d6-event-type {
+        width: 12px;
+        text-align: center;
+      }
+
+      .d6-event-type.user {
+        color: var(--accent);
+      }
+      .d6-event-type.claude {
+        color: hsl(0, 0%, 50%);
+      }
+      .d6-event-type.tool {
+        color: var(--info);
+      }
+      .d6-event-type.agent {
+        color: var(--accent);
+      }
+
+      .d6-event-text {
+        flex: 1;
+        color: hsl(0, 0%, 60%);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Comparison View */
+      .compare-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-lg);
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .compare-item {
+        background: var(--bg-elevated);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+
+      .compare-item h3 {
+        padding: var(--space-md);
+        background: var(--bg-hover);
+        font-size: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .compare-preview {
+        height: 350px;
+        overflow: hidden;
+        transform: scale(0.5);
+        transform-origin: top left;
+        width: 200%;
+        height: 700px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <nav class="nav">
-        <div class="nav-content">
-            <h1><span>Grimoire</span> Design Directions</h1>
-            <div class="nav-tabs">
-                <button class="nav-tab active" data-dir="1">1. Classic Obsidian</button>
-                <button class="nav-tab" data-dir="2">2. Minimal Focus</button>
-                <button class="nav-tab" data-dir="3">3. Dense Power</button>
-                <button class="nav-tab" data-dir="4">4. Card-Based</button>
-                <button class="nav-tab" data-dir="5">5. Split View</button>
-                <button class="nav-tab" data-dir="6">6. Terminal</button>
-                <button class="nav-tab" data-dir="compare">Compare</button>
-            </div>
+      <div class="nav-content">
+        <h1><span>Grimoire</span> Design Directions</h1>
+        <div class="nav-tabs">
+          <button class="nav-tab active" data-dir="1">1. Classic Obsidian</button>
+          <button class="nav-tab" data-dir="2">2. Minimal Focus</button>
+          <button class="nav-tab" data-dir="3">3. Dense Power</button>
+          <button class="nav-tab" data-dir="4">4. Card-Based</button>
+          <button class="nav-tab" data-dir="5">5. Split View</button>
+          <button class="nav-tab" data-dir="6">6. Terminal</button>
+          <button class="nav-tab" data-dir="compare">Compare</button>
         </div>
+      </div>
     </nav>
 
     <main class="main">
-        <!-- Direction 1: Classic Obsidian -->
-        <section class="direction active" data-dir="1">
-            <div class="direction-header">
-                <h2>Direction 1: Classic Obsidian</h2>
-                <p>Faithful to the Obsidian mental model with ribbon navigation, three-panel layout, and comfortable spacing. Professional and familiar.</p>
-                <div class="direction-tags">
-                    <span class="tag accent">Recommended</span>
-                    <span class="tag">Obsidian-inspired</span>
-                    <span class="tag">Three-panel</span>
-                    <span class="tag">Comfortable spacing</span>
-                </div>
+      <!-- Direction 1: Classic Obsidian -->
+      <section class="direction active" data-dir="1">
+        <div class="direction-header">
+          <h2>Direction 1: Classic Obsidian</h2>
+          <p>
+            Faithful to the Obsidian mental model with ribbon navigation, three-panel layout, and
+            comfortable spacing. Professional and familiar.
+          </p>
+          <div class="direction-tags">
+            <span class="tag accent">Recommended</span>
+            <span class="tag">Obsidian-inspired</span>
+            <span class="tag">Three-panel</span>
+            <span class="tag">Comfortable spacing</span>
+          </div>
+        </div>
+        <div class="mockup-container">
+          <div class="d1-app">
+            <div class="d1-ribbon">
+              <div class="d1-ribbon-icon active">S</div>
+              <div class="d1-ribbon-icon">W</div>
+              <div class="d1-ribbon-icon">H</div>
+              <div style="flex: 1"></div>
+              <div class="d1-ribbon-icon">?</div>
             </div>
-            <div class="mockup-container">
-                <div class="d1-app">
-                    <div class="d1-ribbon">
-                        <div class="d1-ribbon-icon active">S</div>
-                        <div class="d1-ribbon-icon">W</div>
-                        <div class="d1-ribbon-icon">H</div>
-                        <div style="flex:1"></div>
-                        <div class="d1-ribbon-icon">?</div>
-                    </div>
-                    <div class="d1-left-panel">
-                        <div class="d1-panel-header">
-                            <span class="d1-panel-title">Sessions</span>
-                            <button class="d1-new-btn">+</button>
-                        </div>
-                        <div class="d1-session-list">
-                            <div class="d1-session-item active">
-                                <div class="d1-session-name">API refactoring project</div>
-                                <div class="d1-session-meta">Active now</div>
-                            </div>
-                            <div class="d1-session-item">
-                                <div class="d1-session-name">Debug auth flow</div>
-                                <div class="d1-session-meta">2 hours ago</div>
-                            </div>
-                            <div class="d1-session-item">
-                                <div class="d1-session-name">Create user dashboard</div>
-                                <div class="d1-session-meta">Yesterday</div>
-                            </div>
-                            <div class="d1-session-item">
-                                <div class="d1-session-name">Database optimization</div>
-                                <div class="d1-session-meta">3 days ago</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d1-main">
-                        <div class="d1-tab-bar">
-                            <button class="d1-tab active">
-                                API refactoring project
-                                <span class="d1-tab-close">x</span>
-                            </button>
-                            <button class="d1-tab">
-                                Debug auth flow
-                                <span class="d1-tab-close">x</span>
-                            </button>
-                        </div>
-                        <div class="d1-conversation">
-                            <div class="d1-message user">
-                                <div class="d1-message-content">I need to refactor the API layer to use a cleaner architecture. Can you analyze the current structure and suggest improvements?</div>
-                                <div class="d1-message-meta">You, 2 min ago</div>
-                            </div>
-                            <div class="d1-message claude">
-                                <div class="d1-message-content">
-                                    I'll analyze your API layer and suggest improvements. Let me start by examining the current structure.
-                                    <div class="d1-subagent">
-                                        <div class="d1-subagent-header">
-                                            <span class="d1-subagent-icon">A</span>
-                                            <span class="d1-subagent-name">Code Analysis Agent</span>
-                                            <span class="d1-subagent-status">Completed</span>
-                                        </div>
-                                    </div>
-                                    <div class="d1-tool-card">
-                                        <span class="d1-tool-name">Read</span> src/api/routes/index.ts
-                                    </div>
-                                    <div class="d1-tool-card">
-                                        <span class="d1-tool-name">Read</span> src/api/controllers/userController.ts
-                                    </div>
-                                    Based on my analysis, here are the key improvements I recommend...
-                                </div>
-                                <div class="d1-message-meta">Claude, just now</div>
-                            </div>
-                        </div>
-                        <div class="d1-input-area">
-                            <div class="d1-input-wrapper">
-                                <textarea class="d1-input" placeholder="Type your message..." rows="1"></textarea>
-                                <button class="d1-send-btn">-></button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d1-right-panel">
-                        <div class="d1-right-tabs">
-                            <button class="d1-right-tab">Info</button>
-                            <button class="d1-right-tab active">Events</button>
-                        </div>
-                        <div class="d1-timeline">
-                            <div class="d1-event">
-                                <div class="d1-event-icon user">U</div>
-                                <span class="d1-event-text">I need to refactor the API...</span>
-                                <span class="d1-event-time">2m</span>
-                            </div>
-                            <div class="d1-event">
-                                <div class="d1-event-icon agent">A</div>
-                                <span class="d1-event-text">Code Analysis Agent</span>
-                                <span class="d1-event-time">1m</span>
-                            </div>
-                            <div class="d1-event">
-                                <div class="d1-event-icon tool">T</div>
-                                <span class="d1-event-text">Read: routes/index.ts</span>
-                                <span class="d1-event-time">1m</span>
-                            </div>
-                            <div class="d1-event">
-                                <div class="d1-event-icon tool">T</div>
-                                <span class="d1-event-text">Read: userController.ts</span>
-                                <span class="d1-event-time">1m</span>
-                            </div>
-                            <div class="d1-event">
-                                <div class="d1-event-icon claude">C</div>
-                                <span class="d1-event-text">Analysis complete...</span>
-                                <span class="d1-event-time">now</span>
-                            </div>
-                        </div>
-                    </div>
+            <div class="d1-left-panel">
+              <div class="d1-panel-header">
+                <span class="d1-panel-title">Sessions</span>
+                <button class="d1-new-btn">+</button>
+              </div>
+              <div class="d1-session-list">
+                <div class="d1-session-item active">
+                  <div class="d1-session-name">API refactoring project</div>
+                  <div class="d1-session-meta">Active now</div>
                 </div>
+                <div class="d1-session-item">
+                  <div class="d1-session-name">Debug auth flow</div>
+                  <div class="d1-session-meta">2 hours ago</div>
+                </div>
+                <div class="d1-session-item">
+                  <div class="d1-session-name">Create user dashboard</div>
+                  <div class="d1-session-meta">Yesterday</div>
+                </div>
+                <div class="d1-session-item">
+                  <div class="d1-session-name">Database optimization</div>
+                  <div class="d1-session-meta">3 days ago</div>
+                </div>
+              </div>
             </div>
-        </section>
+            <div class="d1-main">
+              <div class="d1-tab-bar">
+                <button class="d1-tab active">
+                  API refactoring project
+                  <span class="d1-tab-close">x</span>
+                </button>
+                <button class="d1-tab">
+                  Debug auth flow
+                  <span class="d1-tab-close">x</span>
+                </button>
+              </div>
+              <div class="d1-conversation">
+                <div class="d1-message user">
+                  <div class="d1-message-content">
+                    I need to refactor the API layer to use a cleaner architecture. Can you analyze
+                    the current structure and suggest improvements?
+                  </div>
+                  <div class="d1-message-meta">You, 2 min ago</div>
+                </div>
+                <div class="d1-message claude">
+                  <div class="d1-message-content">
+                    I'll analyze your API layer and suggest improvements. Let me start by examining
+                    the current structure.
+                    <div class="d1-subagent">
+                      <div class="d1-subagent-header">
+                        <span class="d1-subagent-icon">A</span>
+                        <span class="d1-subagent-name">Code Analysis Agent</span>
+                        <span class="d1-subagent-status">Completed</span>
+                      </div>
+                    </div>
+                    <div class="d1-tool-card">
+                      <span class="d1-tool-name">Read</span> src/api/routes/index.ts
+                    </div>
+                    <div class="d1-tool-card">
+                      <span class="d1-tool-name">Read</span> src/api/controllers/userController.ts
+                    </div>
+                    Based on my analysis, here are the key improvements I recommend...
+                  </div>
+                  <div class="d1-message-meta">Claude, just now</div>
+                </div>
+              </div>
+              <div class="d1-input-area">
+                <div class="d1-input-wrapper">
+                  <textarea class="d1-input" placeholder="Type your message..." rows="1"></textarea>
+                  <button class="d1-send-btn">-></button>
+                </div>
+              </div>
+            </div>
+            <div class="d1-right-panel">
+              <div class="d1-right-tabs">
+                <button class="d1-right-tab">Info</button>
+                <button class="d1-right-tab active">Events</button>
+              </div>
+              <div class="d1-timeline">
+                <div class="d1-event">
+                  <div class="d1-event-icon user">U</div>
+                  <span class="d1-event-text">I need to refactor the API...</span>
+                  <span class="d1-event-time">2m</span>
+                </div>
+                <div class="d1-event">
+                  <div class="d1-event-icon agent">A</div>
+                  <span class="d1-event-text">Code Analysis Agent</span>
+                  <span class="d1-event-time">1m</span>
+                </div>
+                <div class="d1-event">
+                  <div class="d1-event-icon tool">T</div>
+                  <span class="d1-event-text">Read: routes/index.ts</span>
+                  <span class="d1-event-time">1m</span>
+                </div>
+                <div class="d1-event">
+                  <div class="d1-event-icon tool">T</div>
+                  <span class="d1-event-text">Read: userController.ts</span>
+                  <span class="d1-event-time">1m</span>
+                </div>
+                <div class="d1-event">
+                  <div class="d1-event-icon claude">C</div>
+                  <span class="d1-event-text">Analysis complete...</span>
+                  <span class="d1-event-time">now</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <!-- Direction 2: Minimal Focus -->
-        <section class="direction" data-dir="2">
-            <div class="direction-header">
-                <h2>Direction 2: Minimal Focus</h2>
-                <p>Stripped-down interface focused on the conversation. No sidebars visible by default. Maximum reading space, distraction-free.</p>
-                <div class="direction-tags">
-                    <span class="tag">Minimal</span>
-                    <span class="tag">Focus mode</span>
-                    <span class="tag">Large typography</span>
-                </div>
+      <!-- Direction 2: Minimal Focus -->
+      <section class="direction" data-dir="2">
+        <div class="direction-header">
+          <h2>Direction 2: Minimal Focus</h2>
+          <p>
+            Stripped-down interface focused on the conversation. No sidebars visible by default.
+            Maximum reading space, distraction-free.
+          </p>
+          <div class="direction-tags">
+            <span class="tag">Minimal</span>
+            <span class="tag">Focus mode</span>
+            <span class="tag">Large typography</span>
+          </div>
+        </div>
+        <div class="mockup-container">
+          <div class="d2-app">
+            <div class="d2-sidebar">
+              <div class="d2-sidebar-icon active">S</div>
+              <div class="d2-sidebar-icon">W</div>
+              <div style="flex: 1"></div>
+              <div class="d2-sidebar-icon">?</div>
             </div>
-            <div class="mockup-container">
-                <div class="d2-app">
-                    <div class="d2-sidebar">
-                        <div class="d2-sidebar-icon active">S</div>
-                        <div class="d2-sidebar-icon">W</div>
-                        <div style="flex:1"></div>
-                        <div class="d2-sidebar-icon">?</div>
-                    </div>
-                    <div class="d2-main">
-                        <div class="d2-header">
-                            <h1>API refactoring project</h1>
-                        </div>
-                        <div class="d2-conversation">
-                            <div class="d2-message user">
-                                <div class="d2-message-author">You</div>
-                                <div class="d2-message-content">I need to refactor the API layer to use a cleaner architecture. Can you analyze the current structure and suggest improvements?</div>
-                            </div>
-                            <div class="d2-message">
-                                <div class="d2-message-author">Claude</div>
-                                <div class="d2-message-content">
-                                    I'll analyze your API layer and suggest improvements. Let me start by examining the current structure.
-                                    <div class="d2-nested">
-                                        <div class="d2-nested-label">Code Analysis Agent</div>
-                                        <div>Analyzed 12 files, found 3 architectural concerns</div>
-                                    </div>
-                                    Based on my analysis, here are the key improvements I recommend for your API architecture...
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d2-input-area">
-                            <textarea class="d2-input" placeholder="Send a message..." rows="1"></textarea>
-                            <div class="d2-input-hint">Press Enter to send</div>
-                        </div>
-                    </div>
+            <div class="d2-main">
+              <div class="d2-header">
+                <h1>API refactoring project</h1>
+              </div>
+              <div class="d2-conversation">
+                <div class="d2-message user">
+                  <div class="d2-message-author">You</div>
+                  <div class="d2-message-content">
+                    I need to refactor the API layer to use a cleaner architecture. Can you analyze
+                    the current structure and suggest improvements?
+                  </div>
                 </div>
+                <div class="d2-message">
+                  <div class="d2-message-author">Claude</div>
+                  <div class="d2-message-content">
+                    I'll analyze your API layer and suggest improvements. Let me start by examining
+                    the current structure.
+                    <div class="d2-nested">
+                      <div class="d2-nested-label">Code Analysis Agent</div>
+                      <div>Analyzed 12 files, found 3 architectural concerns</div>
+                    </div>
+                    Based on my analysis, here are the key improvements I recommend for your API
+                    architecture...
+                  </div>
+                </div>
+              </div>
+              <div class="d2-input-area">
+                <textarea class="d2-input" placeholder="Send a message..." rows="1"></textarea>
+                <div class="d2-input-hint">Press Enter to send</div>
+              </div>
             </div>
-        </section>
+          </div>
+        </div>
+      </section>
 
-        <!-- Direction 3: Dense Power User -->
-        <section class="direction" data-dir="3">
-            <div class="direction-header">
-                <h2>Direction 3: Dense Power User</h2>
-                <p>Maximum information density with compact spacing. Toolbar with quick actions, always-visible timeline. For users who want everything at a glance.</p>
-                <div class="direction-tags">
-                    <span class="tag">Dense</span>
-                    <span class="tag">Power user</span>
-                    <span class="tag">Toolbar</span>
-                    <span class="tag">Compact</span>
+      <!-- Direction 3: Dense Power User -->
+      <section class="direction" data-dir="3">
+        <div class="direction-header">
+          <h2>Direction 3: Dense Power User</h2>
+          <p>
+            Maximum information density with compact spacing. Toolbar with quick actions,
+            always-visible timeline. For users who want everything at a glance.
+          </p>
+          <div class="direction-tags">
+            <span class="tag">Dense</span>
+            <span class="tag">Power user</span>
+            <span class="tag">Toolbar</span>
+            <span class="tag">Compact</span>
+          </div>
+        </div>
+        <div class="mockup-container">
+          <div class="d3-app">
+            <div class="d3-sidebar">
+              <div class="d3-sidebar-header">
+                <span class="d3-sidebar-title">Sessions</span>
+              </div>
+              <div class="d3-sessions">
+                <div class="d3-session active">
+                  <div class="d3-session-status"></div>
+                  <span class="d3-session-name">API refactoring project</span>
+                  <span class="d3-session-count">24</span>
                 </div>
-            </div>
-            <div class="mockup-container">
-                <div class="d3-app">
-                    <div class="d3-sidebar">
-                        <div class="d3-sidebar-header">
-                            <span class="d3-sidebar-title">Sessions</span>
-                        </div>
-                        <div class="d3-sessions">
-                            <div class="d3-session active">
-                                <div class="d3-session-status"></div>
-                                <span class="d3-session-name">API refactoring project</span>
-                                <span class="d3-session-count">24</span>
-                            </div>
-                            <div class="d3-session">
-                                <div class="d3-session-status"></div>
-                                <span class="d3-session-name">Debug auth flow</span>
-                                <span class="d3-session-count">8</span>
-                            </div>
-                            <div class="d3-session">
-                                <div class="d3-session-status"></div>
-                                <span class="d3-session-name">Create user dashboard</span>
-                                <span class="d3-session-count">42</span>
-                            </div>
-                            <div class="d3-session">
-                                <div class="d3-session-status"></div>
-                                <span class="d3-session-name">Database optimization</span>
-                                <span class="d3-session-count">15</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d3-main">
-                        <div class="d3-toolbar">
-                            <div class="d3-toolbar-group">
-                                <button class="d3-toolbar-btn">+ New</button>
-                            </div>
-                            <div class="d3-toolbar-group">
-                                <button class="d3-toolbar-btn active">Expand All</button>
-                                <button class="d3-toolbar-btn">Collapse All</button>
-                            </div>
-                            <div class="d3-toolbar-group">
-                                <button class="d3-toolbar-btn">Filter: All</button>
-                            </div>
-                        </div>
-                        <div class="d3-conversation">
-                            <div class="d3-chat">
-                                <div class="d3-msg user">
-                                    <div class="d3-msg-avatar">T</div>
-                                    <div class="d3-msg-body">
-                                        <div class="d3-msg-header">
-                                            <span class="d3-msg-name">teazyou</span>
-                                            <span class="d3-msg-time">14:32</span>
-                                        </div>
-                                        <div class="d3-msg-text">I need to refactor the API layer to use a cleaner architecture.</div>
-                                    </div>
-                                </div>
-                                <div class="d3-msg claude">
-                                    <div class="d3-msg-avatar">C</div>
-                                    <div class="d3-msg-body">
-                                        <div class="d3-msg-header">
-                                            <span class="d3-msg-name">Claude</span>
-                                            <span class="d3-msg-time">14:32</span>
-                                        </div>
-                                        <div class="d3-msg-text">I'll analyze your API layer. Let me examine the structure.</div>
-                                        <div class="d3-agent-block">
-                                            <div class="d3-agent-header">
-                                                <span class="d3-agent-icon">A</span>
-                                                <span class="d3-agent-name">Code Analysis Agent</span>
-                                                <span class="d3-agent-badge">Done</span>
-                                            </div>
-                                        </div>
-                                        <div class="d3-tool-line">
-                                            <span>Read</span> src/api/routes/index.ts
-                                        </div>
-                                        <div class="d3-tool-line">
-                                            <span>Read</span> src/api/controllers/userController.ts
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d3-input-area">
-                                    <textarea class="d3-input" placeholder="Message..." rows="1"></textarea>
-                                </div>
-                            </div>
-                            <div class="d3-timeline">
-                                <div class="d3-event active">
-                                    <div class="d3-event-dot user"></div>
-                                    <span class="d3-event-text">I need to refactor...</span>
-                                </div>
-                                <div class="d3-event">
-                                    <div class="d3-event-dot agent"></div>
-                                    <span class="d3-event-text">Code Analysis Agent</span>
-                                </div>
-                                <div class="d3-event">
-                                    <div class="d3-event-dot tool"></div>
-                                    <span class="d3-event-text">Read: routes/index.ts</span>
-                                </div>
-                                <div class="d3-event">
-                                    <div class="d3-event-dot tool"></div>
-                                    <span class="d3-event-text">Read: userController.ts</span>
-                                </div>
-                                <div class="d3-event">
-                                    <div class="d3-event-dot claude"></div>
-                                    <span class="d3-event-text">Analysis complete</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="d3-session">
+                  <div class="d3-session-status"></div>
+                  <span class="d3-session-name">Debug auth flow</span>
+                  <span class="d3-session-count">8</span>
                 </div>
+                <div class="d3-session">
+                  <div class="d3-session-status"></div>
+                  <span class="d3-session-name">Create user dashboard</span>
+                  <span class="d3-session-count">42</span>
+                </div>
+                <div class="d3-session">
+                  <div class="d3-session-status"></div>
+                  <span class="d3-session-name">Database optimization</span>
+                  <span class="d3-session-count">15</span>
+                </div>
+              </div>
             </div>
-        </section>
+            <div class="d3-main">
+              <div class="d3-toolbar">
+                <div class="d3-toolbar-group">
+                  <button class="d3-toolbar-btn">+ New</button>
+                </div>
+                <div class="d3-toolbar-group">
+                  <button class="d3-toolbar-btn active">Expand All</button>
+                  <button class="d3-toolbar-btn">Collapse All</button>
+                </div>
+                <div class="d3-toolbar-group">
+                  <button class="d3-toolbar-btn">Filter: All</button>
+                </div>
+              </div>
+              <div class="d3-conversation">
+                <div class="d3-chat">
+                  <div class="d3-msg user">
+                    <div class="d3-msg-avatar">T</div>
+                    <div class="d3-msg-body">
+                      <div class="d3-msg-header">
+                        <span class="d3-msg-name">teazyou</span>
+                        <span class="d3-msg-time">14:32</span>
+                      </div>
+                      <div class="d3-msg-text">
+                        I need to refactor the API layer to use a cleaner architecture.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="d3-msg claude">
+                    <div class="d3-msg-avatar">C</div>
+                    <div class="d3-msg-body">
+                      <div class="d3-msg-header">
+                        <span class="d3-msg-name">Claude</span>
+                        <span class="d3-msg-time">14:32</span>
+                      </div>
+                      <div class="d3-msg-text">
+                        I'll analyze your API layer. Let me examine the structure.
+                      </div>
+                      <div class="d3-agent-block">
+                        <div class="d3-agent-header">
+                          <span class="d3-agent-icon">A</span>
+                          <span class="d3-agent-name">Code Analysis Agent</span>
+                          <span class="d3-agent-badge">Done</span>
+                        </div>
+                      </div>
+                      <div class="d3-tool-line"><span>Read</span> src/api/routes/index.ts</div>
+                      <div class="d3-tool-line">
+                        <span>Read</span> src/api/controllers/userController.ts
+                      </div>
+                    </div>
+                  </div>
+                  <div class="d3-input-area">
+                    <textarea class="d3-input" placeholder="Message..." rows="1"></textarea>
+                  </div>
+                </div>
+                <div class="d3-timeline">
+                  <div class="d3-event active">
+                    <div class="d3-event-dot user"></div>
+                    <span class="d3-event-text">I need to refactor...</span>
+                  </div>
+                  <div class="d3-event">
+                    <div class="d3-event-dot agent"></div>
+                    <span class="d3-event-text">Code Analysis Agent</span>
+                  </div>
+                  <div class="d3-event">
+                    <div class="d3-event-dot tool"></div>
+                    <span class="d3-event-text">Read: routes/index.ts</span>
+                  </div>
+                  <div class="d3-event">
+                    <div class="d3-event-dot tool"></div>
+                    <span class="d3-event-text">Read: userController.ts</span>
+                  </div>
+                  <div class="d3-event">
+                    <div class="d3-event-dot claude"></div>
+                    <span class="d3-event-text">Analysis complete</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <!-- Direction 4: Card-Based -->
-        <section class="direction" data-dir="4">
-            <div class="direction-header">
-                <h2>Direction 4: Card-Based</h2>
-                <p>Sessions as cards, messages as chat bubbles. More visual separation between elements. Rounded corners, softer feel.</p>
-                <div class="direction-tags">
-                    <span class="tag">Card UI</span>
-                    <span class="tag">Chat bubbles</span>
-                    <span class="tag">Rounded</span>
-                    <span class="tag">Modern</span>
-                </div>
+      <!-- Direction 4: Card-Based -->
+      <section class="direction" data-dir="4">
+        <div class="direction-header">
+          <h2>Direction 4: Card-Based</h2>
+          <p>
+            Sessions as cards, messages as chat bubbles. More visual separation between elements.
+            Rounded corners, softer feel.
+          </p>
+          <div class="direction-tags">
+            <span class="tag">Card UI</span>
+            <span class="tag">Chat bubbles</span>
+            <span class="tag">Rounded</span>
+            <span class="tag">Modern</span>
+          </div>
+        </div>
+        <div class="mockup-container">
+          <div class="d4-app">
+            <div class="d4-nav">
+              <div class="d4-nav-icon active">S</div>
+              <div class="d4-nav-icon">W</div>
+              <div style="flex: 1"></div>
+              <div class="d4-nav-icon">?</div>
             </div>
-            <div class="mockup-container">
-                <div class="d4-app">
-                    <div class="d4-nav">
-                        <div class="d4-nav-icon active">S</div>
-                        <div class="d4-nav-icon">W</div>
-                        <div style="flex:1"></div>
-                        <div class="d4-nav-icon">?</div>
-                    </div>
-                    <div class="d4-sidebar">
-                        <div class="d4-sidebar-header">
-                            <span class="d4-sidebar-title">Sessions</span>
-                            <button class="d4-new-btn">+</button>
-                        </div>
-                        <div class="d4-session-card active">
-                            <div class="d4-card-header">
-                                <div class="d4-card-status"></div>
-                                <span class="d4-card-name">API refactoring project</span>
-                            </div>
-                            <div class="d4-card-preview">Analyzing API structure and suggesting architectural improvements...</div>
-                            <div class="d4-card-footer">
-                                <span>24 messages</span>
-                                <span>Active now</span>
-                            </div>
-                        </div>
-                        <div class="d4-session-card">
-                            <div class="d4-card-header">
-                                <div class="d4-card-status"></div>
-                                <span class="d4-card-name">Debug auth flow</span>
-                            </div>
-                            <div class="d4-card-preview">Fixed the JWT token validation issue in middleware</div>
-                            <div class="d4-card-footer">
-                                <span>8 messages</span>
-                                <span>2h ago</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d4-main">
-                        <div class="d4-header">
-                            <span class="d4-session-name">API refactoring project</span>
-                            <div class="d4-header-actions">
-                                <button class="d4-header-btn">Events</button>
-                                <button class="d4-header-btn">Info</button>
-                            </div>
-                        </div>
-                        <div class="d4-conversation">
-                            <div class="d4-message user">
-                                <div class="d4-message-bubble">I need to refactor the API layer to use a cleaner architecture. Can you analyze the current structure?</div>
-                            </div>
-                            <div class="d4-message claude">
-                                <div class="d4-message-bubble">
-                                    I'll analyze your API layer and suggest improvements.
-                                    <div class="d4-agent-card">
-                                        <div class="d4-agent-header">
-                                            <div class="d4-agent-icon">A</div>
-                                            <span class="d4-agent-name">Code Analysis Agent</span>
-                                            <span class="d4-agent-status">Done</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <span class="d4-tool-chip">Read routes/index.ts</span>
-                                        <span class="d4-tool-chip">Read userController.ts</span>
-                                    </div>
-                                    Based on my analysis, here are the key improvements...
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d4-input-area">
-                            <div class="d4-input-wrapper">
-                                <textarea class="d4-input" placeholder="Send a message..." rows="1"></textarea>
-                                <button class="d4-send-btn">-></button>
-                            </div>
-                        </div>
-                    </div>
+            <div class="d4-sidebar">
+              <div class="d4-sidebar-header">
+                <span class="d4-sidebar-title">Sessions</span>
+                <button class="d4-new-btn">+</button>
+              </div>
+              <div class="d4-session-card active">
+                <div class="d4-card-header">
+                  <div class="d4-card-status"></div>
+                  <span class="d4-card-name">API refactoring project</span>
                 </div>
+                <div class="d4-card-preview">
+                  Analyzing API structure and suggesting architectural improvements...
+                </div>
+                <div class="d4-card-footer">
+                  <span>24 messages</span>
+                  <span>Active now</span>
+                </div>
+              </div>
+              <div class="d4-session-card">
+                <div class="d4-card-header">
+                  <div class="d4-card-status"></div>
+                  <span class="d4-card-name">Debug auth flow</span>
+                </div>
+                <div class="d4-card-preview">
+                  Fixed the JWT token validation issue in middleware
+                </div>
+                <div class="d4-card-footer">
+                  <span>8 messages</span>
+                  <span>2h ago</span>
+                </div>
+              </div>
             </div>
-        </section>
+            <div class="d4-main">
+              <div class="d4-header">
+                <span class="d4-session-name">API refactoring project</span>
+                <div class="d4-header-actions">
+                  <button class="d4-header-btn">Events</button>
+                  <button class="d4-header-btn">Info</button>
+                </div>
+              </div>
+              <div class="d4-conversation">
+                <div class="d4-message user">
+                  <div class="d4-message-bubble">
+                    I need to refactor the API layer to use a cleaner architecture. Can you analyze
+                    the current structure?
+                  </div>
+                </div>
+                <div class="d4-message claude">
+                  <div class="d4-message-bubble">
+                    I'll analyze your API layer and suggest improvements.
+                    <div class="d4-agent-card">
+                      <div class="d4-agent-header">
+                        <div class="d4-agent-icon">A</div>
+                        <span class="d4-agent-name">Code Analysis Agent</span>
+                        <span class="d4-agent-status">Done</span>
+                      </div>
+                    </div>
+                    <div>
+                      <span class="d4-tool-chip">Read routes/index.ts</span>
+                      <span class="d4-tool-chip">Read userController.ts</span>
+                    </div>
+                    Based on my analysis, here are the key improvements...
+                  </div>
+                </div>
+              </div>
+              <div class="d4-input-area">
+                <div class="d4-input-wrapper">
+                  <textarea class="d4-input" placeholder="Send a message..." rows="1"></textarea>
+                  <button class="d4-send-btn">-></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <!-- Direction 5: Split View Focus -->
-        <section class="direction" data-dir="5">
-            <div class="direction-header">
-                <h2>Direction 5: Split View Focus</h2>
-                <p>Clear three-column split with search, conversation, and detail panel. Strong visual separation. Good for reference and navigation.</p>
-                <div class="direction-tags">
-                    <span class="tag">Split view</span>
-                    <span class="tag">Search-first</span>
-                    <span class="tag">Detail panel</span>
-                </div>
+      <!-- Direction 5: Split View Focus -->
+      <section class="direction" data-dir="5">
+        <div class="direction-header">
+          <h2>Direction 5: Split View Focus</h2>
+          <p>
+            Clear three-column split with search, conversation, and detail panel. Strong visual
+            separation. Good for reference and navigation.
+          </p>
+          <div class="direction-tags">
+            <span class="tag">Split view</span>
+            <span class="tag">Search-first</span>
+            <span class="tag">Detail panel</span>
+          </div>
+        </div>
+        <div class="mockup-container">
+          <div class="d5-app">
+            <div class="d5-rail">
+              <div class="d5-rail-btn active">S</div>
+              <div class="d5-rail-btn">W</div>
+              <div style="flex: 1"></div>
+              <div class="d5-rail-btn">?</div>
             </div>
-            <div class="mockup-container">
-                <div class="d5-app">
-                    <div class="d5-rail">
-                        <div class="d5-rail-btn active">S</div>
-                        <div class="d5-rail-btn">W</div>
-                        <div style="flex:1"></div>
-                        <div class="d5-rail-btn">?</div>
-                    </div>
-                    <div class="d5-panel-left">
-                        <div class="d5-search">
-                            <input type="text" class="d5-search-input" placeholder="Search sessions...">
-                        </div>
-                        <div class="d5-list">
-                            <div class="d5-item active">
-                                <div class="d5-item-name">API refactoring project</div>
-                                <div class="d5-item-preview">Analyzing API structure and suggesting...</div>
-                            </div>
-                            <div class="d5-item">
-                                <div class="d5-item-name">Debug auth flow</div>
-                                <div class="d5-item-preview">Fixed the JWT token validation...</div>
-                            </div>
-                            <div class="d5-item">
-                                <div class="d5-item-name">Create user dashboard</div>
-                                <div class="d5-item-preview">Building React components for...</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d5-content">
-                        <div class="d5-chat">
-                            <div class="d5-chat-header">
-                                <div class="d5-chat-status"></div>
-                                <span class="d5-chat-title">API refactoring project</span>
-                            </div>
-                            <div class="d5-messages">
-                                <div class="d5-msg user">
-                                    <div class="d5-msg-header">
-                                        <span class="d5-msg-author">You</span>
-                                        <span class="d5-msg-time">14:32</span>
-                                    </div>
-                                    <div class="d5-msg-content">I need to refactor the API layer to use a cleaner architecture.</div>
-                                </div>
-                                <div class="d5-msg">
-                                    <div class="d5-msg-header">
-                                        <span class="d5-msg-author">Claude</span>
-                                        <span class="d5-msg-time">14:32</span>
-                                    </div>
-                                    <div class="d5-msg-content">
-                                        I'll analyze your API layer and suggest improvements.
-                                        <div class="d5-collapsed">
-                                            <span class="d5-collapsed-icon">A</span>
-                                            <span class="d5-collapsed-text">Code Analysis Agent</span>
-                                            <span class="d5-collapsed-badge">Done</span>
-                                        </div>
-                                        Based on my analysis, here are the improvements...
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="d5-input-area">
-                                <textarea class="d5-input" placeholder="Send a message..." rows="1"></textarea>
-                            </div>
-                        </div>
-                        <div class="d5-detail">
-                            <div class="d5-detail-tabs">
-                                <button class="d5-detail-tab active">Events</button>
-                                <button class="d5-detail-tab">Info</button>
-                            </div>
-                            <div class="d5-detail-content">
-                                <div class="d5-timeline-item">
-                                    <div class="d5-timeline-dot user"></div>
-                                    <span class="d5-timeline-text">I need to refactor...</span>
-                                </div>
-                                <div class="d5-timeline-item">
-                                    <div class="d5-timeline-dot agent"></div>
-                                    <span class="d5-timeline-text">Code Analysis Agent</span>
-                                </div>
-                                <div class="d5-timeline-item">
-                                    <div class="d5-timeline-dot tool"></div>
-                                    <span class="d5-timeline-text">Read: routes/index.ts</span>
-                                </div>
-                                <div class="d5-timeline-item">
-                                    <div class="d5-timeline-dot tool"></div>
-                                    <span class="d5-timeline-text">Read: userController.ts</span>
-                                </div>
-                                <div class="d5-timeline-item">
-                                    <div class="d5-timeline-dot claude"></div>
-                                    <span class="d5-timeline-text">Analysis complete</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="d5-panel-left">
+              <div class="d5-search">
+                <input type="text" class="d5-search-input" placeholder="Search sessions..." />
+              </div>
+              <div class="d5-list">
+                <div class="d5-item active">
+                  <div class="d5-item-name">API refactoring project</div>
+                  <div class="d5-item-preview">Analyzing API structure and suggesting...</div>
                 </div>
+                <div class="d5-item">
+                  <div class="d5-item-name">Debug auth flow</div>
+                  <div class="d5-item-preview">Fixed the JWT token validation...</div>
+                </div>
+                <div class="d5-item">
+                  <div class="d5-item-name">Create user dashboard</div>
+                  <div class="d5-item-preview">Building React components for...</div>
+                </div>
+              </div>
             </div>
-        </section>
+            <div class="d5-content">
+              <div class="d5-chat">
+                <div class="d5-chat-header">
+                  <div class="d5-chat-status"></div>
+                  <span class="d5-chat-title">API refactoring project</span>
+                </div>
+                <div class="d5-messages">
+                  <div class="d5-msg user">
+                    <div class="d5-msg-header">
+                      <span class="d5-msg-author">You</span>
+                      <span class="d5-msg-time">14:32</span>
+                    </div>
+                    <div class="d5-msg-content">
+                      I need to refactor the API layer to use a cleaner architecture.
+                    </div>
+                  </div>
+                  <div class="d5-msg">
+                    <div class="d5-msg-header">
+                      <span class="d5-msg-author">Claude</span>
+                      <span class="d5-msg-time">14:32</span>
+                    </div>
+                    <div class="d5-msg-content">
+                      I'll analyze your API layer and suggest improvements.
+                      <div class="d5-collapsed">
+                        <span class="d5-collapsed-icon">A</span>
+                        <span class="d5-collapsed-text">Code Analysis Agent</span>
+                        <span class="d5-collapsed-badge">Done</span>
+                      </div>
+                      Based on my analysis, here are the improvements...
+                    </div>
+                  </div>
+                </div>
+                <div class="d5-input-area">
+                  <textarea class="d5-input" placeholder="Send a message..." rows="1"></textarea>
+                </div>
+              </div>
+              <div class="d5-detail">
+                <div class="d5-detail-tabs">
+                  <button class="d5-detail-tab active">Events</button>
+                  <button class="d5-detail-tab">Info</button>
+                </div>
+                <div class="d5-detail-content">
+                  <div class="d5-timeline-item">
+                    <div class="d5-timeline-dot user"></div>
+                    <span class="d5-timeline-text">I need to refactor...</span>
+                  </div>
+                  <div class="d5-timeline-item">
+                    <div class="d5-timeline-dot agent"></div>
+                    <span class="d5-timeline-text">Code Analysis Agent</span>
+                  </div>
+                  <div class="d5-timeline-item">
+                    <div class="d5-timeline-dot tool"></div>
+                    <span class="d5-timeline-text">Read: routes/index.ts</span>
+                  </div>
+                  <div class="d5-timeline-item">
+                    <div class="d5-timeline-dot tool"></div>
+                    <span class="d5-timeline-text">Read: userController.ts</span>
+                  </div>
+                  <div class="d5-timeline-item">
+                    <div class="d5-timeline-dot claude"></div>
+                    <span class="d5-timeline-text">Analysis complete</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <!-- Direction 6: Terminal-Inspired -->
-        <section class="direction" data-dir="6">
-            <div class="direction-header">
-                <h2>Direction 6: Terminal-Inspired</h2>
-                <p>Embraces CLI heritage with monospace typography and command-line aesthetics. Familiar to power users, unique identity.</p>
-                <div class="direction-tags">
-                    <span class="tag">Terminal</span>
-                    <span class="tag">Monospace</span>
-                    <span class="tag">CLI heritage</span>
-                </div>
+      <!-- Direction 6: Terminal-Inspired -->
+      <section class="direction" data-dir="6">
+        <div class="direction-header">
+          <h2>Direction 6: Terminal-Inspired</h2>
+          <p>
+            Embraces CLI heritage with monospace typography and command-line aesthetics. Familiar to
+            power users, unique identity.
+          </p>
+          <div class="direction-tags">
+            <span class="tag">Terminal</span>
+            <span class="tag">Monospace</span>
+            <span class="tag">CLI heritage</span>
+          </div>
+        </div>
+        <div class="mockup-container">
+          <div class="d6-app">
+            <div class="d6-sidebar">
+              <div class="d6-sidebar-header">~/sessions</div>
+              <div class="d6-sessions">
+                <div class="d6-session active">api-refactoring-project</div>
+                <div class="d6-session">debug-auth-flow</div>
+                <div class="d6-session">create-user-dashboard</div>
+                <div class="d6-session">database-optimization</div>
+              </div>
             </div>
-            <div class="mockup-container">
-                <div class="d6-app">
-                    <div class="d6-sidebar">
-                        <div class="d6-sidebar-header">~/sessions</div>
-                        <div class="d6-sessions">
-                            <div class="d6-session active">api-refactoring-project</div>
-                            <div class="d6-session">debug-auth-flow</div>
-                            <div class="d6-session">create-user-dashboard</div>
-                            <div class="d6-session">database-optimization</div>
-                        </div>
-                    </div>
-                    <div class="d6-main">
-                        <div class="d6-header">
-                            <span class="d6-header-path">~/sessions/api-refactoring-project</span>
-                            <span class="d6-header-status">[active]</span>
-                        </div>
-                        <div class="d6-terminal">
-                            <div class="d6-line">
-                                <span class="d6-prompt">you@grimoire ~ </span>
-                                <span class="d6-user-input">I need to refactor the API layer to use a cleaner architecture.</span>
-                            </div>
-                            <div class="d6-response">
-                                I'll analyze your API layer and suggest improvements. Let me examine the current structure.
-                                <div class="d6-agent-block">
-                                    <div class="d6-agent-label">[subagent: code-analysis]</div>
-                                    <div class="d6-agent-content">Analyzing project structure...</div>
-                                </div>
-                                <div class="d6-tool">Read src/api/routes/index.ts</div>
-                                <div class="d6-tool">Read src/api/controllers/userController.ts</div>
-                                <div><span class="d6-success">[done]</span> Analysis complete. Here are the improvements I recommend...</div>
-                            </div>
-                        </div>
-                        <div class="d6-input-area">
-                            <div class="d6-input-line">
-                                <span class="d6-input-prompt">you@grimoire ~ </span>
-                                <input type="text" class="d6-input" placeholder="">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d6-panel">
-                        <div class="d6-panel-header">events</div>
-                        <div class="d6-event-line">
-                            <span class="d6-event-type user">U</span>
-                            <span class="d6-event-text">I need to refactor...</span>
-                        </div>
-                        <div class="d6-event-line">
-                            <span class="d6-event-type agent">A</span>
-                            <span class="d6-event-text">code-analysis</span>
-                        </div>
-                        <div class="d6-event-line">
-                            <span class="d6-event-type tool">T</span>
-                            <span class="d6-event-text">Read routes/index.ts</span>
-                        </div>
-                        <div class="d6-event-line">
-                            <span class="d6-event-type tool">T</span>
-                            <span class="d6-event-text">Read userController.ts</span>
-                        </div>
-                        <div class="d6-event-line">
-                            <span class="d6-event-type claude">C</span>
-                            <span class="d6-event-text">Analysis complete</span>
-                        </div>
-                    </div>
+            <div class="d6-main">
+              <div class="d6-header">
+                <span class="d6-header-path">~/sessions/api-refactoring-project</span>
+                <span class="d6-header-status">[active]</span>
+              </div>
+              <div class="d6-terminal">
+                <div class="d6-line">
+                  <span class="d6-prompt">you@grimoire ~ </span>
+                  <span class="d6-user-input"
+                    >I need to refactor the API layer to use a cleaner architecture.</span
+                  >
                 </div>
+                <div class="d6-response">
+                  I'll analyze your API layer and suggest improvements. Let me examine the current
+                  structure.
+                  <div class="d6-agent-block">
+                    <div class="d6-agent-label">[subagent: code-analysis]</div>
+                    <div class="d6-agent-content">Analyzing project structure...</div>
+                  </div>
+                  <div class="d6-tool">Read src/api/routes/index.ts</div>
+                  <div class="d6-tool">Read src/api/controllers/userController.ts</div>
+                  <div>
+                    <span class="d6-success">[done]</span> Analysis complete. Here are the
+                    improvements I recommend...
+                  </div>
+                </div>
+              </div>
+              <div class="d6-input-area">
+                <div class="d6-input-line">
+                  <span class="d6-input-prompt">you@grimoire ~ </span>
+                  <input type="text" class="d6-input" placeholder="" />
+                </div>
+              </div>
             </div>
-        </section>
+            <div class="d6-panel">
+              <div class="d6-panel-header">events</div>
+              <div class="d6-event-line">
+                <span class="d6-event-type user">U</span>
+                <span class="d6-event-text">I need to refactor...</span>
+              </div>
+              <div class="d6-event-line">
+                <span class="d6-event-type agent">A</span>
+                <span class="d6-event-text">code-analysis</span>
+              </div>
+              <div class="d6-event-line">
+                <span class="d6-event-type tool">T</span>
+                <span class="d6-event-text">Read routes/index.ts</span>
+              </div>
+              <div class="d6-event-line">
+                <span class="d6-event-type tool">T</span>
+                <span class="d6-event-text">Read userController.ts</span>
+              </div>
+              <div class="d6-event-line">
+                <span class="d6-event-type claude">C</span>
+                <span class="d6-event-text">Analysis complete</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <!-- Comparison View -->
-        <section class="direction" data-dir="compare">
-            <div class="direction-header">
-                <h2>Compare All Directions</h2>
-                <p>Side-by-side comparison of all design directions. Click any direction tab above to see it full-size.</p>
+      <!-- Comparison View -->
+      <section class="direction" data-dir="compare">
+        <div class="direction-header">
+          <h2>Compare All Directions</h2>
+          <p>
+            Side-by-side comparison of all design directions. Click any direction tab above to see
+            it full-size.
+          </p>
+        </div>
+        <div class="compare-grid">
+          <div class="compare-item">
+            <h3>1. Classic Obsidian (Recommended)</h3>
+            <div class="compare-preview">
+              <div class="d1-app" style="pointer-events: none">
+                <!-- Same content as d1 -->
+              </div>
             </div>
-            <div class="compare-grid">
-                <div class="compare-item">
-                    <h3>1. Classic Obsidian (Recommended)</h3>
-                    <div class="compare-preview">
-                        <div class="d1-app" style="pointer-events:none">
-                            <!-- Same content as d1 -->
-                        </div>
-                    </div>
-                </div>
-                <div class="compare-item">
-                    <h3>2. Minimal Focus</h3>
-                    <div class="compare-preview">
-                        <div class="d2-app" style="pointer-events:none">
-                            <!-- Same content as d2 -->
-                        </div>
-                    </div>
-                </div>
-                <div class="compare-item">
-                    <h3>3. Dense Power User</h3>
-                    <div class="compare-preview">
-                        <div class="d3-app" style="pointer-events:none">
-                            <!-- Same content as d3 -->
-                        </div>
-                    </div>
-                </div>
-                <div class="compare-item">
-                    <h3>4. Card-Based</h3>
-                    <div class="compare-preview">
-                        <div class="d4-app" style="pointer-events:none">
-                            <!-- Same content as d4 -->
-                        </div>
-                    </div>
-                </div>
-                <div class="compare-item">
-                    <h3>5. Split View Focus</h3>
-                    <div class="compare-preview">
-                        <div class="d5-app" style="pointer-events:none">
-                            <!-- Same content as d5 -->
-                        </div>
-                    </div>
-                </div>
-                <div class="compare-item">
-                    <h3>6. Terminal-Inspired</h3>
-                    <div class="compare-preview">
-                        <div class="d6-app" style="pointer-events:none">
-                            <!-- Same content as d6 -->
-                        </div>
-                    </div>
-                </div>
+          </div>
+          <div class="compare-item">
+            <h3>2. Minimal Focus</h3>
+            <div class="compare-preview">
+              <div class="d2-app" style="pointer-events: none">
+                <!-- Same content as d2 -->
+              </div>
             </div>
-        </section>
+          </div>
+          <div class="compare-item">
+            <h3>3. Dense Power User</h3>
+            <div class="compare-preview">
+              <div class="d3-app" style="pointer-events: none">
+                <!-- Same content as d3 -->
+              </div>
+            </div>
+          </div>
+          <div class="compare-item">
+            <h3>4. Card-Based</h3>
+            <div class="compare-preview">
+              <div class="d4-app" style="pointer-events: none">
+                <!-- Same content as d4 -->
+              </div>
+            </div>
+          </div>
+          <div class="compare-item">
+            <h3>5. Split View Focus</h3>
+            <div class="compare-preview">
+              <div class="d5-app" style="pointer-events: none">
+                <!-- Same content as d5 -->
+              </div>
+            </div>
+          </div>
+          <div class="compare-item">
+            <h3>6. Terminal-Inspired</h3>
+            <div class="compare-preview">
+              <div class="d6-app" style="pointer-events: none">
+                <!-- Same content as d6 -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <script>
-        // Tab navigation
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Update active tab
-                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
+      // Tab navigation
+      document.querySelectorAll('.nav-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          // Update active tab
+          document.querySelectorAll('.nav-tab').forEach((t) => t.classList.remove('active'))
+          tab.classList.add('active')
 
-                // Show corresponding direction
-                const dir = tab.dataset.dir;
-                document.querySelectorAll('.direction').forEach(d => d.classList.remove('active'));
-                document.querySelector(`.direction[data-dir="${dir}"]`).classList.add('active');
-            });
-        });
+          // Show corresponding direction
+          const dir = tab.dataset.dir
+          document.querySelectorAll('.direction').forEach((d) => d.classList.remove('active'))
+          document.querySelector(`.direction[data-dir="${dir}"]`).classList.add('active')
+        })
+      })
     </script>
-</body>
+  </body>
 </html>

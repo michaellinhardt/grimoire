@@ -83,29 +83,34 @@ Which areas would you like to edit? (You can select multiple)"
 **For each selected category, ask targeted questions:**
 
 #### If Persona selected:
+
 - "What aspect of the persona needs change?"
 - "Should the role be more specific or expanded?"
 - "Is the communication style hitting the right tone?"
 - "Do the principles need refinement?"
 
 #### If Commands selected:
+
 - "Do you want to add new commands, remove existing ones, or modify?"
 - "Are current command names and descriptions clear?"
 - "Should command steps be adjusted?"
 - "Is the menu structure working well?"
 
 #### If Metadata selected:
+
 - "What metadata fields need updating?"
 - "Is the description accurate and compelling?"
 - "Should version be bumped?"
 - "Are tags still relevant?"
 
 #### If Actions selected:
+
 - "What critical actions need modification?"
 - "Should new activation behaviors be added?"
 - "Are current actions executing as expected?"
 
 #### If Type conversion selected:
+
 - "What type are you converting from/to?"
 - "What's driving this conversion?"
 - "Are you aware of the implications (e.g., Expert needs sidecar)?"
@@ -118,25 +123,31 @@ Which areas would you like to edit? (You can select multiple)"
 ## Edits Planned
 
 ### Persona Edits
+
 - [ ] {edit description}
 - [ ] {edit description}
 
 ### Command Edits
+
 - [ ] {edit description}
 - [ ] {edit description}
 
 ### Metadata Edits
+
 - [ ] {edit description}
 - [ ] {edit description}
 
 ### Critical Action Edits
+
 - [ ] {edit description}
 - [ ] {edit description}
 
 ### Type Conversion
+
 - [ ] {from: X, to: Y, rationale: ...}
 
 ### Other Edits
+
 - [ ] {edit description}
 ```
 

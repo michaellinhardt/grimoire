@@ -7,15 +7,15 @@
 
 Both opcode and Grimoire aim to provide a desktop GUI for Claude Code, but they take fundamentally different architectural approaches:
 
-| Aspect | Opcode | Grimoire |
-|--------|--------|----------|
-| Framework | Tauri 2 (Rust + React) | Electron (Node.js + React) |
-| CC Integration | Real-time JSONL streaming | Request-response (process exit triggers read) |
-| Session State | File watching + streaming | Post-completion file reading |
-| Process Model | Interactive streaming sessions | Per-message process spawning (-p flag) |
-| Sub-agent Display | Inline tool widgets | Inline expansion + dedicated tabs |
-| Data Storage | SQLite (local) | SQLite (local) |
-| Maturity | Production (19k+ GitHub stars) | Greenfield (Phase 1 planning) |
+| Aspect            | Opcode                         | Grimoire                                      |
+| ----------------- | ------------------------------ | --------------------------------------------- |
+| Framework         | Tauri 2 (Rust + React)         | Electron (Node.js + React)                    |
+| CC Integration    | Real-time JSONL streaming      | Request-response (process exit triggers read) |
+| Session State     | File watching + streaming      | Post-completion file reading                  |
+| Process Model     | Interactive streaming sessions | Per-message process spawning (-p flag)        |
+| Sub-agent Display | Inline tool widgets            | Inline expansion + dedicated tabs             |
+| Data Storage      | SQLite (local)                 | SQLite (local)                                |
+| Maturity          | Production (19k+ GitHub stars) | Greenfield (Phase 1 planning)                 |
 
 ---
 
@@ -31,6 +31,7 @@ Opcode integrates with Claude Code through **real-time JSONL streaming**:
 - **Session Discovery:** Auto-detects `~/.claude` directory on first startup
 
 **Key Implementation Detail:**
+
 ```
 Frontend (React) <---> Tauri Bridge <---> Backend (Rust)
                                               |
@@ -48,36 +49,35 @@ Grimoire uses a **request-response model** with process isolation:
 - **No Streaming:** Response retrieved from JSONL file after process completes
 
 **Key Implementation Detail:**
+
 ```typescript
-const child = spawn('claude', [
-  '--session-id', sessionId,
-  '-p', message
-], {
+const child = spawn('claude', ['--session-id', sessionId, '-p', message], {
   env: {
     ...process.env,
     CLAUDE_CONFIG_DIR: path.join(app.getPath('userData'), '.claude')
   }
-});
+})
 
 child.on('exit', async (code) => {
   if (code === 0) {
-    const newEvents = await getResponseAfterProcess(sessionId);
-    emitResponseEvents(sessionId, newEvents);
+    const newEvents = await getResponseAfterProcess(sessionId)
+    emitResponseEvents(sessionId, newEvents)
   }
-});
+})
 ```
 
 ### Analysis
 
-| Factor | Opcode | Grimoire | Verdict |
-|--------|--------|----------|---------|
-| User Experience | Real-time streaming feedback | "Thinking..." indicator, batch response | Opcode (better UX) |
-| Implementation Complexity | Higher (JSONL parsing, streaming) | Lower (file read on exit) | Grimoire (simpler) |
-| Error Handling | Must handle stream interruptions | Clean exit codes | Grimoire (cleaner) |
-| Session Isolation | Shares config directory | Isolated config per app | Grimoire (safer) |
-| Resource Usage | Persistent sessions possible | Process exits after each response | Grimoire (lighter) |
+| Factor                    | Opcode                            | Grimoire                                | Verdict            |
+| ------------------------- | --------------------------------- | --------------------------------------- | ------------------ |
+| User Experience           | Real-time streaming feedback      | "Thinking..." indicator, batch response | Opcode (better UX) |
+| Implementation Complexity | Higher (JSONL parsing, streaming) | Lower (file read on exit)               | Grimoire (simpler) |
+| Error Handling            | Must handle stream interruptions  | Clean exit codes                        | Grimoire (cleaner) |
+| Session Isolation         | Shares config directory           | Isolated config per app                 | Grimoire (safer)   |
+| Resource Usage            | Persistent sessions possible      | Process exits after each response       | Grimoire (lighter) |
 
 **Lessons for Grimoire:**
+
 1. Consider adding optional streaming in future phases for better UX during long operations
 2. The `-p` flag approach is valid for MVP but may feel less responsive for multi-step workflows
 3. Session isolation via `CLAUDE_CONFIG_DIR` is a unique advantage - document this as a feature
@@ -96,6 +96,7 @@ child.on('exit', async (code) => {
 - **Background Agents:** CC Agents run in isolated background processes
 
 **State Tracking:**
+
 - Sessions tracked with timestamps, first messages, and metadata
 - Execution history maintained in SQLite
 - No explicit state machine documented
@@ -109,6 +110,7 @@ child.on('exit', async (code) => {
 - **Tab Behavior:** One tab per session, confirmation on close while Working
 
 **State Tracking:**
+
 ```typescript
 interface ResponseState {
   sessionId: string
@@ -120,15 +122,16 @@ interface ResponseState {
 
 ### Analysis
 
-| Factor | Opcode | Grimoire | Verdict |
-|--------|--------|----------|---------|
-| Session Discovery | Auto-detect ~/.claude | DB + background scan | Similar |
-| State Clarity | Implicit | Explicit 3-state FSM | Grimoire (clearer) |
-| Checkpoint/Branching | Built-in | Not in MVP | Opcode (more features) |
-| Session Isolation | Shared config | Per-app config dir | Grimoire (safer) |
-| Tab Management | Standard tabs | One tab per session, sub-agent tabs | Grimoire (clearer model) |
+| Factor               | Opcode                | Grimoire                            | Verdict                  |
+| -------------------- | --------------------- | ----------------------------------- | ------------------------ |
+| Session Discovery    | Auto-detect ~/.claude | DB + background scan                | Similar                  |
+| State Clarity        | Implicit              | Explicit 3-state FSM                | Grimoire (clearer)       |
+| Checkpoint/Branching | Built-in              | Not in MVP                          | Opcode (more features)   |
+| Session Isolation    | Shared config         | Per-app config dir                  | Grimoire (safer)         |
+| Tab Management       | Standard tabs         | One tab per session, sub-agent tabs | Grimoire (clearer model) |
 
 **Lessons for Grimoire:**
+
 1. Opcode's checkpoint system is popular - consider for Phase 2
 2. Session forking is a powerful feature for experimentation
 3. The explicit 3-state machine is cleaner than Opcode's implicit state - keep it
@@ -149,17 +152,20 @@ interface ResponseState {
 | `result` | Session summaries | cost_usd, duration_ms, usage |
 
 **Specialized Tool Widgets:**
+
 - `EditWidget`: File diff visualization using Diff library
 - `BashWidget`: Terminal-style output with command highlighting
 - `Read/Glob Widgets`: File system query results
 - `MCP Tool Widgets`: Extended capabilities display
 
 **Performance Optimizations:**
+
 - Virtual scrolling via `@tanstack/react-virtual`
 - Output caching via `SessionPersistenceService`
 - Cache invalidation: 5 seconds for running sessions, status-based for others
 
 **Filtering Logic:**
+
 - Removes metadata messages lacking meaningful content
 - Removes user messages containing only tool results with dedicated widgets
 - Removes empty content arrays
@@ -177,6 +183,7 @@ interface ResponseState {
 | `tool_use` (other) | `ToolCallCard` | Generic tool display |
 
 **Tool Call Pairing:**
+
 ```typescript
 function pairToolCallsWithResults(events: ConversationEvent[]): Map<string, ToolPair> {
   // Match tool_use blocks with their tool_result blocks by ID
@@ -185,15 +192,16 @@ function pairToolCallsWithResults(events: ConversationEvent[]): Map<string, Tool
 
 ### Analysis
 
-| Factor | Opcode | Grimoire | Verdict |
-|--------|--------|----------|---------|
-| Tool-Specific Rendering | Rich (dedicated widgets per tool) | Moderate (3 component types) | Opcode (richer) |
-| Virtual Scrolling | Built-in | Not specified | Opcode (better scale) |
-| Caching | Sophisticated (time + status based) | Not in architecture | Opcode (more optimized) |
-| Sub-Agent Treatment | Inline tool widget | Dedicated component + tab option | Grimoire (better focus) |
-| Export Options | JSONL + Markdown | Not in MVP | Opcode (more options) |
+| Factor                  | Opcode                              | Grimoire                         | Verdict                 |
+| ----------------------- | ----------------------------------- | -------------------------------- | ----------------------- |
+| Tool-Specific Rendering | Rich (dedicated widgets per tool)   | Moderate (3 component types)     | Opcode (richer)         |
+| Virtual Scrolling       | Built-in                            | Not specified                    | Opcode (better scale)   |
+| Caching                 | Sophisticated (time + status based) | Not in architecture              | Opcode (more optimized) |
+| Sub-Agent Treatment     | Inline tool widget                  | Dedicated component + tab option | Grimoire (better focus) |
+| Export Options          | JSONL + Markdown                    | Not in MVP                       | Opcode (more options)   |
 
 **Lessons for Grimoire:**
+
 1. Add virtual scrolling for long conversations (use `@tanstack/react-virtual`)
 2. Consider dedicated widgets for common tools (Bash, Read, Edit) beyond generic cards
 3. Opcode's caching strategy is worth adopting for responsiveness
@@ -229,14 +237,15 @@ function pairToolCallsWithResults(events: ConversationEvent[]): Map<string, Tool
 
 ### Analysis
 
-| Factor | Opcode | Grimoire | Verdict |
-|--------|--------|----------|---------|
-| Tab Model Clarity | Standard | Explicit rules + types | Grimoire (clearer) |
-| Sub-Agent Handling | Part of main view | Dedicated tabs | Grimoire (better separation) |
-| Visual Differentiation | Standard | CSS class for sub-agent tabs | Grimoire (clearer UX) |
-| Close Protection | Not documented | Confirmation dialog | Grimoire (safer) |
+| Factor                 | Opcode            | Grimoire                     | Verdict                      |
+| ---------------------- | ----------------- | ---------------------------- | ---------------------------- |
+| Tab Model Clarity      | Standard          | Explicit rules + types       | Grimoire (clearer)           |
+| Sub-Agent Handling     | Part of main view | Dedicated tabs               | Grimoire (better separation) |
+| Visual Differentiation | Standard          | CSS class for sub-agent tabs | Grimoire (clearer UX)        |
+| Close Protection       | Not documented    | Confirmation dialog          | Grimoire (safer)             |
 
 **Lessons for Grimoire:**
+
 1. The one-tab-per-session rule prevents confusion - good decision
 2. Sub-agent tabs are a unique feature - market this as differentiator
 3. Consider adding Opcode's checkpoint timeline as an optional view mode
@@ -254,39 +263,43 @@ function pairToolCallsWithResults(events: ConversationEvent[]): Map<string, Tool
 ### Grimoire's Approach
 
 **Sub-Agent Index:**
+
 ```typescript
 interface SubAgentEntry {
-  agentId: string                 // 6-char hex from filename
-  path: string                    // Full path to agent JSONL
-  parentId: string                // sessionId OR agentId (for nesting)
-  parentMessageUuid: string       // UUID of spawning tool_use message
-  agentType: string               // "Explore", "Bash", etc.
-  label: string                   // "{agentType}-{shortId}"
+  agentId: string // 6-char hex from filename
+  path: string // Full path to agent JSONL
+  parentId: string // sessionId OR agentId (for nesting)
+  parentMessageUuid: string // UUID of spawning tool_use message
+  agentType: string // "Explore", "Bash", etc.
+  label: string // "{agentType}-{shortId}"
   description?: string
   model?: string
 }
 ```
 
 **Display Options:**
+
 1. Inline expansion in conversation view
 2. Dedicated tab with full conversation
 3. Tab label format: `{agentType}-{shortId}` (e.g., "Explore-a951")
 
 **Discovery:**
+
 - Sub-agent files at: `{sessionFolder}/subagents/agent-{agentId}.jsonl`
 - Index rebuilt on session load and updated on new discoveries
 - Unified conversation loader handles both main and sub-agent conversations
 
 ### Analysis
 
-| Factor | Opcode | Grimoire | Verdict |
-|--------|--------|----------|---------|
-| Sub-Agent Visibility | Mixed with tools | Clear identification | Grimoire (clearer) |
-| Drill-Down Options | Limited | Inline + Tab | Grimoire (more flexible) |
-| Nested Sub-Agent Support | Not documented | Supported via parentId | Grimoire (better hierarchy) |
-| Sub-Agent Metadata | Basic | Rich (type, description, model) | Grimoire (more useful) |
+| Factor                   | Opcode           | Grimoire                        | Verdict                     |
+| ------------------------ | ---------------- | ------------------------------- | --------------------------- |
+| Sub-Agent Visibility     | Mixed with tools | Clear identification            | Grimoire (clearer)          |
+| Drill-Down Options       | Limited          | Inline + Tab                    | Grimoire (more flexible)    |
+| Nested Sub-Agent Support | Not documented   | Supported via parentId          | Grimoire (better hierarchy) |
+| Sub-Agent Metadata       | Basic            | Rich (type, description, model) | Grimoire (more useful)      |
 
 **Lessons for Grimoire:**
+
 1. This is Grimoire's strongest differentiator - the PRD's "conversation tree" vision
 2. The sub-agent index pattern is well-designed for quick lookups
 3. Consider adding a tree visualization mode (not just list + drill-down)
@@ -299,17 +312,20 @@ interface SubAgentEntry {
 ### Opcode's Approach
 
 **MCP Server Management:**
+
 - UI-based server registry
 - Manual or JSON-based server addition
 - Claude Desktop import support
 - Connection testing functionality
 
 **Configuration Storage:**
+
 - SQLite database for all local data
 - Auto-detects `~/.claude` directory
 - No telemetry or data collection
 
 **Agent Configuration:**
+
 - Custom name, icon, system prompt
 - Model selection
 - Permission configuration (file read/write, network)
@@ -317,31 +333,35 @@ interface SubAgentEntry {
 ### Grimoire's Approach
 
 **Settings Architecture:**
+
 - Database-stored (not files)
 - Global + per-project settings
 - Schema-driven defaults and validation
 - Immediate application with undo support
 
 **Plugin Settings:**
+
 - Per-plugin configuration
 - Toggle enable/disable
 - Core plugins use same architecture as future community plugins
 
 **No MCP Management in MVP:**
+
 - Deferred to future phases
 - CC handles its own MCP configuration
 
 ### Analysis
 
-| Factor | Opcode | Grimoire | Verdict |
-|--------|--------|----------|---------|
-| MCP Management | Full UI | None (deferred) | Opcode (more features) |
-| Custom Agents | Built-in | Not in MVP | Opcode (more features) |
-| Settings Storage | SQLite | SQLite | Equal |
-| Plugin Architecture | N/A | Explicit extensibility | Grimoire (future-ready) |
-| Privacy | No telemetry | No telemetry | Equal |
+| Factor              | Opcode       | Grimoire               | Verdict                 |
+| ------------------- | ------------ | ---------------------- | ----------------------- |
+| MCP Management      | Full UI      | None (deferred)        | Opcode (more features)  |
+| Custom Agents       | Built-in     | Not in MVP             | Opcode (more features)  |
+| Settings Storage    | SQLite       | SQLite                 | Equal                   |
+| Plugin Architecture | N/A          | Explicit extensibility | Grimoire (future-ready) |
+| Privacy             | No telemetry | No telemetry           | Equal                   |
 
 **Lessons for Grimoire:**
+
 1. MCP management is popular in opcode - consider for Phase 2
 2. Custom agents feature could integrate with Grimoire's plugin system
 3. The plugin architecture is a long-term advantage
@@ -375,6 +395,7 @@ interface SubAgentEntry {
 ### Analysis of Key Differentiators
 
 **Where Opcode Leads:**
+
 - Mature product with large user base (19k+ stars)
 - Real-time streaming for better UX feedback
 - Checkpoint/forking for experimentation
@@ -382,6 +403,7 @@ interface SubAgentEntry {
 - Export capabilities
 
 **Where Grimoire Can Lead:**
+
 - Sub-agent visualization (tree view, dedicated tabs)
 - Session isolation (safer multi-instance)
 - Explicit state machine (clearer behavior)
@@ -419,12 +441,14 @@ interface SubAgentEntry {
 ### Marketing Positioning
 
 **Position Grimoire as:**
+
 - "Sub-agent first" - the tool that actually shows what agents do
 - "Safe isolation" - your sessions, your config, never mixed
 - "Future-ready" - plugin architecture for extensibility
 - "Phase 1 focused" - solid foundation over feature bloat
 
 **Acknowledge Opcode's strengths but differentiate on:**
+
 - Deep sub-agent visibility (tree view, dedicated tabs)
 - Session isolation (CLAUDE_CONFIG_DIR per-app)
 - Explicit state management (predictable behavior)
@@ -447,6 +471,7 @@ interface SubAgentEntry {
 Opcode is a mature, feature-rich product with excellent streaming UX and popular features like checkpoints and MCP management. Grimoire's strength lies in its architectural clarity, sub-agent visualization, and session isolation approach.
 
 **For Grimoire Phase 1, the recommendation is:**
+
 1. Ship the simpler request-response model - it works and is cleaner
 2. Double down on sub-agent visualization as the key differentiator
 3. Plan for streaming and checkpoints in Phase 2

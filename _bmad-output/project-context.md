@@ -2,7 +2,16 @@
 project_name: 'grimoire'
 user_name: 'Teazyou'
 date: '2026-01-22'
-sections_completed: ['technology_stack', 'language_rules', 'framework_rules', 'testing_rules', 'code_quality', 'workflow_rules', 'critical_rules']
+sections_completed:
+  [
+    'technology_stack',
+    'language_rules',
+    'framework_rules',
+    'testing_rules',
+    'code_quality',
+    'workflow_rules',
+    'critical_rules'
+  ]
 status: 'complete'
 rule_count: 47
 optimized_for_llm: true
@@ -17,11 +26,13 @@ _This file contains critical rules and patterns that AI agents must follow when 
 ## Technology Stack & Versions
 
 **Core Stack:**
+
 - Electron via electron-vite (react-ts template)
 - React + TypeScript
 - Vite for build/HMR
 
 **Key Dependencies:**
+
 - Tailwind CSS v4 (not v3 - different config approach)
 - Radix UI primitives (dialog, dropdown-menu, tooltip, scroll-area, tabs)
 - Zustand ~3KB (transient UI state only)
@@ -35,24 +46,29 @@ _This file contains critical rules and patterns that AI agents must follow when 
 ## Language-Specific Rules (TypeScript)
 
 **Path Aliases:**
+
 - `@plugins/*` → `./plugins/*` in tsconfig.json
 
 **Type Transformation (DB ↔ TypeScript):**
+
 - DB uses snake_case, TypeScript uses camelCase
 - Always use transform functions: `toSession(row)`, `toFolder(row)`, `toFileEdit(row)`
 - Booleans: `Boolean(row.is_archived)` (DB stores INTEGER 0/1)
 
 **Zod Validation:**
+
 - Validate at IPC boundary in main process, NOT in preload
 - Preload stays thin - no validation logic
 - Schema naming: `{Name}Schema` (e.g., `SpawnRequestSchema`)
 
 **Error Handling:**
+
 - IPC handlers: Throw errors (let them propagate as rejections)
 - Renderer: Wrap IPC calls in try/catch, update Zustand on error
 - Categorize spawn errors: `ENOENT` = "Claude Code not found"
 
 **Import Patterns:**
+
 - Static plugin imports for MVP (no dynamic `import()`)
 - Shared types in `src/shared/types/`
 - Zod schemas co-located with type definitions
@@ -62,11 +78,13 @@ _This file contains critical rules and patterns that AI agents must follow when 
 ## Framework-Specific Rules (React/Electron)
 
 **Component Organization:**
+
 - PascalCase files: `SessionList.tsx`, `ChatInput.tsx`
 - Colocate tests: `SessionList.test.tsx` beside `SessionList.tsx`
 - Feature folders are autonomous (independently understandable by AI)
 
 **Zustand State Management:**
+
 - Naming: `use{Name}Store` (e.g., `useUIStore`, `useSessionStore`)
 - Separate stores per domain - NEVER combine multiple domains
 - Immutable updates only: `set({ key: value })` or `set((state) => ({ ... }))`
@@ -80,11 +98,13 @@ _This file contains critical rules and patterns that AI agents must follow when 
 | Renderer | React, Zustand, calls `window.grimoireAPI` |
 
 **IPC Channel Naming:**
+
 - Pattern: `namespace:action` (use colon, not dot or camelCase)
 - Examples: `sessions:list`, `sessions:spawn`, `instance:stateChanged`
 - Namespaces: lowercase singular (`session`, `instance`, `db`, `app`)
 
 **Plugin Structure:**
+
 ```
 plugins/{name}/src/
 ├── main/           # Electron main process code
@@ -99,25 +119,31 @@ plugins/{name}/src/
 ## Testing Rules
 
 **Test Location:**
+
 - Colocate with source: `SessionList.test.tsx` beside `SessionList.tsx`
 - Paths: `src/**/*.test.ts`, `plugins/**/*.test.ts`
 
 **Environment Separation (vitest.config.ts):**
+
 - `**/main/**/*.test.ts` → `node` environment
 - `**/preload/**/*.test.ts` → `node` environment
 - Everything else → `jsdom` (renderer tests)
 
 **Validation Command:**
+
 ```bash
 npm run validate  # tsc --noEmit && vitest run && npm run lint
 ```
+
 Run after ALL code changes.
 
 **Required Tests:**
+
 - All Zod schemas must have rejection tests (invalid inputs)
 - Schema test example: reject non-UUID sessionId, empty message
 
 **MVP Scope:**
+
 - Happy path integration tests for core flows
 - Manual testing for session file parsing edge cases
 - Comprehensive automation deferred to post-MVP
@@ -140,12 +166,13 @@ Run after ALL code changes.
 **Database Naming:**
 | Element | Convention | Example |
 |---------|------------|---------|
-| Tables | snake_case, plural | `sessions`, `file_edits` |
+| Tables | snake*case, plural | `sessions`, `file_edits` |
 | Columns | snake_case | `session_id`, `created_at` |
 | Timestamps | `{action}_at` | `created_at`, `updated_at` |
-| Booleans | `is_{state}` | `is_archived`, `is_pinned` |
+| Booleans | `is*{state}`|`is_archived`, `is_pinned` |
 
 **Key File Locations:**
+
 - Shared types: `src/shared/types/`
 - DB schema: `src/shared/db/schema.sql`
 - Main process: `src/main/`
@@ -153,6 +180,7 @@ Run after ALL code changes.
 - Plugin code: `plugins/{name}/src/`
 
 **Style Rules:**
+
 - ESLint + Prettier (electron-vite defaults)
 - No emojis unless explicitly requested
 - Comments only where logic isn't self-evident
@@ -162,6 +190,7 @@ Run after ALL code changes.
 ## Development Workflow Rules
 
 **Essential Commands:**
+
 ```bash
 npm run dev          # Development with HMR
 npm run validate     # tsc + vitest + lint (run after ALL changes)
@@ -170,17 +199,20 @@ npm run make         # Create unsigned DMG
 ```
 
 **Database Schema (MVP):**
+
 - Schema file: `src/shared/db/schema.sql`
 - Version: `DB_VERSION` constant + SQLite `user_version` pragma
 - MVP: Recreate DB on schema change (data loss acceptable)
 - Always bump version when modifying schema
 
 **Native Module Rebuild:**
+
 ```bash
 npx electron-rebuild -f -w better-sqlite3  # After install or Electron upgrade
 ```
 
 **Distribution (MVP):**
+
 - Unsigned DMG for testing: `npm run make`
 - Bypass Gatekeeper: `xattr -cr /Applications/Grimoire.app`
 - Code signing deferred to pre-public release
@@ -193,37 +225,47 @@ npx electron-rebuild -f -w better-sqlite3  # After install or Electron upgrade
 
 **States:** Idle → Working → Idle (or Error)
 
-| Event | Transition |
-|-------|------------|
-| User sends message | Idle → Working |
-| Process exits (code 0) | Working → Idle |
+| Event                    | Transition      |
+| ------------------------ | --------------- |
+| User sends message       | Idle → Working  |
+| Process exits (code 0)   | Working → Idle  |
 | Process exits (non-zero) | Working → Error |
-| User sends new message | Error → Working |
+| User sends new message   | Error → Working |
 
 **Spawn Pattern:**
+
 ```typescript
 // Message sent via stdin JSON after spawn, not CLI argument
-const child = spawn('claude', [
-  '-p',
-  '--input-format', 'stream-json',
-  '--output-format', 'stream-json',
-  '--verbose',
-  '--replay-user-messages',
-  '--dangerously-skip-permissions',
-  '--resume', sessionId
-], {
-  env: {
-    ...process.env,
-    CLAUDE_CONFIG_DIR: path.join(app.getPath('userData'), '.claude'),
-    CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING: '1'
+const child = spawn(
+  'claude',
+  [
+    '-p',
+    '--input-format',
+    'stream-json',
+    '--output-format',
+    'stream-json',
+    '--verbose',
+    '--replay-user-messages',
+    '--dangerously-skip-permissions',
+    '--resume',
+    sessionId
+  ],
+  {
+    env: {
+      ...process.env,
+      CLAUDE_CONFIG_DIR: path.join(app.getPath('userData'), '.claude'),
+      CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING: '1'
+    }
   }
-})
+)
 
 // Send message via stdin (not CLI argument)
-child.stdin.write(JSON.stringify({
-  type: 'user',
-  message: { role: 'user', content: userMessage }
-}))
+child.stdin.write(
+  JSON.stringify({
+    type: 'user',
+    message: { role: 'user', content: userMessage }
+  })
+)
 child.stdin.end()
 ```
 
@@ -291,22 +333,22 @@ CREATE TABLE sessions (
 
 ### Tab Types
 
-| Type | CSS Class | When |
-|------|-----------|------|
-| Session | `.tab--session` | Main conversations |
+| Type      | CSS Class        | When                             |
+| --------- | ---------------- | -------------------------------- |
+| Session   | `.tab--session`  | Main conversations               |
 | Sub-Agent | `.tab--subagent` | Nested agent views (purple tint) |
-| File | `.tab--file` | File preview (blue tint) |
+| File      | `.tab--file`     | File preview (blue tint)         |
 
 **Sub-agent tabs:** Hide chat input (`tab.type === 'subagent'`)
 
 ### Data Format Rules
 
-| Data | DB Format | TypeScript Format |
-|------|-----------|-------------------|
-| Timestamps | Unix ms (INTEGER) | `number` |
-| UUIDs | TEXT | `string` |
-| Booleans | INTEGER 0/1 | `boolean` |
-| JSON fields | snake_case | camelCase |
+| Data        | DB Format         | TypeScript Format |
+| ----------- | ----------------- | ----------------- |
+| Timestamps  | Unix ms (INTEGER) | `number`          |
+| UUIDs       | TEXT              | `string`          |
+| Booleans    | INTEGER 0/1       | `boolean`         |
+| JSON fields | snake_case        | camelCase         |
 
 ### Performance Patterns
 
@@ -320,12 +362,14 @@ CREATE TABLE sessions (
 ## Usage Guidelines
 
 **For AI Agents:**
+
 - Read this file before implementing any code
 - Follow ALL rules exactly as documented
 - When in doubt, prefer the more restrictive option
 - Run `npm run validate` after every change
 
 **For Humans:**
+
 - Keep this file lean and focused on agent needs
 - Update when technology stack changes
 - Review quarterly for outdated rules
@@ -334,4 +378,3 @@ CREATE TABLE sessions (
 ---
 
 _Last Updated: 2026-01-22_
-

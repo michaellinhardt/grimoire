@@ -49,11 +49,11 @@ This uses **step-file architecture** for disciplined execution:
 
 This workflow supports three modes:
 
-| Mode | Purpose | Entry Point | Output |
-|------|---------|-------------|--------|
-| **Create** | Build new agent from scratch | `steps-c/step-01-brainstorm.md` | New `.agent.yaml` file |
-| **Edit** | Modify existing agent | `steps-e/e-01-load-existing.md` | Updated `.agent.yaml` file |
-| **Validate** | Review existing agent | `steps-v/v-01-load-review.md` | Validation report |
+| Mode         | Purpose                      | Entry Point                     | Output                     |
+| ------------ | ---------------------------- | ------------------------------- | -------------------------- |
+| **Create**   | Build new agent from scratch | `steps-c/step-01-brainstorm.md` | New `.agent.yaml` file     |
+| **Edit**     | Modify existing agent        | `steps-e/e-01-load-existing.md` | Updated `.agent.yaml` file |
+| **Validate** | Review existing agent        | `steps-v/v-01-load-review.md`   | Validation report          |
 
 ---
 
@@ -102,6 +102,7 @@ Then load, read completely, and execute `steps-v/v-01-load-review.md`
 ## MODE-SPECIFIC NOTES
 
 ### Create Mode
+
 - Starts with optional brainstorming
 - Progresses through discovery, metadata, persona, commands, activation
 - Builds agent based on type (Simple/Expert/Module)
@@ -109,6 +110,7 @@ Then load, read completely, and execute `steps-v/v-01-load-review.md`
 - Celebrates completion with installation guidance
 
 ### Edit Mode
+
 - Loads existing agent first
 - Discovers what user wants to change
 - Validates current agent before editing
@@ -117,6 +119,7 @@ Then load, read completely, and execute `steps-v/v-01-load-review.md`
 - Celebrates successful edit
 
 ### Validate Mode
+
 - Loads existing agent
 - Runs systematic validation (metadata, persona, menu, structure, sidecar)
 - Generates comprehensive validation report
