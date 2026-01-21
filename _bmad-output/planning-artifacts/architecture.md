@@ -321,13 +321,19 @@ DB entry created only after Claude Code's first response or error confirms sessi
 **Structure:**
 ```typescript
 interface SubAgentEntry {
-  agentId: string
-  path: string                    // Path to sub-agent JSONL file
-  parentId: string                // sessionId OR agentId (for nested)
+  agentId: string                 // 6-char hex from filename (e.g., "a951b4d")
+  path: string                    // Full path: {sessionFolder}/subagents/agent-{agentId}.jsonl
+  parentId: string                // sessionId OR agentId (for nested sub-agents)
   parentMessageUuid: string       // UUID of tool_use message that spawned this agent
-  agentType: string               // "Explore", "Bash", etc.
-  label: string                   // "{agentType}-{shortId}"
+  agentType: string               // From Task tool input.subagent_type: "Explore", "Bash", etc.
+  label: string                   // Display label: "{agentType}-{shortId}" (e.g., "Explore-a951")
+  description?: string            // From Task tool input.description
+  model?: string                  // From Task tool input.model (if specified)
 }
+
+// Sub-agent file identification:
+// - Location: {session-uuid}/subagents/agent-{agentId}.jsonl
+// - Every event in file has: isSidechain: true, agentId: "{6-char-hex}"
 
 // Stored in main process memory
 const subAgentIndex = new Map<string, SubAgentEntry>()
@@ -403,7 +409,65 @@ claude --session-id <uuid> \
        -p "user message"
 ```
 
-**Event types:** `init`, `message`, `tool_use`, `tool_result`, `result`
+**NDJSON Event Types (from `--output-format stream-json`):**
+
+| Event Type | Purpose |
+|------------|---------|
+| `message_start` | Beginning of response, includes model/ID |
+| `content_block_start` | Start of text/tool_use/thinking block |
+| `content_block_delta` | Incremental update (text_delta, input_json_delta) |
+| `content_block_stop` | End of content block |
+| `message_delta` | Top-level changes (stop_reason, usage) |
+| `message_stop` | Final event, response complete |
+| `result` | Final result (may not emit - see Known Issue) |
+| `ping` | Keep-alive, safe to ignore |
+| `error` | Error events |
+
+**Streaming State Management:**
+```typescript
+interface StreamState {
+  currentText: string
+  currentToolCall: {
+    id: string
+    name: string
+    inputJson: string
+  } | null
+  completedToolCalls: ToolUseBlock[]
+}
+
+function handleStreamEvent(event: StreamEvent, state: StreamState) {
+  switch (event.event.type) {
+    case 'content_block_start':
+      if (event.event.content_block?.type === 'tool_use') {
+        state.currentToolCall = {
+          id: event.event.content_block.id,
+          name: event.event.content_block.name,
+          inputJson: ''
+        }
+      }
+      break
+
+    case 'content_block_delta':
+      if (event.event.delta?.type === 'text_delta') {
+        state.currentText += event.event.delta.text
+      } else if (event.event.delta?.type === 'input_json_delta') {
+        state.currentToolCall!.inputJson += event.event.delta.partial_json
+      }
+      break
+
+    case 'content_block_stop':
+      if (state.currentToolCall) {
+        state.completedToolCalls.push({
+          type: 'tool_use',
+          ...state.currentToolCall,
+          input: JSON.parse(state.currentToolCall.inputJson)
+        })
+        state.currentToolCall = null
+      }
+      break
+  }
+}
+```
 
 **Response Tracking:**
 
@@ -496,6 +560,309 @@ const child = spawn('claude', [
 ### Data Export/Backup
 
 **MVP:** Not included. Users can manually backup app data folder if needed.
+
+## Claude Code JSONL Format Specification
+
+This section documents the Claude Code conversation storage format discovered through research. This specification is authoritative for implementing conversation parsing and display.
+
+### Folder Structure
+
+```
+~/.claude/  (or CLAUDE_CONFIG_DIR)
+├── projects/                        # Main project storage
+│   └── -<encoded-path>/             # Path URL-encoded (/ → -)
+│       ├── <uuid>.jsonl             # Main session file
+│       ├── <uuid>/
+│       │   └── subagents/
+│       │       └── agent-<6-char>.jsonl  # Sub-agent conversations
+│       └── tool-results/            # Large tool outputs
+└── file-history/                    # File edit backups
+    └── <session-uuid>/
+        └── <hash>@v<version>        # Versioned file backups
+```
+
+### Core Event Types
+
+Each line in a `.jsonl` file is one of these event types:
+
+| Type | Purpose | Key Fields |
+|------|---------|------------|
+| `user` | User message or tool result | `message.role: "user"`, `message.content` |
+| `assistant` | Claude response | `message.role: "assistant"`, `message.content[]`, `message.usage` |
+| `summary` | Session summary (first line of resumed sessions) | `summary`, `leafUuid` |
+| `file-history-snapshot` | File backup tracking | `snapshot.trackedFileBackups` |
+
+### Event Structure
+
+**Common Fields (all events):**
+```typescript
+interface BaseEvent {
+  type: 'user' | 'assistant' | 'summary' | 'file-history-snapshot'
+  uuid: string
+  parentUuid: string | null       // For building message tree
+  sessionId: string
+  timestamp: string               // ISO 8601
+  isSidechain: boolean            // true = sub-agent conversation
+  agentId?: string                // Present if sub-agent (6-char hex)
+}
+```
+
+**User Message Event:**
+```typescript
+interface UserEvent extends BaseEvent {
+  type: 'user'
+  cwd: string
+  gitBranch: string
+  version: string
+  message: {
+    role: 'user'
+    content: string | ContentBlock[]
+  }
+  // Present if this is a tool_result response:
+  sourceToolAssistantUUID?: string
+  toolUseResult?: ToolUseResult
+}
+```
+
+**Assistant Message Event:**
+```typescript
+interface AssistantEvent extends BaseEvent {
+  type: 'assistant'
+  requestId: string
+  message: {
+    model: string
+    role: 'assistant'
+    content: ContentBlock[]
+    stop_reason: 'end_turn' | 'tool_use' | 'max_tokens'
+    usage: TokenUsage
+  }
+}
+```
+
+### Content Block Types
+
+```typescript
+type ContentBlock = TextBlock | ToolUseBlock | ToolResultBlock
+
+interface TextBlock {
+  type: 'text'
+  text: string
+}
+
+interface ToolUseBlock {
+  type: 'tool_use'
+  id: string              // e.g., "toolu_01HXYyux..."
+  name: string            // e.g., "Read", "Write", "Edit", "Task"
+  input: Record<string, unknown>
+}
+
+interface ToolResultBlock {
+  type: 'tool_result'
+  tool_use_id: string     // Matches ToolUseBlock.id
+  content: string
+}
+```
+
+### Token Usage Structure
+
+```typescript
+interface TokenUsage {
+  input_tokens: number
+  output_tokens: number
+  cache_creation_input_tokens?: number
+  cache_read_input_tokens?: number
+}
+```
+
+### Detection Patterns
+
+**File Edit Detection:**
+```typescript
+function isFileEdit(event: ConversationEvent): boolean {
+  if (event.type !== 'assistant') return false
+  return event.message.content.some(c =>
+    c.type === 'tool_use' && (c.name === 'Write' || c.name === 'Edit')
+  )
+}
+
+function extractFilePath(toolUse: ToolUseBlock): string {
+  return toolUse.input.file_path as string
+}
+```
+
+**Sub-Agent Spawn Detection:**
+```typescript
+function isSubAgentSpawn(event: ConversationEvent): boolean {
+  if (event.type !== 'assistant') return false
+  return event.message.content.some(c =>
+    c.type === 'tool_use' && c.name === 'Task'
+  )
+}
+
+function extractSubAgentInfo(toolUse: ToolUseBlock): SubAgentInfo {
+  return {
+    description: toolUse.input.description as string,
+    subagentType: toolUse.input.subagent_type as string,
+    prompt: toolUse.input.prompt as string,
+    model: toolUse.input.model as string | undefined
+  }
+}
+```
+
+**Sub-Agent Conversation Detection:**
+```typescript
+function isSubAgentConversation(event: ConversationEvent): boolean {
+  return event.isSidechain === true
+}
+
+function getSubAgentId(event: ConversationEvent): string | null {
+  return event.agentId ?? null
+}
+```
+
+### Tool Call/Result Pairing
+
+Tool calls and their results are in separate events. Pair them using `tool_use_id`:
+
+```typescript
+interface ToolPair {
+  call: ToolUseBlock
+  result: ToolResultBlock | null
+}
+
+function pairToolCallsWithResults(events: ConversationEvent[]): Map<string, ToolPair> {
+  const pairs = new Map<string, ToolPair>()
+
+  for (const event of events) {
+    // Find tool_use in assistant messages
+    if (event.type === 'assistant') {
+      for (const content of event.message.content) {
+        if (content.type === 'tool_use') {
+          pairs.set(content.id, { call: content, result: null })
+        }
+      }
+    }
+
+    // Find tool_result in user messages
+    if (event.type === 'user' && Array.isArray(event.message.content)) {
+      for (const content of event.message.content) {
+        if (content.type === 'tool_result' && pairs.has(content.tool_use_id)) {
+          pairs.get(content.tool_use_id)!.result = content
+        }
+      }
+    }
+  }
+
+  return pairs
+}
+```
+
+### Message Tree Construction
+
+Use `parentUuid` to build conversation threading:
+
+```typescript
+interface MessageNode {
+  event: ConversationEvent
+  children: MessageNode[]
+}
+
+function buildMessageTree(events: ConversationEvent[]): MessageNode[] {
+  const nodeMap = new Map<string, MessageNode>()
+  const roots: MessageNode[] = []
+
+  for (const event of events) {
+    const node = { event, children: [] }
+    nodeMap.set(event.uuid, node)
+
+    if (event.parentUuid && nodeMap.has(event.parentUuid)) {
+      nodeMap.get(event.parentUuid)!.children.push(node)
+    } else {
+      roots.push(node)
+    }
+  }
+
+  return roots
+}
+```
+
+### Conversation Rendering Algorithm
+
+When rendering a conversation, use this algorithm to map events to UI components:
+
+```typescript
+function renderConversation(events: ConversationEvent[]): ReactNode[] {
+  const rendered: ReactNode[] = []
+  const toolPairs = pairToolCallsWithResults(events)
+
+  for (const event of events) {
+    // Skip tool_result events (rendered with their call)
+    if (isToolResult(event)) continue
+
+    if (event.type === 'user' && !isToolResult(event)) {
+      rendered.push(<MessageBubble key={event.uuid} role="user" content={event.message.content} />)
+    }
+
+    if (event.type === 'assistant') {
+      for (const content of event.message.content) {
+        if (content.type === 'text') {
+          rendered.push(<MessageBubble key={`${event.uuid}-text`} role="assistant" content={content.text} />)
+        }
+
+        if (content.type === 'tool_use') {
+          const result = toolPairs.get(content.id)?.result
+
+          if (content.name === 'Task') {
+            rendered.push(
+              <SubAgentBubble
+                key={content.id}
+                toolCall={content}
+                result={result}
+                onOpenInTab={() => openSubAgentTab(content)}
+              />
+            )
+          } else if (content.name === 'Write' || content.name === 'Edit') {
+            rendered.push(
+              <FileEditCard
+                key={content.id}
+                toolCall={content}
+                result={result}
+              />
+            )
+          } else {
+            rendered.push(
+              <ToolCallCard
+                key={content.id}
+                toolCall={content}
+                result={result}
+              />
+            )
+          }
+        }
+      }
+    }
+  }
+
+  return rendered
+}
+
+function isToolResult(event: ConversationEvent): boolean {
+  if (event.type !== 'user') return false
+  const content = event.message.content
+  return Array.isArray(content) && content.some(c => c.type === 'tool_result')
+}
+```
+
+**Component Mapping:**
+
+| Event/Content Type | Component | Notes |
+|--------------------|-----------|-------|
+| `user` event (text) | `MessageBubble` | Right-aligned, user styling |
+| `assistant` text block | `MessageBubble` | Left-aligned, assistant styling |
+| `tool_use` (Task) | `SubAgentBubble` | Expandable, opens tab |
+| `tool_use` (Write/Edit) | `FileEditCard` | Shows file path, diff |
+| `tool_use` (other) | `ToolCallCard` | Generic tool display |
+| `tool_result` | Paired with call | Not rendered separately |
 
 ## Core Architectural Decisions
 
@@ -958,6 +1325,64 @@ function toFileEdit(row: DBFileEditRow): FileEdit {
     lineStart: row.line_start,
     lineEnd: row.line_end
   }
+}
+
+// src/shared/types/conversation.ts
+interface ConversationEvent {
+  type: 'user' | 'assistant' | 'summary' | 'file-history-snapshot'
+  uuid: string
+  parentUuid: string | null
+  sessionId: string
+  timestamp: string
+  isSidechain: boolean
+  agentId?: string
+  message?: {
+    role: 'user' | 'assistant'
+    content: string | ContentBlock[]
+    model?: string
+    usage?: TokenUsage
+  }
+  toolUseResult?: ToolUseResult
+  sourceToolAssistantUUID?: string
+  // User event fields
+  cwd?: string
+  gitBranch?: string
+  version?: string
+  // Assistant event fields
+  requestId?: string
+}
+
+interface ContentBlock {
+  type: 'text' | 'tool_use' | 'tool_result'
+  text?: string
+  id?: string
+  name?: string
+  input?: Record<string, unknown>
+  tool_use_id?: string
+  content?: string
+}
+
+interface TokenUsage {
+  input_tokens: number
+  output_tokens: number
+  cache_creation_input_tokens?: number
+  cache_read_input_tokens?: number
+}
+
+interface ToolUseResult {
+  type: 'text'
+  file?: {
+    filePath: string
+    content: string
+    numLines: number
+  }
+}
+
+interface SubAgentInfo {
+  description: string
+  subagentType: string
+  prompt: string
+  model?: string
 }
 ```
 

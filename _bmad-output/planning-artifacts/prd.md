@@ -520,7 +520,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR61: System spawns CC child processes with `CLAUDE_CONFIG_DIR` environment variable for isolation
 - FR62: System spawns CC with session ID argument for session continuity
 - FR63: System passes user input to CC child process as terminal input
-- FR64: System captures CC output and renders in conversation view
+- FR64: System captures CC output (NDJSON stream events) and renders in conversation view
 - FR65: System tracks session ID for each spawned CC instance
 - FR66: System supports resuming any existing session by ID
 - FR67: System displays actionable error in conversation when CC fails to spawn
