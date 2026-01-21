@@ -1223,7 +1223,7 @@ test('SpawnRequestSchema rejects empty message', () => {
 | Element | Convention | Example |
 |---------|------------|---------|
 | Tables | snake_case, plural | `sessions`, `settings`, `plugin_configs` |
-| Columns | snake_case | `session_id`, `project_path`, `created_at` |
+| Columns | snake_case | `session_id`, `folder_path`, `created_at` |
 | Primary keys | `id` or `{table}_id` | `id` for simple, `session_id` if referenced |
 | Foreign keys | `{referenced_table}_id` | `session_id` referencing sessions |
 | Timestamps | `{action}_at` | `created_at`, `updated_at`, `archived_at` |
@@ -1233,7 +1233,7 @@ test('SpawnRequestSchema rejects empty message', () => {
 ```sql
 CREATE TABLE sessions (
   id TEXT PRIMARY KEY,
-  project_path TEXT NOT NULL,
+  folder_path TEXT NOT NULL,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   archived INTEGER DEFAULT 0
@@ -1376,8 +1376,8 @@ const AppErrorSchema = z.discriminatedUnion('type', [
 | UUIDs | String | `"550e8400-e29b-41d4-a716-446655440000"` |
 | Booleans (DB) | INTEGER 0/1 | `archived INTEGER DEFAULT 0` |
 | Booleans (JSON) | true/false | `{ "archived": false }` |
-| JSON fields | camelCase | `{ "projectPath": "/path", "createdAt": 1705123456789 }` |
-| SQL fields | snake_case | `project_path`, `created_at` |
+| JSON fields | camelCase | `{ "folderPath": "/path", "createdAt": 1705123456789 }` |
+| SQL fields | snake_case | `folder_path`, `created_at` |
 
 **TypeScript ↔ SQLite mapping:**
 ```typescript
@@ -1708,7 +1708,7 @@ export const useSessionStore = create<SessionState>((set) => ({
 // ✅ Correct DB → TypeScript transformation
 const session: Session = {
   id: row.id,
-  projectPath: row.project_path,  // snake_case → camelCase
+  folderPath: row.folder_path,  // snake_case → camelCase
   createdAt: row.created_at
 }
 ```
@@ -1739,7 +1739,7 @@ set((state) => {
 // ❌ Inconsistent naming in DB
 CREATE TABLE Sessions (                 // Should be lowercase 'sessions'
   sessionId TEXT,                       // Should be 'session_id' or 'id'
-  ProjectPath TEXT                      // Should be 'project_path'
+  FolderPath TEXT                       // Should be 'folder_path'
 )
 ```
 
