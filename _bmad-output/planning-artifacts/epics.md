@@ -159,7 +159,7 @@ This document provides the complete epic and story breakdown for Grimoire, decom
 - FR85: User can access expandable search bar in session list panel header
 - FR86: User can access expandable search bar in folder hierarchy panel header
 - FR87: System filters list instantly per keystroke (no confirmation needed)
-- FR88: System supports fuzzy matching on session name, folder path, session ID, git branch
+- FR88: System supports fuzzy matching on session name, folder path, session ID
 - FR89: System supports comma-separated terms as OR logic (e.g., "dev,marketing")
 - FR90: User can collapse search bar by clicking outside or clicking search icon again
 
@@ -1755,7 +1755,7 @@ So that **I can locate what I need without scrolling through long lists**.
 
 **Given** search is active (FR88)
 **When** searching
-**Then** fuzzy matching works on: session name, folder path, session ID, git branch
+**Then** fuzzy matching works on: session name, folder path, session ID
 **And** partial matches are included
 
 **Given** the user enters comma-separated terms (FR89)

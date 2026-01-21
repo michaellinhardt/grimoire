@@ -1146,7 +1146,7 @@ Orphaned session:
 | `abc-123` | Match session ID |
 
 **Searchable Fields:**
-- Session list: Session name/summary, folder path, session ID, git branch
+- Session list: Session name/summary, folder path, session ID
 - Folder hierarchy: Folder path, session names within folder
 
 **States:**
@@ -1273,6 +1273,37 @@ Pinned:
 **Tab Label Format:** `{agentType}-{shortId}` (e.g., "Explore-a8b2", "Bash-f3c1")
 
 **CSS Class:** `.tab--subagent` applied when `tab.type === 'subagent'`
+
+**File Preview Tab Variant:**
+```
+┌──────────────────────────────────────────────────────────────┐
+│ [Session ×] [Button.tsx ×] [+]                    [🚪] [🚪] │
+└──────────────────────────────────────────────────────────────┘
+              ↑ blue tint background, file icon prefix
+```
+
+**File Preview Tab States:**
+- Default: Muted text, subtle blue tint background
+- Hover: Primary text, close button visible
+- Active: Primary text, accent underline, blue tint
+
+**Tab Label Format:** `{filename}` with file-type icon prefix (e.g., "📄 Button.tsx")
+
+**CSS Class:** `.tab--file` applied when `tab.type === 'file'`
+
+**File Preview Tab Behavior:**
+- Opens when user clicks file in Folder Tree (right panel)
+- Shows read-only file content with syntax highlighting
+- Right panel switches to File Edit History view when file tab is active
+- No chat input displayed (read-only view)
+
+**Tab Type Summary:**
+
+| Type | CSS Class | Background | Use Case |
+|------|-----------|------------|----------|
+| Session | `.tab--session` | Default | Main conversation tabs |
+| Sub-Agent | `.tab--subagent` | Purple tint | Nested agent conversations |
+| File | `.tab--file` | Blue tint | File preview from folder tree |
 
 ---
 
