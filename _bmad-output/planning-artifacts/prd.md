@@ -415,7 +415,7 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR2: User can collapse/expand left and right panels
 - FR3: User can navigate between app sections via ribbon icons
 - FR4: User can resize panels by dragging dividers
-- FR5: User can open multiple sessions in a tab system (one session = one tab maximum)
+- FR5: User can open multiple sessions in a tab system (one session = one tab maximum, sub-agent conversations open as additional tabs)
 - FR6: User can switch between open session tabs (clicking already-open session focuses existing tab)
 - FR7: User can drag a tab to panel border to split view
 - FR7a: System displays confirmation dialog when user closes tab with Working session
@@ -461,6 +461,8 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR30: User can archive sessions
 - FR31: User can toggle visibility of archived sessions
 - FR32: System displays empty/new session state when no session selected
+- FR32a: System builds sub-agent index when session loads, containing path, parent reference, and label for each sub-agent
+- FR32b: System updates sub-agent index when new sub-agents are discovered during streaming
 
 ### Conversation Display
 
@@ -469,6 +471,10 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR35: User can expand tool calls to see full input/output details
 - FR36: User can see sub-agent spawns as nested/collapsible conversation elements
 - FR37: User can expand sub-agent to view its full conversation
+- FR37a: User can open sub-agent conversation in a dedicated tab by clicking "open in tab" button on sub-agent bubble
+- FR37b: User can open sub-agent conversation in a dedicated tab by clicking sub-agent event in timeline
+- FR37c: System displays sub-agent tabs with visual differentiation (color tint via CSS class)
+- FR37d: System displays sub-agent tab label in format "{agentType}-{shortId}" (e.g., "Explore-a8b2")
 - FR38: User can see error indicators on failed operations
 - FR39: User can scroll through long conversations
 - FR40: User can navigate long conversations via navigation map in right panel
@@ -513,6 +519,8 @@ Build the foundational architecture that enables future expansion. Prove the cor
 - FR65: System tracks session ID for each spawned CC instance
 - FR66: System supports resuming any existing session by ID
 - FR67: System displays actionable error in conversation when CC fails to spawn
+- FR67a: System uses unified conversation loader for both main sessions and sub-agent conversations
+- FR67b: System determines conversation type (main vs sub-agent) from file path, not loader logic
 
 ### Deferred to Post-MVP
 

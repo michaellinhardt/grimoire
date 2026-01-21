@@ -314,6 +314,38 @@ The Spawn Child system manages Claude Code CLI instances on behalf of Grimoire. 
 
 DB entry created only after Claude Code's first response or error confirms session exists.
 
+### Sub-Agent Index
+
+**Purpose:** Fast lookup of sub-agent metadata without repeated file system scans.
+
+**Structure:**
+```typescript
+interface SubAgentEntry {
+  agentId: string
+  path: string                    // Path to sub-agent JSONL file
+  parentId: string                // sessionId OR agentId (for nested)
+  parentMessageUuid: string       // UUID of tool_use message that spawned this agent
+  agentType: string               // "Explore", "Bash", etc.
+  label: string                   // "{agentType}-{shortId}"
+}
+
+// Stored in main process memory
+const subAgentIndex = new Map<string, SubAgentEntry>()
+```
+
+**Lifecycle:**
+
+| Event | Action |
+|-------|--------|
+| Session loads | Scan session folder for sub-agent files, populate index |
+| Tab opens (any conversation) | Scan that conversation's folder, add to index |
+| New sub-agent spawned | Add entry from stream event |
+| App quit | Index discarded (rebuilt on next session load) |
+
+**Discovery Pattern:**
+- Sub-agent files located at: `{sessionFolder}/subagents/agent-{agentId}.jsonl`
+- Nested sub-agents follow same pattern within their parent's folder
+
 ### App Startup Pattern
 
 **Pattern:** DB-First with Background Validation
@@ -388,6 +420,26 @@ interface Response {
 ```
 
 **Known Issue:** Final `result` event may not emit (GitHub #1920). Mitigate via `stop_reason` in message event.
+
+### Unified Conversation Loader
+
+**Principle:** Single loader function handles both main session and sub-agent conversations.
+
+```typescript
+// plugins/sessions/src/main/conversation-loader.ts
+async function loadConversation(path: string): Promise<Conversation> {
+  // Same logic regardless of main vs sub-agent
+  // Path is the only differentiator
+  const lines = await readJsonlFile(path)
+  return parseConversation(lines)
+}
+```
+
+**Caller determines path:**
+- Main session: `{CLAUDE_CONFIG_DIR}/projects/{hash}/{sessionId}.jsonl`
+- Sub-agent: From `subAgentIndex.get(agentId).path`
+
+**No conditionals based on conversation type** - rendering logic is identical.
 
 ### Isolation Architecture
 
@@ -680,12 +732,34 @@ CREATE TABLE sessions (
 'sessions:sendMessage'
 'db:query'
 'app:getPath'
+'subagent:openTab'        // Open sub-agent in new tab
+'subagent:getIndex'       // Get current sub-agent index
 
 // Event channels (main → renderer)
 'instance:stateChanged'
 'instance:streamChunk'
 'session:discovered'
+'subagent:discovered'     // New sub-agent found during scan/stream
 'app:beforeQuit'
+```
+
+#### Tab Type Conventions
+
+| Type | Value | Visual Treatment | Label Format |
+|------|-------|------------------|--------------|
+| Session | `'session'` | Default tab styling | Session name or "New Session" |
+| SubAgent | `'subagent'` | `.tab--subagent` CSS class (color tint) | `{agentType}-{shortId}` |
+
+**Tab interface extension:**
+```typescript
+interface Tab {
+  id: string
+  type: 'session' | 'subagent'
+  sessionId: string           // Parent session ID
+  agentId?: string            // Only for subagent type
+  label: string
+  conversationPath: string    // Path to JSONL file
+}
 ```
 
 #### Code Naming Conventions
@@ -1112,7 +1186,11 @@ grimoire/
 │           │   ├── stream-parser.ts
 │           │   ├── stream-parser.test.ts
 │           │   ├── session-scanner.ts
-│           │   └── session-scanner.test.ts
+│           │   ├── session-scanner.test.ts
+│           │   ├── conversation-loader.ts
+│           │   ├── conversation-loader.test.ts
+│           │   ├── subagent-index.ts
+│           │   └── subagent-index.test.ts
 │           │
 │           ├── renderer/
 │           │   ├── SessionList.tsx
@@ -1129,6 +1207,8 @@ grimoire/
 │           │   ├── SessionInfo.tsx
 │           │   ├── EventTimeline.tsx
 │           │   ├── StreamingIndicator.tsx
+│           │   ├── SubAgentTab.tsx
+│           │   ├── SubAgentTab.test.tsx
 │           │   │
 │           │   ├── store/
 │           │   │   ├── useSessionStore.ts

@@ -732,33 +732,46 @@ Detailed investigation of a specific sub-agent's behavior.
 ```mermaid
 flowchart TD
     A[See Sub-Agent Bubble] --> B{Collapsed State}
-    B --> C[Shows: Agent Name + Status]
-    C --> D[Click to Expand]
-    D --> E[Inline Expansion]
-    E --> F[View Agent's Messages]
-    F --> G[View Agent's Tool Calls]
-    G --> H{Tool Call Collapsed}
-    H --> I[Click Tool Call]
-    I --> J[Expand Tool Details]
-    J --> K[See Input/Output]
-    K --> L[Understand Agent Behavior]
-    L --> M[Click to Collapse]
-    M --> B
+    B --> C[Shows: Agent Name + Status + ↗ on hover]
+    C --> D{User Action}
+    D -->|Click bubble| E[Inline Expansion]
+    D -->|Click ↗ button| F[Open in New Tab]
+    D -->|Click in Timeline| F
+    E --> G[View Agent Summary]
+    G --> H{Need More Detail?}
+    H -->|Yes| I[Click ↗ in expanded view]
+    I --> F
+    H -->|No| J[Click to Collapse]
+    J --> B
+    F --> K[Sub-Agent Tab Opens]
+    K --> L[Full Conversation View]
+    L --> M[Same UI as Main Session]
+    M --> N[Can Type to Continue Sub-Agent]
 ```
+
+**Interaction Pattern:**
+
+| Entry Point | Action | Result |
+|-------------|--------|--------|
+| Collapsed bubble click | Single click | Inline expansion (existing) |
+| [↗] button on bubble | Click | Opens sub-agent in new tab |
+| Event timeline click | Click sub-agent event | Opens sub-agent in new tab |
+| Expanded bubble [↗] | Click | Opens sub-agent in new tab |
 
 **Expansion Behavior:**
 
 | State | Display | Action |
 |-------|---------|--------|
-| Collapsed | Agent name + status badge | Click to expand |
-| Expanded | Full conversation inline | Click header to collapse |
+| Collapsed | Agent name + status badge + [↗] on hover | Click to expand, [↗] to open tab |
+| Expanded | Full conversation inline + [↗] visible | Click header to collapse, [↗] to open tab |
 | Tool (collapsed) | Tool name + summary | Click to expand |
 | Tool (expanded) | Full input/output | Click to collapse |
 
 **Design Principle:**
-- Progressive disclosure: summary → detail
-- Never lose context (inline expansion, no modal)
+- Progressive disclosure: summary → detail → dedicated tab
+- Never lose context (inline expansion preserves parent view)
 - Clear visual hierarchy (agent → tools → details)
+- Tab option for deep investigation without losing parent context
 
 ---
 
@@ -962,6 +975,23 @@ flowchart TD
 - Click +: New session
 - Door buttons: Toggle left/right panels
 
+**Sub-Agent Tab Variant:**
+```
+┌────────────────────────────────────────────────────────┐
+│ [Session ×] [Explore-a8b2 ×] [+]              [🚪] [🚪] │
+└────────────────────────────────────────────────────────┘
+              ↑ purple tint background
+```
+
+**Sub-Agent Tab States:**
+- Default: Muted text, subtle purple tint background
+- Hover: Primary text, close button visible
+- Active: Primary text, accent underline, purple tint
+
+**Tab Label Format:** `{agentType}-{shortId}` (e.g., "Explore-a8b2", "Bash-f3c1")
+
+**CSS Class:** `.tab--subagent` applied when `tab.type === 'subagent'`
+
 ---
 
 #### 5. Message Bubble
@@ -1006,15 +1036,24 @@ flowchart TD
 
 **Sub-Agent Bubble:**
 ```
-┌─────────────────────────────────┐
-│ [A] Code Analysis Agent    Done │
-└─────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ [A] Code Analysis Agent    Done    [↗] │
+└─────────────────────────────────────────┘
 14:32
 ```
 - Alignment: Left
 - Background: Agent background (purple-tinted)
 - Border: Agent border (purple)
-- Expandable: Click to see full conversation
+- **Primary action (click):** Expand inline to see conversation summary
+- **Secondary action ([↗] button, visible on hover):** Open full conversation in dedicated tab
+
+**Interaction States:**
+
+| State | Display |
+|-------|---------|
+| Collapsed | Agent name + status + [↗] on hover |
+| Expanded (inline) | Summary conversation + [↗] always visible |
+| Running | Animated `···` indicator + [↗] to open live view in tab |
 
 ---
 
@@ -1044,6 +1083,11 @@ flowchart TD
 - Token count displayed like timestamp
 - Click: Scroll conversation to that event
 - Color-coded by type (subtle background differences)
+
+**Sub-Agent Events:**
+- Display: Agent type + short ID (e.g., "Explore-a8b2")
+- Click behavior: Opens sub-agent in dedicated tab (not inline scroll)
+- Visual: Purple-tinted background (matches sub-agent bubble)
 
 ---
 
