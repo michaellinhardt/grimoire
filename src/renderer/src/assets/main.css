@@ -53,3 +53,67 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Panel collapse/expand animation (AC3: 200ms ease-out) */
+[data-panel-group-id='grimoire-shell'] > [data-panel] {
+  transition: flex-basis 200ms ease-out;
+}
+
+/* Focus styles for resize handles (keyboard accessibility) */
+[data-panel-group-id='grimoire-shell'] > [data-resize-handle]:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* Tooltip animation for smoother UX */
+[data-radix-popper-content-wrapper] [role='tooltip'] {
+  animation: tooltip-fade-in 150ms ease-out;
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Tab state indicators */
+
+/* Working state - green dot with pulse animation */
+.tab--working::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  margin-right: 6px;
+  animation: tab-pulse 1.5s ease-in-out infinite;
+}
+
+/* Error state - red dot, no animation */
+.tab--error::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--error);
+  margin-right: 6px;
+}
+
+/* Idle state - no indicator (default, no CSS needed) */
+
+@keyframes tab-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

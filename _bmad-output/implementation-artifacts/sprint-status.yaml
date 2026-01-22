@@ -37,13 +37,13 @@ development_status:
   # Epic 1: Project Bootstrap & Core Shell
   epic-1: in-progress
   1-1-project-scaffold-with-electron-vite: done
-  1-2-core-shell-layout-with-ribbon-and-panels: ready-for-dev
-  1-3-tab-system-for-sessions: backlog
+  1-2-core-shell-layout-with-ribbon-and-panels: done
+  1-3-tab-system-for-sessions: done
   epic-1-retrospective: optional
 
   # Epic 2a: Session List & Basic Display
-  epic-2a: backlog
-  2a-1-session-scanner-and-database-sync: backlog
+  epic-2a: in-progress
+  2a-1-session-scanner-and-database-sync: done
   2a-2-session-list-component: backlog
   2a-3-session-management-actions: backlog
   2a-4-empty-and-new-session-states: backlog

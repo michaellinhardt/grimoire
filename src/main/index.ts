@@ -3,12 +3,19 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initDatabase, closeDatabase } from './db'
+import { registerSessionsIPC } from './ipc'
+import { processRegistry } from './process-registry'
+
+// Flag to prevent infinite loop when app.quit() triggers before-quit again
+let isQuitting = false
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1200,
+    height: 800,
+    minWidth: 800,
+    minHeight: 600,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -43,6 +50,9 @@ app.whenReady().then(() => {
   // Initialize database
   initDatabase()
 
+  // Register IPC handlers
+  registerSessionsIPC()
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.grimoire')
 
@@ -72,6 +82,29 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Graceful shutdown: terminate all child processes before quitting
+app.on('before-quit', async (event) => {
+  if (isQuitting) return
+  if (processRegistry.size === 0) return
+
+  event.preventDefault()
+  isQuitting = true
+
+  // Terminate all processes
+  const terminations = Array.from(processRegistry.entries()).map(async ([, child]) => {
+    child.kill('SIGTERM')
+    await Promise.race([
+      new Promise<void>((resolve) => child.once('exit', () => resolve())),
+      new Promise<void>((resolve) => setTimeout(resolve, 5000))
+    ])
+    if (!child.killed) child.kill('SIGKILL')
+  })
+
+  await Promise.all(terminations)
+  processRegistry.clear()
+  app.quit() // Re-trigger quit after processes terminated
 })
 
 app.on('will-quit', () => {

@@ -1,0 +1,1 @@
+export { registerSessionsIPC } from './sessions'
