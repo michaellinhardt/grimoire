@@ -1,6 +1,6 @@
 # Story 1.1: Project Scaffold with Electron-Vite
 
-Status: review
+Status: done
 
 ## Story
 
@@ -17,7 +17,7 @@ so that **I have a solid foundation to build Grimoire's features upon**.
 5. SQLite (better-sqlite3) is set up with database at ~/.grimoire/grimoire.db
 6. Zod is available for IPC validation
 7. Vitest is configured with jsdom environment for renderer tests
-8. The initial database schema is created (sessions, folders, file_edits, settings tables)
+8. The initial database schema is created (sessions, session_metadata, folders, file_edits, settings tables)
 9. `npm run dev` launches the Electron app successfully
 10. `npm run validate` (tsc + vitest + lint) passes
 
@@ -402,14 +402,14 @@ grimoire/
 
 ### Architecture Compliance Checklist
 
-- [ ] Use snake_case for database columns
-- [ ] Use camelCase for TypeScript properties
-- [ ] Store files follow pattern: `use{Name}Store.ts`
-- [ ] Components use PascalCase: `ComponentName.tsx`
-- [ ] Tests colocated: `ComponentName.test.ts`
-- [ ] IPC channels use `namespace:action` pattern
-- [ ] Zod schemas named `{Name}Schema`
-- [ ] All state in Zustand stores (no React.useState for shared state)
+- [x] Use snake_case for database columns
+- [x] Use camelCase for TypeScript properties
+- [x] Store files follow pattern: `use{Name}Store.ts`
+- [x] Components use PascalCase: `ComponentName.tsx`
+- [x] Tests colocated: `ComponentName.test.ts`
+- [x] IPC channels use `namespace:action` pattern
+- [x] Zod schemas named `{Name}Schema`
+- [x] All state in Zustand stores (no React.useState for shared state)
 
 ### Testing Requirements
 
@@ -478,34 +478,41 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 ### Change Log
 
 - 2026-01-22: Story completed - all 9 tasks implemented and validated
+- 2026-01-22: Code review fixes applied:
+  - Fixed schema drift: db.ts now imports schema.sql via Vite raw import
+  - Added externalizeDepsPlugin to electron.vite.config.ts for native modules
+  - Added React plugin to vitest.config.ts for TSX test support
+  - Converted App.tsx inline styles to Tailwind arbitrary values
+  - Created db.test.ts with database initialization tests (7 tests)
+  - Updated AC8 to document all 5 tables (including session_metadata)
+  - Verified and checked Architecture Compliance Checklist
+- 2026-01-22: Code review round 2 fixes applied:
+  - Fixed App.tsx return type: `React.JSX.Element` -> `ReactElement` with proper import
+  - Updated db.test.ts mock schema to match production schema structure
+  - Added useUIStore.test.ts with 5 tests for Zustand store validation
+  - Reorganized File List to separate template vs implemented files
+  - Total tests: 21 passing (was 16)
+- 2026-01-22: Code review round 3 (final) fixes applied:
+  - Added FK constraints to db.test.ts mock schema (sessions, session_metadata, file_edits)
+  - Renamed `activeTab` to `activeTabId` in useUIStore.ts per architecture spec
+  - Updated useUIStore.test.ts to use `activeTabId`
+  - Changed `console.log` to `console.warn` in db.ts for schema warnings
+  - All 21 tests passing, `npm run validate` passes
 
 ### File List
 
-**New Files:**
-- electron.vite.config.ts
-- vitest.config.ts
-- eslint.config.mjs
-- electron-builder.yml
-- package.json
-- tsconfig.json
-- tsconfig.node.json
-- tsconfig.web.json
-- .editorconfig
-- .prettierrc.yaml
-- .prettierignore
-- src/main/index.ts
-- src/main/db.ts
-- src/preload/index.ts
-- src/preload/index.d.ts
-- src/renderer/index.html
-- src/renderer/src/App.tsx
-- src/renderer/src/main.tsx
-- src/renderer/src/env.d.ts
-- src/renderer/src/assets/main.css
-- src/renderer/src/shared/store/useUIStore.ts
-- src/shared/types/ipc.ts
-- src/shared/types/ipc.test.ts
-- src/shared/db/schema.sql
+**Implemented Files (story-specific work):**
+- src/main/db.ts - Database initialization with version-aware schema recreation
+- src/main/db.test.ts - Database initialization tests (7 tests)
+- src/main/env.d.ts - Type declarations for SQL raw imports
+- src/shared/db/schema.sql - Database schema (5 tables: sessions, session_metadata, folders, file_edits, settings)
+- src/shared/types/ipc.ts - Zod schemas for IPC validation (SessionIdSchema, SpawnRequestSchema, SessionSchema, FolderSchema)
+- src/shared/types/ipc.test.ts - Zod schema tests (9 tests)
+- src/renderer/src/assets/main.css - Tailwind v4 with dark-first color system
+- src/renderer/src/shared/store/useUIStore.ts - Zustand store for UI state
+- src/renderer/src/shared/store/useUIStore.test.ts - Zustand store tests (5 tests)
+
+**Directory Structure (placeholders for future stories):**
 - src/renderer/src/core/shell/.gitkeep
 - src/renderer/src/core/settings/.gitkeep
 - src/renderer/src/core/loading/.gitkeep
@@ -513,14 +520,29 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 - src/renderer/src/shared/utils/.gitkeep
 - plugins/sessions/src/main/.gitkeep
 - plugins/sessions/src/renderer/.gitkeep
-- build/entitlements.mac.plist
-- build/icon.icns
-- build/icon.ico
-- build/icon.png
+
+**Template Files (from electron-vite react-ts):**
+- electron.vite.config.ts - Vite config (customized: added Tailwind, externalizeDepsPlugin)
+- vitest.config.ts - Vitest config (customized: added React plugin, environment separation)
+- eslint.config.mjs
+- electron-builder.yml
+- package.json (customized: added dependencies, validate script)
+- tsconfig.json, tsconfig.node.json, tsconfig.web.json
+- .editorconfig, .prettierrc.yaml, .prettierignore
+- src/main/index.ts
+- src/preload/index.ts, src/preload/index.d.ts
+- src/renderer/index.html
+- src/renderer/src/App.tsx (customized: Tailwind classes)
+- src/renderer/src/main.tsx
+- src/renderer/src/env.d.ts
+- build/entitlements.mac.plist, build/icon.icns, build/icon.ico, build/icon.png
 - resources/icon.png
-- .vscode/extensions.json
-- .vscode/launch.json
-- .vscode/settings.json
+- .vscode/extensions.json, .vscode/launch.json, .vscode/settings.json
 
 **Modified Files:**
 - .gitignore (added node_modules, dist, out, .DS_Store, .eslintcache, *.log*)
+- electron.vite.config.ts (code review: added externalizeDepsPlugin for main/preload)
+- vitest.config.ts (code review: added React plugin for TSX test support)
+- src/main/db.ts (code review: imports schema.sql via raw import instead of inline)
+- src/main/db.test.ts (code review: updated mock schema to match production structure)
+- src/renderer/src/App.tsx (code review: converted inline styles to Tailwind arbitrary values, fixed JSX return type)
