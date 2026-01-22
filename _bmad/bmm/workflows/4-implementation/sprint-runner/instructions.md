@@ -61,6 +61,7 @@
 
 4. **REMINDER PHRASE** - If a subagent hesitates or asks for input, respond: "AUTONOMOUS MODE: Take the decision yourself. Choose the most thorough option. Proceed without confirmation."
 
+
 ---
 
 ## Understanding sprint-status.yaml
@@ -124,10 +125,13 @@ Started: [ISO timestamp]
 | 1 | create-story | Created story file | 2m 34s |
 | 2 | story-review #1 | 2 critical issues fixed | 1m 45s |
 | 3 | story-review #2 | No critical issues | 1m 12s |
-| 4 | dev-story | All tasks completed | 15m 12s |
-| 5 | code-review #1 | 2 issues found, fixed | 4m 08s |
-| 6 | code-review #2 | 1 issue found, fixed | 3m 22s |
-| 7 | code-review #3 | Clean - marked done | 2m 45s |
+| 4 | create-tech-spec | Tech spec created | 3m 20s |
+| 5 | tech-spec-review #1 | 1 critical issue fixed | 2m 10s |
+| 6 | tech-spec-review #2 | No critical issues | 1m 45s |
+| 7 | dev-story | All tasks completed | 15m 12s |
+| 8 | code-review #1 | 2 issues found, fixed | 4m 08s |
+| 9 | code-review #2 | 1 issue found, fixed | 3m 22s |
+| 10 | code-review #3 | Clean - marked done | 2m 45s |
 
 Story completed: [ISO timestamp]
 Total duration: [duration]
@@ -349,7 +353,28 @@ Please review the story manually and resolve before resuming.
     </check>
 
     <check if="no critical issues OR story_review_attempt >= 3">
-      <action>Log: "Story review complete, proceeding to dev-story"</action>
+      <action>Log: "Story review complete, proceeding to create-tech-spec"</action>
+      <action>Go to Step 4c (create tech spec)</action>
+    </check>
+  </check>
+
+  <check if="workflow was create-tech-spec">
+    <action>Set tech_spec_review_attempt = 1</action>
+    <action>Log: "Tech spec created, starting review"</action>
+    <action>Go to Step 4d (tech-spec review loop)</action>
+  </check>
+
+  <check if="workflow was tech-spec-review">
+    <action>Parse subagent result for critical issues found</action>
+
+    <check if="critical issues found AND tech_spec_review_attempt < 3">
+      <action>Increment tech_spec_review_attempt</action>
+      <action>Log: "Tech spec review found critical issues, attempt [n] of 3"</action>
+      <action>Go to Step 4d (another tech-spec-review)</action>
+    </check>
+
+    <check if="no critical issues OR tech_spec_review_attempt >= 3">
+      <action>Log: "Tech spec review complete, proceeding to dev-story"</action>
       <action>Go to Step 2 (run dev-story)</action>
     </check>
   </check>
@@ -403,6 +428,90 @@ Please review the story manually and resolve before resuming.
   <action>Record end time and calculate duration</action>
   <action>Log to orchestrator.md: step number, "story-review", result summary, duration</action>
   <action>Go to Step 4 to process story-review result</action>
+</step>
+
+<step n="4c" goal="Create tech spec for story">
+  <critical>After story review passes, create a tech spec for the story</critical>
+
+  <action>Record step start time</action>
+  <action>Spawn NEW subagent with create-tech-spec instructions</action>
+
+  <subagent-prompt for="create-tech-spec">
+  ```
+  AUTONOMOUS MODE - No human available to answer questions. Make all decisions yourself.
+
+  Run the workflow: /bmad:bmm:workflows:create-tech-spec
+
+  Target story: [story_key]
+  Story file: {implementation_artifacts}/[story_key].md
+
+  CRITICAL INSTRUCTIONS:
+  - Create a technical specification for implementing this story
+  - You MUST make all decisions autonomously. No one will answer questions.
+  - Read the story file to understand requirements and acceptance criteria
+  - Design the technical approach, data structures, APIs, components needed
+  - Do NOT ask for confirmation. Complete the tech spec fully.
+  - Save the tech spec in the appropriate location
+
+  DECISION RULES:
+  - If the workflow asks for approval → proceed without approval
+  - If multiple approaches exist → choose the most robust one
+  - Never wait for human input. You ARE the decision maker.
+
+  IMPORTANT OUTPUT: At the end, clearly state:
+  - "TECH SPEC CREATED: [filename]"
+  - Location where the tech spec was saved
+  ```
+  </subagent-prompt>
+
+  <action>Wait for subagent completion</action>
+  <action>Record end time and calculate duration</action>
+  <action>Log to orchestrator.md: step number, "create-tech-spec", result summary, duration</action>
+  <action>Go to Step 4 to process create-tech-spec result</action>
+</step>
+
+<step n="4d" goal="Tech spec review loop">
+  <critical>After tech spec creation, review it before dev-story</critical>
+
+  <action>Record step start time</action>
+  <action>Spawn NEW subagent with tech-spec-review instructions</action>
+
+  <subagent-prompt for="tech-spec-review">
+  ```
+  AUTONOMOUS MODE - No human available to answer questions. Make all decisions yourself.
+
+  Run the workflow: /bmad:bmm:workflows:create-tech-spec
+
+  Target story: [story_key]
+  Story file: {implementation_artifacts}/[story_key].md
+
+  MODE: REVIEW ONLY - The tech spec already exists. Do NOT create a new one.
+
+  When the workflow asks what to do, select the REVIEW option.
+
+  CRITICAL INSTRUCTIONS:
+  - Review the existing tech spec for completeness and quality
+  - Verify it aligns with the story requirements and acceptance criteria
+  - Check for missing components, unclear specifications, potential issues
+  - Fix ANY issues you find (critical, high, medium, low)
+  - You MUST make all decisions autonomously. No one will answer questions.
+  - Do NOT ask for confirmation. Fix everything you find.
+
+  DECISION RULES:
+  - If the workflow asks for approval → proceed without approval
+  - Always choose review/validate options when offered
+  - Never wait for human input. You ARE the decision maker.
+
+  IMPORTANT OUTPUT: At the end, clearly state:
+  - "CRITICAL ISSUES FOUND: [count]" or "NO CRITICAL ISSUES FOUND"
+  - This determines if another review pass is needed
+  ```
+  </subagent-prompt>
+
+  <action>Wait for subagent completion</action>
+  <action>Record end time and calculate duration</action>
+  <action>Log to orchestrator.md: step number, "tech-spec-review", result summary, duration</action>
+  <action>Go to Step 4 to process tech-spec-review result</action>
 </step>
 
 <step n="5" goal="Error recovery">
@@ -471,26 +580,32 @@ START:
      - Number (e.g., "3") → complete 3 stories then prompt
      - "all" → complete ALL stories until sprint done
 
-LOOP:
+LOOP (for each story):
   1. Read sprint-status.yaml → find first non-done story
-  2. Determine workflow based on status:
-     - backlog → create-story → story-review loop (until no critical issues)
-     - ready-for-dev/in-progress → dev-story
-     - review → code-review (max 3 attempts)
-  3. Spawn subagent with AUTONOMOUS instructions
-  4. Log result to orchestrator.md
-  5. After create-story: spawn review subagent, repeat if critical issues
-  6. After code-review clean or 3 attempts → mark done
-  7. Increment stories_completed
-  8. Check batch mode:
-     - "all" → continue to next story (no prompt)
-     - "fixed" + batch complete → prompt for next batch
-     - "fixed" + batch not complete → continue to next story
 
-BATCH COMPLETE (fixed mode only):
-  - Report completion
-  - Ask "How many stories for next batch? (number or 'all')"
-  - Reset counter, continue loop
+  2. If status == backlog:
+     a. create-story (subagent)
+     b. story-review loop (until no critical, max 3)
+     c. create-tech-spec (subagent)
+     d. tech-spec-review loop (until no critical, max 3)
+
+  3. dev-story (subagent) - implements the story using tech spec
+
+  4. code-review loop:
+     - CRITICAL found → re-review (unlimited, hard limit 10)
+     - Non-critical found → re-review (max 3)
+     - ZERO issues → done
+
+  5. Mark story done, increment counter
+
+  6. Check batch mode:
+     - "all" → next story
+     - "fixed" + complete → prompt for next batch
+     - "fixed" + incomplete → next story
+
+SUBAGENT RULES:
+  - All subagents run AUTONOMOUS (no human input)
+  - Make all decisions independently
 ```
 
 **Usage Examples:**
