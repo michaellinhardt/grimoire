@@ -132,9 +132,6 @@ Started: [ISO timestamp]
 Story completed: [ISO timestamp]
 Total duration: [duration]
 
---- CONTEXT COMPACTION ---
-Context compacted. Resuming loop.
-
 ---
 
 ## Story: [next-story-key]
@@ -254,12 +251,12 @@ Context compacted. Resuming loop.
 
   Target story: [story_key]
   Story file: {implementation_artifacts}/[story_key].md
-  Review attempt: [review_attempt] of 3
+  Review attempt: [review_attempt]
 
   CRITICAL INSTRUCTIONS:
   - You MUST make all decisions autonomously. No one will answer questions.
   - Perform adversarial code review as the workflow instructs.
-  - If you find ANY issues (HIGH, MEDIUM, or LOW severity):
+  - If you find ANY issues (CRITICAL, HIGH, MEDIUM, or LOW severity):
     - FIX THEM AUTOMATICALLY (choose option 1 "Fix them automatically" when prompted)
     - Do NOT create action items
     - Do NOT change story status to "done"
@@ -270,6 +267,11 @@ Context compacted. Resuming loop.
   - Do NOT ask for confirmation. Fix everything you find.
 
   IMPORTANT: After fixing issues, the story stays in "review" status for another review pass.
+
+  MANDATORY OUTPUT FORMAT - At the end of your review, clearly state:
+  - "HIGHEST SEVERITY: CRITICAL" or "HIGHEST SEVERITY: HIGH" or "HIGHEST SEVERITY: MEDIUM" or "HIGHEST SEVERITY: LOW" or "ZERO ISSUES"
+  - Include counts: "Issues: X CRITICAL, X HIGH, X MEDIUM, X LOW"
+  - This determines the re-review logic
 
   DECISION RULES:
   - If the workflow asks "What should I do with these issues?" → ALWAYS choose option 1 "Fix them automatically"
@@ -290,23 +292,44 @@ Context compacted. Resuming loop.
 
   <check if="workflow was code-review">
     <action>Re-read sprint-status.yaml to check current_story_key status</action>
+    <action>Parse subagent result for highest severity found (CRITICAL/HIGH/MEDIUM/LOW/NONE)</action>
+    <action>Increment review_attempt</action>
 
-    <check if="status == done">
-      <action>Log: "Story completed" with timestamp and total duration</action>
-      <action>Go to Step 6 (MANDATORY context compaction)</action>
+    <check if="review_attempt >= 10">
+      <action>Log to orchestrator.md: "HARD LIMIT REACHED: 10 code reviews on story [story_key]"</action>
+      <action>Log: "STOPPING - Human review required. Too many review cycles."</action>
+      <output>
+**ORCHESTRATOR STOPPED - HUMAN REVIEW REQUIRED**
+
+Story: [story_key]
+Code reviews attempted: 10 (hard limit)
+Issues keep recurring - possible systemic problem.
+
+Please review the story manually and resolve before resuming.
+      </output>
+      <action>EXIT workflow - do not continue</action>
     </check>
 
-    <check if="status == review AND review_attempt < 3">
-      <action>Increment review_attempt</action>
-      <action>Log: "Review found issues, attempt [n] of 3"</action>
+    <check if="status == done OR zero issues found">
+      <action>Log: "Story completed - code review passed with ZERO issues"</action>
+      <action>Go to Step 6 (batch tracking)</action>
+    </check>
+
+    <check if="CRITICAL issues found">
+      <action>Log: "CRITICAL issues found and fixed, mandatory re-review (attempt [review_attempt]/10)"</action>
       <action>Go to Step 3 (another code-review)</action>
     </check>
 
-    <check if="status == review AND review_attempt >= 3">
-      <action>Log: "WARNING: 3 review attempts completed, issues may remain"</action>
-      <action>Force update sprint-status.yaml: set story to "done"</action>
-      <action>Log: "Force-marked done after 3 review cycles"</action>
-      <action>Go to Step 6 (MANDATORY context compaction)</action>
+    <check if="non-critical issues (HIGH/MEDIUM/LOW) AND review_attempt < 3">
+      <action>Log: "Non-critical issues found, attempt [review_attempt] of 3"</action>
+      <action>Go to Step 3 (another code-review)</action>
+    </check>
+
+    <check if="non-critical issues (HIGH/MEDIUM/LOW) AND review_attempt >= 3">
+      <action>Log: "3 review attempts completed, non-critical issues may remain"</action>
+      <action>Update sprint-status.yaml: set story to "done"</action>
+      <action>Log: "Marked done after 3 review cycles (no critical issues)"</action>
+      <action>Go to Step 6 (batch tracking)</action>
     </check>
   </check>
 
@@ -400,29 +423,16 @@ Context compacted. Resuming loop.
   </check>
 </step>
 
-<step n="6" goal="MANDATORY context compaction and batch tracking">
-  <critical>THIS STEP IS MANDATORY. DO NOT SKIP. Execute after EVERY completed story.</critical>
-  <critical>This ensures the orchestrator can run for extended periods without context overflow.</critical>
-
+<step n="6" goal="Batch tracking and next story">
   <action>Increment stories_completed by 1</action>
-  <action>Log to orchestrator.md: "--- CONTEXT COMPACTION ---"</action>
 
   <check if="batch_mode == 'all'">
-    <action>Log: "Story [story_key] fully completed. ([stories_completed] total, mode: ALL)"</action>
-    <action>Use the context compaction tool to compress conversation history</action>
-    <action>Preserve only:
-      - Current sprint-status.yaml state
-      - orchestrator.md log file path
-      - batch_mode = "all"
-      - stories_completed counter
-      - Any error recovery state
-    </action>
-    <action>After compaction, log: "Context compacted. Resuming loop (ALL mode)."</action>
+    <action>Log to orchestrator.md: "Story [story_key] fully completed. ([stories_completed] total, mode: ALL)"</action>
     <action>Go to Step 1 (next story - continues until all done)</action>
   </check>
 
   <check if="batch_mode == 'fixed'">
-    <action>Log: "Story [story_key] fully completed. ([stories_completed]/[batch_size])"</action>
+    <action>Log to orchestrator.md: "Story [story_key] fully completed. ([stories_completed]/[batch_size])"</action>
 
     <check if="stories_completed >= batch_size">
       <action>Log to orchestrator.md: "=== BATCH COMPLETE: [batch_size] stories ==="</action>
@@ -447,15 +457,6 @@ Ready for next batch.
       <action>Log to orchestrator.md: "New batch started: [batch_size] stories"</action>
     </check>
 
-    <action>Use the context compaction tool to compress conversation history</action>
-    <action>Preserve only:
-      - Current sprint-status.yaml state
-      - orchestrator.md log file path
-      - batch_mode, batch_size, stories_completed counters
-      - Any error recovery state
-    </action>
-
-    <action>After compaction, log: "Context compacted. Resuming loop."</action>
     <action>Go to Step 1 (next story)</action>
   </check>
 </step>
@@ -481,8 +482,7 @@ LOOP:
   5. After create-story: spawn review subagent, repeat if critical issues
   6. After code-review clean or 3 attempts → mark done
   7. Increment stories_completed
-  8. COMPACT CONTEXT (MANDATORY)
-  9. Check batch mode:
+  8. Check batch mode:
      - "all" → continue to next story (no prompt)
      - "fixed" + batch complete → prompt for next batch
      - "fixed" + batch not complete → continue to next story
