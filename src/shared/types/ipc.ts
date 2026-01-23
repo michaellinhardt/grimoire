@@ -271,6 +271,17 @@ export const StreamEndEventSchema = z.object({
 
 export type StreamEndEvent = z.infer<typeof StreamEndEventSchema>
 
+/**
+ * Stream init event - session initialized with tools list
+ * Emitted when CC starts and sends the init system message (Story 3b-1)
+ */
+export const StreamInitEventSchema = z.object({
+  sessionId: z.string().uuid(),
+  tools: z.array(z.unknown()).optional()
+})
+
+export type StreamInitEvent = z.infer<typeof StreamInitEventSchema>
+
 // ============================================================
 // Abort Schemas (Story 3a-4)
 // ============================================================

@@ -130,6 +130,17 @@ const grimoireAPI = {
       ): void => callback(data)
       ipcRenderer.on('stream:end', handler)
       return () => ipcRenderer.removeListener('stream:end', handler)
+    },
+    // Stream init event listener (Story 3b-1)
+    onStreamInit: (
+      callback: (event: { sessionId: string; tools?: unknown[] }) => void
+    ): (() => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        data: { sessionId: string; tools?: unknown[] }
+      ): void => callback(data)
+      ipcRenderer.on('stream:init', handler)
+      return () => ipcRenderer.removeListener('stream:init', handler)
     }
   },
   // New namespace (Story 2a.3)

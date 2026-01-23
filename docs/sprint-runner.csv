@@ -164,3 +164,27 @@
 1769197724,3a,3a-4,code-review-1,workflow,end
 1769197747,3a,3a-4,code-review-2,workflow,start
 1769197849,3a,3a-4,code-review-2,workflow,end
+1769201922,3b,3b-1,create-story,workflow,start
+1769201924,3b,3b-1,story-discovery,workflow,start
+1769201925,3b,3b-2,story-discovery,workflow,start
+1769202109,3b,3b-1,story-discovery,workflow,end
+1769202110,3b,3b-2,story-discovery,workflow,end
+1769202118,3b,3b-1,create-story,workflow,end
+1769202125,3b,3b-2,create-story,workflow,start
+1769202288,3b,3b-2,create-story,workflow,end
+1769202327,3b,3b-1,story-review-1,workflow,start
+1769202403,3b,3b-1,story-review-1,workflow,end
+1769202408,3b,3b-2,story-review-1,workflow,start
+1769202469,3b,3b-2,story-review-1,workflow,end
+1769202501,3b,3b-1,create-tech-spec,workflow,start
+1769202662,3b,3b-1,create-tech-spec,workflow,end
+1769202662,3b,3b-2,create-tech-spec,workflow,start
+1769202839,3b,3b-2,create-tech-spec,workflow,end
+1769202888,3b,3b-1,tech-spec-review-1,workflow,start
+1769203002,3b,3b-1,tech-spec-review-1,workflow,end
+1769203007,3b,3b-2,tech-spec-review-1,workflow,start
+1769203074,3b,3b-2,tech-spec-review-1,workflow,end
+1769203104,3b,3b-1,dev-story,workflow,start
+1769203543,3b,3b-1,dev-story,workflow,end
+1769203572,3b,3b-1,code-review-1,workflow,start
+1769203670,3b,3b-1,code-review-1,workflow,end,"Fixed 2 MEDIUM issues"

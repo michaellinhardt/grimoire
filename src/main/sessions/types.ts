@@ -88,3 +88,19 @@ export interface SubAgentEntry {
 }
 
 export type SubAgentIndex = Map<string, SubAgentEntry>
+
+// ============================================================
+// CC Spawner Types (Story 3b-1)
+// ============================================================
+
+/**
+ * Options for spawning a CC child process.
+ */
+export interface SpawnOptions {
+  /** Session UUID (undefined for new sessions) */
+  sessionId?: string
+  /** Working directory for the CC process */
+  folderPath: string
+  /** User message to send via stdin */
+  message: string
+}

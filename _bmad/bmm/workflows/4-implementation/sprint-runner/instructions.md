@@ -42,23 +42,47 @@ To use a prompt:
 
 ## Orchestrator Log Format
 
-Subagents write to `./docs/sprint-runner.csv` in CSV format (no header):
+Subagents write to `./docs/sprint-runner.csv` in CSV format (no header, 7 columns):
 
 ```
-timestamp,epicID,storyID,command,task-id,status
+timestamp,epicID,storyID,command,task-id,status,"message"
 ```
 
-- `status` = "start" or "end"
-- Duration is calculated by dashboard (matching start/end pairs)
+**Column definitions:**
+- `timestamp` - Unix epoch seconds
+- `epicID` - Short epic identifier (e.g., "2a", "3b")
+- `storyID` - Short story identifier (e.g., "2a-1", "3b-2")
+- `command` - Workflow name (e.g., "create-story", "dev-story", "code-review-1")
+- `task-id` - Task phase from taxonomy (e.g., "setup", "implement", "validate")
+- `status` - Event status: "start" or "end"
+- `message` - Descriptive message (required, max 150 chars, quoted for CSV)
+
+**Task IDs:** See `task-taxonomy.yaml` for valid task IDs per command.
+
+**Message format:**
+- Start message: Describes what the task is about to do
+- End message: Describes outcome with structured suffix format: `Text (metric:value, metric:value)`
+- Recommended metrics: `files`, `lines`, `tests`, `issues`, `sections`
+
+**Script usage:**
+```bash
+_bmad/scripts/orchestrator.sh <epic_id> <story_id> <command> <task_id> <status> "<message>"
+```
 
 **IMPORTANT:** The orchestrator does NOT log. Only subagents log using the script.
 
-Example log entries (from subagents):
-```
-1706054400,2a,2a-1,create-story,workflow,start
-1706054500,2a,2a-1,create-story,workflow,end
-1706054501,2a,2a-1,story-discovery,workflow,start
-1706054600,2a,2a-1,story-discovery,workflow,end
+**Example log entries (from subagents):**
+```csv
+1706054400,2a,2a-1,create-story,setup,start,"Initializing story creation for 2a-1"
+1706054402,2a,2a-1,create-story,setup,end,"Setup complete (files:1)"
+1706054403,2a,2a-1,create-story,analyze,start,"Analyzing epic requirements"
+1706054420,2a,2a-1,create-story,analyze,end,"Requirements analyzed (sections:4)"
+1706054421,2a,2a-1,create-story,generate,start,"Generating story content"
+1706054480,2a,2a-1,create-story,generate,end,"Story content generated (lines:85)"
+1706054481,2a,2a-1,create-story,write,start,"Writing story file"
+1706054485,2a,2a-1,create-story,write,end,"Story file written (files:1, lines:85)"
+1706054486,2a,2a-1,create-story,validate,start,"Validating story structure"
+1706054490,2a,2a-1,create-story,validate,end,"Validation passed (sections:5)"
 ```
 
 ---

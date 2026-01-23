@@ -19,6 +19,7 @@ import {
 import { toSessionMetadata, type DBSessionMetadataRow } from '../sessions/session-metadata'
 import { processRegistry } from '../process-registry'
 import { scanClaudeConfigDir, syncSessionsToDatabase, listSessions } from '../sessions'
+import { spawnCC } from '../sessions/cc-spawner'
 import { getDatabase } from '../db'
 
 export function registerSessionsIPC(): void {
@@ -306,37 +307,44 @@ export function registerSessionsIPC(): void {
     return { sessionId: newSessionId }
   })
 
-  // Send message to session (Story 3a.2)
-  // Note: Actual CC spawn will be implemented in Story 3b-1
-  // For now, this creates the session in DB if new
+  // Send message to session (Story 3a.2 + Story 3b-1)
+  // Spawns CC and handles session ID assignment:
+  // - Existing sessions: use provided sessionId
+  // - New sessions: let CC assign sessionId via init event (Story 3b-2 updates DB)
   ipcMain.handle('sessions:sendMessage', async (_, data: unknown) => {
     try {
       const { sessionId, message, folderPath, isNewSession } = SendMessageSchema.parse(data)
       const db = getDatabase()
       const now = Date.now()
 
-      if (isNewSession) {
-        // Create new session in database (similar to sessions:create)
-        db.prepare(
-          `
-          INSERT INTO sessions (id, folder_path, created_at, updated_at)
-          VALUES (?, ?, ?, ?)
-        `
-        ).run(sessionId, folderPath, now, now)
-      } else {
+      if (!isNewSession) {
         // Update last accessed timestamp for existing session
         db.prepare('UPDATE sessions SET updated_at = ? WHERE id = ?').run(now, sessionId)
       }
+      // NOTE: For new sessions, we do NOT create a DB entry here.
+      // CC will assign the real sessionId via init event.
+      // Story 3b-2 (stream parser) will update the DB when init event is received.
+      // The renderer UUID is temporary and serves only to match stream events.
 
-      // TODO: Story 3b-1 will implement actual CC child process spawning
-      // For now, just acknowledge the message was received
-      if (process.env.DEBUG_SEND_MESSAGE) {
-        console.debug(
-          `[sendMessage] Received: sessionId=${sessionId}, message=${message.substring(0, 50)}...`
-        )
+      // Spawn CC child process (Story 3b-1)
+      try {
+        spawnCC({
+          sessionId: isNewSession ? undefined : sessionId,
+          folderPath,
+          message
+        })
+
+        if (process.env.DEBUG_SEND_MESSAGE) {
+          console.debug(`[sendMessage] Spawned CC: sessionId=${sessionId}, isNew=${isNewSession}`)
+        }
+
+        return { success: true }
+      } catch (spawnError) {
+        const spawnErrorMsg =
+          spawnError instanceof Error ? spawnError.message : 'Failed to spawn CC'
+        console.error('[sessions:sendMessage] Spawn error:', spawnErrorMsg)
+        return { success: false, error: spawnErrorMsg }
       }
-
-      return { success: true }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to send message'
       console.error('[sessions:sendMessage] Error:', errorMessage)

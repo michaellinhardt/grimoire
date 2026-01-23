@@ -1,0 +1,259 @@
+# Task Taxonomy for Sprint Runner Logging
+# Version: 1.0
+# Location: _bmad/bmm/workflows/4-implementation/sprint-runner/task-taxonomy.yaml
+#
+# This file defines valid task IDs for sprint-runner logging.
+# Subagents MUST use these task IDs when calling orchestrator.sh.
+
+version: "1.0"
+
+description: |
+  Defines the canonical task phases for each sprint-runner command.
+  When logging, subagents must use task IDs from this taxonomy.
+  Messages are required and should follow the structured suffix format.
+
+# Recommended metrics for end messages (free-form allowed)
+recommended_metrics:
+  - key: files
+    description: Number of files created or modified
+  - key: lines
+    description: Lines of code or content written
+  - key: tests
+    description: "Test results (e.g., '12/12 passed' or '3 failed')"
+  - key: issues
+    description: Number of issues found or fixed
+  - key: sections
+    description: Document sections processed
+
+# Message format guidelines
+message_format:
+  max_length: 150
+  start_format: "Action description for {story_id}"
+  end_format: "Result description (metric:value, metric:value)"
+  examples:
+    start: "Initializing story creation for 2b-6"
+    end: "Story file written (files:1, lines:85)"
+
+# ============================================================
+# COMMAND TAXONOMIES
+# ============================================================
+
+commands:
+
+  # ----------------------------------------------------------
+  # CREATE-STORY: Creates story file from epic requirements
+  # ----------------------------------------------------------
+  create-story:
+    description: Creates story file from epic requirements
+    phases:
+      - id: setup
+        description: Initialize context and load epic file
+        typical_start: "Initializing story creation for {story_id}"
+        typical_end: "Setup complete (files:1)"
+
+      - id: analyze
+        description: Analyze epic requirements for story scope
+        typical_start: "Analyzing epic requirements"
+        typical_end: "Requirements analyzed (sections:N)"
+
+      - id: generate
+        description: Generate story content and structure
+        typical_start: "Generating story content"
+        typical_end: "Story content generated (lines:N)"
+
+      - id: write
+        description: Write story file to implementation-artifacts
+        typical_start: "Writing story file"
+        typical_end: "Story file written (files:1, lines:N)"
+
+      - id: validate
+        description: Validate story structure and completeness
+        typical_start: "Validating story structure"
+        typical_end: "Validation passed (sections:N)"
+
+  # ----------------------------------------------------------
+  # STORY-DISCOVERY: Parallel discovery for story context
+  # ----------------------------------------------------------
+  story-discovery:
+    description: Parallel discovery for story context (runs alongside create-story)
+    phases:
+      - id: setup
+        description: Load story and project context
+        typical_start: "Loading discovery context for {story_id}"
+        typical_end: "Context loaded"
+
+      - id: explore
+        description: Explore codebase for relevant patterns
+        typical_start: "Exploring codebase patterns"
+        typical_end: "Patterns identified (files:N)"
+
+      - id: write
+        description: Write discovery file
+        typical_start: "Writing discovery file"
+        typical_end: "Discovery file written (lines:N)"
+
+  # ----------------------------------------------------------
+  # STORY-REVIEW: Review story quality and completeness
+  # ----------------------------------------------------------
+  story-review:
+    description: Review story quality and completeness
+    phases:
+      - id: setup
+        description: Load story and discovery files
+        typical_start: "Loading story {story_id} for review"
+        typical_end: "Files loaded"
+
+      - id: analyze
+        description: Analyze story for issues
+        typical_start: "Analyzing story quality"
+        typical_end: "Analysis complete (issues:N)"
+
+      - id: fix
+        description: Fix identified issues
+        typical_start: "Fixing identified issues"
+        typical_end: "Issues fixed (issues:N)"
+
+      - id: validate
+        description: Validate fixes
+        typical_start: "Validating fixes"
+        typical_end: "Validation passed"
+
+  # ----------------------------------------------------------
+  # CREATE-TECH-SPEC: Creates technical specification for story
+  # ----------------------------------------------------------
+  create-tech-spec:
+    description: Creates technical specification for story
+    phases:
+      - id: setup
+        description: Load story and discovery context
+        typical_start: "Loading tech-spec context for {story_id}"
+        typical_end: "Context loaded"
+
+      - id: discover
+        description: Inline discovery for technical details
+        typical_start: "Discovering technical requirements"
+        typical_end: "Discovery complete (files:N)"
+
+      - id: generate
+        description: Generate tech-spec content
+        typical_start: "Generating tech-spec"
+        typical_end: "Tech-spec generated (sections:N)"
+
+      - id: write
+        description: Write tech-spec file
+        typical_start: "Writing tech-spec file"
+        typical_end: "Tech-spec written (lines:N)"
+
+      - id: validate
+        description: Validate tech-spec completeness
+        typical_start: "Validating tech-spec"
+        typical_end: "Validation passed"
+
+  # ----------------------------------------------------------
+  # TECH-SPEC-DISCOVERY: Discovery phase for tech-spec (if separate)
+  # ----------------------------------------------------------
+  tech-spec-discovery:
+    description: Discovery phase for tech-spec (when run separately)
+    phases:
+      - id: setup
+        description: Initialize discovery context
+        typical_start: "Initializing tech-spec discovery for {story_id}"
+        typical_end: "Setup complete"
+
+      - id: explore
+        description: Explore codebase for implementation patterns
+        typical_start: "Exploring implementation patterns"
+        typical_end: "Patterns found (files:N)"
+
+      - id: write
+        description: Write discovery findings
+        typical_start: "Writing discovery findings"
+        typical_end: "Discovery written (lines:N)"
+
+  # ----------------------------------------------------------
+  # TECH-SPEC-REVIEW: Review tech-spec quality
+  # ----------------------------------------------------------
+  tech-spec-review:
+    description: Review tech-spec quality and completeness
+    phases:
+      - id: setup
+        description: Load tech-spec files
+        typical_start: "Loading tech-spec {story_id} for review"
+        typical_end: "Files loaded"
+
+      - id: analyze
+        description: Analyze tech-spec completeness
+        typical_start: "Analyzing tech-spec quality"
+        typical_end: "Analysis complete (issues:N)"
+
+      - id: fix
+        description: Fix identified issues
+        typical_start: "Fixing tech-spec issues"
+        typical_end: "Issues fixed (issues:N)"
+
+      - id: validate
+        description: Validate fixes
+        typical_start: "Validating tech-spec fixes"
+        typical_end: "Validation passed"
+
+  # ----------------------------------------------------------
+  # DEV-STORY: Implement story code
+  # ----------------------------------------------------------
+  dev-story:
+    description: Implement story code based on story and tech-spec
+    phases:
+      - id: setup
+        description: Load story, tech-spec, and context
+        typical_start: "Loading implementation context for {story_id}"
+        typical_end: "Context loaded (files:N)"
+
+      - id: implement
+        description: Write implementation code
+        typical_start: "Implementing story code"
+        typical_end: "Implementation complete (files:N, lines:N)"
+
+      - id: tests
+        description: Write and run tests
+        typical_start: "Writing and running tests"
+        typical_end: "Tests complete (tests:N passed)"
+
+      - id: lint
+        description: Run linting and formatting
+        typical_start: "Running lint and format"
+        typical_end: "Lint passed"
+
+      - id: validate
+        description: Final validation
+        typical_start: "Running final validation"
+        typical_end: "Validation passed"
+
+  # ----------------------------------------------------------
+  # CODE-REVIEW: Review implemented code
+  # ----------------------------------------------------------
+  code-review:
+    description: Review implemented code for issues
+    phases:
+      - id: setup
+        description: Load story code and context
+        typical_start: "Loading code for review ({story_id})"
+        typical_end: "Code loaded (files:N)"
+
+      - id: analyze
+        description: Analyze code for issues
+        typical_start: "Analyzing code quality"
+        typical_end: "Analysis complete (issues:N found)"
+
+      - id: fix
+        description: Apply fixes to code
+        typical_start: "Applying code fixes"
+        typical_end: "Fixes applied (issues:N fixed)"
+
+      - id: test
+        description: Re-run tests after fixes
+        typical_start: "Re-running tests"
+        typical_end: "Tests passed (tests:N)"
+
+      - id: validate
+        description: Validate all fixes
+        typical_start: "Validating code review fixes"
+        typical_end: "Validation passed"

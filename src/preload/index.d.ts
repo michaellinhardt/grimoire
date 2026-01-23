@@ -68,6 +68,10 @@ export interface GrimoireAPI {
         aborted?: boolean
       }) => void
     ) => () => void
+    // Stream init event listener (Story 3b-1)
+    onStreamInit: (
+      callback: (event: { sessionId: string; tools?: unknown[] }) => void
+    ) => () => void
   }
   dialog: {
     selectFolder: () => Promise<{ canceled: boolean; folderPath: string | null }>

@@ -123,9 +123,9 @@ development_status:
 # Summary: Complete implementation of abort and resume functionality. All 6 ACs implemented, all 784 tests passing, comprehensive test coverage including ChatInput abort button, useAbortSession hook, Escape key handler, system message rendering, and addAbortedMessage action.
 
   # Epic 3b: CC Integration & Instance Management
-  epic-3b: backlog
-  3b-1-cc-child-process-spawning: backlog
-  3b-2-ndjson-stream-parser: backlog
+  epic-3b: in-progress
+  3b-1-cc-child-process-spawning: review
+  3b-2-ndjson-stream-parser: ready-for-dev
   3b-3-instance-state-machine: backlog
   3b-4-request-response-process-model: backlog
   epic-3b-retrospective: optional

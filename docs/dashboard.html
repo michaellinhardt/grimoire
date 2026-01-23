@@ -766,6 +766,79 @@
             height: 24px;
         }
 
+        /* Timeline command group (for expand/collapse) */
+        .timeline-command-group {
+            /* Default expanded */
+        }
+
+        .timeline-command-group.collapsed .timeline-tasks-container {
+            display: none;
+        }
+
+        .timeline-command-group .cmd-expand-icon {
+            display: inline-block;
+            width: 12px;
+            font-size: 8px;
+            color: #a8a8a8;
+            transition: transform 0.2s ease;
+            margin-right: 4px;
+            cursor: pointer;
+        }
+
+        .timeline-command-group.collapsed .cmd-expand-icon {
+            transform: rotate(-90deg);
+        }
+
+        .timeline-command-group:not(.collapsed) .cmd-expand-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Timeline message row */
+        .timeline-message-row {
+            display: flex;
+            height: 20px;
+        }
+
+        .timeline-message-label {
+            width: var(--timeline-label-width);
+            min-width: var(--timeline-label-width);
+            background: #fafaf9;
+            border-right: 1px solid #e8e7e5;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+        }
+
+        .timeline-message-content {
+            flex-shrink: 0;
+            position: relative;
+            height: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-message-text {
+            font-size: 10px;
+            color: #787774;
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 300px;
+            padding-left: 4px;
+        }
+
+        /* Task message in activity log */
+        .task-message {
+            font-size: 11px;
+            color: #787774;
+            font-style: italic;
+            padding: 2px 12px 6px 44px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         /* Filters */
         .filters {
             display: flex;
@@ -1696,6 +1769,7 @@
             maxLabelWidth: 400,
             blockSizeMinutes: 10,
             expandedStoryIds: new Set(),  // Multiple stories can be expanded
+            expandedCommands: new Map(),  // Track command expand/collapse state (key -> boolean, default true)
             timelineStartTs: null,
             timelineEndTs: null,
             totalTimelineWidth: 0,  // Continuous timeline width in pixels
@@ -1804,11 +1878,47 @@
         }
 
         // ============================================================
-        // ORCHESTRATOR PARSERS - 6-COLUMN FORMAT
+        // ORCHESTRATOR PARSERS - 7-COLUMN FORMAT (backward compatible with 6)
         // ============================================================
 
+        // RFC 4180 compliant CSV line parser
+        // Handles quoted fields with escaped quotes ("")
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextChar = line[i + 1];
+
+                if (inQuotes) {
+                    if (char === '"' && nextChar === '"') {
+                        current += '"';
+                        i++; // Skip escaped quote
+                    } else if (char === '"') {
+                        inQuotes = false;
+                    } else {
+                        current += char;
+                    }
+                } else {
+                    if (char === '"') {
+                        inQuotes = true;
+                    } else if (char === ',') {
+                        result.push(current);
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
         // Parse orchestrator CSV log
-        // Format: timestamp,epicID,storyID,command,task-id,status
+        // Format (7-column): timestamp,epicID,storyID,command,task-id,status,"message"
+        // Format (6-column legacy): timestamp,epicID,storyID,command,task-id,status
         // - status = "start" or "end"
         // - Duration calculated by matching start/end pairs
         // - Orphan handling: < 30 min = in-progress, >= 30 min = ignore
@@ -1821,17 +1931,20 @@
 
             // First pass: collect all entries and match start/end pairs
             // Key format: epicId|storyId|command|taskId
-            const pairMap = new Map(); // key -> { start: entry, end: entry }
+            const pairMap = new Map(); // key -> { start: entry, end: entry, startMessage, endMessage }
             const allEntries = [];
 
             for (let i = startIndex; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
 
-                const parts = line.split(',');
+                // Use RFC 4180 parser for proper quote handling
+                const parts = parseCSVLine(line);
                 if (parts.length < 6) continue;
 
-                const [timestamp, epicId, storyId, command, taskId, status] = parts;
+                // 6-column: timestamp,epic,story,cmd,task,status
+                // 7-column: timestamp,epic,story,cmd,task,status,message
+                const [timestamp, epicId, storyId, command, taskId, status, message = ''] = parts;
                 const ts = parseInt(timestamp, 10);
                 if (isNaN(ts)) continue;
 
@@ -1841,7 +1954,8 @@
                     storyId,
                     command,
                     taskId,
-                    status: status.trim().toLowerCase()
+                    status: status.trim().toLowerCase(),
+                    message: message.trim()
                 };
 
                 allEntries.push(entry);
@@ -1850,14 +1964,16 @@
                 const pairKey = `${entry.epicId}|${storyId}|${command}|${taskId}`;
 
                 if (!pairMap.has(pairKey)) {
-                    pairMap.set(pairKey, { start: null, end: null });
+                    pairMap.set(pairKey, { start: null, end: null, startMessage: '', endMessage: '' });
                 }
 
                 const pair = pairMap.get(pairKey);
                 if (entry.status === 'start') {
                     pair.start = entry;
+                    pair.startMessage = entry.message;
                 } else if (entry.status === 'end') {
                     pair.end = entry;
+                    pair.endMessage = entry.message;
                 }
             }
 
@@ -1934,6 +2050,7 @@
                 let taskDurationSecs = 0;
                 let taskStatus = 'in-progress';
                 let taskEndTs = null;
+                const MAX_IN_PROGRESS_SECS = 30 * 60; // 30 minutes cap
 
                 if (endEntry) {
                     taskDurationSecs = endEntry.timestamp - startEntry.timestamp;
@@ -1944,16 +2061,38 @@
                     if (!cmdGroup.endTs || endEntry.timestamp > cmdGroup.endTs) {
                         cmdGroup.endTs = endEntry.timestamp;
                     }
+                } else {
+                    // In-progress: use current time, capped at 30 minutes
+                    const elapsedSecs = currentTime - startEntry.timestamp;
+                    taskDurationSecs = Math.min(elapsedSecs, MAX_IN_PROGRESS_SECS);
+                    taskEndTs = startEntry.timestamp + taskDurationSecs;
+
+                    // Update command group end timestamp for in-progress
+                    if (!cmdGroup.endTs || taskEndTs > cmdGroup.endTs) {
+                        cmdGroup.endTs = taskEndTs;
+                    }
+
+                    // Also update story end timestamp for in-progress commands
+                    // This ensures story bar extends to cover all commands including in-progress ones
+                    if (!story.endTs || taskEndTs > story.endTs) {
+                        story.endTs = taskEndTs;
+                    }
                 }
 
-                // Add task to command group
+                // Add task to command group (include messages)
+                const startMessage = pair.startMessage || '';
+                const endMessage = pair.endMessage || '';
                 cmdGroup.tasks.push({
                     taskId,
                     startTs: startEntry.timestamp,
                     endTs: taskEndTs,
                     durationSecs: taskDurationSecs,
                     duration: taskDurationSecs > 0 ? formatDuration(taskDurationSecs) : '',
-                    status: taskStatus
+                    status: taskStatus,
+                    startMessage,
+                    endMessage,
+                    // Display message: end message if completed, start message if in-progress
+                    message: taskStatus === 'completed' ? endMessage : startMessage
                 });
 
                 cmdGroup.totalDurationSecs += taskDurationSecs;
@@ -2012,14 +2151,18 @@
                 story.commands = commandsArray;
 
                 // Calculate total duration as last end - first start (wall clock time)
+                const MAX_IN_PROGRESS_SECS = 30 * 60; // 30 minutes cap
                 if (story.startTs && story.endTs) {
                     story.totalDurationSecs = story.endTs - story.startTs;
                     story.duration = formatDuration(story.totalDurationSecs);
                 } else if (story.startTs) {
-                    // Still in progress - show time since start
+                    // Still in progress - show time since start, capped at 30 min for timeline
                     const now = Math.floor(Date.now() / 1000);
-                    story.totalDurationSecs = now - story.startTs;
+                    const elapsedSecs = now - story.startTs;
+                    story.totalDurationSecs = elapsedSecs; // Display shows actual elapsed
                     story.duration = formatDuration(story.totalDurationSecs);
+                    // Set endTs for timeline bar rendering, capped at 30 min
+                    story.endTs = story.startTs + Math.min(elapsedSecs, MAX_IN_PROGRESS_SECS);
                 } else {
                     story.totalDurationSecs = 0;
                     story.duration = '';
@@ -2411,6 +2554,7 @@
                         tasksHtml = cmd.tasks.map(task => {
                             const safeTaskId = escapeHtml(task.taskId);
                             const safeTaskDuration = escapeHtml(task.duration || '');
+                            const safeTaskMessage = escapeHtml(task.message || '');
                             const isTaskInProgress = task.status === 'in-progress';
                             const statusIcon = isTaskInProgress ? '\u23f3' : '\u2713';
                             const statusClass = isTaskInProgress ? 'in-progress' : 'completed';
@@ -2426,6 +2570,7 @@
                                         <span class="task-status ${statusClass}">${statusIcon}</span>
                                     </div>
                                 </div>
+                                ${safeTaskMessage ? `<div class="task-message">${safeTaskMessage}</div>` : ''}
                             `;
                         }).join('');
                     }
@@ -2891,6 +3036,22 @@
             }
         }
 
+        // Toggle command expand/collapse in timeline
+        function toggleTimelineCommand(cmdKey) {
+            const cmdGroup = document.querySelector(`.timeline-command-group[data-cmd-key="${CSS.escape(cmdKey)}"]`);
+            if (!cmdGroup) return;
+
+            const wasExpanded = !cmdGroup.classList.contains('collapsed');
+            cmdGroup.classList.toggle('collapsed', wasExpanded);
+
+            // Store state (default is expanded=true, so we only store when collapsed)
+            if (wasExpanded) {
+                timelineState.expandedCommands.set(cmdKey, false);
+            } else {
+                timelineState.expandedCommands.delete(cmdKey); // Remove to use default (expanded)
+            }
+        }
+
         // Show timeline tooltip
         function showTimelineTooltip(event, storyId, duration, stepCount, started) {
             const tooltip = document.getElementById('timelineTooltip');
@@ -3092,7 +3253,11 @@
                 // Use block-based timestampToX() - bars scale with block size
                 if (!isHidden && blocks.length > 0) {
                     const barLeft = timestampToX(activity.startTs);
-                    const barRight = timestampToX(activity.endTs || activity.startTs + 3600);
+                    // For in-progress stories without endTs, use current time capped at 30 min
+                    const MAX_IN_PROGRESS_SECS = 30 * 60;
+                    const now = Math.floor(Date.now() / 1000);
+                    const fallbackEnd = activity.startTs + Math.min(now - activity.startTs, MAX_IN_PROGRESS_SECS);
+                    const barRight = timestampToX(activity.endTs || fallbackEnd);
                     const barWidth = Math.max(barRight - barLeft, 20); // Minimum width for visibility
 
                     const bar = document.createElement('div');
@@ -3117,21 +3282,57 @@
                     commandRows.className = 'timeline-command-rows';
 
                     // Generate command rows - use continuous positioning
-                    (activity.steps || []).forEach(step => {
+                    const MAX_IN_PROGRESS_SECS = 30 * 60;
+                    const now = Math.floor(Date.now() / 1000);
+
+                    (activity.steps || []).forEach((step, stepIndex) => {
                         const cmdLeft = timestampToX(step.startTs);
-                        const cmdRight = timestampToX(step.endTs || step.startTs + 60);
+                        // For in-progress commands without endTs, use current time capped at 30 min
+                        const cmdFallbackEnd = step.startTs + Math.min(now - step.startTs, MAX_IN_PROGRESS_SECS);
+                        const cmdRight = timestampToX(step.endTs || cmdFallbackEnd);
                         const cmdWidth = Math.max(cmdRight - cmdLeft, 20); // Minimum width for visibility
                         const cmdClass = getCommandClass(step.command);
                         const safeCmdDuration = escapeHtml(step.duration || '');
                         const hasInProgressTasks = step.tasks && step.tasks.some(t => t.status === 'in-progress');
+                        const hasTasks = step.tasks && step.tasks.length > 1;
+
+                        // Create command group container for expand/collapse
+                        const cmdGroupKey = `${activity.storyId}|${step.command}|${stepIndex}`;
+                        const isExpanded = timelineState.expandedCommands ?
+                            (timelineState.expandedCommands.get(cmdGroupKey) !== false) : true; // Default expanded
+
+                        const cmdGroup = document.createElement('div');
+                        cmdGroup.className = 'timeline-command-group' + (isExpanded ? '' : ' collapsed');
+                        cmdGroup.dataset.cmdKey = cmdGroupKey;
 
                         const cmdRow = document.createElement('div');
                         cmdRow.className = 'timeline-command-row';
 
                         const cmdRowLabel = document.createElement('div');
                         cmdRowLabel.className = 'timeline-command-row-label';
-                        cmdRowLabel.textContent = step.command;
+
+                        // Add expand/collapse toggle if there are tasks
+                        if (hasTasks) {
+                            const toggleIcon = document.createElement('span');
+                            toggleIcon.className = 'cmd-expand-icon';
+                            toggleIcon.innerHTML = '&#9654;';
+                            toggleIcon.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                toggleTimelineCommand(cmdGroupKey);
+                            });
+                            cmdRowLabel.appendChild(toggleIcon);
+                        }
+
+                        const cmdLabelText = document.createElement('span');
+                        cmdLabelText.textContent = step.command;
+                        cmdRowLabel.appendChild(cmdLabelText);
                         cmdRowLabel.title = step.command;
+
+                        // Make label clickable to toggle
+                        if (hasTasks) {
+                            cmdRowLabel.style.cursor = 'pointer';
+                            cmdRowLabel.addEventListener('click', () => toggleTimelineCommand(cmdGroupKey));
+                        }
 
                         const cmdRowContent = document.createElement('div');
                         cmdRowContent.className = 'timeline-command-row-content';
@@ -3150,16 +3351,23 @@
                         cmdRowContent.appendChild(cmdBar);
                         cmdRow.appendChild(cmdRowLabel);
                         cmdRow.appendChild(cmdRowContent);
-                        commandRows.appendChild(cmdRow);
+                        cmdGroup.appendChild(cmdRow);
+
+                        // Container for tasks (can be collapsed)
+                        const tasksContainer = document.createElement('div');
+                        tasksContainer.className = 'timeline-tasks-container';
 
                         // Add task-level rows within command only if multiple tasks exist
                         // Single task = no granularity to show, just the command is enough
                         if (step.tasks && step.tasks.length > 1) {
                             step.tasks.forEach(task => {
                                 const taskLeft = timestampToX(task.startTs);
-                                const taskRight = timestampToX(task.endTs || task.startTs + 60);
+                                // For in-progress tasks without endTs, use current time capped at 30 min
+                                const taskFallbackEnd = task.startTs + Math.min(now - task.startTs, MAX_IN_PROGRESS_SECS);
+                                const taskRight = timestampToX(task.endTs || taskFallbackEnd);
                                 const taskWidth = Math.max(taskRight - taskLeft, 15);
                                 const isTaskInProgress = task.status === 'in-progress';
+                                const safeTaskMessage = escapeHtml(task.message || '');
 
                                 const taskRow = document.createElement('div');
                                 taskRow.className = 'timeline-task-row';
@@ -3180,14 +3388,41 @@
                                 taskBar.style.width = taskWidth + 'px';
                                 const showTaskLabel = taskWidth >= 30;
                                 taskBar.innerHTML = showTaskLabel ? `<span class="task-label">${escapeHtml(task.duration || '')}</span>` : '';
-                                taskBar.title = `${task.taskId}: ${task.duration || (isTaskInProgress ? 'running...' : '')}`;
+                                taskBar.title = safeTaskMessage || `${task.taskId}: ${task.duration || (isTaskInProgress ? 'running...' : '')}`;
 
                                 taskRowContent.appendChild(taskBar);
                                 taskRow.appendChild(taskRowLabel);
                                 taskRow.appendChild(taskRowContent);
-                                commandRows.appendChild(taskRow);
+                                tasksContainer.appendChild(taskRow);
+
+                                // Add message row below task if message exists
+                                if (safeTaskMessage) {
+                                    const msgRow = document.createElement('div');
+                                    msgRow.className = 'timeline-message-row';
+
+                                    const msgLabel = document.createElement('div');
+                                    msgLabel.className = 'timeline-message-label';
+
+                                    const msgContent = document.createElement('div');
+                                    msgContent.className = 'timeline-message-content';
+                                    msgContent.style.width = timelineState.totalTimelineWidth + 'px';
+                                    msgContent.style.minWidth = timelineState.totalTimelineWidth + 'px';
+
+                                    const msgText = document.createElement('span');
+                                    msgText.className = 'timeline-message-text';
+                                    msgText.textContent = safeTaskMessage;
+                                    msgText.style.marginLeft = taskLeft + 'px';
+
+                                    msgContent.appendChild(msgText);
+                                    msgRow.appendChild(msgLabel);
+                                    msgRow.appendChild(msgContent);
+                                    tasksContainer.appendChild(msgRow);
+                                }
                             });
                         }
+
+                        cmdGroup.appendChild(tasksContainer);
+                        commandRows.appendChild(cmdGroup);
                     });
 
                     row.appendChild(commandRows);

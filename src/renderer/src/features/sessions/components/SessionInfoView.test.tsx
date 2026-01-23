@@ -86,7 +86,8 @@ beforeEach(() => {
       onMetadataUpdated: mockOnMetadataUpdated,
       onStreamChunk: vi.fn(() => vi.fn()),
       onStreamTool: vi.fn(() => vi.fn()),
-      onStreamEnd: vi.fn(() => vi.fn())
+      onStreamEnd: vi.fn(() => vi.fn()),
+      onStreamInit: vi.fn(() => vi.fn())
     },
     dialog: {
       selectFolder: vi.fn().mockResolvedValue({ canceled: false, folderPath: '/test' })
@@ -357,7 +358,8 @@ describe('SessionInfoView loading state', () => {
         onMetadataUpdated: vi.fn().mockReturnValue(() => {}),
         onStreamChunk: vi.fn(() => vi.fn()),
         onStreamTool: vi.fn(() => vi.fn()),
-        onStreamEnd: vi.fn(() => vi.fn())
+        onStreamEnd: vi.fn(() => vi.fn()),
+        onStreamInit: vi.fn(() => vi.fn())
       },
       dialog: {
         selectFolder: vi.fn().mockResolvedValue({ canceled: false, folderPath: '/test' })
