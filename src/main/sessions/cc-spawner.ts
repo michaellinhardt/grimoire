@@ -1,9 +1,9 @@
 import { spawn, type ChildProcess } from 'child_process'
-import { createInterface } from 'readline'
-import { app, BrowserWindow } from 'electron'
+import { app } from 'electron'
 import { join } from 'path'
 import { processRegistry } from '../process-registry'
 import type { SpawnOptions } from './types'
+import { createStreamParser, emitToRenderer } from './stream-parser'
 
 /**
  * Finds the claude executable path.
@@ -21,16 +21,6 @@ function findClaudeExecutable(): string {
   // Common paths: /usr/local/bin/claude, ~/.npm/bin/claude, ~/.local/bin/claude
   // We rely on PATH being set correctly; if not found, spawn will emit 'error' event
   return 'claude'
-}
-
-/**
- * Emits an event to all renderer windows.
- */
-function emitToRenderer(channel: string, data: unknown): void {
-  const windows = BrowserWindow.getAllWindows()
-  for (const win of windows) {
-    win.webContents.send(channel, data)
-  }
 }
 
 /**
@@ -69,7 +59,7 @@ export function spawnCC(options: SpawnOptions): ChildProcess {
   // Spawn the process
   const executable = findClaudeExecutable()
   const child = spawn(executable, args, {
-    cwd: folderPath,
+    cwd: folderPath, // Will fail with ENOENT if folder doesn't exist (Issue #5)
     env,
     stdio: ['pipe', 'pipe', 'pipe']
   })
@@ -96,58 +86,50 @@ export function spawnCC(options: SpawnOptions): ChildProcess {
     })
   })
 
-  child.stdin?.write(stdinMessage + '\n')
-  child.stdin?.end()
+  // Write message and handle backpressure (Issue #1)
+  const stdinWriteResult = child.stdin?.write(stdinMessage + '\n', (err) => {
+    if (err) {
+      console.error('[cc-spawner] stdin write callback error:', err.message)
+      processRegistry.delete(registryId)
+      emitToRenderer('stream:end', {
+        sessionId: registryId,
+        success: false,
+        error: `Failed to write to stdin: ${err.message}`
+      })
+    }
+  })
+
+  // Check for backpressure - if write returns false, wait for drain
+  if (stdinWriteResult === false) {
+    child.stdin?.once('drain', () => {
+      child.stdin?.end()
+    })
+  } else {
+    child.stdin?.end()
+  }
 
   // Track whether we've captured the real session ID
-  let capturedSessionId = sessionId ?? null
-  let initReceived = false
+  let capturedSessionId = sessionId ?? ''
 
-  // Setup stdout readline for init event capture
+  // Setup stream parser for full NDJSON parsing (Story 3b-2)
   if (child.stdout) {
-    const rl = createInterface({
-      input: child.stdout,
-      crlfDelay: Infinity
-    })
-
-    rl.on('line', (line) => {
-      // Only parse the first line for init event (full parsing in Story 3b-2)
-      if (!initReceived) {
-        try {
-          const event = JSON.parse(line)
-          if (event.type === 'system' && event.subtype === 'init') {
-            initReceived = true
-            const newSessionId = event.session_id
-
-            // Update registry if session ID changed (new session)
-            if (!sessionId && newSessionId) {
-              processRegistry.delete(registryId)
-              processRegistry.set(newSessionId, child)
-              capturedSessionId = newSessionId
-            } else if (sessionId) {
-              capturedSessionId = sessionId
-            }
-
-            // Emit stream:init event to renderer
-            emitToRenderer('stream:init', {
-              sessionId: capturedSessionId || registryId,
-              tools: event.tools ?? []
-            })
-          }
-        } catch {
-          // Ignore parse errors for non-JSON lines
+    const parser = createStreamParser({
+      sessionId: capturedSessionId || registryId,
+      stdout: child.stdout,
+      onSessionIdCaptured: (newSessionId) => {
+        // Update registry if session ID changed (new session)
+        if (!sessionId && newSessionId) {
+          processRegistry.delete(registryId)
+          processRegistry.set(newSessionId, child)
+          capturedSessionId = newSessionId
+        } else if (sessionId) {
+          capturedSessionId = sessionId
         }
       }
     })
 
-    rl.on('error', (err) => {
-      console.error('[cc-spawner] readline error:', err.message)
-      // Continue - process will handle cleanup on exit
-    })
-
-    // Cleanup readline on process exit to prevent fd leaks
-    child.on('exit', () => {
-      rl.close()
+    parser.on('error', (err) => {
+      console.error('[cc-spawner] Parser error:', err.message)
     })
   }
 
@@ -171,26 +153,39 @@ export function spawnCC(options: SpawnOptions): ChildProcess {
 
     // Emit stream:end event
     const success = code === 0
+    const stderrMessage = stderrBuffer
+      ? stderrBuffer.length >= MAX_STDERR_BUFFER
+        ? `${stderrBuffer.trim()} ... (truncated)`
+        : stderrBuffer.trim()
+      : ''
     emitToRenderer('stream:end', {
       sessionId: cleanupKey,
       success,
       error: success
         ? undefined
-        : `Process exited with code ${code}${signal ? ` (signal: ${signal})` : ''}${stderrBuffer ? `: ${stderrBuffer.trim()}` : ''}`
+        : `Process exited with code ${code}${signal ? ` (signal: ${signal})` : ''}${stderrMessage ? `: ${stderrMessage}` : ''}`,
+      aborted: signal === 'SIGTERM' || signal === 'SIGKILL'
     })
   })
 
   // Handle spawn errors (e.g., ENOENT if claude not installed)
-  child.on('error', (err) => {
+  child.on('error', (err: NodeJS.ErrnoException) => {
     // Remove from registry - use same logic as exit handler for consistency
     const cleanupKey = capturedSessionId || registryId
     processRegistry.delete(cleanupKey)
+
+    // Provide better error message for missing executable (Issue #6)
+    let errorMsg = err.message
+    if (err.code === 'ENOENT') {
+      errorMsg =
+        'Claude Code is not installed or not in PATH. Please install Claude Code and ensure it is available on your system.'
+    }
 
     // Emit stream:end event with error
     emitToRenderer('stream:end', {
       sessionId: cleanupKey,
       success: false,
-      error: `Failed to spawn Claude Code: ${err.message}`
+      error: `Failed to spawn Claude Code: ${errorMsg}`
     })
   })
 

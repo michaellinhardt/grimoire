@@ -230,9 +230,10 @@ export type StreamToolResultBlock = z.infer<typeof StreamToolResultBlockSchema>
 
 /**
  * Stream chunk event - text content arriving during streaming
+ * Note: sessionId can be pending-{timestamp} for new sessions before init event arrives
  */
 export const StreamChunkEventSchema = z.object({
-  sessionId: z.string().uuid(),
+  sessionId: z.string().min(1),
   type: z.literal('text'),
   content: z.string(),
   uuid: z.string().uuid().optional()
@@ -242,9 +243,10 @@ export type StreamChunkEvent = z.infer<typeof StreamChunkEventSchema>
 
 /**
  * Stream tool event - tool call or result during streaming
+ * Note: sessionId can be pending-{timestamp} for new sessions before init event arrives
  */
 export const StreamToolEventSchema = z.object({
-  sessionId: z.string().uuid(),
+  sessionId: z.string().min(1),
   type: z.enum(['tool_use', 'tool_result']),
   toolUse: StreamToolUseBlockSchema.optional(),
   toolResult: StreamToolResultBlockSchema.optional()
@@ -254,9 +256,10 @@ export type StreamToolEvent = z.infer<typeof StreamToolEventSchema>
 
 /**
  * Stream end event - streaming completed or failed
+ * Note: sessionId can be pending-{timestamp} for new sessions before init event arrives
  */
 export const StreamEndEventSchema = z.object({
-  sessionId: z.string().uuid(),
+  sessionId: z.string().min(1),
   success: z.boolean(),
   error: z.string().optional(),
   aborted: z.boolean().optional(),
@@ -274,9 +277,10 @@ export type StreamEndEvent = z.infer<typeof StreamEndEventSchema>
 /**
  * Stream init event - session initialized with tools list
  * Emitted when CC starts and sends the init system message (Story 3b-1)
+ * Note: sessionId can be pending-{timestamp} for new sessions before init event arrives
  */
 export const StreamInitEventSchema = z.object({
-  sessionId: z.string().uuid(),
+  sessionId: z.string().min(1),
   tools: z.array(z.unknown()).optional()
 })
 

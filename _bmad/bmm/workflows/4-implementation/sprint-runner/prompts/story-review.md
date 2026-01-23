@@ -78,28 +78,51 @@ IMPORTANT OUTPUT: At the end, clearly state:
 
 ## Logging Instructions
 
-You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
+You MUST log your progress using the orchestrator script with granular task phases and descriptive messages.
 
-**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status> "<message>"`
 - epicID: Short numeric ID (e.g., `2a`, `2b`) - extract from story key
 - storyID: Short numeric ID (e.g., `2a-1`, `2b-1`) - same as story key
 - command: "story-review-{{review_attempt}}" (includes attempt number)
-- task-id: identifies the granular task
+- task-id: Phase from taxonomy (setup, analyze, fix, validate)
 - status: "start" or "end"
+- message: Descriptive text (max 150 chars, required)
 
 **IMPORTANT:** Always use SHORT NUMERIC IDs, never full story/epic titles.
+
+**Task phases for story-review (from task-taxonomy.yaml):**
+- `setup` - Load story and discovery files
+- `analyze` - Analyze story for issues
+- `fix` - Fix identified issues
+- `validate` - Validate fixes
+
+**Message format:**
+- Start: Describe what the task is about to do
+- End: Describe outcome with metrics suffix `(metric:value)`
+- Recommended metrics: issues, sections, files
 
 **Required logs for this workflow:**
 
 ```bash
-# At START of workflow
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} workflow start
+# At START of each phase
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} setup start "Loading story {{story_id}} for review"
+# ... load files ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} setup end "Files loaded"
 
-# At END of workflow (before terminating)
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} workflow end
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} analyze start "Analyzing story quality"
+# ... analyze story ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} analyze end "Analysis complete (issues:N)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} fix start "Fixing identified issues"
+# ... fix issues ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} fix end "Issues fixed (issues:N)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} validate start "Validating fixes"
+# ... validate ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-review-{{review_attempt}} validate end "Validation passed"
 ```
 
-**CRITICAL:** Always log both START and END. Duration is calculated by dashboard (end - start).
+**CRITICAL:** Always log both START and END for each phase. Replace N with actual counts.
 
 ---
 

@@ -50,28 +50,46 @@ IMPORTANT: Generate one discovery file per story. If processing 2a-1 and 2a-2, c
 
 ## Logging Instructions
 
-You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
+You MUST log your progress using the orchestrator script with granular task phases and descriptive messages.
 
-**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status> "<message>"`
 - epicID: Short numeric ID (e.g., `2a`, `2b`) - extract from story key
 - storyID: Short numeric ID (e.g., `2a-1`, `2b-1`) - same as story key
 - command: "story-discovery"
-- task-id: identifies the granular task
+- task-id: Phase from taxonomy (setup, explore, write)
 - status: "start" or "end"
+- message: Descriptive text (max 150 chars, required)
 
 **IMPORTANT:** Always use SHORT NUMERIC IDs, never full story/epic titles.
+
+**Task phases for story-discovery (from task-taxonomy.yaml):**
+- `setup` - Load story and project context
+- `explore` - Explore codebase for relevant patterns
+- `write` - Write discovery file
+
+**Message format:**
+- Start: Describe what the task is about to do
+- End: Describe outcome with metrics suffix `(metric:value)`
+- Recommended metrics: files, lines, sections
 
 **Required logs for this workflow:**
 
 ```bash
-# At START of workflow
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-discovery workflow start
+# At START of each phase
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-discovery setup start "Loading discovery context for {{story_id}}"
+# ... do setup work ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-discovery setup end "Context loaded"
 
-# At END of workflow (before terminating)
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-discovery workflow end
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-discovery explore start "Exploring codebase patterns"
+# ... explore codebase ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-discovery explore end "Patterns identified (files:N)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-discovery write start "Writing discovery file"
+# ... write file ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} story-discovery write end "Discovery file written (lines:N)"
 ```
 
-**CRITICAL:** Always log both START and END. Duration is calculated by dashboard (end - start).
+**CRITICAL:** Always log both START and END for each phase. Replace N with actual counts.
 
 ---
 

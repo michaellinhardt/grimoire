@@ -104,3 +104,80 @@ export interface SpawnOptions {
   /** User message to send via stdin */
   message: string
 }
+
+// ============================================================
+// Stream Parser Types (Story 3b-2)
+// ============================================================
+
+/**
+ * Token usage information from assistant messages.
+ */
+export interface TokenInfo {
+  input: number
+  output: number
+}
+
+/**
+ * Parsed init event from CC stream.
+ */
+export interface ParsedInitEvent {
+  type: 'init'
+  sessionId: string
+  tools: unknown[]
+}
+
+/**
+ * Parsed user event from CC stream - contains checkpoint UUID.
+ */
+export interface ParsedUserEvent {
+  type: 'user'
+  uuid: string
+  content: string
+}
+
+/**
+ * Parsed assistant event from CC stream - text content or tool use.
+ */
+export interface ParsedAssistantEvent {
+  type: 'assistant'
+  uuid?: string
+  content?: string
+  toolUse?: {
+    type: 'tool_use'
+    id: string
+    name: string
+    input: Record<string, unknown>
+  }
+  tokens?: TokenInfo
+}
+
+/**
+ * Parsed tool result event from CC stream.
+ */
+export interface ParsedToolResultEvent {
+  type: 'tool_result'
+  toolUseId: string
+  content: string
+  isError: boolean
+}
+
+/**
+ * Parsed result event from CC stream - end of response.
+ */
+export interface ParsedResultEvent {
+  type: 'result'
+  success: boolean
+  durationMs?: number
+  tokens?: TokenInfo
+  costUsd?: number
+}
+
+/**
+ * Union type for all parsed stream events.
+ */
+export type ParsedStreamEvent =
+  | ParsedInitEvent
+  | ParsedUserEvent
+  | ParsedAssistantEvent
+  | ParsedToolResultEvent
+  | ParsedResultEvent

@@ -129,28 +129,56 @@ The orchestrator will parse this decision to determine whether to run the tech-s
 
 ## Logging Instructions
 
-You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
+You MUST log your progress using the orchestrator script with granular task phases and descriptive messages.
 
-**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status> "<message>"`
 - epicID: Short numeric ID (e.g., `2a`, `2b`) - extract from story key
 - storyID: Short numeric ID (e.g., `2a-1`, `2b-1`) - same as story key
 - command: "create-story"
-- task-id: identifies the granular task
+- task-id: Phase from taxonomy (setup, analyze, generate, write, validate)
 - status: "start" or "end"
+- message: Descriptive text (max 150 chars, required)
 
 **IMPORTANT:** Always use SHORT NUMERIC IDs, never full story/epic titles.
+
+**Task phases for create-story (from task-taxonomy.yaml):**
+- `setup` - Initialize context and load epic file
+- `analyze` - Analyze epic requirements for story scope
+- `generate` - Generate story content and structure
+- `write` - Write story file to implementation-artifacts
+- `validate` - Validate story structure and completeness
+
+**Message format:**
+- Start: Describe what the task is about to do
+- End: Describe outcome with metrics suffix `(metric:value)`
+- Recommended metrics: files, lines, sections, issues
 
 **Required logs for this workflow:**
 
 ```bash
-# At START of workflow
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story workflow start
+# At START of each phase
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story setup start "Initializing story creation for {{story_id}}"
+# ... do setup work ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story setup end "Setup complete (files:1)"
 
-# At END of workflow (before terminating)
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story workflow end
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story analyze start "Analyzing epic requirements"
+# ... analyze epic ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story analyze end "Requirements analyzed (sections:N)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story generate start "Generating story content"
+# ... generate content ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story generate end "Story content generated (lines:N)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story write start "Writing story file"
+# ... write file ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story write end "Story file written (files:1, lines:N)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story validate start "Validating story structure"
+# ... validate ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story validate end "Validation passed (sections:N)"
 ```
 
-**CRITICAL:** Always log both START and END. Duration is calculated by dashboard (end - start).
+**CRITICAL:** Always log both START and END for each phase. Replace N with actual counts.
 
 ---
 

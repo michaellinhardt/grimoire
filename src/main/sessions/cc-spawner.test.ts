@@ -180,11 +180,13 @@ describe('cc-spawner', () => {
       const writeSpy = vi.spyOn(mockStdin, 'write')
       spawnCC({ folderPath: '/test/path', message: 'Hello world' })
 
+      // Write now has a callback for error handling (Issue #1)
       expect(writeSpy).toHaveBeenCalledWith(
         JSON.stringify({
           type: 'user',
           message: { role: 'user', content: 'Hello world' }
-        }) + '\n'
+        }) + '\n',
+        expect.any(Function)
       )
     })
 
@@ -400,6 +402,65 @@ describe('cc-spawner', () => {
       spawnCC({ folderPath: '/test/path', message: 'Hello' })
 
       expect(spawn).toHaveBeenCalledWith('claude', expect.any(Array), expect.any(Object))
+    })
+  })
+
+  describe('spawn configuration', () => {
+    it('sets correct cwd for child process (Issue #5)', () => {
+      spawnCC({ folderPath: '/custom/working/dir', message: 'Hello' })
+
+      expect(spawn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(Array),
+        expect.objectContaining({
+          cwd: '/custom/working/dir'
+        })
+      )
+    })
+  })
+
+  describe('stdin write backpressure handling', () => {
+    it('handles backpressure with drain event (Issue #1)', () => {
+      vi.spyOn(mockStdin, 'write').mockReturnValue(false) // Simulate backpressure
+      const drainSpy = vi.spyOn(mockStdin, 'once')
+
+      spawnCC({ folderPath: '/test/path', message: 'Hello' })
+
+      expect(drainSpy).toHaveBeenCalledWith('drain', expect.any(Function) as never)
+    })
+  })
+
+  describe('error messaging', () => {
+    it('provides helpful error message when claude executable not found (Issue #6)', () => {
+      spawnCC({ folderPath: '/test/path', message: 'Hello' })
+
+      const error = new Error('spawn claude ENOENT') as NodeJS.ErrnoException
+      error.code = 'ENOENT'
+      mockChildProcess.emit('error', error)
+
+      expect(mockWindow.webContents.send).toHaveBeenCalledWith(
+        'stream:end',
+        expect.objectContaining({
+          success: false,
+          error: expect.stringContaining('Claude Code is not installed')
+        })
+      )
+    })
+
+    it('includes truncation indicator when stderr is truncated (Issue #7)', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      spawnCC({ sessionId, folderPath: '/test/path', message: 'Hello' })
+
+      // Simulate stderr at max buffer
+      const maxOutput = 'X'.repeat(10 * 1024) // Exactly at limit
+      mockStderr.emit('data', Buffer.from(maxOutput + 'EXTRA'))
+
+      mockChildProcess.emit('exit', 1, null)
+
+      const call = mockWindow.webContents.send.mock.calls.find(
+        (c) => c[0] === 'stream:end' && c[1].success === false
+      )
+      expect(call?.[1]?.error).toMatch(/\.\.\. \(truncated\)/)
     })
   })
 })

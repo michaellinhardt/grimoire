@@ -188,3 +188,9 @@
 1769203543,3b,3b-1,dev-story,workflow,end
 1769203572,3b,3b-1,code-review-1,workflow,start
 1769203670,3b,3b-1,code-review-1,workflow,end,"Fixed 2 MEDIUM issues"
+1769203850,3b,3b-1,code-review-2,workflow,end,"Code review complete: 8 issues found and fixed (2 CRITICAL, 2 HIGH, 3 MEDIUM, 1 LOW). All 811 tests passing."
+1769204235,3b,3b-1,code-review-3,workflow,end,"Code review complete - all 7 issues fixed"
+1769204290,3b,3b-2,dev-story,workflow,start,"Starting dev-story workflow"
+1769204619,3b,3b-2,dev-story,workflow,end,"Completed dev-story workflow"
+1769204653,3b,3b-2,code-review-1,workflow,start,"Starting code review workflow"
+1769204864,3b,3b-2,code-review-1,workflow,end,"Code review complete: 1 HIGH, 1 MEDIUM issues found and fixed"

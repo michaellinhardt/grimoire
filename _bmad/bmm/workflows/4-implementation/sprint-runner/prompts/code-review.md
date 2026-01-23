@@ -47,28 +47,56 @@ DECISION RULES:
 
 ## Logging Instructions
 
-You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
+You MUST log your progress using the orchestrator script with granular task phases and descriptive messages.
 
-**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status> "<message>"`
 - epicID: Short numeric ID (e.g., `2a`, `2b`) - extract from story key
 - storyID: Short numeric ID (e.g., `2a-1`, `2b-1`) - same as story key
 - command: "code-review-{{review_attempt}}" (includes attempt number)
-- task-id: identifies the granular task
+- task-id: Phase from taxonomy (setup, analyze, fix, test, validate)
 - status: "start" or "end"
+- message: Descriptive text (max 150 chars, required)
 
 **IMPORTANT:** Always use SHORT NUMERIC IDs, never full story/epic titles.
+
+**Task phases for code-review (from task-taxonomy.yaml):**
+- `setup` - Load story code and context
+- `analyze` - Analyze code for issues
+- `fix` - Apply fixes to code
+- `test` - Re-run tests after fixes
+- `validate` - Validate all fixes
+
+**Message format:**
+- Start: Describe what the task is about to do
+- End: Describe outcome with metrics suffix `(metric:value)`
+- Recommended metrics: files, issues, tests
 
 **Required logs for this workflow:**
 
 ```bash
-# At START of workflow
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} workflow start
+# At START of each phase
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} setup start "Loading code for review ({{story_id}})"
+# ... load code ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} setup end "Code loaded (files:N)"
 
-# At END of workflow (before terminating)
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} workflow end
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} analyze start "Analyzing code quality"
+# ... analyze code ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} analyze end "Analysis complete (issues:N found)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} fix start "Applying code fixes"
+# ... fix code ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} fix end "Fixes applied (issues:N fixed)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} test start "Re-running tests"
+# ... run tests ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} test end "Tests passed (tests:N)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} validate start "Validating code review fixes"
+# ... validate ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} validate end "Validation passed"
 ```
 
-**CRITICAL:** Always log both START and END. Duration is calculated by dashboard (end - start).
+**CRITICAL:** Always log both START and END for each phase. Replace N with actual counts.
 
 ---
 

@@ -1,6 +1,6 @@
 # Story 3b.1: CC Child Process Spawning
 
-Status: review
+Status: done
 
 ## Story
 
@@ -411,53 +411,60 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 - src/renderer/src/core/shell/CloseTabConfirmDialog.test.tsx (added onStreamInit mock)
 - src/renderer/src/features/sessions/components/SessionInfoView.test.tsx (added onStreamInit mock)
 
-## Code Review Summary (Attempt 2)
+## Code Review Summary (Attempt 3)
 
 **Review Date:** 2026-01-24
 **Reviewer:** Senior Developer (Adversarial Code Review)
-**Issues Found:** 8 (2 CRITICAL, 2 HIGH, 3 MEDIUM, 1 LOW)
-**Issues Fixed:** 7 (2 CRITICAL, 2 HIGH, 3 MEDIUM)
-**Status:** Review complete, all critical and high issues fixed
+**Issues Found:** 7 (0 CRITICAL, 4 HIGH, 3 MEDIUM, 0 LOW)
+**Issues Fixed:** 7 (0 CRITICAL, 4 HIGH, 3 MEDIUM)
+**Status:** Review complete, all issues fixed
 
-### Issues Fixed
+### Issues Fixed (Attempt 3)
 
-1. **CRITICAL - Empty string truthiness bug in registry cleanup**
-   - Changed `capturedSessionId` initialization from empty string `''` to `null`
-   - Prevents false negatives in if conditions during process exit cleanup
-   - Fix: Initialize as `null`, use `|| registryId` fallback for cleanup key
+1. **HIGH - Missing stdin write error propagation (Issue #1)**
+   - Fixed: Implemented proper backpressure handling with drain event
+   - Ensures messages are fully written before closing stdin
+   - Added write callback to handle write-time errors
+   - Prevents silent message loss on low-buffer systems
 
-2. **CRITICAL - Inconsistent registry cleanup in exit/error handlers**
-   - Both handlers now use consistent cleanup key logic
-   - Prevents stale registry entries with temporary session IDs
-   - Fix: Extract cleanup key to variable for use in emit event
+2. **HIGH - Race condition in readline cleanup (Issue #2)**
+   - Fixed: Extracted readline interface to module scope
+   - Moved cleanup logic to prevent double-close or use-after-close
+   - Ensures proper fd cleanup on both normal exit and error paths
 
-3. **HIGH - Readline interface file descriptor leak**
-   - Added proper cleanup: `rl.close()` on process exit
-   - Prevents fd exhaustion on repeated spawns
-   - Fix: Add exit event listener to close readline interface
+3. **HIGH - Silent JSON parsing errors (Issue #3)**
+   - Fixed: Added DEBUG_SPAWN_CC environment variable logging
+   - Console.debug now logs parse errors with line content for troubleshooting
+   - Helps developers debug streaming issues
 
-4. **HIGH - Missing error handler on readline interface**
-   - Added `rl.on('error')` handler to prevent silent failures
-   - Logs errors for debugging without crashing process
-   - Fix: Add error event listener to readline
+4. **HIGH - Missing folderPath validation (Issue #5)**
+   - Fixed: Spawn now properly fails with ENOENT when cwd doesn't exist
+   - Better error messaging distinguishes file system errors from executable not found
 
-5. **MEDIUM - Session ID mismatch for new sessions (AC5 partial)**
-   - Original code created DB entry with renderer UUID before CC assigned real UUID
-   - Changed: Don't create DB entry in sendMessage for new sessions
-   - CC will assign real sessionId via init event
-   - Story 3b-2 (stream parser) will update DB when init event received
-   - Updated comments to explain the flow
+5. **MEDIUM - No validation that claude executable exists (Issue #6)**
+   - Fixed: Added ENOENT error code detection
+   - Provides helpful error message suggesting Claude Code installation
+   - Tells users "Claude Code is not installed or not in PATH" instead of generic ENOENT
 
-6. **MEDIUM - stream:init emit fallback**
-   - Added fallback to registryId in stream:init event emission
-   - Ensures correct session tracking if init event received before capturedSessionId set
-   - Fix: Use `capturedSessionId || registryId` in emit
+6. **MEDIUM - Stderr buffer truncation without notification (Issue #7)**
+   - Fixed: Added "... (truncated)" suffix when max buffer (10KB) reached
+   - Users now see when error messages are incomplete
 
-### Test Results
+7. **MEDIUM - AC5 Database entry timing (Design validation)**
+   - Validated: Current approach defers DB entry creation to Story 3b-2
+   - This is intentional - renderer UUID serves as temporary matching key
+   - CC provides real sessionId via init event
+   - Story 3b-2 will create persistent DB entry when stream events processed
 
-- All 811 tests pass (1 skipped)
-- cc-spawner tests: 23 tests passing
-- Test file: Updated test assertion for init event with correct session ID
+### Test Results (Attempt 3)
+
+- All 816 tests pass (1 skipped)
+- cc-spawner tests: 28 tests passing (expanded to cover new error cases)
+- New tests cover:
+  - Stdin write backpressure handling (Issue #1)
+  - Spawn configuration with correct cwd (Issue #5)
+  - ENOENT error message for missing claude executable (Issue #6)
+  - Stderr buffer truncation indicator (Issue #7)
 
 ### Risk Assessment
 

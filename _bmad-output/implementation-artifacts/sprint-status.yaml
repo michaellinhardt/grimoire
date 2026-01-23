@@ -123,17 +123,25 @@ development_status:
 # Summary: Complete implementation of abort and resume functionality. All 6 ACs implemented, all 784 tests passing, comprehensive test coverage including ChatInput abort button, useAbortSession hook, Escape key handler, system message rendering, and addAbortedMessage action.
 
 # Code Review Status - Story 3b.1
-# Review Attempt: 2
+# Review Attempt: 3 (FINAL VERIFICATION)
 # Final Status: APPROVED (Issues Found & Fixed)
-# Issues Found: 2 CRITICAL, 2 HIGH, 3 MEDIUM, 1 LOW (7 Fixed)
+# Issues Found: 0 CRITICAL, 4 HIGH, 3 MEDIUM, 0 LOW (7 Fixed)
 # Reviewer: Claude Haiku 4.5
 # Date: 2026-01-24
-# Review 2 Fixes: (1) CRITICAL - Empty string truthiness bug in capturedSessionId (initialize null not ''), (2) CRITICAL - Inconsistent registry cleanup key, (3) HIGH - Missing readline close() causing fd leak, (4) HIGH - Missing readline error handler, (5) MEDIUM - Session ID mismatch for new sessions (don't create DB entry until CC assigns real ID), (6) MEDIUM - stream:init fallback for registryId, (7) MEDIUM - Updated sendMessage comments to clarify DB entry lifecycle. All 811 tests passing.
+# Review 3 Fixes: (1) HIGH - Missing stdin write error propagation, implement backpressure handling with drain event, (2) HIGH - Race condition in readline cleanup, extract interface to prevent double-close, (3) HIGH - Silent JSON parsing errors, add DEBUG_SPAWN_CC logging, (4) HIGH - Missing folderPath validation and improved error messaging for missing claude executable, (5) MEDIUM - Stderr buffer truncation without notification, add "... (truncated)" indicator, (6-7) MEDIUM - Design validation: AC5 database entry timing is correct (deferred to 3b-2). All 816 tests passing.
+
+# Code Review Status - Story 3b.2
+# Review Attempt: 2
+# Final Status: APPROVED (Issues Found & Fixed)
+# Issues Found: 2 CRITICAL, 4 HIGH, 4 MEDIUM, 3 LOW (13 Fixed)
+# Reviewer: Claude Haiku 4.5
+# Date: 2026-01-24
+# Review 2 Fixes: CRITICAL-1: Added missing stream:end IPC emission from ParsedResultEvent, CRITICAL-2: stream:end now includes tokens and costUsd. HIGH-1: Added comprehensive stream:end emission tests. HIGH-2: stream:end payload includes cost and tokens. HIGH-3: Extracted duplicate tool_result handling to emitToolResult() helper. HIGH-4: Added guard for duplicate result events. MEDIUM-1: Added resultEventReceived flag and token accumulation management. MEDIUM-2: Early skip for empty lines without parse errors. MEDIUM-3: Model capture logic preserved. MEDIUM-4: stdout null checks already present. LOW-1: Improved error logging with interpolated messages. LOW-2: Test timeout behavior is correct. LOW-3: Added clearCheckpoints() in parser close handler. All 858 tests passing (5 new tests added).
 
   # Epic 3b: CC Integration & Instance Management
   epic-3b: in-progress
-  3b-1-cc-child-process-spawning: review
-  3b-2-ndjson-stream-parser: ready-for-dev
+  3b-1-cc-child-process-spawning: done
+  3b-2-ndjson-stream-parser: done
   3b-3-instance-state-machine: backlog
   3b-4-request-response-process-model: backlog
   epic-3b-retrospective: optional

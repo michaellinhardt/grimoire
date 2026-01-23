@@ -35,28 +35,56 @@ DECISION RULES:
 
 ## Logging Instructions
 
-You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
+You MUST log your progress using the orchestrator script with granular task phases and descriptive messages.
 
-**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status> "<message>"`
 - epicID: Short numeric ID (e.g., `2a`, `2b`) - extract from story key
 - storyID: Short numeric ID (e.g., `2a-1`, `2b-1`) - same as story key
 - command: "dev-story"
-- task-id: identifies the granular task
+- task-id: Phase from taxonomy (setup, implement, tests, lint, validate)
 - status: "start" or "end"
+- message: Descriptive text (max 150 chars, required)
 
 **IMPORTANT:** Always use SHORT NUMERIC IDs, never full story/epic titles.
+
+**Task phases for dev-story (from task-taxonomy.yaml):**
+- `setup` - Load story, tech-spec, and context
+- `implement` - Write implementation code
+- `tests` - Write and run tests
+- `lint` - Run linting and formatting
+- `validate` - Final validation
+
+**Message format:**
+- Start: Describe what the task is about to do
+- End: Describe outcome with metrics suffix `(metric:value)`
+- Recommended metrics: files, lines, tests
 
 **Required logs for this workflow:**
 
 ```bash
-# At START of workflow
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story workflow start
+# At START of each phase
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story setup start "Loading implementation context for {{story_id}}"
+# ... load context ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story setup end "Context loaded (files:N)"
 
-# At END of workflow (before terminating)
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story workflow end
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story implement start "Implementing story code"
+# ... write code ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story implement end "Implementation complete (files:N, lines:N)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story tests start "Writing and running tests"
+# ... run tests ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story tests end "Tests complete (tests:N passed)"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story lint start "Running lint and format"
+# ... lint ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story lint end "Lint passed"
+
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story validate start "Running final validation"
+# ... validate ...
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story validate end "Validation passed"
 ```
 
-**CRITICAL:** Always log both START and END. Duration is calculated by dashboard (end - start).
+**CRITICAL:** Always log both START and END for each phase. Replace N with actual counts.
 
 ---
 
