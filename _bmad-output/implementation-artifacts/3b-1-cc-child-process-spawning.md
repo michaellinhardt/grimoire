@@ -411,6 +411,68 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 - src/renderer/src/core/shell/CloseTabConfirmDialog.test.tsx (added onStreamInit mock)
 - src/renderer/src/features/sessions/components/SessionInfoView.test.tsx (added onStreamInit mock)
 
+## Code Review Summary (Attempt 2)
+
+**Review Date:** 2026-01-24
+**Reviewer:** Senior Developer (Adversarial Code Review)
+**Issues Found:** 8 (2 CRITICAL, 2 HIGH, 3 MEDIUM, 1 LOW)
+**Issues Fixed:** 7 (2 CRITICAL, 2 HIGH, 3 MEDIUM)
+**Status:** Review complete, all critical and high issues fixed
+
+### Issues Fixed
+
+1. **CRITICAL - Empty string truthiness bug in registry cleanup**
+   - Changed `capturedSessionId` initialization from empty string `''` to `null`
+   - Prevents false negatives in if conditions during process exit cleanup
+   - Fix: Initialize as `null`, use `|| registryId` fallback for cleanup key
+
+2. **CRITICAL - Inconsistent registry cleanup in exit/error handlers**
+   - Both handlers now use consistent cleanup key logic
+   - Prevents stale registry entries with temporary session IDs
+   - Fix: Extract cleanup key to variable for use in emit event
+
+3. **HIGH - Readline interface file descriptor leak**
+   - Added proper cleanup: `rl.close()` on process exit
+   - Prevents fd exhaustion on repeated spawns
+   - Fix: Add exit event listener to close readline interface
+
+4. **HIGH - Missing error handler on readline interface**
+   - Added `rl.on('error')` handler to prevent silent failures
+   - Logs errors for debugging without crashing process
+   - Fix: Add error event listener to readline
+
+5. **MEDIUM - Session ID mismatch for new sessions (AC5 partial)**
+   - Original code created DB entry with renderer UUID before CC assigned real UUID
+   - Changed: Don't create DB entry in sendMessage for new sessions
+   - CC will assign real sessionId via init event
+   - Story 3b-2 (stream parser) will update DB when init event received
+   - Updated comments to explain the flow
+
+6. **MEDIUM - stream:init emit fallback**
+   - Added fallback to registryId in stream:init event emission
+   - Ensures correct session tracking if init event received before capturedSessionId set
+   - Fix: Use `capturedSessionId || registryId` in emit
+
+### Test Results
+
+- All 811 tests pass (1 skipped)
+- cc-spawner tests: 23 tests passing
+- Test file: Updated test assertion for init event with correct session ID
+
+### Risk Assessment
+
+**Resolved Risks:**
+- Process registry no longer accumulates stale entries
+- New sessions will properly map to CC-assigned UUIDs
+- File descriptor leaks prevented on repeated spawns
+- No more silent failures from readline errors
+
+**Remaining Risks:**
+- Story 3b-2 must implement full stream parsing to handle non-init events
+- Database update on init event (Story 3b-2) is critical for session consistency
+- Stream event emission currently only handles init (full parsing deferred)
+
 ## Change Log
 
 - 2026-01-24: Story 3b-1 implementation complete - CC child process spawning with environment isolation, stdin message delivery, session ID capture, and stream event emission
+- 2026-01-24: Code Review Attempt 2 - Fixed 2 CRITICAL and 2 HIGH severity issues in spawning logic, file descriptor management, and session ID tracking

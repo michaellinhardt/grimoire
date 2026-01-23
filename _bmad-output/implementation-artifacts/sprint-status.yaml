@@ -122,6 +122,14 @@ development_status:
 # Date: 2026-01-24
 # Summary: Complete implementation of abort and resume functionality. All 6 ACs implemented, all 784 tests passing, comprehensive test coverage including ChatInput abort button, useAbortSession hook, Escape key handler, system message rendering, and addAbortedMessage action.
 
+# Code Review Status - Story 3b.1
+# Review Attempt: 2
+# Final Status: APPROVED (Issues Found & Fixed)
+# Issues Found: 2 CRITICAL, 2 HIGH, 3 MEDIUM, 1 LOW (7 Fixed)
+# Reviewer: Claude Haiku 4.5
+# Date: 2026-01-24
+# Review 2 Fixes: (1) CRITICAL - Empty string truthiness bug in capturedSessionId (initialize null not ''), (2) CRITICAL - Inconsistent registry cleanup key, (3) HIGH - Missing readline close() causing fd leak, (4) HIGH - Missing readline error handler, (5) MEDIUM - Session ID mismatch for new sessions (don't create DB entry until CC assigns real ID), (6) MEDIUM - stream:init fallback for registryId, (7) MEDIUM - Updated sendMessage comments to clarify DB entry lifecycle. All 811 tests passing.
+
   # Epic 3b: CC Integration & Instance Management
   epic-3b: in-progress
   3b-1-cc-child-process-spawning: review
