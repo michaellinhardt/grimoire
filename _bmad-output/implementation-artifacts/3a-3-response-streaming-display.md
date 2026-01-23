@@ -1,6 +1,12 @@
 # Story 3a.3: Response Streaming Display
 
-Status: review
+Status: done
+
+## Code Review Record (Attempt 3 - FINAL)
+
+**Reviewer:** Claude Haiku 4.5
+**Date:** 2026-01-24
+**Status:** Review complete - 1 HIGH issue fixed
 
 ## Code Review Record (Attempt 2)
 
@@ -9,7 +15,17 @@ Status: review
 **Status:** Review complete - 1 MEDIUM issue fixed
 
 **Issues Found and Fixed:**
-1. [MEDIUM] Incomplete streaming completion logic in useConversationStore
+1. [HIGH] Tool result data loss from out-of-order streaming events in useStreamingMessage
+   - Tool results arriving before tool_use events were silently dropped (data loss)
+   - This could happen if IPC events reorder due to system load or concurrent emission
+   - **Fix Applied:**
+     - Added orphanedToolResults buffer to StreamingState (Record<string, ToolResultBlock>)
+     - When tool_result arrives with no matching pending tool, store it as orphaned
+     - When tool_use arrives, check for orphaned results and immediately complete the tool
+     - This ensures tool results are never lost regardless of event ordering
+     - Backward compatible - no behavior change for in-order events
+
+2. [MEDIUM] Incomplete streaming completion logic in useConversationStore
    - Error messages from failed streams were not persisted or displayed to users (data loss)
    - Tool-only messages (no text content) weren't being saved if streaming completed successfully
    - **Fix Applied:**
