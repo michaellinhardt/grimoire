@@ -81,6 +81,52 @@ const grimoireAPI = {
       ipcRenderer.on('sessions:metadataUpdated', handler)
       // Return cleanup function
       return () => ipcRenderer.removeListener('sessions:metadataUpdated', handler)
+    },
+    // Streaming event listeners (Story 3a-3)
+    onStreamChunk: (
+      callback: (event: { sessionId: string; type: 'text'; content: string; uuid?: string }) => void
+    ): (() => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        data: { sessionId: string; type: 'text'; content: string; uuid?: string }
+      ): void => callback(data)
+      ipcRenderer.on('stream:chunk', handler)
+      return () => ipcRenderer.removeListener('stream:chunk', handler)
+    },
+    onStreamTool: (
+      callback: (event: {
+        sessionId: string
+        type: 'tool_use' | 'tool_result'
+        toolUse?: unknown
+        toolResult?: unknown
+      }) => void
+    ): (() => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        data: {
+          sessionId: string
+          type: 'tool_use' | 'tool_result'
+          toolUse?: unknown
+          toolResult?: unknown
+        }
+      ): void => callback(data)
+      ipcRenderer.on('stream:tool', handler)
+      return () => ipcRenderer.removeListener('stream:tool', handler)
+    },
+    onStreamEnd: (
+      callback: (event: {
+        sessionId: string
+        success: boolean
+        error?: string
+        aborted?: boolean
+      }) => void
+    ): (() => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        data: { sessionId: string; success: boolean; error?: string; aborted?: boolean }
+      ): void => callback(data)
+      ipcRenderer.on('stream:end', handler)
+      return () => ipcRenderer.removeListener('stream:end', handler)
     }
   },
   // New namespace (Story 2a.3)

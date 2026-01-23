@@ -151,6 +151,15 @@ describe('ConversationView', () => {
     mockClearScrollPosition.mockClear()
     mockOpenSubAgentTab.mockClear()
 
+    // Mock window.grimoireAPI for useStreamingMessage hook (Story 3a-3)
+    window.grimoireAPI = {
+      sessions: {
+        onStreamChunk: vi.fn(() => vi.fn()),
+        onStreamTool: vi.fn(() => vi.fn()),
+        onStreamEnd: vi.fn(() => vi.fn())
+      }
+    } as unknown as typeof window.grimoireAPI
+
     // Mock only the functions actually used by ConversationView
     vi.mocked(useUIStore).mockReturnValue({
       setScrollPosition: mockSetScrollPosition,
@@ -654,18 +663,37 @@ describe('ConversationView', () => {
   })
 
   describe('Loading and Thinking indicators (Story 2b.4)', () => {
-    it('shows LoadingIndicator when sessionState is working and no messages streaming', () => {
+    it('shows LoadingIndicator when sessionState is working and not actively streaming', () => {
+      // Story 3a-3: Streaming state now comes from useStreamingMessage hook (IPC events)
+      // When no streaming is active, LoadingIndicator shows
       render(<ConversationView messages={[]} sessionId="test-session" sessionState="working" />)
 
       expect(screen.getByRole('status', { name: 'Loading Claude Code' })).toBeInTheDocument()
       expect(screen.getByText('Loading Claude Code...')).toBeInTheDocument()
     })
 
-    it('shows ThinkingIndicator when sessionState is working and streaming started', () => {
-      // When there are messages and state is working, streaming has started
+    it('shows ThinkingIndicator when sessionState is working and streaming is active', () => {
+      // Story 3a-3: Need to simulate streaming via IPC event
+      let chunkCallback: ((event: unknown) => void) | null = null
+      window.grimoireAPI = {
+        sessions: {
+          onStreamChunk: vi.fn((cb) => {
+            chunkCallback = cb
+            return vi.fn()
+          }),
+          onStreamTool: vi.fn(() => vi.fn()),
+          onStreamEnd: vi.fn(() => vi.fn())
+        }
+      } as unknown as typeof window.grimoireAPI
+
       render(
         <ConversationView messages={mockMessages} sessionId="test-session" sessionState="working" />
       )
+
+      // Trigger streaming event
+      act(() => {
+        chunkCallback?.({ sessionId: 'test-session', type: 'text', content: 'Hello' })
+      })
 
       expect(screen.getByRole('status', { name: 'Claude is thinking' })).toBeInTheDocument()
       expect(screen.getByText('Thinking')).toBeInTheDocument()
@@ -687,42 +715,76 @@ describe('ConversationView', () => {
       expect(screen.queryByRole('status', { name: 'Claude is thinking' })).not.toBeInTheDocument()
     })
 
-    it('transitions from Loading to Thinking when first message arrives', () => {
-      const { rerender } = render(
-        <ConversationView messages={[]} sessionId="test-session" sessionState="working" />
-      )
+    it('transitions from Loading to Thinking when streaming starts via IPC', () => {
+      // Story 3a-3: Transition now triggered by IPC streaming events
+      let chunkCallback: ((event: unknown) => void) | null = null
+      window.grimoireAPI = {
+        sessions: {
+          onStreamChunk: vi.fn((cb) => {
+            chunkCallback = cb
+            return vi.fn()
+          }),
+          onStreamTool: vi.fn(() => vi.fn()),
+          onStreamEnd: vi.fn(() => vi.fn())
+        }
+      } as unknown as typeof window.grimoireAPI
+
+      render(<ConversationView messages={[]} sessionId="test-session" sessionState="working" />)
 
       // Initially shows loading
       expect(screen.getByText('Loading Claude Code...')).toBeInTheDocument()
       expect(screen.queryByText('Thinking')).not.toBeInTheDocument()
 
-      // Rerender with first message (streaming started)
-      rerender(
-        <ConversationView
-          messages={[mockMessages[0]]}
-          sessionId="test-session"
-          sessionState="working"
-        />
-      )
+      // Trigger first streaming chunk
+      act(() => {
+        chunkCallback?.({ sessionId: 'test-session', type: 'text', content: 'Hello' })
+      })
 
       // Should now show thinking
       expect(screen.queryByText('Loading Claude Code...')).not.toBeInTheDocument()
       expect(screen.getByText('Thinking')).toBeInTheDocument()
     })
 
-    it('resets streaming state when session changes', () => {
-      const { rerender } = render(
-        <ConversationView messages={mockMessages} sessionId="session-1" sessionState="working" />
-      )
+    it('isolates streaming state per session via hook', () => {
+      // Story 3a-3: Streaming state is managed per-session via useStreamingMessage hook
+      // The hook filters events by sessionId - events for session-1 don't affect session-2
 
-      // Should show thinking (has messages while working)
-      expect(screen.getByText('Thinking')).toBeInTheDocument()
+      // This test verifies that switching sessions doesn't carry over streaming state
+      // by confirming session-2 events are filtered when session-1 is active
+      let chunkCallback: ((event: unknown) => void) | null = null
+      const mockOnStreamChunk = vi.fn((cb: (event: unknown) => void) => {
+        chunkCallback = cb
+        return vi.fn()
+      })
 
-      // Change session to a new one with working state but no messages
-      rerender(<ConversationView messages={[]} sessionId="session-2" sessionState="working" />)
+      window.grimoireAPI = {
+        sessions: {
+          onStreamChunk: mockOnStreamChunk,
+          onStreamTool: vi.fn(() => vi.fn()),
+          onStreamEnd: vi.fn(() => vi.fn())
+        }
+      } as unknown as typeof window.grimoireAPI
 
-      // Should show loading (new session, no messages yet)
+      render(<ConversationView messages={[]} sessionId="session-1" sessionState="working" />)
+
+      // Initially shows loading (no streaming for session-1)
       expect(screen.getByText('Loading Claude Code...')).toBeInTheDocument()
+
+      // Trigger streaming event for session-2 (different session - should be ignored)
+      act(() => {
+        chunkCallback?.({ sessionId: 'session-2', type: 'text', content: 'Hello' })
+      })
+
+      // Should still show loading (event was for different session)
+      expect(screen.getByText('Loading Claude Code...')).toBeInTheDocument()
+
+      // Trigger streaming event for session-1 (current session)
+      act(() => {
+        chunkCallback?.({ sessionId: 'session-1', type: 'text', content: 'Hello' })
+      })
+
+      // Now should show thinking
+      expect(screen.getByText('Thinking')).toBeInTheDocument()
     })
   })
 

@@ -41,3 +41,8 @@ export { MOCK_TIMELINE_EVENTS, createMockTimelineEvents } from './types'
 // Story 2b.5: Rewind UI
 export { RewindModal } from './RewindModal'
 export type { RewindModalProps } from './RewindModal'
+// Story 3a-3: Streaming Display
+export { StreamingMessageBubble } from './StreamingMessageBubble'
+export type { StreamingMessageBubbleProps } from './StreamingMessageBubble'
+export { JumpToLatestButton } from './JumpToLatestButton'
+export type { JumpToLatestButtonProps } from './JumpToLatestButton'

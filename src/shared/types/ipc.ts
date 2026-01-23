@@ -199,3 +199,74 @@ export const SendMessageResponseSchema = z.object({
 })
 
 export type SendMessageResponse = z.infer<typeof SendMessageResponseSchema>
+
+// ============================================================
+// Streaming Event Schemas (Story 3a-3)
+// ============================================================
+
+/**
+ * Tool use block for streaming - matches ToolUseBlock in renderer types
+ */
+export const StreamToolUseBlockSchema = z.object({
+  type: z.literal('tool_use'),
+  id: z.string(),
+  name: z.string(),
+  input: z.record(z.string(), z.unknown())
+})
+
+export type StreamToolUseBlock = z.infer<typeof StreamToolUseBlockSchema>
+
+/**
+ * Tool result block for streaming - matches ToolResultBlock in renderer types
+ */
+export const StreamToolResultBlockSchema = z.object({
+  type: z.literal('tool_result'),
+  tool_use_id: z.string(),
+  content: z.string(),
+  is_error: z.boolean().optional()
+})
+
+export type StreamToolResultBlock = z.infer<typeof StreamToolResultBlockSchema>
+
+/**
+ * Stream chunk event - text content arriving during streaming
+ */
+export const StreamChunkEventSchema = z.object({
+  sessionId: z.string().uuid(),
+  type: z.literal('text'),
+  content: z.string(),
+  uuid: z.string().uuid().optional()
+})
+
+export type StreamChunkEvent = z.infer<typeof StreamChunkEventSchema>
+
+/**
+ * Stream tool event - tool call or result during streaming
+ */
+export const StreamToolEventSchema = z.object({
+  sessionId: z.string().uuid(),
+  type: z.enum(['tool_use', 'tool_result']),
+  toolUse: StreamToolUseBlockSchema.optional(),
+  toolResult: StreamToolResultBlockSchema.optional()
+})
+
+export type StreamToolEvent = z.infer<typeof StreamToolEventSchema>
+
+/**
+ * Stream end event - streaming completed or failed
+ */
+export const StreamEndEventSchema = z.object({
+  sessionId: z.string().uuid(),
+  success: z.boolean(),
+  error: z.string().optional(),
+  aborted: z.boolean().optional(),
+  totalTokens: z
+    .object({
+      input: z.number(),
+      output: z.number()
+    })
+    .optional(),
+  costUsd: z.number().optional()
+})
+
+export type StreamEndEvent = z.infer<typeof StreamEndEventSchema>

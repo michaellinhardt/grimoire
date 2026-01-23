@@ -10,7 +10,8 @@ describe('useConversationStore', () => {
     // Reset store to initial state
     useConversationStore.setState({
       messages: new Map(),
-      pendingMessages: new Map()
+      pendingMessages: new Map(),
+      streamingMessages: {}
     })
   })
 
@@ -208,6 +209,143 @@ describe('useConversationStore', () => {
       expect(
         hasSessionPendingMessages(useConversationStore.getState().pendingMessages, sessionId)
       ).toBe(false)
+    })
+  })
+
+  // Story 3a-3: Streaming state tests
+  describe('streaming actions', () => {
+    it('startStreaming initializes streaming state', () => {
+      const { startStreaming } = useConversationStore.getState()
+
+      startStreaming(sessionId)
+
+      const state = useConversationStore.getState()
+      expect(state.streamingMessages[sessionId]).toBeDefined()
+      expect(state.streamingMessages[sessionId]?.content).toBe('')
+      expect(state.streamingMessages[sessionId]?.toolCalls).toEqual([])
+      expect(state.streamingMessages[sessionId]?.startedAt).toBeGreaterThan(0)
+    })
+
+    it('appendStreamChunk accumulates content', () => {
+      const { startStreaming, appendStreamChunk } = useConversationStore.getState()
+
+      startStreaming(sessionId)
+      appendStreamChunk(sessionId, 'Hello ')
+      appendStreamChunk(sessionId, 'world!')
+
+      const state = useConversationStore.getState()
+      expect(state.streamingMessages[sessionId]?.content).toBe('Hello world!')
+    })
+
+    it('appendStreamChunk does nothing if no streaming state', () => {
+      const { appendStreamChunk } = useConversationStore.getState()
+
+      appendStreamChunk(sessionId, 'Hello')
+
+      const state = useConversationStore.getState()
+      expect(state.streamingMessages[sessionId]).toBeUndefined()
+    })
+
+    it('addStreamToolCall adds tool to streaming state', () => {
+      const { startStreaming, addStreamToolCall } = useConversationStore.getState()
+
+      startStreaming(sessionId)
+      addStreamToolCall(sessionId, {
+        type: 'tool_use',
+        id: 'tool-1',
+        name: 'Read',
+        input: { file_path: '/test.ts' }
+      })
+
+      const state = useConversationStore.getState()
+      expect(state.streamingMessages[sessionId]?.toolCalls).toHaveLength(1)
+      expect(state.streamingMessages[sessionId]?.toolCalls[0].id).toBe('tool-1')
+    })
+
+    it('completeStreaming with success creates assistant message', () => {
+      const { startStreaming, appendStreamChunk, completeStreaming, getMessages } =
+        useConversationStore.getState()
+
+      startStreaming(sessionId)
+      appendStreamChunk(sessionId, 'Response content')
+      completeStreaming(sessionId, true)
+
+      const state = useConversationStore.getState()
+      expect(state.streamingMessages[sessionId]).toBeUndefined()
+
+      const messages = getMessages(sessionId)
+      expect(messages).toHaveLength(1)
+      expect(messages[0]).toMatchObject({
+        role: 'assistant',
+        content: 'Response content'
+      })
+    })
+
+    it('completeStreaming with success includes tool calls', () => {
+      const {
+        startStreaming,
+        appendStreamChunk,
+        addStreamToolCall,
+        completeStreaming,
+        getMessages
+      } = useConversationStore.getState()
+
+      startStreaming(sessionId)
+      appendStreamChunk(sessionId, 'Content')
+      addStreamToolCall(sessionId, {
+        type: 'tool_use',
+        id: 'tool-1',
+        name: 'Read',
+        input: {}
+      })
+      completeStreaming(sessionId, true)
+
+      const messages = getMessages(sessionId)
+      const msg = messages[0]
+      // Type guard for ConversationMessage (has role, toolUseBlocks)
+      expect('role' in msg && msg.role === 'assistant').toBe(true)
+      if ('toolUseBlocks' in msg) {
+        expect(msg.toolUseBlocks).toHaveLength(1)
+      }
+    })
+
+    it('completeStreaming with failure creates error message', () => {
+      const { startStreaming, appendStreamChunk, completeStreaming, getMessages } =
+        useConversationStore.getState()
+
+      startStreaming(sessionId)
+      appendStreamChunk(sessionId, 'Partial content')
+      completeStreaming(sessionId, false, 'Network error')
+
+      const state = useConversationStore.getState()
+      expect(state.streamingMessages[sessionId]).toBeUndefined()
+      const messages = getMessages(sessionId)
+      expect(messages).toHaveLength(1)
+      expect(messages[0]).toMatchObject({
+        type: 'system',
+        content: 'Network error',
+        isError: true
+      })
+    })
+
+    it('completeStreaming does nothing without content', () => {
+      const { startStreaming, completeStreaming, getMessages } = useConversationStore.getState()
+
+      startStreaming(sessionId)
+      completeStreaming(sessionId, true)
+
+      expect(getMessages(sessionId)).toEqual([])
+    })
+
+    it('clearStreaming removes streaming state', () => {
+      const { startStreaming, appendStreamChunk, clearStreaming } = useConversationStore.getState()
+
+      startStreaming(sessionId)
+      appendStreamChunk(sessionId, 'Content')
+      clearStreaming(sessionId)
+
+      const state = useConversationStore.getState()
+      expect(state.streamingMessages[sessionId]).toBeUndefined()
     })
   })
 })

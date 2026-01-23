@@ -82,7 +82,10 @@ beforeEach(() => {
       upsertMetadata: vi.fn().mockResolvedValue({ success: true }),
       rewind: vi.fn().mockResolvedValue({ sessionId: 'rewind-session' }),
       sendMessage: vi.fn().mockResolvedValue({ success: true }),
-      onMetadataUpdated: mockOnMetadataUpdated
+      onMetadataUpdated: mockOnMetadataUpdated,
+      onStreamChunk: vi.fn(() => vi.fn()),
+      onStreamTool: vi.fn(() => vi.fn()),
+      onStreamEnd: vi.fn(() => vi.fn())
     },
     dialog: {
       selectFolder: vi.fn().mockResolvedValue({ canceled: false, folderPath: '/test' })
@@ -349,7 +352,10 @@ describe('SessionInfoView loading state', () => {
         upsertMetadata: vi.fn().mockResolvedValue({ success: true }),
         rewind: vi.fn().mockResolvedValue({ sessionId: 'rewind-session' }),
         sendMessage: vi.fn().mockResolvedValue({ success: true }),
-        onMetadataUpdated: vi.fn().mockReturnValue(() => {})
+        onMetadataUpdated: vi.fn().mockReturnValue(() => {}),
+        onStreamChunk: vi.fn(() => vi.fn()),
+        onStreamTool: vi.fn(() => vi.fn()),
+        onStreamEnd: vi.fn(() => vi.fn())
       },
       dialog: {
         selectFolder: vi.fn().mockResolvedValue({ canceled: false, folderPath: '/test' })

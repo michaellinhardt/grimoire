@@ -1,0 +1,26 @@
+# Batch Commit - Archive and Commit Completed Stories
+name: batch-commit
+description: 'Archive completed story artifacts and commit all changes in a single atomic operation. Can be invoked by sprint-runner or standalone with story IDs.'
+author: 'BMad'
+
+# Critical variables from config
+config_source: '{project-root}/_bmad/bmm/config.yaml'
+user_name: '{config_source}:user_name'
+communication_language: '{config_source}:communication_language'
+implementation_artifacts: '{config_source}:implementation_artifacts'
+planning_artifacts: '{config_source}:planning_artifacts'
+
+# Workflow components
+installed_path: '{project-root}/_bmad/bmm/workflows/4-implementation/batch-commit'
+instructions: '{installed_path}/instructions.md'
+
+# Key paths
+archived_artifacts: '{project-root}/_bmad-output/archived-artifacts'
+sprint_runner_log: '{project-root}/docs/sprint-runner.csv'
+
+# Parameters (passed from sprint-runner or command line)
+# story_ids: Comma-separated list of story IDs (e.g., "3a-1,3a-2")
+# epic_id: Auto-derived from story_ids if not provided
+
+# No validation checklist - operational workflow
+standalone: true

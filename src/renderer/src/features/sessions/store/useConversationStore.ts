@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ConversationMessage } from '../components/types'
+import type { ConversationMessage, ToolUseBlock } from '../components/types'
 
 /**
  * System message type for error display
@@ -16,6 +16,15 @@ export interface SystemMessage {
  * Union type for all displayable messages
  */
 export type DisplayMessage = ConversationMessage | SystemMessage
+
+/**
+ * Streaming message state (Story 3a-3)
+ */
+export interface StreamingState {
+  content: string
+  toolCalls: ToolUseBlock[]
+  startedAt: number
+}
 
 interface ConversationStoreState {
   /** Messages keyed by sessionId */
@@ -45,11 +54,31 @@ interface ConversationStoreState {
 
   /** Set messages for a session (e.g., on load from storage) */
   setMessages: (sessionId: string, messages: DisplayMessage[]) => void
+
+  // Streaming state and actions (Story 3a-3)
+  /** Streaming state per session */
+  streamingMessages: Record<string, StreamingState | null>
+
+  /** Start streaming for a session */
+  startStreaming: (sessionId: string) => void
+
+  /** Append content chunk to streaming message */
+  appendStreamChunk: (sessionId: string, chunk: string) => void
+
+  /** Add tool call to streaming message */
+  addStreamToolCall: (sessionId: string, toolCall: ToolUseBlock) => void
+
+  /** Complete streaming and convert to permanent message */
+  completeStreaming: (sessionId: string, success: boolean, error?: string) => void
+
+  /** Clear streaming state for a session */
+  clearStreaming: (sessionId: string) => void
 }
 
 export const useConversationStore = create<ConversationStoreState>((set, get) => ({
   messages: new Map(),
   pendingMessages: new Map(),
+  streamingMessages: {},
 
   addOptimisticMessage: (sessionId, content) => {
     const messageId = crypto.randomUUID()
@@ -134,6 +163,122 @@ export const useConversationStore = create<ConversationStoreState>((set, get) =>
       const newMessages = new Map(state.messages)
       newMessages.set(sessionId, messages)
       return { messages: newMessages }
+    })
+  },
+
+  // Streaming actions (Story 3a-3)
+  startStreaming: (sessionId) => {
+    set((state) => ({
+      streamingMessages: {
+        ...state.streamingMessages,
+        [sessionId]: {
+          content: '',
+          toolCalls: [],
+          startedAt: Date.now()
+        }
+      }
+    }))
+  },
+
+  appendStreamChunk: (sessionId, chunk) => {
+    set((state) => {
+      const current = state.streamingMessages[sessionId]
+      if (!current) return state
+      return {
+        streamingMessages: {
+          ...state.streamingMessages,
+          [sessionId]: {
+            ...current,
+            content: current.content + chunk
+          }
+        }
+      }
+    })
+  },
+
+  addStreamToolCall: (sessionId, toolCall) => {
+    set((state) => {
+      const current = state.streamingMessages[sessionId]
+      if (!current) return state
+      return {
+        streamingMessages: {
+          ...state.streamingMessages,
+          [sessionId]: {
+            ...current,
+            toolCalls: [...current.toolCalls, toolCall]
+          }
+        }
+      }
+    })
+  },
+
+  completeStreaming: (sessionId, success, error) => {
+    const state = get()
+    const streaming = state.streamingMessages[sessionId]
+    if (!streaming) return
+
+    if (success && (streaming.content || streaming.toolCalls.length > 0)) {
+      // Convert streaming content to permanent assistant message
+      // Include message if it has text content OR tool calls (AC5: tool-only responses)
+      const assistantMessage: ConversationMessage = {
+        uuid: `assistant-${crypto.randomUUID()}`,
+        role: 'assistant',
+        content: streaming.content,
+        timestamp: Date.now(),
+        toolUseBlocks: streaming.toolCalls.length > 0 ? streaming.toolCalls : undefined
+      }
+
+      set((state) => {
+        const newMessages = new Map(state.messages)
+        const sessionMessages = newMessages.get(sessionId) ?? []
+        newMessages.set(sessionId, [...sessionMessages, assistantMessage])
+
+        const newStreaming = { ...state.streamingMessages }
+        delete newStreaming[sessionId]
+
+        return {
+          messages: newMessages,
+          streamingMessages: newStreaming
+        }
+      })
+    } else if (!success) {
+      // Add error message when stream fails (AC6: error state handling)
+      const errorMessage: SystemMessage = {
+        type: 'system',
+        uuid: `error-${crypto.randomUUID()}`,
+        content: error ?? 'Stream ended with error',
+        timestamp: Date.now(),
+        isError: true
+      }
+
+      set((state) => {
+        const newMessages = new Map(state.messages)
+        const sessionMessages = newMessages.get(sessionId) ?? []
+        newMessages.set(sessionId, [...sessionMessages, errorMessage])
+
+        const newStreaming = { ...state.streamingMessages }
+        delete newStreaming[sessionId]
+
+        return {
+          messages: newMessages,
+          streamingMessages: newStreaming
+        }
+      })
+    } else {
+      // Success but no content and no tool calls - just clear state
+      set((state) => {
+        const newStreaming = { ...state.streamingMessages }
+        delete newStreaming[sessionId]
+        return { streamingMessages: newStreaming }
+      })
+    }
+  },
+
+  clearStreaming: (sessionId) => {
+    set((state) => {
+      const newStreaming = { ...state.streamingMessages }
+      delete newStreaming[sessionId]
+      return { streamingMessages: newStreaming }
     })
   }
 }))

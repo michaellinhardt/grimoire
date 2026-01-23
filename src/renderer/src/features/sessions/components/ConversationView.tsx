@@ -6,11 +6,14 @@ import { SubAgentBubble } from './SubAgentBubble'
 import { ThinkingIndicator } from './ThinkingIndicator'
 import { LoadingIndicator } from './LoadingIndicator'
 import { RewindModal } from './RewindModal'
+import { StreamingMessageBubble } from './StreamingMessageBubble'
+import { JumpToLatestButton } from './JumpToLatestButton'
 import { useUIStore, type SessionState } from '@renderer/shared/store/useUIStore'
 import { findToolResult } from '@renderer/shared/utils/pairToolCalls'
 import { formatMessageTimestamp } from '@renderer/shared/utils/formatMessageTimestamp'
 import { cn } from '@renderer/shared/utils/cn'
 import { useActiveTimelineEvent } from '../hooks/useActiveTimelineEvent'
+import { useStreamingMessage } from '../hooks/useStreamingMessage'
 import type { ConversationMessage, SubAgentBlock } from './types'
 
 export interface ConversationViewProps {
@@ -48,9 +51,19 @@ export function ConversationView({
   // Track message element refs for scroll-to-event functionality
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
-  // Track streaming state for Loading->Thinking transition
-  // MVP NOTE: With request-response model, this will be refined in Epic 3b
-  const [isStreaming, setIsStreaming] = useState(false)
+  // Streaming state from hook (Story 3a-3)
+  const {
+    content: streamingContent,
+    isStreaming: isActivelyStreaming,
+    pendingToolCalls,
+    completedToolCalls
+  } = useStreamingMessage(sessionId)
+
+  // Use actual streaming state (Story 3a-3)
+  const isStreaming = isActivelyStreaming
+
+  // Track if user manually scrolled up during streaming (Story 3a-3)
+  const [userScrolledUp, setUserScrolledUp] = useState(false)
 
   const { getScrollPosition, setScrollPosition, openSubAgentTab, setScrollToConversationEvent } =
     useUIStore()
@@ -204,7 +217,7 @@ export function ConversationView({
     setExpandedTools(new Set())
     setExpandedSubAgents(new Set())
     messageRefs.current.clear()
-    setIsStreaming(false)
+    setUserScrolledUp(false)
     // Reset rewind modal state (Story 2b.5)
     setRewindModalOpen(false)
     setRewindCheckpointUuid(null)
@@ -225,17 +238,12 @@ export function ConversationView({
     return () => setScrollToConversationEvent(null)
   }, [scrollToEvent, setScrollToConversationEvent])
 
-  // Simulate streaming detection for Loading->Thinking transition
-  // MVP NOTE: With request-response model, this simulates the transition
-  // Real streaming detection will be implemented in Epic 3b
+  // Handle streaming auto-scroll (Story 3a-3)
   useEffect(() => {
-    if (sessionState === 'working' && messages.length > 0) {
-      // Consider "streaming" once we have at least one message while working
-      setIsStreaming(true)
-    } else if (sessionState === 'idle') {
-      setIsStreaming(false)
+    if (isStreaming && isNearBottom() && !userScrolledUp) {
+      scrollToBottom()
     }
-  }, [sessionState, messages.length])
+  }, [streamingContent, isStreaming, isNearBottom, userScrolledUp, scrollToBottom])
 
   // Ref to store debounce timeout for cleanup on unmount
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -249,6 +257,12 @@ export function ConversationView({
     }
   }, [])
 
+  // Handle jump to latest click (Story 3a-3)
+  const handleJumpToLatest = useCallback(() => {
+    scrollToBottom()
+    setUserScrolledUp(false)
+  }, [scrollToBottom])
+
   // Save scroll position on scroll (debounced to reduce state updates during rapid scrolling)
   const handleScroll = useCallback((): void => {
     if (debounceTimeoutRef.current) {
@@ -259,7 +273,17 @@ export function ConversationView({
         setScrollPosition(sessionId, viewportRef.current.scrollTop)
       }
     }, 100)
-  }, [sessionId, setScrollPosition])
+
+    // Track user scroll-away during streaming (Story 3a-3)
+    if (isStreaming && viewportRef.current) {
+      const atBottom = isNearBottom()
+      if (!atBottom && !userScrolledUp) {
+        setUserScrolledUp(true)
+      } else if (atBottom && userScrolledUp) {
+        setUserScrolledUp(false)
+      }
+    }
+  }, [sessionId, setScrollPosition, isStreaming, isNearBottom, userScrolledUp])
 
   return (
     <ScrollArea.Root className="h-full w-full">
@@ -368,6 +392,31 @@ export function ConversationView({
             </>
           )}
 
+          {/* Streaming message bubble (Story 3a-3) */}
+          {isStreaming && <StreamingMessageBubble content={streamingContent} isStreaming={true} />}
+
+          {/* Pending tool calls during streaming (Story 3a-3) */}
+          {pendingToolCalls.map((tool) => (
+            <ToolCallCard
+              key={tool.id}
+              toolCall={tool}
+              result={null}
+              isExpanded={expandedTools.has(tool.id)}
+              onToggle={() => toggleTool(tool.id)}
+            />
+          ))}
+
+          {/* Completed tool calls during streaming (Story 3a-3) */}
+          {completedToolCalls.map(({ call, result }) => (
+            <ToolCallCard
+              key={call.id}
+              toolCall={call}
+              result={result}
+              isExpanded={expandedTools.has(call.id)}
+              onToggle={() => toggleTool(call.id)}
+            />
+          ))}
+
           {/* Loading/Thinking indicators at the END of messages list */}
           {sessionState === 'working' && !isStreaming && <LoadingIndicator />}
           {sessionState === 'working' && isStreaming && <ThinkingIndicator />}
@@ -380,6 +429,9 @@ export function ConversationView({
       >
         <ScrollArea.Thumb className="relative flex-1 rounded-full bg-[var(--text-muted)] opacity-50 hover:opacity-75" />
       </ScrollArea.Scrollbar>
+
+      {/* Jump to latest button (Story 3a-3) */}
+      <JumpToLatestButton visible={isStreaming && userScrolledUp} onClick={handleJumpToLatest} />
 
       {/* Rewind Modal (Story 2b.5) */}
       <RewindModal

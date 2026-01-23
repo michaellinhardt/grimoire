@@ -120,10 +120,7 @@ development_status:
 
 ## Workflow Steps
 
-<step n="0" goal="Initialize: project context, cleanup, and batch size">
-
-  <!-- FIRST: Set iteration flag for cleanup safety (MEDIUM-5 Resolution) -->
-  <action>Set is_first_iteration = true</action>
+<step n="0" goal="Initialize: project context and batch size">
 
   <substep n="0a" goal="Check and refresh project context (C8)">
     <action>Run: _bmad/scripts/project-context-should-refresh.sh</action>
@@ -150,52 +147,10 @@ development_status:
     </check>
   </substep>
 
-  <substep n="0b" goal="Cleanup from previous runs (FIRST ITERATION ONLY)">
-    <!-- MEDIUM-5 Resolution: Only cleanup if first iteration flag is true -->
-    <check if="is_first_iteration == true">
-      <action>Log: "First iteration - cleaning implementation artifacts"</action>
+  <!-- NOTE: Cleanup (formerly Step 0b) has been moved to batch-commit workflow -->
+  <!-- Cleanup now happens at end of each cycle, not at start -->
 
-      <!-- LOG FILE PRESERVED: ./docs/sprint-runner.csv is NOT deleted -->
-      <!-- Dashboard can filter by date, preserving history across runs -->
-      <action>Log: "Log file preserved at ./docs/sprint-runner.csv"</action>
-
-      <action>Spawn BMAD Master subagent with Task tool</action>
-      <subagent-prompt>
-      AUTONOMOUS MODE - Clean implementation artifacts from previous runs.
-
-      Clean the folder: {implementation_artifacts}/
-
-      IMPORTANT: Log ALL files being deleted BEFORE deletion (MEDIUM-5 Resolution)
-
-      DELETE these files (if they exist):
-      - All files matching *-discovery-*.md
-      - All completed story files (check sprint-status.yaml for "done" status)
-      - All completed tech-spec files for done stories
-
-      PRESERVE these files:
-      - sprint-status.yaml
-      - Any files for stories NOT in "done" status
-
-      NOTE: sprint-runner.csv is preserved (not deleted) - history is kept.
-
-      For each file to be deleted, output:
-      "DELETING: [filepath]"
-
-      After completion, output:
-      "CLEANUP COMPLETE: Deleted [count] files"
-      </subagent-prompt>
-      <action>Wait for completion</action>
-      <action>Log: "Cleanup complete"</action>
-
-      <!-- Subagents log directly to sprint-runner.csv -->
-    </check>
-
-    <check if="is_first_iteration == false">
-      <action>Log: "Not first iteration - skipping cleanup"</action>
-    </check>
-  </substep>
-
-  <substep n="0c" goal="Determine number of cycles to run">
+  <substep n="0b" goal="Determine number of cycles to run">
     <comment>
     CYCLE vs STORY: The number is CYCLES, not stories.
     Each cycle processes 1-2 stories:
@@ -227,9 +182,6 @@ development_status:
       <action>Go to Step 1</action>
     </check>
   </substep>
-
-  <!-- AFTER CLEANUP: Clear iteration flag (MEDIUM-5 Resolution) -->
-  <action>Set is_first_iteration = false</action>
 
 </step>
 
@@ -498,7 +450,46 @@ Please review the story manually and resolve before resuming.
   </for-each>
 
   <action>Increment cycles_completed by 1 (one cycle done, regardless of 1 or 2 stories)</action>
-  <action>Go to Step 5 (batch tracking)</action>
+  <action>Go to Step 4c (batch-commit)</action>
+</step>
+
+<step n="4c" goal="BATCH-COMMIT PHASE">
+  <action>Log: "Starting batch-commit for completed stories"</action>
+
+  <!-- Collect story_keys from current cycle -->
+  <action>Collect completed story IDs from story_keys (exclude any marked "blocked")</action>
+  <action>Format as comma-separated list (e.g., "3a-1,3a-2")</action>
+
+  <check if="no completed stories in cycle (all blocked)">
+    <action>Log: "No completed stories to commit, skipping batch-commit"</action>
+    <action>Go to Step 5 (error recovery) or Step 6 (cycle tracking)</action>
+  </check>
+
+  <action>Extract epic_id from story_keys (everything BEFORE last dash)</action>
+  <comment>Examples: "3a-1" -> epic "3a", for multiple epics join with comma</comment>
+
+  <action>Spawn subagent with Task tool</action>
+  <subagent-prompt>
+  AUTONOMOUS MODE - Run batch-commit workflow.
+
+  Run the workflow: /bmad:bmm:workflows:batch-commit
+
+  Parameters:
+  - story_ids: {{completed_story_ids}}
+  - epic_id: {{epic_id}}
+
+  This workflow will:
+  1. Archive completed story artifacts to archived-artifacts/
+  2. Delete discovery files (intermediate files)
+  3. Stage and commit all changes with message: feat({{epic_id}}): implement stories {{story_ids}}
+
+  Execute with full autonomy. Handle errors gracefully.
+  </subagent-prompt>
+
+  <action>Wait for completion</action>
+  <action>Log: "Batch-commit complete"</action>
+
+  <action>Go to Step 5 (error recovery check) or Step 6 (cycle tracking)</action>
 </step>
 
 <step n="5" goal="Error recovery">
@@ -561,12 +552,7 @@ START:
       - If TRUE: spawn subagent to generate fresh project context
       - If FALSE: skip (context is fresh)
 
-  0b. FIRST LOOP ONLY: Cleanup (is_first_iteration flag)
-      - DELETE orchestrator.md (for CSV migration)
-      - Spawn BMAD Master to clean discovery files and done story files
-      - Log all deletions before deleting
-
-  0c. Get number of CYCLES from command or use default (2):
+  0b. Get number of CYCLES from command or use default (2):
       - Number (e.g., "3") -> run 3 cycles then prompt
       - "all" -> run cycles until all stories done
       - Default: 2 cycles
@@ -601,7 +587,14 @@ LOOP (for each CYCLE):
           - No critical after 3 -> done
           - Hard limit 10 -> mark "blocked"
 
-  5. Increment cycles_completed by 1 (one cycle = one iteration)
+  4c. BATCH-COMMIT (end of cycle):
+      - Spawn batch-commit workflow with completed story IDs
+      - Archives story artifacts to archived-artifacts/
+      - Deletes discovery files (intermediate)
+      - Commits all changes with: feat({epic}): implement stories {ids}
+      - Skipped if all stories in cycle were blocked
+
+  5. Error recovery (if needed)
 
   6. Check batch mode:
      - "all" -> next cycle (continues until all done)
@@ -621,6 +614,12 @@ LOG FORMAT:
   - Subagents log via: _bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>
   - Use SHORT NUMERIC IDs only (e.g., "2a", "2a-1"), never full titles
   - Orchestrator does NOT log
+
+GIT COMMITS:
+  - Each cycle produces one git commit via batch-commit workflow
+  - Commit message format: feat({epic_id}): implement stories {story_ids}
+  - Artifacts archived to _bmad-output/archived-artifacts/
+  - Discovery files deleted (not preserved)
 ```
 
 **Usage Examples:**
@@ -634,4 +633,4 @@ LOG FORMAT:
 - 1 cycle with unpaired story (last of epic) = 1 story
 - "run 2" = 2 cycles = 2-4 stories depending on pairing
 
-<critical>BEGIN NOW. Parse number of cycles from command, run Step 0 (project context + cleanup), then start the loop.</critical>
+<critical>BEGIN NOW. Parse number of cycles from command, run Step 0 (project context check + batch size), then start the loop.</critical>

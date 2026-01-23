@@ -46,6 +46,26 @@ export interface GrimoireAPI {
     }) => Promise<{ success: boolean; error?: string }>
     // New methods (Story 2c.2) - Real-time metadata update event listener
     onMetadataUpdated: (callback: (data: SessionMetadata) => void) => () => void
+    // Streaming event listeners (Story 3a-3)
+    onStreamChunk: (
+      callback: (event: { sessionId: string; type: 'text'; content: string; uuid?: string }) => void
+    ) => () => void
+    onStreamTool: (
+      callback: (event: {
+        sessionId: string
+        type: 'tool_use' | 'tool_result'
+        toolUse?: unknown
+        toolResult?: unknown
+      }) => void
+    ) => () => void
+    onStreamEnd: (
+      callback: (event: {
+        sessionId: string
+        success: boolean
+        error?: string
+        aborted?: boolean
+      }) => void
+    ) => () => void
   }
   dialog: {
     selectFolder: () => Promise<{ canceled: boolean; folderPath: string | null }>

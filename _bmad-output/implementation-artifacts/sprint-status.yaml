@@ -94,7 +94,7 @@ development_status:
   epic-3a: in-progress
   3a-1-chat-input-component: done
   3a-2-message-send-flow: done
-  3a-3-response-streaming-display: ready-for-dev
+  3a-3-response-streaming-display: review
   3a-4-abort-and-resume: ready-for-dev
   epic-3a-retrospective: optional
 

@@ -214,3 +214,22 @@ body {
 .running-dots .dot:nth-child(3) {
   animation: thinking-dots 1.4s ease-in-out 0.4s infinite;
 }
+
+/* ========================================
+ * Story 3a-3: Streaming Cursor Animation
+ * ======================================== */
+
+@keyframes cursor-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-cursor-blink {
+  animation: cursor-blink 1s step-end infinite;
+}

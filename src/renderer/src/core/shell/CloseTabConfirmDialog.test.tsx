@@ -85,7 +85,10 @@ beforeEach(() => {
       upsertMetadata: mockUpsertMetadata,
       rewind: mockRewind,
       sendMessage: mockSendMessage,
-      onMetadataUpdated: mockOnMetadataUpdated
+      onMetadataUpdated: mockOnMetadataUpdated,
+      onStreamChunk: vi.fn(() => vi.fn()),
+      onStreamTool: vi.fn(() => vi.fn()),
+      onStreamEnd: vi.fn(() => vi.fn())
     },
     dialog: {
       selectFolder: mockSelectFolder
