@@ -6,6 +6,7 @@ interface StreamingState {
   isStreaming: boolean
   pendingToolCalls: ToolUseBlock[]
   completedToolCalls: Array<{ call: ToolUseBlock; result: ToolResultBlock }>
+  orphanedToolResults: Record<string, ToolResultBlock>
   error: string | null
 }
 
@@ -27,6 +28,7 @@ export function useStreamingMessage(sessionId: string | null): UseStreamingMessa
     isStreaming: false,
     pendingToolCalls: [],
     completedToolCalls: [],
+    orphanedToolResults: {},
     error: null
   })
 
@@ -36,6 +38,7 @@ export function useStreamingMessage(sessionId: string | null): UseStreamingMessa
       isStreaming: false,
       pendingToolCalls: [],
       completedToolCalls: [],
+      orphanedToolResults: {},
       error: null
     })
   }, [])
@@ -59,15 +62,46 @@ export function useStreamingMessage(sessionId: string | null): UseStreamingMessa
 
       if (event.type === 'tool_use' && event.toolUse) {
         const toolUse = event.toolUse as ToolUseBlock
-        setState((prev) => ({
-          ...prev,
-          pendingToolCalls: [...prev.pendingToolCalls, toolUse]
-        }))
+        setState((prev) => {
+          const newState = {
+            ...prev,
+            pendingToolCalls: [...prev.pendingToolCalls, toolUse]
+          }
+
+          // Check if we have an orphaned result for this tool
+          const orphanedResult = prev.orphanedToolResults[toolUse.id]
+          if (orphanedResult) {
+            // Immediately complete this tool with the orphaned result
+            const newOrphaned = { ...prev.orphanedToolResults }
+            delete newOrphaned[toolUse.id]
+
+            return {
+              ...newState,
+              pendingToolCalls: newState.pendingToolCalls.filter((t) => t.id !== toolUse.id),
+              completedToolCalls: [
+                ...prev.completedToolCalls,
+                { call: toolUse, result: orphanedResult }
+              ],
+              orphanedToolResults: newOrphaned
+            }
+          }
+
+          return newState
+        })
       } else if (event.type === 'tool_result' && event.toolResult) {
         const toolResult = event.toolResult as ToolResultBlock
         setState((prev) => {
           const matchingTool = prev.pendingToolCalls.find((t) => t.id === toolResult.tool_use_id)
-          if (!matchingTool) return prev
+          if (!matchingTool) {
+            // Store orphaned result for later matching (handles out-of-order events)
+            return {
+              ...prev,
+              orphanedToolResults: {
+                ...prev.orphanedToolResults,
+                [toolResult.tool_use_id]: toolResult
+              }
+            }
+          }
 
           return {
             ...prev,
