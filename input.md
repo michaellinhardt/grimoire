@@ -9,6 +9,7 @@ You will run the workflow:
 ```
 0. Discovery context in files
 1. Ask clarification questions
+1.1. identify gap, mistake, potential issue, improvement
 2. generate 2 report to list change, one for the command sprint-runner, one for
 dashboard.html
 3. Task 2 sub agent: they plan respectively for sprint-runner and for dashboard.html ( include acceptance criteria and checklist verifications )
@@ -51,3 +52,4 @@ Issue: First dashboard.html, the tab activity is not displaying any data.
   - create-story,final,write final file
   - story-review-1,study,read the story file
   - ...
+
