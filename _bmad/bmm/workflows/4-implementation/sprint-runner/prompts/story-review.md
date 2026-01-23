@@ -1,7 +1,7 @@
 # Story Review Subagent Prompt (REVIEW MODE)
 
 ## Variables
-- `{{story_key}}` - The story identifier
+- `{{story_key}}` - The story identifier(s) - comma-separated for paired stories (e.g., "3a-1,3a-2")
 - `{{implementation_artifacts}}` - Path to implementation artifacts folder
 - `{{review_attempt}}` - Current review attempt number
 
@@ -13,14 +13,30 @@ AUTONOMOUS MODE - No human available to answer questions. Make all decisions you
 
 Run the workflow: /bmad:bmm:workflows:create-story
 
-Target story: {{story_key}} (status: ready-for-dev)
-Story file: {{implementation_artifacts}}/{{story_key}}.md
+Target stories: {{story_key}} (status: ready-for-dev)
 
-MODE: REVIEW ONLY - The story already exists. Do NOT create a new story.
+**MULTI-STORY HANDLING:**
+You may receive 1 or 2 story keys (comma-separated). Process each story SEQUENTIALLY:
+
+1. Parse the story_key(s) into a list
+2. For EACH story in the list:
+   a. Log START for this story (see Logging Instructions)
+   b. Review story file: {{implementation_artifacts}}/[story_id].md
+   c. Read discovery file: {{implementation_artifacts}}/[story_id]-discovery-story.md
+   d. Fix any issues found
+   e. Output "CRITICAL ISSUES FOUND: [count]" or "NO CRITICAL ISSUES FOUND" for this story
+   f. Log END for this story
+3. After ALL stories complete, terminate
+
+Example for "3a-1,3a-2":
+- Process 3a-1 completely (log start, review, fix, report, log end)
+- Then process 3a-2 completely (log start, review, fix, report, log end)
+
+MODE: REVIEW ONLY - The stories already exist. Do NOT create new stories.
 
 PRE-COMPUTED DISCOVERY AVAILABLE (HIGH-2 Resolution):
-Read this discovery file first - it contains story context WITH project context already injected:
-- {{implementation_artifacts}}/{{story_key}}-discovery-story.md
+For each story, read its discovery file first - it contains story context WITH project context already injected:
+- {{implementation_artifacts}}/[story_id]-discovery-story.md
 
 NOTE: Project context is ALREADY APPENDED to the discovery file (see "# Project Context Dump Below" section).
 Do NOT read project-context.md separately - use the content already in the discovery file.

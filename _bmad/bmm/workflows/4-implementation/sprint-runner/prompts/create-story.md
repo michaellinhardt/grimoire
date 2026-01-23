@@ -1,7 +1,7 @@
 # Create Story Subagent Prompt (CREATE MODE)
 
 ## Variables
-- `{{story_key}}` - The story identifier
+- `{{story_key}}` - The story identifier(s) - comma-separated for paired stories (e.g., "3a-1,3a-2")
 - `{{implementation_artifacts}}` - Path to implementation artifacts folder
 
 ---
@@ -12,7 +12,22 @@ AUTONOMOUS MODE - No human available to answer questions. Make all decisions you
 
 Run the workflow: /bmad:bmm:workflows:create-story
 
-Target: Create the next story from the epics. The sprint-status.yaml shows story {{story_key}} in backlog.
+Target stories: {{story_key}}
+
+**MULTI-STORY HANDLING:**
+You may receive 1 or 2 story keys (comma-separated). Process each story SEQUENTIALLY:
+
+1. Parse the story_key(s) into a list
+2. For EACH story in the list:
+   a. Log START for this story (see Logging Instructions)
+   b. Create the story file following all instructions below
+   c. Output the TECH-SPEC DECISION for this story
+   d. Log END for this story
+3. After ALL stories complete, terminate
+
+Example for "3a-1,3a-2":
+- Process 3a-1 completely (log start, create, decide, log end)
+- Then process 3a-2 completely (log start, create, decide, log end)
 
 CRITICAL INSTRUCTIONS:
 - You MUST make all decisions autonomously. No one will answer questions.

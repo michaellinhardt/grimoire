@@ -298,33 +298,34 @@ development_status:
   </check>
 </step>
 
-<step n="2b" goal="STORY-REVIEW PHASE (SEQUENTIAL)">
-  <for-each story in="story_keys">
-    <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
-    <action>Set story_review_attempt = 1</action>
+<step n="2b" goal="STORY-REVIEW PHASE">
+  <!-- ONE agent reviews ALL stories in the batch (processes them sequentially, logs each) -->
+  <action>Set story_review_attempt = 1</action>
 
-    <loop max="3">
-      <action>Load prompt from prompts/story-review.md, substitute variables</action>
-      <check if="story_review_attempt >= 2">
-        <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
-        <action>Spawn subagent with Task tool using model: "haiku"</action>
-      </check>
-      <check else>
-        <action>Spawn subagent with Task tool (default model)</action>
-      </check>
-      <action>Wait for completion</action>
-      <action>Parse result for critical issues</action>
+  <loop max="3">
+    <action>Load prompt from prompts/story-review.md</action>
+    <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
 
-      <check if="no critical issues found">
-        <!-- Subagent logs its own "end" before terminating -->
-        <action>Log: "Story review passed for [story]"</action>
-        <action>Break loop</action>
-      </check>
+    <check if="story_review_attempt >= 2">
+      <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
+      <action>Spawn ONE subagent with Task tool using model: "haiku"</action>
+    </check>
+    <check else>
+      <action>Spawn ONE subagent with Task tool (default model)</action>
+    </check>
 
-      <!-- Subagent logs milestones -->
-      <action>Increment story_review_attempt</action>
-    </loop>
-  </for-each>
+    <action>Wait for completion</action>
+    <comment>Subagent processes each story sequentially, logging start/end for each</comment>
+    <action>Parse result for critical issues across ALL stories in batch</action>
+
+    <check if="no critical issues found for ANY story">
+      <action>Log: "Story review passed for all stories"</action>
+      <action>Break loop</action>
+    </check>
+
+    <!-- If any story has critical issues, re-run review for all -->
+    <action>Increment story_review_attempt</action>
+  </loop>
 
   <check if="tech_spec_needed == true">
     <action>Go to Step 3 (CREATE-TECH-SPEC)</action>
@@ -336,54 +337,53 @@ development_status:
   </check>
 </step>
 
-<step n="3" goal="CREATE-TECH-SPEC PHASE (SEQUENTIAL - CONDITIONAL)">
+<step n="3" goal="CREATE-TECH-SPEC PHASE (CONDITIONAL)">
   <!-- This step only runs if tech_spec_needed == true -->
+  <!-- ONE agent creates tech-specs for ALL stories in the batch -->
 
   <action>Log: "Starting CREATE-TECH-SPEC phase for [story_key(s)]"</action>
 
-  <!-- SEQUENTIAL EXECUTION - One tech-spec at a time, subagent does its own discovery -->
-  <for-each story in="story_keys">
-    <action>Load prompt from prompts/create-tech-spec.md, substitute variables for [story]</action>
-    <action>Spawn subagent with Task tool (default model)</action>
-    <goal>Create tech spec with inline discovery for [story]</goal>
-    <action>Wait for completion</action>
-    <!-- Subagent logs milestones and "end" -->
-  </for-each>
+  <action>Load prompt from prompts/create-tech-spec.md</action>
+  <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
+  <action>Spawn ONE subagent with Task tool (default model)</action>
+  <goal>Create tech specs for all stories (processes sequentially, logs each)</goal>
+  <action>Wait for completion</action>
+  <comment>Subagent processes each story sequentially, logging start/end for each</comment>
 
-  <!-- NOTE: No tech-discovery parallel execution -->
-  <!-- NOTE: No project-context injection for tech-discovery files -->
+  <!-- NOTE: Subagent does its own inline discovery for each story -->
 
   <action>Log: "CREATE-TECH-SPEC phase complete"</action>
   <action>Go to Step 3b (tech-spec review)</action>
 </step>
 
-<step n="3b" goal="TECH-SPEC-REVIEW PHASE (SEQUENTIAL)">
-  <for-each story in="story_keys">
-    <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
-    <action>Set tech_spec_review_attempt = 1</action>
+<step n="3b" goal="TECH-SPEC-REVIEW PHASE">
+  <!-- ONE agent reviews ALL tech-specs in the batch (processes them sequentially, logs each) -->
+  <action>Set tech_spec_review_attempt = 1</action>
 
-    <loop max="3">
-      <action>Load prompt from prompts/tech-spec-review.md, substitute variables</action>
-      <check if="tech_spec_review_attempt >= 2">
-        <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
-        <action>Spawn subagent with Task tool using model: "haiku"</action>
-      </check>
-      <check else>
-        <action>Spawn subagent with Task tool (default model)</action>
-      </check>
-      <action>Wait for completion</action>
-      <action>Parse result for critical issues</action>
+  <loop max="3">
+    <action>Load prompt from prompts/tech-spec-review.md</action>
+    <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
 
-      <check if="no critical issues found">
-        <!-- Subagent logs its own "end" before terminating -->
-        <action>Log: "Tech spec review passed for [story]"</action>
-        <action>Break loop</action>
-      </check>
+    <check if="tech_spec_review_attempt >= 2">
+      <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
+      <action>Spawn ONE subagent with Task tool using model: "haiku"</action>
+    </check>
+    <check else>
+      <action>Spawn ONE subagent with Task tool (default model)</action>
+    </check>
 
-      <!-- Subagent logs milestones -->
-      <action>Increment tech_spec_review_attempt</action>
-    </loop>
-  </for-each>
+    <action>Wait for completion</action>
+    <comment>Subagent processes each story sequentially, logging start/end for each</comment>
+    <action>Parse result for critical issues across ALL stories in batch</action>
+
+    <check if="no critical issues found for ANY story">
+      <action>Log: "Tech spec review passed for all stories"</action>
+      <action>Break loop</action>
+    </check>
+
+    <!-- If any story has critical issues, re-run review for all -->
+    <action>Increment tech_spec_review_attempt</action>
+  </loop>
 
   <action>Go to Step 4 (DEV + CODE-REVIEW)</action>
 </step>
@@ -591,19 +591,30 @@ LOOP (for each CYCLE):
      - Last story of epic runs alone (1 story)
      - Each iteration = 1 cycle, regardless of 1 or 2 stories
 
-  2. If status == backlog (PARALLEL):
-     a. create-story (CREATE MODE) + create-story-discovery (DISCOVERY MODE)
-        - TWO Task tool calls in single message (concurrent)
-     b. Inject project context into discovery files
-     c. story-review loop (sequential, Haiku for review 2+, max 3)
+  2. If status == backlog (PARALLEL - 2 agents):
+     a. ONE create-story agent (handles ALL stories in batch sequentially)
+        - Receives comma-separated story_keys (e.g., "3a-1,3a-2")
+        - Processes each story, logs start/end for each
+        - Outputs TECH-SPEC DECISION for each story
+     b. ONE create-story-discovery agent (handles ALL stories in parallel)
+        - Receives comma-separated story_keys
+        - Creates discovery file for each story
+     c. Inject project context into discovery files
+     d. Parse TECH-SPEC DECISIONS from create-story output
+     e. ONE story-review agent (handles ALL stories sequentially)
+        - Review loop (max 3 attempts, Haiku for review 2+)
+        - Processes each story, logs start/end for each
 
-  3. create-tech-spec (SEQUENTIAL - CONDITIONAL):
+  3. create-tech-spec (CONDITIONAL - 1 agent):
      - ONLY runs if tech_spec_needed == true (any story requires it)
      - If ALL stories marked SKIP, this phase is bypassed
-     a. For each story: create-tech-spec (CREATE MODE with inline discovery)
-        - SINGLE subagent per story (no parallel discovery)
-        - Subagent performs its own discovery during spec creation
-     b. tech-spec-review loop (sequential, Haiku for review 2+, max 3)
+     a. ONE create-tech-spec agent (handles ALL stories sequentially)
+        - Receives comma-separated story_keys
+        - Processes each story, logs start/end for each
+        - Does inline discovery (no separate discovery files)
+     b. ONE tech-spec-review agent (handles ALL stories sequentially)
+        - Review loop (max 3 attempts, Haiku for review 2+)
+        - Processes each story, logs start/end for each
 
   Note: Tech-spec decision is made by create-story subagent based on complexity.
   Decision output: [TECH-SPEC-DECISION: REQUIRED] or [TECH-SPEC-DECISION: SKIP]
@@ -637,8 +648,11 @@ SUBAGENT RULES:
   - All subagents run AUTONOMOUS (no human input)
   - Make all decisions independently
   - Review 2+: model: "haiku"
-  - Review agents receive discovery file paths (context already injected)
-  - Review agents skip discovery steps (use provided file)
+  - ONE agent handles ALL stories in batch (1-2 stories)
+  - Agent processes stories SEQUENTIALLY, logs start/end for EACH story
+  - Prompts receive comma-separated story_keys (e.g., "3a-1,3a-2")
+  - Story-review agents use discovery files (context already injected)
+  - Tech-spec agents do inline discovery (no separate discovery files)
 
 LOG FORMAT:
   - CSV: timestamp,epicID,storyID,command,task-id,status

@@ -1,7 +1,7 @@
 # Tech Spec Review Subagent Prompt (REVIEW MODE)
 
 ## Variables
-- `{{story_key}}` - The story identifier
+- `{{story_key}}` - The story identifier(s) - comma-separated for paired stories (e.g., "3a-1,3a-2")
 - `{{implementation_artifacts}}` - Path to implementation artifacts folder
 - `{{review_attempt}}` - Current review attempt number
 
@@ -13,23 +13,31 @@ AUTONOMOUS MODE - No human available to answer questions. Make all decisions you
 
 Run the workflow: /bmad:bmm:workflows:create-tech-spec
 
-Target story: {{story_key}}
-Story file: {{implementation_artifacts}}/{{story_key}}.md
-Tech spec file: {{implementation_artifacts}}/tech-spec-{{story_key}}.md
+Target stories: {{story_key}}
 
-MODE: REVIEW ONLY - The tech spec already exists. Do NOT create a new one.
+**MULTI-STORY HANDLING:**
+You may receive 1 or 2 story keys (comma-separated). Process each story SEQUENTIALLY:
 
-PRE-COMPUTED DISCOVERY AVAILABLE (HIGH-2 Resolution):
-Read this discovery file first - it contains tech context WITH project context already injected:
-- {{implementation_artifacts}}/{{story_key}}-discovery-tech.md
+1. Parse the story_key(s) into a list
+2. For EACH story in the list:
+   a. Log START for this story (see Logging Instructions)
+   b. Review story file: {{implementation_artifacts}}/[story_id].md
+   c. Review tech spec file: {{implementation_artifacts}}/tech-spec-[story_id].md
+   d. Fix any issues found
+   e. Output "CRITICAL ISSUES FOUND: [count]" or "NO CRITICAL ISSUES FOUND" for this story
+   f. Log END for this story
+3. After ALL stories complete, terminate
 
-NOTE: Project context is ALREADY APPENDED to the discovery file (see "# Project Context Dump Below" section).
-Do NOT read project-context.md separately - use the content already in the discovery file.
+Example for "3a-1,3a-2":
+- Process 3a-1 completely (log start, review, fix, report, log end)
+- Then process 3a-2 completely (log start, review, fix, report, log end)
 
-SKIP THESE STEPS ENTIRELY (use provided discovery file instead):
+MODE: REVIEW ONLY - The tech specs already exist. Do NOT create new ones.
+
+SKIP THESE STEPS ENTIRELY:
 - Step 1.1-1.5 (Greet, orient scan, questions, capture, init WIP) - SPEC EXISTS
-- Step 2.2 (Execute investigation) - USE PROVIDED FILE
-- Step 2.3 (Document technical context) - ALREADY DOCUMENTED
+- Step 2.2 (Execute investigation) - SPEC CONTAINS CONTEXT
+- Step 2.3 (Document technical context) - ALREADY IN SPEC
 - Step 3 (Generate spec) - SPEC EXISTS
 
 EXECUTE THESE STEPS:
@@ -39,7 +47,7 @@ EXECUTE THESE STEPS:
   - Completeness (all tasks have file paths and actions)
   - Logical ordering (dependencies respected)
   - Testable ACs (Given/When/Then format)
-  - Alignment with story requirements (from discovery files)
+  - Alignment with story requirements
   - No placeholders or TBDs
 
 When the workflow asks what to do, select the REVIEW option.
