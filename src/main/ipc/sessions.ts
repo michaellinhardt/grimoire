@@ -330,7 +330,9 @@ export function registerSessionsIPC(): void {
       // TODO: Story 3b-1 will implement actual CC child process spawning
       // For now, just acknowledge the message was received
       if (process.env.DEBUG_SEND_MESSAGE) {
-        console.debug(`[sendMessage] Received: sessionId=${sessionId}, message=${message.substring(0, 50)}...`)
+        console.debug(
+          `[sendMessage] Received: sessionId=${sessionId}, message=${message.substring(0, 50)}...`
+        )
       }
 
       return { success: true }

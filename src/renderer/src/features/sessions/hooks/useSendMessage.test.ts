@@ -177,7 +177,7 @@ describe('useSendMessage', () => {
       expect(messages[1].content).toContain('Connection failed')
     })
 
-    it('sets state to error then immediately to idle on failure', async () => {
+    it('sets state to error on failure (held until Story 3a-3)', async () => {
       mockSendMessage.mockResolvedValue({
         success: false,
         error: 'Failed'
@@ -189,9 +189,9 @@ describe('useSendMessage', () => {
         await result.current.sendMessage('Hello')
       })
 
-      // State should immediately transition to idle (no artificial delay)
+      // State should remain in error state (will be transitioned back to idle by Story 3a-3)
       const tab = useUIStore.getState().tabs.find((t) => t.id === tabId)
-      expect(tab?.sessionState).toBe('idle')
+      expect(tab?.sessionState).toBe('error')
     })
   })
 
@@ -361,9 +361,6 @@ describe('useSendMessage', () => {
 
       // Should not call IPC for oversized message
       expect(mockSendMessage).not.toHaveBeenCalled()
-      // Should add error message
-      const generatedSessionId = expect.any(String)
-      // At this point, we just verify IPC wasn't called - error handling tested above
     })
   })
 })

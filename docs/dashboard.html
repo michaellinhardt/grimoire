@@ -1000,9 +1000,20 @@
             border: 1px solid #e8e7e5;
             border-radius: 0 0 8px 8px;
             overflow-x: auto;
-            overflow-y: auto;
-            max-height: 600px;
+            overflow-y: visible;
             position: relative;
+        }
+
+        /* Vertical cursor line for alignment visualization */
+        .timeline-cursor-line {
+            position: absolute;
+            top: 0;
+            width: 1px;
+            height: 10000px;
+            background: rgba(239, 68, 68, 0.5);
+            pointer-events: none;
+            z-index: 100;
+            display: none;
         }
 
         /* Time Header (sticky top) */
@@ -1585,6 +1596,9 @@
 
                 <!-- Scrollable Container -->
                 <div class="timeline-scroll-container" id="timelineScrollContainer">
+                    <!-- Vertical cursor line for alignment -->
+                    <div class="timeline-cursor-line" id="timelineCursorLine"></div>
+
                     <!-- Time Header (sticky top) with resize handle -->
                     <div class="timeline-header" id="timelineHeader">
                         <div class="timeline-label-spacer">
@@ -2514,6 +2528,24 @@
             document.addEventListener('mouseup', stopResize);
         }
 
+        // Initialize cursor line for timeline alignment visualization
+        function initTimelineCursorLine() {
+            const container = document.getElementById('timelineScrollContainer');
+            const cursorLine = document.getElementById('timelineCursorLine');
+            if (!container || !cursorLine) return;
+
+            container.addEventListener('mousemove', (e) => {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left + container.scrollLeft;
+                cursorLine.style.left = x + 'px';
+                cursorLine.style.display = 'block';
+            });
+
+            container.addEventListener('mouseleave', () => {
+                cursorLine.style.display = 'none';
+            });
+        }
+
         function startResize(e) {
             resizeState.isResizing = true;
             resizeState.startX = e.clientX;
@@ -3190,11 +3222,21 @@
                 timelineCache.hasScrolled = false;
                 renderTimeline();
             }
+            // Persist active tab
+            localStorage.setItem('dashboard-active-tab', tabName);
         }
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => switchTab(btn.dataset.tab));
         });
+
+        // Restore active tab from localStorage
+        function restoreActiveTab() {
+            const savedTab = localStorage.getItem('dashboard-active-tab');
+            if (savedTab) {
+                switchTab(savedTab);
+            }
+        }
 
         function updateTabCounts(sprintData, orchestratorData) {
             if (sprintData) {
@@ -3346,6 +3388,8 @@
         // Initialize
         restoreColumnWidth();
         initColumnResize();
+        initTimelineCursorLine();
+        restoreActiveTab();
         tryAutoLoad();
 
         // Update time display

@@ -115,8 +115,7 @@ export function useSendMessage({
             `Failed to send message: ${result.error ?? 'Unknown error'}`
           )
           updateTabSessionState(tabId, 'error')
-          // Allow immediate retry - no artificial delay
-          updateTabSessionState(tabId, 'idle')
+          // Note: Story 3a-3 will handle transition back to 'idle' when user acknowledges error
         }
       } catch (error) {
         // 7. Handle unexpected errors
@@ -124,8 +123,7 @@ export function useSendMessage({
         markMessageFailed(actualSessionId, messageId)
         addErrorMessage(actualSessionId, `Error: ${errorMessage}`)
         updateTabSessionState(tabId, 'error')
-        // Allow immediate retry
-        updateTabSessionState(tabId, 'idle')
+        // Note: Story 3a-3 will handle transition back to 'idle' when user acknowledges error
       }
     },
     [

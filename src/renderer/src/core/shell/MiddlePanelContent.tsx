@@ -37,6 +37,8 @@ export function MiddlePanelContent(): ReactElement {
   const displayMessages = storeMessages.length > 0 ? storeMessages : mockMessages
 
   // Setup send message hook
+  // NOTE: For existing sessions, session should always be found via lookup
+  // If session is null here for a tab with sessionId, it's a data integrity issue
   const { sendMessage } = useSendMessage({
     sessionId: activeTab?.sessionId ?? null,
     tabId: activeTab?.id ?? '',
