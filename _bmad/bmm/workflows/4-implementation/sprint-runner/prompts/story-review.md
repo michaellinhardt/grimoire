@@ -66,7 +66,7 @@ You MUST log your progress using the orchestrator script. Log START at beginning
 
 **Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
 - epicID: Short numeric ID (e.g., `2a`, `2b`) - extract from story key
-- storyID: Short numeric ID (e.g., `2a.1`, `2b-1`) - same as story key
+- storyID: Short numeric ID (e.g., `2a-1`, `2b-1`) - same as story key
 - command: "story-review-{{review_attempt}}" (includes attempt number)
 - task-id: identifies the granular task
 - status: "start" or "end"

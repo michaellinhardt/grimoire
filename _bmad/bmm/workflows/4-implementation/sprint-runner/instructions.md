@@ -25,12 +25,12 @@ To use a prompt:
 3. Pass the substituted prompt to Task tool
 
 **Logging Variables:**
-- `{{epic_id}}` - Short numeric ID extracted from story_key (e.g., "2a" from "2a.1", "2b" from "2b-1")
-- `{{story_id}}` - Short numeric ID, same as story_key (e.g., "2a.1", "2b-1")
+- `{{epic_id}}` - Short numeric ID extracted from story_key (e.g., "2a" from "2a-1")
+- `{{story_id}}` - Short numeric ID, same as story_key (e.g., "2a-1", "2b-1")
 - `{{command}}` - Workflow name with iteration for reviews (e.g., "story-review-1", "code-review-3")
 
 **IMPORTANT:** Always use SHORT NUMERIC IDs, never full story titles or epic names.
-- CORRECT: `2a`, `2b-1`, `1.2.3`
+- CORRECT: `2a`, `2a-1`, `2b-1`
 - WRONG: `epic-2a-user-authentication`, `story-2b-1-login-feature`
 
 ---
@@ -50,10 +50,10 @@ timestamp,epicID,storyID,command,task-id,status
 
 Example log entries (from subagents):
 ```
-1706054400,2a,2a.1,create-story,workflow,start
-1706054500,2a,2a.1,create-story,workflow,end
-1706054501,2a,2a.1,story-discovery,workflow,start
-1706054600,2a,2a.1,story-discovery,workflow,end
+1706054400,2a,2a-1,create-story,workflow,start
+1706054500,2a,2a-1,create-story,workflow,end
+1706054501,2a,2a-1,story-discovery,workflow,start
+1706054600,2a,2a-1,story-discovery,workflow,end
 ```
 
 ---
@@ -617,7 +617,7 @@ LOG FORMAT:
   - CSV: timestamp,epicID,storyID,command,task-id,status
   - status = "start" or "end" (duration calculated by dashboard)
   - Subagents log via: _bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>
-  - Use SHORT NUMERIC IDs only (e.g., "2a", "2a.1"), never full titles
+  - Use SHORT NUMERIC IDs only (e.g., "2a", "2a-1"), never full titles
   - Orchestrator does NOT log
 ```
 
