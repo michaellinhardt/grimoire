@@ -597,6 +597,26 @@
             font-family: 'SF Mono', Monaco, monospace;
         }
 
+        /* Simplified command row for single-task commands (no expand toggle) */
+        .command-header-simple {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+        }
+
+        .command-header-simple .command-name {
+            flex: 1;
+        }
+
+        .command-header-simple .task-status {
+            font-size: 14px;
+        }
+
+        .command-group.single-task {
+            background: transparent;
+        }
+
         .command-tasks {
             border-top: 1px solid #e8e7e5;
             padding: 8px 0;
@@ -974,33 +994,6 @@
             color: #787774;
         }
 
-        .timeline-legend {
-            display: flex;
-            gap: 16px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            color: #787774;
-        }
-
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-        }
-
-        .legend-color.story {
-            background: var(--timeline-story-color);
-        }
-
-        .legend-color.command {
-            background: #3b82f6;
-        }
-
         /* Scrollable Timeline Container */
         .timeline-scroll-container {
             background: white;
@@ -1068,8 +1061,8 @@
         .timeline-hour {
             min-width: 60px;
             padding: 8px 4px;
-            text-align: left;
-            padding-left: 8px;
+            text-align: right;
+            padding-right: 8px;
             font-size: 11px;
             font-weight: 600;
             color: #787774;
@@ -1107,7 +1100,7 @@
             border-right: 1px dashed #e8e7e5;
         }
 
-        /* Compact empty time block */
+        /* Compact gap indicator - small width, subtle pattern */
         .timeline-hour.compact {
             min-width: 20px;
             width: 20px;
@@ -1584,19 +1577,9 @@
                                min="1"
                                max="480"
                                step="1"
-                               value="120"
-                               onchange="setBlockSizeMinutes(this.value)">
-                    </div>
-
-                    <div class="timeline-legend">
-                        <span class="legend-item">
-                            <span class="legend-color story"></span>
-                            Story
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-color command"></span>
-                            Command
-                        </span>
+                               value="10"
+                               onkeydown="if(event.key==='Enter'){this.blur();}"
+                               onblur="setBlockSizeMinutes(this.value)">
                     </div>
                 </div>
 
@@ -1697,8 +1680,8 @@
             labelColumnWidth: 200,
             minLabelWidth: 120,
             maxLabelWidth: 400,
-            blockSizeMinutes: 120,
-            expandedStoryId: null,
+            blockSizeMinutes: 10,
+            expandedStoryIds: new Set(),  // Multiple stories can be expanded
             timelineStartTs: null,
             timelineEndTs: null,
             totalTimelineWidth: 0,  // Continuous timeline width in pixels
@@ -1880,10 +1863,13 @@
                 // Handle orphans (start without end)
                 if (!endEntry) {
                     const age = currentTime - startEntry.timestamp;
+                    const ageMinutes = Math.floor(age / 60);
                     if (age >= THIRTY_MINUTES) {
-                        // Stale: ignore entirely
+                        // Stale: ignore this command but continue processing story
+                        console.log(`Orphan filtered (stale): ${storyId}/${command} - age ${ageMinutes}m`);
                         return;
                     }
+                    console.log(`Orphan kept (fresh): ${storyId}/${command} - age ${ageMinutes}m`);
                     // Fresh: will be shown as in-progress
                 }
 
@@ -2010,8 +1996,20 @@
                 story.steps.sort((a, b) => a.startTs - b.startTs);
 
                 story.commands = commandsArray;
-                story.totalDurationSecs = storyTotalDuration;
-                story.duration = formatDuration(storyTotalDuration);
+
+                // Calculate total duration as last end - first start (wall clock time)
+                if (story.startTs && story.endTs) {
+                    story.totalDurationSecs = story.endTs - story.startTs;
+                    story.duration = formatDuration(story.totalDurationSecs);
+                } else if (story.startTs) {
+                    // Still in progress - show time since start
+                    const now = Math.floor(Date.now() / 1000);
+                    story.totalDurationSecs = now - story.startTs;
+                    story.duration = formatDuration(story.totalDurationSecs);
+                } else {
+                    story.totalDurationSecs = 0;
+                    story.duration = '';
+                }
 
                 // Set completed timestamp if all tasks are done
                 if (allTasksCompleted && story.endTs) {
@@ -2032,8 +2030,10 @@
             if (!text || !text.trim()) {
                 return [];
             }
-            console.log('Parsing sprint-runner.csv');
-            return parseOrchestratorCSV(text);
+            console.log('Parsing sprint-runner.csv, lines:', text.trim().split('\n').length);
+            const result = parseOrchestratorCSV(text);
+            console.log('Parsed stories:', result.map(s => `${s.storyId} (${s.commands?.length || 0} cmds, ${s.completed ? 'done' : 'in-progress'})`));
+            return result;
         }
 
         // ============================================================
@@ -2215,11 +2215,23 @@
                     <div class="epic-stories-list" style="display: none;"></div>
                 `;
 
-                const status = (epic.status || 'backlog').toLowerCase().trim();
+                // Auto-detect epic status based on story completion
+                // (overrides YAML status for accuracy)
+                let effectiveStatus;
+                if (totalStories > 0 && doneStories === totalStories) {
+                    // All stories done = epic is done
+                    effectiveStatus = 'done';
+                } else if (doneStories > 0 || epicStories.some(s => s.status !== 'backlog')) {
+                    // At least one story started or done = epic in progress
+                    effectiveStatus = 'in-progress';
+                } else {
+                    // All stories in backlog = epic in backlog
+                    effectiveStatus = 'backlog';
+                }
 
-                if (status === 'done' || status === 'completed') {
+                if (effectiveStatus === 'done') {
                     doneEl.appendChild(card);
-                } else if (status === 'in-progress' || status === 'in_progress' || status === 'inprogress') {
+                } else if (effectiveStatus === 'in-progress') {
                     inProgressEl.appendChild(card);
                 } else {
                     backlogEl.appendChild(card);
@@ -2346,13 +2358,18 @@
 
         function renderActivityLog(activities) {
             const logEl = document.getElementById('activityLog');
+            console.log('renderActivityLog called with', activities?.length, 'activities');
+            console.log('Activity IDs:', activities?.map(a => `${a.storyId}:${a.completed ? 'done' : 'in-progress'}`));
 
             if (!activities || activities.length === 0) {
                 logEl.innerHTML = '<div class="empty-state">No activity yet</div>';
                 return;
             }
 
-            logEl.innerHTML = activities.slice(0, 10).map((activity, index) => {
+            const toRender = activities.slice(0, 10);
+            console.log('Rendering', toRender.length, 'activities:', toRender.map(a => a.storyId));
+
+            logEl.innerHTML = toRender.map((activity, index) => {
                 const isCompleted = activity.completed && activity.completed !== '';
                 const statusClass = isCompleted ? 'completed' : 'in-progress';
                 const isCollapsed = index > 0;
@@ -2365,31 +2382,53 @@
                 const safeDuration = escapeHtml(activity.duration || '');
 
                 // Build hierarchical command/task structure
+                // Hide task-id level if command has only one task (no granularity to show)
                 const commandsHtml = (activity.commands || []).map((cmd, cmdIndex) => {
                     const safeCmdName = escapeHtml(cmd.command);
                     const safeCmdDuration = escapeHtml(cmd.totalDuration || '');
-                    const hasInProgressTasks = cmd.tasks.some(t => t.status === 'in-progress');
+                    const hasInProgressTasks = cmd.tasks && cmd.tasks.some(t => t.status === 'in-progress');
+                    const hasSingleTask = !cmd.tasks || cmd.tasks.length <= 1;
+                    const cmdStatusIcon = hasInProgressTasks ? '\u23f3' : '\u2713';
+                    const cmdStatusClass = hasInProgressTasks ? 'in-progress' : 'completed';
 
-                    const tasksHtml = cmd.tasks.map(task => {
-                        const safeTaskId = escapeHtml(task.taskId);
-                        const safeTaskDuration = escapeHtml(task.duration || '');
-                        const isTaskInProgress = task.status === 'in-progress';
-                        const statusIcon = isTaskInProgress ? '\u23f3' : '\u2713';
-                        const statusClass = isTaskInProgress ? 'in-progress' : 'completed';
+                    // Only show task list if there are multiple tasks
+                    let tasksHtml = '';
+                    if (!hasSingleTask) {
+                        tasksHtml = cmd.tasks.map(task => {
+                            const safeTaskId = escapeHtml(task.taskId);
+                            const safeTaskDuration = escapeHtml(task.duration || '');
+                            const isTaskInProgress = task.status === 'in-progress';
+                            const statusIcon = isTaskInProgress ? '\u23f3' : '\u2713';
+                            const statusClass = isTaskInProgress ? 'in-progress' : 'completed';
 
-                        return `
-                            <div class="task-item${isTaskInProgress ? ' task-in-progress' : ''}">
-                                <div class="task-item-left">
-                                    <span class="task-prefix">\u2514\u2500</span>
-                                    <span class="task-name">${safeTaskId}</span>
+                            return `
+                                <div class="task-item${isTaskInProgress ? ' task-in-progress' : ''}">
+                                    <div class="task-item-left">
+                                        <span class="task-prefix">\u2514\u2500</span>
+                                        <span class="task-name">${safeTaskId}</span>
+                                    </div>
+                                    <div class="task-item-right">
+                                        <span class="task-duration">${safeTaskDuration || (isTaskInProgress ? 'running...' : '-')}</span>
+                                        <span class="task-status ${statusClass}">${statusIcon}</span>
+                                    </div>
                                 </div>
-                                <div class="task-item-right">
-                                    <span class="task-duration">${safeTaskDuration || (isTaskInProgress ? 'running...' : '-')}</span>
-                                    <span class="task-status ${statusClass}">${statusIcon}</span>
+                            `;
+                        }).join('');
+                    }
+
+                    // If single task, show simpler command row without expand toggle
+                    if (hasSingleTask) {
+                        return `
+                            <div class="command-group single-task" data-cmd-index="${cmdIndex}">
+                                <div class="command-header-simple">
+                                    <span class="command-name">${safeCmdName}</span>
+                                    ${hasInProgressTasks ? '<span class="activity-badge" style="margin-left: 8px;">Running</span>' : ''}
+                                    <span class="command-duration">${safeCmdDuration || '-'}</span>
+                                    <span class="task-status ${cmdStatusClass}">${cmdStatusIcon}</span>
                                 </div>
                             </div>
                         `;
-                    }).join('');
+                    }
 
                     return `
                         <div class="command-group" data-cmd-index="${cmdIndex}">
@@ -2535,37 +2574,29 @@
         }
 
         /**
-         * Convert timestamp to X position using continuous time scale.
-         * This is independent of block size - only depends on timeline bounds.
-         * Bar positions stay constant when block size changes.
+         * Convert timestamp to X position using compacted block layout.
+         * Uses timestampToXCompact when compacted blocks are available.
          */
         function timestampToX(timestamp) {
-            const { timelineStartTs, timelineEndTs, totalTimelineWidth } = timelineState;
+            // Use compact positioning if available
+            if (timelineState.compactedBlocks && timelineState.compactedBlocks.length > 0) {
+                return timestampToXCompact(timestamp);
+            }
 
-            if (!timelineStartTs || !timelineEndTs || !totalTimelineWidth) return 0;
+            // Fallback to linear positioning
+            const { timelineStartTs, blockSizeMinutes, zoomLevel } = timelineState;
+            if (!timelineStartTs || !blockSizeMinutes) return 0;
 
-            const totalTimeRange = timelineEndTs - timelineStartTs;
-            if (totalTimeRange <= 0) return 0;
-
-            // Position bar proportionally within total width
+            const blockWidthPx = COLUMN_WIDTH_PX * (zoomLevel / 100);
             const timeOffset = timestamp - timelineStartTs;
-            return (timeOffset / totalTimeRange) * totalTimelineWidth;
+            const timeOffsetMinutes = timeOffset / 60;
+            return (timeOffsetMinutes / blockSizeMinutes) * blockWidthPx;
         }
 
         /**
          * Generate time blocks based on timeline bounds.
-         * Also calculates and stores totalTimelineWidth for continuous bar positioning.
-         *
-         * Key insight: totalTimelineWidth is based on blockCount * columnWidth.
-         * When block size changes:
-         *   - blockCount changes
-         *   - columnWidth stays fixed (COLUMN_WIDTH_PX)
-         *   - totalTimelineWidth changes proportionally
-         *   - But bar positions remain correct because timestampToX() uses the ratio:
-         *     (timeOffset / totalTimeRange) * totalTimelineWidth
-         *
-         * This ensures bars stay at the same proportional position even as the
-         * grid resolution changes.
+         * These blocks are then passed to compactEmptyBlocks() which merges
+         * consecutive empty blocks and calculates final positions.
          */
         function generateTimeBlocks() {
             const { timelineStartTs, timelineEndTs, blockSizeMinutes, zoomLevel } = timelineState;
@@ -2578,8 +2609,7 @@
             const totalMinutes = totalSeconds / 60;
             const blockCount = Math.ceil(totalMinutes / blockSizeMinutes);
 
-            // Store total timeline width for continuous bar positioning
-            // All columns are the same width (no compaction)
+            // Initial width estimate (will be recalculated after compaction)
             timelineState.totalTimelineWidth = blockCount * blockWidthPx;
 
             const blocks = [];
@@ -2609,46 +2639,138 @@
         }
 
         /**
-         * Detect which time blocks are empty (no tasks).
-         * This is now for visual indication only - it does NOT affect bar positioning.
-         * Bars are positioned using continuous timestampToX() independent of block state.
-         *
-         * Note: We no longer merge empty blocks since all columns have the same width.
+         * Detect empty blocks and compact consecutive empty blocks into single gap indicators.
+         * Returns compacted blocks with position mapping for bar rendering.
          */
-        function detectEmptyBlocks(blocks, activities, blockSizeMinutes) {
+        function compactEmptyBlocks(blocks, activities, blockSizeMinutes, blockWidthPx) {
+            const COMPACT_WIDTH = 20;
             const blockSizeSeconds = blockSizeMinutes * 60;
 
-            return blocks.map((block) => {
+            // First, mark which blocks are empty
+            const markedBlocks = blocks.map((block) => {
                 const blockStart = block.timestamp;
                 const blockEnd = blockStart + blockSizeSeconds;
 
-                // Check if any activity or step overlaps this block
                 const hasContent = activities.some(activity => {
-                    // Check if story bar overlaps
                     const storyOverlaps = (
                         activity.startTs < blockEnd &&
                         (activity.endTs || activity.startTs + 3600) > blockStart
                     );
-
                     if (storyOverlaps) return true;
 
-                    // Check if any command step overlaps
                     return (activity.steps || []).some(step => {
                         const stepEnd = step.endTs || step.startTs + 60;
                         return step.startTs < blockEnd && stepEnd > blockStart;
                     });
                 });
 
-                return {
-                    ...block,
-                    isEmpty: !hasContent
-                };
+                return { ...block, isEmpty: !hasContent };
             });
+
+            // Merge consecutive empty blocks into single compact gaps
+            // Labels restart at 0 after each gap
+            const compactedBlocks = [];
+            let currentGap = null;
+            let xPosition = 0;
+            let minutesSinceGap = 0; // Reset after each gap
+
+            // Helper to format time label
+            function formatLabel(minutes) {
+                if (minutes >= 60) {
+                    const hours = Math.floor(minutes / 60);
+                    const mins = minutes % 60;
+                    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+                }
+                return `${minutes}m`;
+            }
+
+            markedBlocks.forEach((block) => {
+                if (block.isEmpty) {
+                    if (!currentGap) {
+                        // Start new gap
+                        currentGap = {
+                            isCompact: true,
+                            isEmpty: true,
+                            label: '···',
+                            gapStartTs: block.timestamp,
+                            gapEndTs: block.timestamp + blockSizeSeconds,
+                            widthPx: COMPACT_WIDTH
+                        };
+                    } else {
+                        // Extend existing gap
+                        currentGap.gapEndTs = block.timestamp + blockSizeSeconds;
+                    }
+                } else {
+                    // Flush pending gap and reset minute counter
+                    if (currentGap) {
+                        currentGap.xPosition = xPosition;
+                        compactedBlocks.push(currentGap);
+                        xPosition += COMPACT_WIDTH;
+                        currentGap = null;
+                        minutesSinceGap = 0; // Reset after gap
+                    }
+                    // Add non-empty block with label showing block END time
+                    minutesSinceGap += blockSizeMinutes;
+                    compactedBlocks.push({
+                        ...block,
+                        label: formatLabel(minutesSinceGap),
+                        isCompact: false,
+                        xPosition: xPosition,
+                        widthPx: blockWidthPx
+                    });
+                    xPosition += blockWidthPx;
+                }
+            });
+
+            // Flush final gap
+            if (currentGap) {
+                currentGap.xPosition = xPosition;
+                compactedBlocks.push(currentGap);
+                xPosition += COMPACT_WIDTH;
+            }
+
+            // Store total width and position mapping
+            timelineState.totalTimelineWidth = xPosition;
+            timelineState.compactedBlocks = compactedBlocks;
+
+            return compactedBlocks;
         }
 
-        // REMOVED: timestampToXWithCompact() - replaced by continuous timestampToX()
-        // The compact block positioning caused bars to shift when block size changed.
-        // Now all bar positioning uses timestampToX() with continuous time scale.
+        /**
+         * Convert timestamp to X position accounting for compacted gaps.
+         */
+        function timestampToXCompact(timestamp) {
+            const blocks = timelineState.compactedBlocks;
+            if (!blocks || blocks.length === 0) return 0;
+
+            const blockSizeSeconds = timelineState.blockSizeMinutes * 60;
+
+            for (let i = 0; i < blocks.length; i++) {
+                const block = blocks[i];
+
+                if (block.isCompact) {
+                    // Gap block - check if timestamp falls within gap
+                    if (timestamp >= block.gapStartTs && timestamp < block.gapEndTs) {
+                        // Position at start of compact gap (don't interpolate within gap)
+                        return block.xPosition;
+                    }
+                } else {
+                    // Normal block
+                    const blockStart = block.timestamp;
+                    const blockEnd = blockStart + blockSizeSeconds;
+
+                    if (timestamp >= blockStart && timestamp < blockEnd) {
+                        // Interpolate within block
+                        const progress = (timestamp - blockStart) / blockSizeSeconds;
+                        return block.xPosition + (progress * block.widthPx);
+                    }
+                }
+            }
+
+            // After last block - return end position
+            const lastBlock = blocks[blocks.length - 1];
+            return lastBlock.xPosition + lastBlock.widthPx;
+        }
 
         // Toggle story visibility via checkbox
         function toggleStoryVisibility(storyId, visible) {
@@ -2695,11 +2817,9 @@
                 return timelineCache.data;
             }
 
-            // Filter activities with valid data and reverse to show oldest first
+            // Filter activities with valid data - newest first (matches Activity tab order)
             const validActivities = orchestratorData
-                .filter(a => a.steps && a.steps.length > 0)
-                .slice()
-                .reverse();
+                .filter(a => a.steps && a.steps.length > 0);
 
             timelineCache.data = validActivities;
             timelineCache.dataHash = hash;
@@ -2721,7 +2841,7 @@
             renderTimeline();
         }
 
-        // Toggle story row expansion via label click
+        // Toggle story row expansion via label click (multiple can be expanded)
         function toggleStoryRow(storyId) {
             const sanitizedId = CSS.escape(String(storyId || ''));
             const row = document.querySelector(`.timeline-row[data-story-id="${sanitizedId}"]`);
@@ -2729,16 +2849,14 @@
 
             const wasExpanded = row.classList.contains('expanded');
 
-            // Collapse all other rows (single expansion mode)
-            document.querySelectorAll('.timeline-row.expanded').forEach(r => {
-                if (r !== row) {
-                    r.classList.remove('expanded');
-                }
-            });
-
-            // Toggle current row
+            // Toggle current row (allow multiple expansions)
             row.classList.toggle('expanded', !wasExpanded);
-            timelineState.expandedStoryId = wasExpanded ? null : storyId;
+
+            if (wasExpanded) {
+                timelineState.expandedStoryIds.delete(storyId);
+            } else {
+                timelineState.expandedStoryIds.add(storyId);
+            }
         }
 
         // Show timeline tooltip
@@ -2835,36 +2953,36 @@
             timelineState.timelineStartTs = startTimestamps.length > 0 ? Math.min(...startTimestamps) : 0;
             timelineState.timelineEndTs = endTimestamps.length > 0 ? Math.max(...endTimestamps) : 3600;
 
-            // Generate time blocks (also calculates totalTimelineWidth)
-            // Note: generateTimeBlocks() must be called first to set totalTimelineWidth
-            let blocks = [];
+            // Generate time blocks and compact empty ones
             const blockWidthPx = COLUMN_WIDTH_PX * (timelineState.zoomLevel / 100);
+            let blocks = [];
 
             if (visibleActivities.length > 0) {
-                blocks = generateTimeBlocks();
-                // detectEmptyBlocks is now for visual indication only - no compaction
-                blocks = detectEmptyBlocks(blocks, visibleActivities, timelineState.blockSizeMinutes);
+                const rawBlocks = generateTimeBlocks();
+                blocks = compactEmptyBlocks(rawBlocks, visibleActivities, timelineState.blockSizeMinutes, blockWidthPx);
             }
             timelineState.processedBlocks = blocks;
 
-            // Render time header - all columns have uniform width
+            console.log('Timeline blocks:', blocks.length, 'compact:', blocks.filter(b => b.isCompact).length);
+
+            // Render time header - compact blocks get small width
             hoursEl.innerHTML = '';
             blocks.forEach(block => {
                 const hourDiv = document.createElement('div');
-                hourDiv.className = 'timeline-hour' + (block.isEmpty ? ' empty' : '');
-                hourDiv.style.minWidth = blockWidthPx + 'px';
-                hourDiv.style.width = blockWidthPx + 'px';
-                hourDiv.textContent = '';
+                hourDiv.className = 'timeline-hour' + (block.isCompact ? ' compact' : '');
+                hourDiv.style.minWidth = block.widthPx + 'px';
+                hourDiv.style.width = block.widthPx + 'px';
+                hourDiv.textContent = block.isCompact ? '' : block.label;
                 hoursEl.appendChild(hourDiv);
             });
 
-            // Render grid lines - all columns have uniform width (no compaction)
+            // Render grid lines - compact blocks get small width
             gridEl.innerHTML = '';
             blocks.forEach(block => {
                 const gridLine = document.createElement('div');
-                gridLine.className = 'timeline-grid-line' + (block.isEmpty ? ' empty' : '');
-                gridLine.style.minWidth = blockWidthPx + 'px';
-                gridLine.style.width = blockWidthPx + 'px';
+                gridLine.className = 'timeline-grid-line' + (block.isCompact ? ' compact' : '');
+                gridLine.style.minWidth = block.widthPx + 'px';
+                gridLine.style.width = block.widthPx + 'px';
                 gridEl.appendChild(gridLine);
             });
 
@@ -2939,7 +3057,7 @@
                 content.style.minWidth = timelineState.totalTimelineWidth + 'px';
 
                 // Only render timeline bar for visible stories
-                // Use continuous timestampToX() - bars stay at same position when block size changes
+                // Use block-based timestampToX() - bars scale with block size
                 if (!isHidden && blocks.length > 0) {
                     const barLeft = timestampToX(activity.startTs);
                     const barRight = timestampToX(activity.endTs || activity.startTs + 3600);
@@ -3002,8 +3120,9 @@
                         cmdRow.appendChild(cmdRowContent);
                         commandRows.appendChild(cmdRow);
 
-                        // Add task-level rows within command if tasks exist
-                        if (step.tasks && step.tasks.length > 0) {
+                        // Add task-level rows within command only if multiple tasks exist
+                        // Single task = no granularity to show, just the command is enough
+                        if (step.tasks && step.tasks.length > 1) {
                             step.tasks.forEach(task => {
                                 const taskLeft = timestampToX(task.startTs);
                                 const taskRight = timestampToX(task.endTs || task.startTs + 60);
@@ -3123,10 +3242,10 @@
                     sprintText = await sprintResponse.text();
                 }
 
-                const csvResponse = await fetch('./sprint-runner.csv');
+                const csvResponse = await fetch('./sprint-runner.csv?t=' + Date.now());
                 if (csvResponse.ok) {
                     orchText = await csvResponse.text();
-                    console.log('Loading sprint-runner.csv');
+                    console.log('Loading sprint-runner.csv, length:', orchText.length, 'lines:', orchText.split('\n').length);
                 }
 
                 const combinedData = (sprintText || '') + '|' + (orchText || '');
@@ -3175,14 +3294,15 @@
                 }
 
                 let orchText = null;
-                const csvResponse = await fetch('./sprint-runner.csv');
+                const csvResponse = await fetch('./sprint-runner.csv?t=' + Date.now());
                 if (csvResponse.ok) {
                     orchText = await csvResponse.text();
-                    console.log('Loading sprint-runner.csv');
+                    console.log('Loading sprint-runner.csv, length:', orchText.length, 'lines:', orchText.split('\n').length);
                 }
 
                 if (orchText) {
                     state.orchestratorData = parseOrchestrator(orchText);
+                    console.log('Parsed activities:', state.orchestratorData.length, 'stories:', state.orchestratorData.map(a => a.storyId));
                     state.lastUpdateTime = Date.now();
                     renderActivityLog(state.orchestratorData);
                 }

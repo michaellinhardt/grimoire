@@ -1,4 +1,5 @@
-export { ChatInputPlaceholder } from './ChatInputPlaceholder'
+export { ChatInput } from './ChatInput'
+export type { ChatInputProps } from './ChatInput'
 export { EmptyStateView } from './EmptyStateView'
 export { NewSessionView } from './NewSessionView'
 export { SessionList } from './SessionList'

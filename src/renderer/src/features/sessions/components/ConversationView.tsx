@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState, type ReactElement } from 'react'
+import { useRef, useEffect, useCallback, useState, useMemo, type ReactElement } from 'react'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { MessageBubble } from './MessageBubble'
 import { ToolCallCard } from './ToolCallCard'
@@ -9,6 +9,8 @@ import { RewindModal } from './RewindModal'
 import { useUIStore, type SessionState } from '@renderer/shared/store/useUIStore'
 import { findToolResult } from '@renderer/shared/utils/pairToolCalls'
 import { formatMessageTimestamp } from '@renderer/shared/utils/formatMessageTimestamp'
+import { cn } from '@renderer/shared/utils/cn'
+import { useActiveTimelineEvent } from '../hooks/useActiveTimelineEvent'
 import type { ConversationMessage, SubAgentBlock } from './types'
 
 export interface ConversationViewProps {
@@ -50,7 +52,17 @@ export function ConversationView({
   // MVP NOTE: With request-response model, this will be refined in Epic 3b
   const [isStreaming, setIsStreaming] = useState(false)
 
-  const { getScrollPosition, setScrollPosition, openSubAgentTab } = useUIStore()
+  const { getScrollPosition, setScrollPosition, openSubAgentTab, setScrollToConversationEvent } =
+    useUIStore()
+
+  // Highlight state for scroll-to-event animation (Story 2c-3)
+  const [highlightedUuid, setHighlightedUuid] = useState<string | null>(null)
+
+  // Track message UUIDs for scroll sync (Story 2c-3)
+  const messageUuids = useMemo(() => messages.map((m) => m.uuid), [messages])
+
+  // Track active message in viewport for timeline sync (Story 2c-3)
+  useActiveTimelineEvent(viewportRef, messageUuids)
 
   // Track which tool cards are expanded
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set())
@@ -124,12 +136,20 @@ export function ConversationView({
     [rewindCheckpointUuid, onRewind]
   )
 
-  // Scroll to a specific event/message by UUID
+  // Scroll to a specific event/message by UUID with highlight animation (Story 2c-3)
   const scrollToEvent = useCallback((eventUuid: string) => {
     const element = messageRefs.current.get(eventUuid)
     if (element) {
       // Browser handles smooth scroll timing (~300ms)
       element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      // Apply highlight animation
+      setHighlightedUuid(eventUuid)
+
+      // Remove highlight after 500ms
+      setTimeout(() => {
+        setHighlightedUuid(null)
+      }, 500)
     }
   }, [])
 
@@ -199,6 +219,12 @@ export function ConversationView({
     }
   }, [onScrollToEventRef, scrollToEvent])
 
+  // Register scroll function to store for cross-component access (Story 2c-3)
+  useEffect(() => {
+    setScrollToConversationEvent(scrollToEvent)
+    return () => setScrollToConversationEvent(null)
+  }, [scrollToEvent, setScrollToConversationEvent])
+
   // Simulate streaming detection for Loading->Thinking transition
   // MVP NOTE: With request-response model, this simulates the transition
   // Real streaming detection will be implemented in Epic 3b
@@ -265,6 +291,11 @@ export function ConversationView({
                   return (
                     <div
                       key={msg.uuid}
+                      data-message-uuid={msg.uuid}
+                      className={cn(
+                        'transition-all duration-300',
+                        highlightedUuid === msg.uuid && 'ring-2 ring-[var(--accent)] rounded-lg'
+                      )}
                       ref={(el) => {
                         if (el) messageRefs.current.set(msg.uuid, el)
                       }}
@@ -311,6 +342,11 @@ export function ConversationView({
                 return (
                   <div
                     key={msg.uuid}
+                    data-message-uuid={msg.uuid}
+                    className={cn(
+                      'transition-all duration-300',
+                      highlightedUuid === msg.uuid && 'ring-2 ring-[var(--accent)] rounded-lg'
+                    )}
                     ref={(el) => {
                       if (el) messageRefs.current.set(msg.uuid, el)
                     }}

@@ -6,16 +6,67 @@ import { MiddlePanelContent } from './MiddlePanelContent'
 const mockUseUIStore = vi.fn()
 
 vi.mock('@renderer/shared/store/useUIStore', () => ({
-  useUIStore: () => mockUseUIStore()
+  useUIStore: Object.assign(() => mockUseUIStore(), {
+    getState: () => mockUseUIStore()
+  })
+}))
+
+// Mock useSessionStore
+vi.mock('@renderer/features/sessions/store/useSessionStore', () => ({
+  useSessionStore: () => ({ sessions: [] }),
+  selectSessionById: () => undefined
+}))
+
+// Mock useConversationStore
+vi.mock('@renderer/features/sessions/store/useConversationStore', () => ({
+  useConversationStore: (selector?: (state: { getMessages: (id: string) => [] }) => []) =>
+    selector ? selector({ getMessages: () => [] }) : { getMessages: () => [] }
+}))
+
+// Mock useSendMessage hook
+vi.mock('@renderer/features/sessions/hooks/useSendMessage', () => ({
+  useSendMessage: () => ({
+    sendMessage: vi.fn(),
+    isSending: false
+  })
 }))
 
 // Mock the session components
 vi.mock('@renderer/features/sessions/components', () => ({
   EmptyStateView: () => <div data-testid="empty-state">EmptyStateView</div>,
   NewSessionView: () => <div data-testid="new-session">NewSessionView</div>,
-  ChatInputPlaceholder: ({ placeholder }: { placeholder?: string }) => (
-    <div data-testid="chat-input-placeholder">{placeholder || 'Type your message...'}</div>
-  ),
+  ChatInput: ({
+    onSend,
+    disabled,
+    placeholder,
+    autoFocus,
+    hasMessages
+  }: {
+    onSend: (message: string) => void
+    disabled?: boolean
+    placeholder?: string
+    autoFocus?: boolean
+    hasMessages?: boolean
+  }) => {
+    // Derive placeholder same as real ChatInput component
+    const displayPlaceholder =
+      placeholder ?? (hasMessages ? 'Type anything to continue...' : 'Type your message...')
+    return (
+      <div data-testid="chat-input">
+        <textarea
+          data-testid="chat-input-textarea"
+          aria-label="Message input"
+          disabled={disabled}
+          placeholder={displayPlaceholder}
+          data-autofocus={autoFocus}
+          data-has-messages={hasMessages}
+        />
+        <button aria-label="Send message" disabled={disabled} onClick={() => onSend('test')}>
+          Send
+        </button>
+      </div>
+    )
+  },
   ConversationView: ({
     messages,
     sessionId,
@@ -111,7 +162,7 @@ describe('MiddlePanelContent', () => {
     expect(screen.getByTestId('session-id')).toHaveTextContent('session-123')
   })
 
-  it('should show session view with chat input placeholder for existing session', () => {
+  it('should show session view with chat input for existing session', () => {
     mockUseUIStore.mockReturnValue({
       tabs: [
         {
@@ -126,8 +177,9 @@ describe('MiddlePanelContent', () => {
     })
     render(<MiddlePanelContent />)
     expect(screen.getByTestId('conversation-view')).toBeInTheDocument()
-    expect(screen.getByTestId('chat-input-placeholder')).toBeInTheDocument()
-    expect(screen.getByText(/Type your message/)).toBeInTheDocument()
+    expect(screen.getByTestId('chat-input')).toBeInTheDocument()
+    // Sessions with messages show "Type anything to continue..." per AC5
+    expect(screen.getByPlaceholderText(/Type anything to continue/)).toBeInTheDocument()
   })
 
   it('should render mock messages in ConversationView', () => {
@@ -201,7 +253,9 @@ describe('MiddlePanelContent', () => {
     })
   })
 
-  describe('sub-agent tabs (Story 2b.3)', () => {
+  describe('sub-agent tabs (Story 2b.3, 2b.6 read-only)', () => {
+    // Story 2b.3 implemented sub-agent display with tab.type='subagent'
+    // Story 2b.6 validates read-only behavior: no chat input visible for sub-agent tabs
     it('should show ConversationView for sub-agent tab', () => {
       mockUseUIStore.mockReturnValue({
         tabs: [
@@ -234,7 +288,7 @@ describe('MiddlePanelContent', () => {
         activeTabId: 'subagent-123'
       })
       render(<MiddlePanelContent />)
-      expect(screen.queryByTestId('chat-input-placeholder')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('chat-input')).not.toBeInTheDocument()
     })
 
     it('should show chat input for regular session tab', () => {
@@ -251,7 +305,82 @@ describe('MiddlePanelContent', () => {
         activeTabId: 'tab-1'
       })
       render(<MiddlePanelContent />)
-      expect(screen.getByTestId('chat-input-placeholder')).toBeInTheDocument()
+      expect(screen.getByTestId('chat-input')).toBeInTheDocument()
+    })
+  })
+
+  describe('ChatInput disabled state (Story 3a-1)', () => {
+    it('should disable ChatInput when sessionState is working', () => {
+      mockUseUIStore.mockReturnValue({
+        tabs: [
+          {
+            id: 'tab-1',
+            type: 'session',
+            title: 'Session',
+            sessionId: 'session-123',
+            sessionState: 'working'
+          }
+        ],
+        activeTabId: 'tab-1'
+      })
+      render(<MiddlePanelContent />)
+      const textarea = screen.getByTestId('chat-input-textarea')
+      expect(textarea).toBeDisabled()
+    })
+
+    it('should enable ChatInput when sessionState is idle', () => {
+      mockUseUIStore.mockReturnValue({
+        tabs: [
+          {
+            id: 'tab-1',
+            type: 'session',
+            title: 'Session',
+            sessionId: 'session-123',
+            sessionState: 'idle'
+          }
+        ],
+        activeTabId: 'tab-1'
+      })
+      render(<MiddlePanelContent />)
+      const textarea = screen.getByTestId('chat-input-textarea')
+      expect(textarea).not.toBeDisabled()
+    })
+
+    it('should pass autoFocus=false for existing sessions', () => {
+      mockUseUIStore.mockReturnValue({
+        tabs: [
+          {
+            id: 'tab-1',
+            type: 'session',
+            title: 'Session',
+            sessionId: 'session-123',
+            sessionState: 'idle'
+          }
+        ],
+        activeTabId: 'tab-1'
+      })
+      render(<MiddlePanelContent />)
+      const textarea = screen.getByTestId('chat-input-textarea')
+      expect(textarea).toHaveAttribute('data-autofocus', 'false')
+    })
+
+    it('should pass hasMessages=true when messages exist', () => {
+      mockUseUIStore.mockReturnValue({
+        tabs: [
+          {
+            id: 'tab-1',
+            type: 'session',
+            title: 'Session',
+            sessionId: 'session-123',
+            sessionState: 'idle'
+          }
+        ],
+        activeTabId: 'tab-1'
+      })
+      render(<MiddlePanelContent />)
+      const textarea = screen.getByTestId('chat-input-textarea')
+      // createMockMessages returns 2 messages, so hasMessages should be true
+      expect(textarea).toHaveAttribute('data-has-messages', 'true')
     })
   })
 })

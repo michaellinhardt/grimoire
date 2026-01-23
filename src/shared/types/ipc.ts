@@ -168,3 +168,34 @@ export const RewindRequestSchema = z.object({
 })
 
 export type RewindRequest = z.infer<typeof RewindRequestSchema>
+
+// ============================================================
+// Message Send Schemas (Story 3a.2)
+// ============================================================
+
+/**
+ * Request schema for sending a message to a session.
+ * Supports both existing sessions and new session creation.
+ */
+export const SendMessageSchema = z.object({
+  /** Session UUID (generated client-side for new sessions) */
+  sessionId: z.string().uuid(),
+  /** Message content to send */
+  message: z.string().min(1),
+  /** Folder path for the session (required for CC spawn) */
+  folderPath: z.string().min(1),
+  /** True if this is the first message creating a new session */
+  isNewSession: z.boolean().optional().default(false)
+})
+
+export type SendMessageRequest = z.infer<typeof SendMessageSchema>
+
+/**
+ * Response schema for send message operation
+ */
+export const SendMessageResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional()
+})
+
+export type SendMessageResponse = z.infer<typeof SendMessageResponseSchema>

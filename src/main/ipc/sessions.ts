@@ -12,7 +12,8 @@ import {
   SessionLineageSchema,
   SessionMetadataSchema,
   SessionMetadataUpsertSchema,
-  RewindRequestSchema
+  RewindRequestSchema,
+  SendMessageSchema
 } from '../../shared/types/ipc'
 import { toSessionMetadata, type DBSessionMetadataRow } from '../sessions/session-metadata'
 import { processRegistry } from '../process-registry'
@@ -302,5 +303,41 @@ export function registerSessionsIPC(): void {
     rewindTransaction()
 
     return { sessionId: newSessionId }
+  })
+
+  // Send message to session (Story 3a.2)
+  // Note: Actual CC spawn will be implemented in Story 3b-1
+  // For now, this creates the session in DB if new
+  ipcMain.handle('sessions:sendMessage', async (_, data: unknown) => {
+    try {
+      const { sessionId, message, folderPath, isNewSession } = SendMessageSchema.parse(data)
+      const db = getDatabase()
+      const now = Date.now()
+
+      if (isNewSession) {
+        // Create new session in database (similar to sessions:create)
+        db.prepare(
+          `
+          INSERT INTO sessions (id, folder_path, created_at, updated_at)
+          VALUES (?, ?, ?, ?)
+        `
+        ).run(sessionId, folderPath, now, now)
+      } else {
+        // Update last accessed timestamp for existing session
+        db.prepare('UPDATE sessions SET updated_at = ? WHERE id = ?').run(now, sessionId)
+      }
+
+      // TODO: Story 3b-1 will implement actual CC child process spawning
+      // For now, just acknowledge the message was received
+      if (process.env.DEBUG_SEND_MESSAGE) {
+        console.debug(`[sendMessage] Received: sessionId=${sessionId}, message=${message.substring(0, 50)}...`)
+      }
+
+      return { success: true }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send message'
+      console.error('[sessions:sendMessage] Error:', errorMessage)
+      return { success: false, error: errorMessage }
+    }
   })
 }

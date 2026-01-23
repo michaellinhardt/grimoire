@@ -220,8 +220,11 @@ def main():
     # Ensure symlinks exist
     ensure_symlinks()
 
-    # Create server
-    with socketserver.TCPServer(("", PORT), DashboardHandler) as httpd:
+    # Create server with SO_REUSEADDR to allow quick restart
+    class ReusableTCPServer(socketserver.TCPServer):
+        allow_reuse_address = True
+
+    with ReusableTCPServer(("", PORT), DashboardHandler) as httpd:
         print(f"\n{'='*50}")
         print(f"Grimoire Dashboard Server")
         print(f"{'='*50}")

@@ -8,11 +8,15 @@ describe('useUIStore', () => {
     useUIStore.setState({
       leftPanelCollapsed: false,
       rightPanelCollapsed: false,
+      rightPanelActiveTab: 'info',
       tabs: [],
       activeTabId: null,
       activeSection: 'sessions',
       showArchived: false,
-      scrollPositions: new Map()
+      scrollPositions: new Map(),
+      // Story 2c-3: Timeline scroll sync
+      activeTimelineEventUuid: null,
+      scrollToConversationEvent: null
     })
   })
 
@@ -29,9 +33,13 @@ describe('useUIStore', () => {
     const state = useUIStore.getState()
     expect(state.leftPanelCollapsed).toBe(false)
     expect(state.rightPanelCollapsed).toBe(false)
+    expect(state.rightPanelActiveTab).toBe('info')
     expect(state.tabs).toEqual([])
     expect(state.activeTabId).toBe(null)
     expect(state.activeSection).toBe('sessions')
+    // Story 2c-3
+    expect(state.activeTimelineEventUuid).toBe(null)
+    expect(state.scrollToConversationEvent).toBe(null)
   })
 
   describe('panel state', () => {
@@ -53,6 +61,37 @@ describe('useUIStore', () => {
 
       setRightPanelCollapsed(false)
       expect(useUIStore.getState().rightPanelCollapsed).toBe(false)
+    })
+  })
+
+  describe('right panel tab state (Story 2c.1)', () => {
+    it('has default rightPanelActiveTab as info', () => {
+      const state = useUIStore.getState()
+      expect(state.rightPanelActiveTab).toBe('info')
+    })
+
+    it('setRightPanelActiveTab updates active tab', () => {
+      const { setRightPanelActiveTab } = useUIStore.getState()
+
+      setRightPanelActiveTab('events')
+      expect(useUIStore.getState().rightPanelActiveTab).toBe('events')
+
+      setRightPanelActiveTab('files')
+      expect(useUIStore.getState().rightPanelActiveTab).toBe('files')
+
+      setRightPanelActiveTab('info')
+      expect(useUIStore.getState().rightPanelActiveTab).toBe('info')
+    })
+
+    it('rightPanelActiveTab is independent from rightPanelCollapsed', () => {
+      const { setRightPanelCollapsed, setRightPanelActiveTab } = useUIStore.getState()
+
+      setRightPanelActiveTab('events')
+      setRightPanelCollapsed(true)
+
+      const state = useUIStore.getState()
+      expect(state.rightPanelActiveTab).toBe('events')
+      expect(state.rightPanelCollapsed).toBe(true)
     })
   })
 
@@ -276,6 +315,55 @@ describe('useUIStore', () => {
       const state = useUIStore.getState()
       expect(state.tabs[0].title).toBe('Updated Title')
       expect(state.tabs[1].title).toBe('Other Tab')
+    })
+
+    describe('updateTabSessionId (Story 3a.2)', () => {
+      it('updates sessionId for specified tab', () => {
+        const newSessionId = '550e8400-e29b-41d4-a716-446655440099'
+        const { addTab, updateTabSessionId } = useUIStore.getState()
+
+        addTab({
+          id: 'tab-1',
+          type: 'session',
+          title: 'New Session',
+          sessionId: null
+        })
+
+        updateTabSessionId('tab-1', newSessionId)
+
+        const state = useUIStore.getState()
+        expect(state.tabs[0].sessionId).toBe(newSessionId)
+      })
+
+      it('does not affect other tabs', () => {
+        const { addTab, updateTabSessionId } = useUIStore.getState()
+
+        addTab({
+          id: 'tab-1',
+          type: 'session',
+          title: 'Session 1',
+          sessionId: null
+        })
+        addTab({
+          id: 'tab-2',
+          type: 'session',
+          title: 'Session 2',
+          sessionId: 'existing-session-id'
+        })
+
+        updateTabSessionId('tab-1', 'new-session-id')
+
+        const state = useUIStore.getState()
+        expect(state.tabs[0].sessionId).toBe('new-session-id')
+        expect(state.tabs[1].sessionId).toBe('existing-session-id')
+      })
+
+      it('handles non-existent tab gracefully', () => {
+        const { updateTabSessionId } = useUIStore.getState()
+
+        // Should not throw
+        expect(() => updateTabSessionId('non-existent', 'session-id')).not.toThrow()
+      })
     })
 
     it('closeTab removes correct tab (existing tests should still pass)', () => {
@@ -642,6 +730,55 @@ describe('useUIStore', () => {
       const state = useUIStore.getState()
       expect(state.tabs.length).toBe(3)
       expect(state.tabs.map((t) => t.type)).toEqual(['subagent', 'subagent', 'subagent'])
+    })
+  })
+
+  describe('timeline scroll sync (Story 2c-3)', () => {
+    it('has default activeTimelineEventUuid as null', () => {
+      const state = useUIStore.getState()
+      expect(state.activeTimelineEventUuid).toBe(null)
+    })
+
+    it('setActiveTimelineEventUuid updates active event', () => {
+      const { setActiveTimelineEventUuid } = useUIStore.getState()
+
+      setActiveTimelineEventUuid('evt-123')
+      expect(useUIStore.getState().activeTimelineEventUuid).toBe('evt-123')
+
+      setActiveTimelineEventUuid('evt-456')
+      expect(useUIStore.getState().activeTimelineEventUuid).toBe('evt-456')
+
+      setActiveTimelineEventUuid(null)
+      expect(useUIStore.getState().activeTimelineEventUuid).toBe(null)
+    })
+
+    it('has default scrollToConversationEvent as null', () => {
+      const state = useUIStore.getState()
+      expect(state.scrollToConversationEvent).toBe(null)
+    })
+
+    it('setScrollToConversationEvent stores function reference', () => {
+      const { setScrollToConversationEvent } = useUIStore.getState()
+      const mockScrollFn = (uuid: string): void => {
+        console.log('scroll to', uuid)
+      }
+
+      setScrollToConversationEvent(mockScrollFn)
+      expect(useUIStore.getState().scrollToConversationEvent).toBe(mockScrollFn)
+
+      setScrollToConversationEvent(null)
+      expect(useUIStore.getState().scrollToConversationEvent).toBe(null)
+    })
+
+    it('activeTimelineEventUuid is independent from other state', () => {
+      const { setActiveTimelineEventUuid, setRightPanelActiveTab } = useUIStore.getState()
+
+      setActiveTimelineEventUuid('evt-123')
+      setRightPanelActiveTab('events')
+
+      const state = useUIStore.getState()
+      expect(state.activeTimelineEventUuid).toBe('evt-123')
+      expect(state.rightPanelActiveTab).toBe('events')
     })
   })
 })

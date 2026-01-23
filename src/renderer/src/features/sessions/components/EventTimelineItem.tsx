@@ -1,5 +1,4 @@
 import { type ReactElement } from 'react'
-import { User, Bot, Wrench, Users } from 'lucide-react'
 import { cn } from '@renderer/shared/utils/cn'
 import { formatTokenCount } from '@renderer/shared/utils/formatTokenCount'
 import { formatMessageTimestamp } from '@renderer/shared/utils/formatMessageTimestamp'
@@ -18,6 +17,7 @@ export interface EventTimelineItemProps {
  * Renders a single event in the timeline navigation map.
  * User events are right-aligned with accent background.
  * System events (assistant/tool/sub_agent) are left-aligned with elevated background.
+ * Text-only display per UX9 specification (no icons).
  *
  * @param event - Timeline event data
  * @param isActive - Whether this event is currently active
@@ -31,11 +31,6 @@ export function EventTimelineItem({
 }: EventTimelineItemProps): ReactElement {
   const isUserEvent = event.type === 'user'
   const isSubAgent = event.type === 'sub_agent'
-  const isTool = event.type === 'tool'
-
-  // Determine icon based on event type
-  // Sub-agents get Users icon to distinguish from regular assistant (Bot)
-  const Icon = isUserEvent ? User : isTool ? Wrench : isSubAgent ? Users : Bot
 
   // Format display values
   const tokenDisplay = event.tokenCount != null ? formatTokenCount(event.tokenCount) : null
@@ -51,8 +46,9 @@ export function EventTimelineItem({
     <button
       type="button"
       onClick={onClick}
+      data-event-uuid={event.uuid}
       className={cn(
-        'w-full flex items-start gap-2 p-2 rounded-md transition-colors',
+        'w-full flex items-start gap-1 p-2 rounded-md transition-colors',
         'text-left text-sm',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
         // Alignment based on event type
@@ -66,18 +62,7 @@ export function EventTimelineItem({
       )}
       aria-label={`Go to ${event.type} event: ${event.summary}`}
     >
-      {/* Icon */}
-      <Icon
-        className={cn(
-          'h-4 w-4 flex-shrink-0 mt-0.5',
-          isUserEvent && 'text-purple-300',
-          !isUserEvent && 'text-[var(--text-muted)]',
-          isSubAgent && 'text-purple-400'
-        )}
-        aria-hidden="true"
-      />
-
-      {/* Content */}
+      {/* Content - text-only per UX9 spec */}
       <div className={cn('flex-1 min-w-0', isUserEvent && 'text-right')}>
         {/* Summary - truncated to one line */}
         <div className={cn('truncate text-[var(--text-primary)]', isUserEvent && 'text-right')}>

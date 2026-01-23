@@ -11,6 +11,16 @@ interface DiscoveredSessionLike {
   updatedAt: number
 }
 
+// Type for session metadata (Story 2c.2 - real-time updates)
+interface SessionMetadataLike {
+  sessionId: string
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalCostUsd: number
+  model: string | null
+  updatedAt: number | null
+}
+
 // Grimoire-specific APIs for renderer
 const grimoireAPI = {
   sessions: {
@@ -55,12 +65,33 @@ const grimoireAPI = {
       sessionId: string
       checkpointUuid: string
       newMessage: string
-    }): Promise<{ sessionId: string }> => ipcRenderer.invoke('sessions:rewind', data)
+    }): Promise<{ sessionId: string }> => ipcRenderer.invoke('sessions:rewind', data),
+    // New methods (Story 3a.2)
+    sendMessage: (data: {
+      sessionId: string
+      message: string
+      folderPath: string
+      isNewSession?: boolean
+    }): Promise<{ success: boolean; error?: string }> =>
+      ipcRenderer.invoke('sessions:sendMessage', data),
+    // New methods (Story 2c.2) - Real-time metadata update event listener
+    onMetadataUpdated: (callback: (data: SessionMetadataLike) => void): (() => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: SessionMetadataLike): void =>
+        callback(data)
+      ipcRenderer.on('sessions:metadataUpdated', handler)
+      // Return cleanup function
+      return () => ipcRenderer.removeListener('sessions:metadataUpdated', handler)
+    }
   },
   // New namespace (Story 2a.3)
   dialog: {
     selectFolder: (): Promise<{ canceled: boolean; folderPath: string | null }> =>
       ipcRenderer.invoke('dialog:selectFolder')
+  },
+  // New namespace (Story 2c.2) - Shell operations
+  shell: {
+    showItemInFolder: (filePath: string): Promise<{ success: boolean; error?: string }> =>
+      ipcRenderer.invoke('shell:showItemInFolder', filePath)
   }
 }
 

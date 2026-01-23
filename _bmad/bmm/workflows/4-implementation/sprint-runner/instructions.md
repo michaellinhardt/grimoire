@@ -195,27 +195,35 @@ development_status:
     </check>
   </substep>
 
-  <substep n="0c" goal="Determine batch size (moved from old Step 0)">
+  <substep n="0c" goal="Determine number of cycles to run">
+    <comment>
+    CYCLE vs STORY: The number is CYCLES, not stories.
+    Each cycle processes 1-2 stories:
+    - 2 stories if next two are from same epic (paired)
+    - 1 story if it's the last story of an epic (no pair available)
+    So "run 2" means 2 cycles, which could complete 2-4 stories depending on pairing.
+    </comment>
+
     <check if="user said 'all' (e.g., 'complete all', 'all stories', 'run all')">
       <action>Set batch_mode = "all"</action>
-      <action>Set batch_size = infinite (no limit)</action>
-      <action>Set stories_completed = 0</action>
+      <action>Set max_cycles = infinite (no limit)</action>
+      <action>Set cycles_completed = 0</action>
       <action>Go to Step 1 immediately</action>
     </check>
 
-    <check if="user provided batch size in command (e.g., 'complete 2 stories', 'run 3', '5 stories')">
+    <check if="user provided number in command (e.g., 'run 2', '3 cycles', '5')">
       <action>Parse number from user input</action>
       <action>Set batch_mode = "fixed"</action>
-      <action>Set batch_size = parsed number</action>
-      <action>Set stories_completed = 0</action>
+      <action>Set max_cycles = parsed number</action>
+      <action>Set cycles_completed = 0</action>
       <action>Go to Step 1 immediately</action>
     </check>
 
-    <check if="no batch size provided">
+    <check if="no number provided">
       <action>Set batch_mode = "fixed"</action>
-      <action>Set batch_size = 2 (default)</action>
-      <action>Set stories_completed = 0</action>
-      <action>Log: "Using default batch size: 2"</action>
+      <action>Set max_cycles = 2 (default)</action>
+      <action>Set cycles_completed = 0</action>
+      <action>Log: "Using default: 2 cycles"</action>
       <action>Go to Step 1</action>
     </check>
   </substep>
@@ -245,28 +253,21 @@ development_status:
     <action>Exit</action>
   </check>
 
-  <!-- Story pairing logic (MEDIUM-3 Resolution: Epic extraction clarified) -->
+  <!-- Story pairing logic: Always try to pair up to 2 stories from same epic -->
   <action>Set first_story = first non-done, non-blocked story</action>
-  <action>Extract first_story_epic = everything BEFORE the LAST dot in story key</action>
-  <comment>Examples: "2a.1" -> epic "2a", "1.2.3" -> epic "1.2"</comment>
+  <action>Extract first_story_epic = everything BEFORE the LAST dash in story key</action>
+  <comment>Examples: "2a-1" -> epic "2a", "2b-3" -> epic "2b"</comment>
 
-  <check if="batch_size == 1">
-    <action>Set story_keys = [first_story]</action>
-    <action>Log: "Single story mode: processing [first_story]"</action>
+  <action>Find second_story = next non-done, non-blocked story with SAME epic prefix</action>
+
+  <check if="second_story exists AND same epic as first_story">
+    <action>Set story_keys = [first_story, second_story]</action>
+    <action>Log: "Cycle: paired [first_story] + [second_story] (same epic)"</action>
   </check>
 
-  <check if="batch_size > 1">
-    <action>Find second_story = next non-done, non-blocked story with SAME epic prefix</action>
-
-    <check if="second_story exists AND same epic as first_story">
-      <action>Set story_keys = [first_story, second_story]</action>
-      <action>Log: "Paired stories: processing [first_story] and [second_story]"</action>
-    </check>
-
-    <check else>
-      <action>Set story_keys = [first_story]</action>
-      <action>Log: "Last story of epic: processing [first_story] alone"</action>
-    </check>
+  <check else>
+    <action>Set story_keys = [first_story]</action>
+    <action>Log: "Cycle: single [first_story] (last of epic or different epic next)"</action>
   </check>
 
   <action>Store: story_keys, current_epic</action>
@@ -496,7 +497,7 @@ Please review the story manually and resolve before resuming.
     </loop>
   </for-each>
 
-  <action>Increment stories_completed by length of story_keys (count non-blocked)</action>
+  <action>Increment cycles_completed by 1 (one cycle done, regardless of 1 or 2 stories)</action>
   <action>Go to Step 5 (batch tracking)</action>
 </step>
 
@@ -518,35 +519,35 @@ Please review the story manually and resolve before resuming.
   </check>
 </step>
 
-<step n="6" goal="Batch tracking and next story">
+<step n="6" goal="Cycle tracking and next iteration">
   <check if="batch_mode == 'all'">
-    <action>Log: "Story batch complete. ([stories_completed] total, mode: ALL)"</action>
-    <action>Go to Step 1 (next story - continues until all done)</action>
+    <action>Log: "Cycle [cycles_completed] complete. (mode: ALL - continuing)"</action>
+    <action>Go to Step 1 (next cycle - continues until all done)</action>
   </check>
 
   <check if="batch_mode == 'fixed'">
-    <check if="stories_completed >= batch_size">
+    <check if="cycles_completed >= max_cycles">
       <output>
 **Batch Complete!**
 
-Stories completed this batch: [stories_completed]
-Total in sprint-status.yaml done: [count from yaml]
+Cycles completed: [cycles_completed]
+Total stories done in sprint-status.yaml: [count from yaml]
 
 Ready for next batch.
       </output>
-      <action>Ask user: "How many stories for the next batch? (number or 'all')"</action>
+      <action>Ask user: "How many cycles for the next batch? (number or 'all')"</action>
       <action>Wait for user response</action>
       <check if="user said 'all'">
         <action>Set batch_mode = "all"</action>
-        <action>Set batch_size = infinite</action>
+        <action>Set max_cycles = infinite</action>
       </check>
       <check if="user provided number">
-        <action>Set batch_size = user's number</action>
+        <action>Set max_cycles = user's number</action>
       </check>
-      <action>Set stories_completed = 0</action>
+      <action>Set cycles_completed = 0</action>
     </check>
 
-    <action>Go to Step 1 (next story)</action>
+    <action>Go to Step 1 (next cycle)</action>
   </check>
 </step>
 
@@ -565,16 +566,17 @@ START:
       - Spawn BMAD Master to clean discovery files and done story files
       - Log all deletions before deleting
 
-  0c. Get batch_size from command or use default (2):
-      - Number (e.g., "3") -> complete 3 stories then prompt
-      - "all" -> complete ALL stories until sprint done
-      - Default: 2 stories
+  0c. Get number of CYCLES from command or use default (2):
+      - Number (e.g., "3") -> run 3 cycles then prompt
+      - "all" -> run cycles until all stories done
+      - Default: 2 cycles
+      NOTE: Each cycle processes 1-2 stories (2 if same epic, 1 if last of epic)
 
-LOOP (for each story or story pair):
+LOOP (for each CYCLE):
   1. Read sprint-status.yaml -> find next 1-2 stories (same epic)
-     - Story pairing: pair only from same epic
-     - Last story of epic runs alone
-     - batch_size=1 processes single story
+     - Story pairing: pair only from same epic (up to 2 stories)
+     - Last story of epic runs alone (1 story)
+     - Each iteration = 1 cycle, regardless of 1 or 2 stories
 
   2. If status == backlog (PARALLEL):
      a. create-story (CREATE MODE) + create-story-discovery (DISCOVERY MODE)
@@ -599,12 +601,12 @@ LOOP (for each story or story pair):
           - No critical after 3 -> done
           - Hard limit 10 -> mark "blocked"
 
-  5. Increment stories_completed by 1 or 2
+  5. Increment cycles_completed by 1 (one cycle = one iteration)
 
   6. Check batch mode:
-     - "all" -> next story pair
-     - "fixed" + complete -> prompt for next batch
-     - "fixed" + incomplete -> next story pair
+     - "all" -> next cycle (continues until all done)
+     - "fixed" + cycles_completed >= max_cycles -> prompt for next batch
+     - "fixed" + cycles remaining -> next cycle
 
 SUBAGENT RULES:
   - All subagents run AUTONOMOUS (no human input)
@@ -622,9 +624,14 @@ LOG FORMAT:
 ```
 
 **Usage Examples:**
-- `/sprint-runner` -> uses default batch size (2)
-- `/sprint-runner 3` -> completes 3 stories then prompts
-- `/sprint-runner all` -> runs until all stories done
-- `/sprint-runner 1` -> processes one story at a time (no pairing)
+- `/sprint-runner` -> runs 2 cycles (default), each cycle = 1-2 stories
+- `/sprint-runner 3` -> runs 3 cycles then prompts (could complete 3-6 stories)
+- `/sprint-runner all` -> runs cycles until all stories done
+- `/sprint-runner 1` -> runs 1 cycle (1-2 stories depending on pairing)
 
-<critical>BEGIN NOW. Parse batch size from command, run Step 0 (project context + cleanup), then start the loop.</critical>
+**Cycle Math:**
+- 1 cycle with paired stories (same epic) = 2 stories
+- 1 cycle with unpaired story (last of epic) = 1 story
+- "run 2" = 2 cycles = 2-4 stories depending on pairing
+
+<critical>BEGIN NOW. Parse number of cycles from command, run Step 0 (project context + cleanup), then start the loop.</critical>

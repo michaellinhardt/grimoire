@@ -37,9 +37,22 @@ export interface GrimoireAPI {
       checkpointUuid: string
       newMessage: string
     }) => Promise<{ sessionId: string }>
+    // New methods (Story 3a.2)
+    sendMessage: (data: {
+      sessionId: string
+      message: string
+      folderPath: string
+      isNewSession?: boolean
+    }) => Promise<{ success: boolean; error?: string }>
+    // New methods (Story 2c.2) - Real-time metadata update event listener
+    onMetadataUpdated: (callback: (data: SessionMetadata) => void) => () => void
   }
   dialog: {
     selectFolder: () => Promise<{ canceled: boolean; folderPath: string | null }>
+  }
+  // New namespace (Story 2c.2) - Shell operations
+  shell: {
+    showItemInFolder: (filePath: string) => Promise<{ success: boolean; error?: string }>
   }
 }
 

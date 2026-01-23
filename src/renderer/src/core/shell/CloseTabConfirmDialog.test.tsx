@@ -21,7 +21,10 @@ const mockGetLineage = vi.fn()
 const mockGetMetadata = vi.fn()
 const mockUpsertMetadata = vi.fn()
 const mockRewind = vi.fn()
+const mockSendMessage = vi.fn()
 const mockSelectFolder = vi.fn()
+const mockOnMetadataUpdated = vi.fn().mockReturnValue(() => {})
+const mockShowItemInFolder = vi.fn()
 beforeEach(() => {
   mockTerminate.mockReset()
   mockTerminate.mockResolvedValue({ success: true })
@@ -55,8 +58,14 @@ beforeEach(() => {
   mockUpsertMetadata.mockResolvedValue({ success: true })
   mockRewind.mockReset()
   mockRewind.mockResolvedValue({ sessionId: 'rewind-session-id' })
+  mockSendMessage.mockReset()
+  mockSendMessage.mockResolvedValue({ success: true })
   mockSelectFolder.mockReset()
   mockSelectFolder.mockResolvedValue({ canceled: false, folderPath: '/test/path' })
+  mockOnMetadataUpdated.mockReset()
+  mockOnMetadataUpdated.mockReturnValue(() => {})
+  mockShowItemInFolder.mockReset()
+  mockShowItemInFolder.mockResolvedValue({ success: true })
   window.grimoireAPI = {
     sessions: {
       terminate: mockTerminate,
@@ -74,10 +83,15 @@ beforeEach(() => {
       getLineage: mockGetLineage,
       getMetadata: mockGetMetadata,
       upsertMetadata: mockUpsertMetadata,
-      rewind: mockRewind
+      rewind: mockRewind,
+      sendMessage: mockSendMessage,
+      onMetadataUpdated: mockOnMetadataUpdated
     },
     dialog: {
       selectFolder: mockSelectFolder
+    },
+    shell: {
+      showItemInFolder: mockShowItemInFolder
     }
   }
 })

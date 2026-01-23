@@ -3,6 +3,8 @@ import type { SubAgentBlock } from '@renderer/features/sessions/components/types
 
 export type SessionState = 'idle' | 'working' | 'error'
 
+export type RightPanelTab = 'info' | 'events' | 'files'
+
 export interface Tab {
   id: string
   type: 'session' | 'subagent' | 'file'
@@ -19,6 +21,7 @@ interface UIState {
   // Panel state (RENAMED from leftPanelOpen/rightPanelOpen - inverted logic)
   leftPanelCollapsed: boolean
   rightPanelCollapsed: boolean
+  rightPanelActiveTab: RightPanelTab
 
   // Tab state
   tabs: Tab[]
@@ -33,9 +36,16 @@ interface UIState {
   // Scroll positions per session for tab switching persistence (Story 2b.1)
   scrollPositions: Map<string, number>
 
+  // Active timeline event for two-way scroll sync (Story 2c-3)
+  activeTimelineEventUuid: string | null
+
+  // Scroll-to-event function reference (registered by ConversationView) (Story 2c-3)
+  scrollToConversationEvent: ((uuid: string) => void) | null
+
   // Actions
   setLeftPanelCollapsed: (collapsed: boolean) => void
   setRightPanelCollapsed: (collapsed: boolean) => void
+  setRightPanelActiveTab: (tab: RightPanelTab) => void
   setActiveSection: (section: 'sessions' | 'settings') => void
   setShowArchived: (show: boolean) => void
   addTab: (tab: AddTabInput) => void
@@ -45,25 +55,34 @@ interface UIState {
   focusOrOpenSession: (sessionId: string, title: string) => void
   updateTabSessionState: (tabId: string, sessionState: SessionState) => void
   updateTabTitle: (tabId: string, title: string) => void
+  updateTabSessionId: (tabId: string, sessionId: string) => void
   setScrollPosition: (sessionId: string, position: number) => void
   getScrollPosition: (sessionId: string) => number
   clearScrollPosition: (sessionId: string) => void
   openSubAgentTab: (subAgent: SubAgentBlock) => void
+  // Story 2c-3: Timeline scroll sync
+  setActiveTimelineEventUuid: (uuid: string | null) => void
+  setScrollToConversationEvent: (fn: ((uuid: string) => void) | null) => void
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
   // Initial state
   leftPanelCollapsed: false,
   rightPanelCollapsed: false,
+  rightPanelActiveTab: 'info',
   tabs: [],
   activeTabId: null,
   activeSection: 'sessions',
   showArchived: false,
   scrollPositions: new Map(),
+  // Story 2c-3: Timeline scroll sync
+  activeTimelineEventUuid: null,
+  scrollToConversationEvent: null,
 
   // Actions
   setLeftPanelCollapsed: (collapsed) => set({ leftPanelCollapsed: collapsed }),
   setRightPanelCollapsed: (collapsed) => set({ rightPanelCollapsed: collapsed }),
+  setRightPanelActiveTab: (tab) => set({ rightPanelActiveTab: tab }),
   setActiveSection: (section) => set({ activeSection: section }),
   setShowArchived: (show) => set({ showArchived: show }),
 
@@ -137,6 +156,11 @@ export const useUIStore = create<UIState>((set, get) => ({
       tabs: state.tabs.map((t) => (t.id === tabId ? { ...t, title } : t))
     })),
 
+  updateTabSessionId: (tabId, sessionId) =>
+    set((state) => ({
+      tabs: state.tabs.map((t) => (t.id === tabId ? { ...t, sessionId } : t))
+    })),
+
   setScrollPosition: (sessionId, position) =>
     set((state) => ({
       scrollPositions: new Map(state.scrollPositions).set(sessionId, position)
@@ -176,5 +200,9 @@ export const useUIStore = create<UIState>((set, get) => ({
         tabs: [...state.tabs, newTab],
         activeTabId: newTab.id
       }
-    })
+    }),
+
+  // Story 2c-3: Timeline scroll sync actions
+  setActiveTimelineEventUuid: (uuid) => set({ activeTimelineEventUuid: uuid }),
+  setScrollToConversationEvent: (fn) => set({ scrollToConversationEvent: fn })
 }))

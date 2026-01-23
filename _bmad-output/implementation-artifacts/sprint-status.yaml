@@ -58,23 +58,53 @@ development_status:
   2b-3-sub-agent-display: done
   2b-4-navigation-and-loading-states: done
   2b-5-rewind-ui-on-user-messages: done
-  2b-6-sub-agent-tab-read-only: backlog
+  2b-6-sub-agent-tab-read-only: done
   epic-2b-retrospective: optional
 
   # Epic 2c: Session Info & Timeline
-  epic-2c: backlog
-  2c-1-right-panel-with-tab-views: backlog
-  2c-2-session-info-view: backlog
-  2c-3-event-timeline-view: backlog
+  epic-2c: done
+  2c-1-right-panel-with-tab-views: done
+  2c-2-session-info-view: done
+  2c-3-event-timeline-view: done
   epic-2c-retrospective: optional
 
+# Code Review Status - Story 2c.1
+# Review Attempt: 3
+# Final Status: APPROVED
+# Issues Found: 0 CRITICAL, 0 HIGH, 0 MEDIUM, 0 LOW
+# Reviewer: Claude Haiku 4.5
+# Date: 2026-01-23
+
+# Code Review Status - Story 2c.3
+# Review Attempt: 2
+# Final Status: APPROVED (Issues Found & Fixed)
+# Issues Found: 0 CRITICAL, 2 HIGH, 3 MEDIUM, 2 LOW (5 Fixed)
+# Reviewer: Claude Haiku 4.5
+# Date: 2026-01-24
+
+# Code Review Status - Story 3a.1
+# Review Attempt: 3 (FINAL VERIFICATION)
+# Final Status: APPROVED (Issues Found & Fixed)
+# Issues Found: 0 CRITICAL, 0 HIGH, 2 MEDIUM, 0 LOW (2 Fixed)
+# Reviewer: Claude Haiku 4.5
+# Date: 2026-01-24
+# Review 3 Fixes: (1) Height calculation uses Math.max(40, ...) for explicit min-height logic, (2) Send button focus-visible styling for WCAG 2.1 accessibility
+
   # Epic 3a: Chat Input & Basic Send
-  epic-3a: backlog
-  3a-1-chat-input-component: backlog
-  3a-2-message-send-flow: backlog
+  epic-3a: in-progress
+  3a-1-chat-input-component: done
+  3a-2-message-send-flow: done
   3a-3-response-streaming-display: backlog
   3a-4-abort-and-resume: backlog
   epic-3a-retrospective: optional
+
+# Code Review Status - Story 3a.2
+# Review Attempt: 2
+# Final Status: APPROVED (Issues Found & Fixed)
+# Issues Found: 0 CRITICAL, 2 HIGH, 3 MEDIUM, 2 LOW (5 Fixed, 2 Accepted as LOW)
+# Reviewer: Claude Haiku 4.5
+# Date: 2026-01-24
+# Review 2 Fixes: (1) Race condition - moved updateTabSessionId after IPC success, (2) Silent folderPath failures with explicit error messages, (3) Empty message validation added, (4) Message length limit (100KB) added, (5) Removed hardcoded retry delays
 
   # Epic 3b: CC Integration & Instance Management
   epic-3b: backlog

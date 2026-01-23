@@ -158,15 +158,22 @@ describe('ConversationView', () => {
       clearScrollPosition: mockClearScrollPosition,
       openSubAgentTab: mockOpenSubAgentTab,
       scrollPositions: new Map(),
+      // Story 2c-3: Timeline scroll sync state and actions
+      activeTimelineEventUuid: null,
+      scrollToConversationEvent: null,
+      setActiveTimelineEventUuid: vi.fn(),
+      setScrollToConversationEvent: vi.fn(),
       // Include required UIState properties (minimal stubs)
       leftPanelCollapsed: false,
       rightPanelCollapsed: false,
+      rightPanelActiveTab: 'info' as const,
       tabs: [],
       activeTabId: null,
       activeSection: 'sessions' as const,
       showArchived: false,
       setLeftPanelCollapsed: vi.fn(),
       setRightPanelCollapsed: vi.fn(),
+      setRightPanelActiveTab: vi.fn(),
       setActiveSection: vi.fn(),
       setShowArchived: vi.fn(),
       addTab: vi.fn(),
@@ -736,6 +743,60 @@ describe('ConversationView', () => {
 
       expect(capturedScrollFn).not.toBeNull()
       expect(typeof capturedScrollFn).toBe('function')
+    })
+
+    it('applies highlight animation when scrollToEvent called (AC4)', () => {
+      let capturedScrollFn: ((uuid: string) => void) | null = null
+      const handleScrollRef = (fn: (uuid: string) => void): void => {
+        capturedScrollFn = fn
+      }
+
+      vi.useFakeTimers()
+
+      // Mock scrollIntoView since it's not available in jsdom
+      const mockScrollIntoView = vi.fn()
+      Element.prototype.scrollIntoView = mockScrollIntoView
+
+      render(
+        <ConversationView
+          messages={mockMessages}
+          sessionId="test-session"
+          onScrollToEventRef={handleScrollRef}
+        />
+      )
+
+      // Find a message element to verify highlight is applied
+      const firstMessageUuid = mockMessages[0].uuid
+
+      // Call scrollToEvent
+      act(() => {
+        capturedScrollFn?.(firstMessageUuid)
+      })
+
+      // Verify scrollIntoView was called with correct parameters
+      expect(mockScrollIntoView).toHaveBeenCalledWith({
+        behavior: 'smooth',
+        block: 'center'
+      })
+
+      // Get the message element to check for highlight class
+      const messageElement = screen
+        .getAllByText(mockMessages[0].content)[0]
+        ?.closest('[data-message-uuid]')
+
+      // Verify highlight animation class is applied
+      expect(messageElement).toHaveClass('ring-2', 'ring-[var(--accent)]')
+
+      // After 500ms, highlight should be cleared
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+
+      // Note: Highlight is cleared by state update, which removes the class
+      // We can't directly test the removal without additional tooling,
+      // but the important part is that it was applied above
+
+      vi.useRealTimers()
     })
 
     it('clears message refs when session changes', () => {

@@ -3,17 +3,33 @@ import { describe, it, expect } from 'vitest'
 import { NewSessionView } from './NewSessionView'
 
 describe('NewSessionView', () => {
-  it('should render new session message', () => {
+  it('renders empty state message', () => {
     render(<NewSessionView />)
     expect(screen.getByText('New session - start typing to begin')).toBeInTheDocument()
   })
 
-  it('should render ChatInputPlaceholder with placeholder text', () => {
+  it('renders ChatInput with auto-focus', () => {
     render(<NewSessionView />)
-    expect(screen.getByText('Type your message... (input coming in Epic 3a)')).toBeInTheDocument()
+
+    const textarea = screen.getByRole('textbox', { name: /message input/i })
+    expect(textarea).toBeInTheDocument()
+    expect(document.activeElement).toBe(textarea)
   })
 
-  it('should have proper layout structure', () => {
+  it('renders new session placeholder text', () => {
+    render(<NewSessionView />)
+
+    // Note: placeholder is 'Type your message...' for new sessions per AC5
+    expect(screen.getByPlaceholderText('Type your message...')).toBeInTheDocument()
+  })
+
+  it('renders send button', () => {
+    render(<NewSessionView />)
+
+    expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument()
+  })
+
+  it('has proper layout structure', () => {
     const { container } = render(<NewSessionView />)
     // Check for flex column layout
     const mainContainer = container.querySelector('.flex-1.flex.flex-col')
@@ -23,12 +39,10 @@ describe('NewSessionView', () => {
     expect(conversationArea).toBeInTheDocument()
   })
 
-  it('should include comment about sub-agent index location', () => {
-    // This test verifies the component is structured correctly for Epic 2b
-    // The actual comment is in the JSX, so we just verify the structure exists
+  it('does not disable ChatInput for new sessions', () => {
     render(<NewSessionView />)
-    // The conversation area placeholder div should exist
-    const message = screen.getByText('New session - start typing to begin')
-    expect(message.parentElement).toHaveClass('flex-1', 'flex', 'items-center', 'justify-center')
+
+    const textarea = screen.getByRole('textbox', { name: /message input/i })
+    expect(textarea).not.toBeDisabled()
   })
 })
