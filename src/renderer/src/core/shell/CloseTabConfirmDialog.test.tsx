@@ -101,6 +101,11 @@ beforeEach(() => {
     },
     shell: {
       showItemInFolder: mockShowItemInFolder
+    },
+    startup: {
+      verify: vi.fn().mockResolvedValue({ success: true }),
+      onStepComplete: vi.fn(() => vi.fn()),
+      onAllComplete: vi.fn(() => vi.fn())
     }
   }
 })

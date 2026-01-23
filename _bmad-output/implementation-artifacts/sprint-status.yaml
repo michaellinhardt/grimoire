@@ -163,9 +163,9 @@ development_status:
 # Summary: Complete implementation of request-response process model with all 6 ACs verified: (AC1) Fresh process per message with natural completion, (AC2) Session returns to Idle state on completion, (AC3) Session resume with --resume flag for existing sessions, (AC4) Concurrent request guard with hasActiveProcess check, (AC5) Graceful process cleanup on app quit with SIGTERM->wait->SIGKILL pattern, (AC6) Process registry accuracy with immediate updates on exit. Comprehensive test coverage with 928 tests passing, including 20 integration tests specifically for process lifecycle. All file modifications properly documented and validated.
 
   # Epic 4: Application Lifecycle & Persistence
-  epic-4: backlog
-  4-1-loading-screen-and-startup-verification: backlog
-  4-2-offline-mode-and-status-indication: backlog
+  epic-4: in-progress
+  4-1-loading-screen-and-startup-verification: review
+  4-2-offline-mode-and-status-indication: ready-for-dev
   4-3-update-checking: backlog
   4-4-state-persistence-and-restoration: backlog
   4-5-db-first-startup-with-background-sync: backlog

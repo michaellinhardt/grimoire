@@ -180,6 +180,27 @@ const grimoireAPI = {
   shell: {
     showItemInFolder: (filePath: string): Promise<{ success: boolean; error?: string }> =>
       ipcRenderer.invoke('shell:showItemInFolder', filePath)
+  },
+  // Startup verification (Story 4-1)
+  startup: {
+    verify: (): Promise<{ success: boolean; failedStep?: string; error?: string }> =>
+      ipcRenderer.invoke('startup:verify'),
+    onStepComplete: (
+      callback: (data: { step: string; success: boolean; error?: string }) => void
+    ): (() => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        data: { step: string; success: boolean; error?: string }
+      ): void => callback(data)
+      ipcRenderer.on('startup:stepComplete', handler)
+      return () => ipcRenderer.removeListener('startup:stepComplete', handler)
+    },
+    onAllComplete: (callback: (data: { success: boolean }) => void): (() => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { success: boolean }): void =>
+        callback(data)
+      ipcRenderer.on('startup:allComplete', handler)
+      return () => ipcRenderer.removeListener('startup:allComplete', handler)
+    }
   }
 }
 

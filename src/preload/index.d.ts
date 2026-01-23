@@ -94,6 +94,14 @@ export interface GrimoireAPI {
   shell: {
     showItemInFolder: (filePath: string) => Promise<{ success: boolean; error?: string }>
   }
+  // Startup verification (Story 4-1)
+  startup: {
+    verify: () => Promise<{ success: boolean; failedStep?: string; error?: string }>
+    onStepComplete: (
+      callback: (data: { step: string; success: boolean; error?: string }) => void
+    ) => () => void
+    onAllComplete: (callback: (data: { success: boolean }) => void) => () => void
+  }
 }
 
 declare global {

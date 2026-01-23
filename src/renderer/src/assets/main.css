@@ -233,3 +233,39 @@ body {
 .animate-cursor-blink {
   animation: cursor-blink 1s step-end infinite;
 }
+
+/* ========================================
+ * Story 4-1: Loading Screen Animations
+ * ======================================== */
+
+/* Logo pulse animation - subtle scale/opacity pulse */
+@keyframes logo-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+.loading-logo-pulse {
+  animation: logo-pulse 2s ease-in-out infinite;
+}
+
+/* Loading screen fade-out transition */
+.loading-screen-fade-out {
+  animation: loading-fade-out 200ms ease-out forwards;
+}
+
+@keyframes loading-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}

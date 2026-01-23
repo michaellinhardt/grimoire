@@ -98,6 +98,11 @@ beforeEach(() => {
     },
     shell: {
       showItemInFolder: mockShowItemInFolder
+    },
+    startup: {
+      verify: vi.fn().mockResolvedValue({ success: true }),
+      onStepComplete: vi.fn(() => vi.fn()),
+      onAllComplete: vi.fn(() => vi.fn())
     }
   }
 
@@ -374,6 +379,11 @@ describe('SessionInfoView loading state', () => {
       },
       shell: {
         showItemInFolder: vi.fn().mockResolvedValue({ success: true })
+      },
+      startup: {
+        verify: vi.fn().mockResolvedValue({ success: true }),
+        onStepComplete: vi.fn(() => vi.fn()),
+        onAllComplete: vi.fn(() => vi.fn())
       }
     }
   })
