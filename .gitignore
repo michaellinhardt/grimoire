@@ -3,7 +3,7 @@ dot-claude/.claude.json
 dot-claude/.claude.json.backup
 
 # Electron / Node
-node_modules
+**/node_modules/
 dist
 out
 .DS_Store
