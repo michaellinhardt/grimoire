@@ -10,14 +10,15 @@
 Subagent prompts are stored in: `_bmad/bmm/workflows/4-implementation/sprint-runner/prompts/`
 
 Available prompts:
-- `create-story.md` - CREATE MODE
+- `create-story.md` - CREATE MODE (includes tech-spec decision)
 - `create-story-discovery.md` - DISCOVERY MODE (parallel)
 - `story-review.md` - REVIEW MODE
-- `create-tech-spec.md` - CREATE MODE
-- `create-tech-spec-discovery.md` - DISCOVERY MODE (parallel)
+- `create-tech-spec.md` - CREATE MODE (includes inline discovery)
 - `tech-spec-review.md` - REVIEW MODE
 - `dev-story.md`
 - `code-review.md`
+
+Note: create-tech-spec-discovery.md has been removed. Tech-spec discovery is now inline.
 
 To use a prompt:
 1. Read the prompt file
@@ -32,6 +33,10 @@ To use a prompt:
 **IMPORTANT:** Always use SHORT NUMERIC IDs, never full story titles or epic names.
 - CORRECT: `2a`, `2a-1`, `2b-1`
 - WRONG: `epic-2a-user-authentication`, `story-2b-1-login-feature`
+
+**Tech-Spec Decision Variables:**
+- `{{tech_spec_needed}}` - Boolean, true if any story in batch requires tech-spec
+- `{{tech_spec_decisions}}` - Object mapping story_id to decision (REQUIRED/SKIP)
 
 ---
 
@@ -248,12 +253,37 @@ development_status:
     <action>Wait for BOTH Task calls to complete</action>
     <!-- Subagents log their own milestones and "end" -->
 
-    <!-- POST-PARALLEL: Inject project context -->
+    <!-- POST-PARALLEL: Inject project context into story discovery -->
     <for-each story in="story_keys">
       <action>Run: _bmad/scripts/project-context-injection.sh {{implementation_artifacts}}/{{story}}-discovery-story.md</action>
     </for-each>
 
-    <action>Log: "CREATE-STORY phase complete, discovery files enriched"</action>
+    <!-- PARSE TECH-SPEC DECISIONS -->
+    <action>Initialize tech_spec_needed = false</action>
+    <action>Initialize tech_spec_decisions = {}</action>
+
+    <for-each story in="story_keys">
+      <action>Parse create-story output for [TECH-SPEC-DECISION: REQUIRED] or [TECH-SPEC-DECISION: SKIP]</action>
+
+      <check if="output contains '[TECH-SPEC-DECISION: REQUIRED]' (case-insensitive)">
+        <action>Set tech_spec_decisions[story] = "REQUIRED"</action>
+        <action>Set tech_spec_needed = true</action>
+        <action>Log: "Story [story] tech-spec decision: REQUIRED"</action>
+      </check>
+
+      <check if="output contains '[TECH-SPEC-DECISION: SKIP]' (case-insensitive)">
+        <action>Set tech_spec_decisions[story] = "SKIP"</action>
+        <action>Log: "Story [story] tech-spec decision: SKIP"</action>
+      </check>
+
+      <check if="no decision found in output">
+        <action>Set tech_spec_decisions[story] = "REQUIRED"</action>
+        <action>Set tech_spec_needed = true</action>
+        <action>Log: "WARNING: No tech-spec decision found for [story], defaulting to REQUIRED"</action>
+      </check>
+    </for-each>
+
+    <action>Log: "CREATE-STORY phase complete. Tech-spec needed: [tech_spec_needed]"</action>
     <action>Go to Step 2b (story review)</action>
   </check>
 
@@ -296,37 +326,34 @@ development_status:
     </loop>
   </for-each>
 
-  <action>Go to Step 3 (CREATE-TECH-SPEC)</action>
+  <check if="tech_spec_needed == true">
+    <action>Go to Step 3 (CREATE-TECH-SPEC)</action>
+  </check>
+
+  <check if="tech_spec_needed == false">
+    <action>Log: "All stories marked tech-spec as SKIP, proceeding directly to DEV"</action>
+    <action>Go to Step 4 (DEV + CODE-REVIEW)</action>
+  </check>
 </step>
 
-<step n="3" goal="CREATE-TECH-SPEC PHASE (PARALLEL)">
+<step n="3" goal="CREATE-TECH-SPEC PHASE (SEQUENTIAL - CONDITIONAL)">
+  <!-- This step only runs if tech_spec_needed == true -->
+
   <action>Log: "Starting CREATE-TECH-SPEC phase for [story_key(s)]"</action>
 
-  <!-- PARALLEL EXECUTION (CRITICAL-2 Resolution: Verified Task tool capability) -->
-  <!-- Make TWO Task tool calls in a SINGLE message for concurrent execution -->
-  <parallel-execution>
-    <task-call id="1">
-      <action>Load prompt from prompts/create-tech-spec.md, substitute variables</action>
-      <action>Spawn subagent with Task tool (default model)</action>
-      <goal>Create tech spec file(s)</goal>
-    </task-call>
-
-    <task-call id="2">
-      <action>Load prompt from prompts/create-tech-spec-discovery.md, substitute variables</action>
-      <action>Spawn subagent with Task tool (default model)</action>
-      <goal>Generate tech discovery file(s)</goal>
-    </task-call>
-  </parallel-execution>
-
-  <action>Wait for BOTH Task calls to complete</action>
-  <!-- Subagents log their own milestones and "end" -->
-
-  <!-- POST-PARALLEL: Inject project context -->
+  <!-- SEQUENTIAL EXECUTION - One tech-spec at a time, subagent does its own discovery -->
   <for-each story in="story_keys">
-    <action>Run: _bmad/scripts/project-context-injection.sh {{implementation_artifacts}}/{{story}}-discovery-tech.md</action>
+    <action>Load prompt from prompts/create-tech-spec.md, substitute variables for [story]</action>
+    <action>Spawn subagent with Task tool (default model)</action>
+    <goal>Create tech spec with inline discovery for [story]</goal>
+    <action>Wait for completion</action>
+    <!-- Subagent logs milestones and "end" -->
   </for-each>
 
-  <action>Log: "CREATE-TECH-SPEC phase complete, discovery files enriched"</action>
+  <!-- NOTE: No tech-discovery parallel execution -->
+  <!-- NOTE: No project-context injection for tech-discovery files -->
+
+  <action>Log: "CREATE-TECH-SPEC phase complete"</action>
   <action>Go to Step 3b (tech-spec review)</action>
 </step>
 
@@ -570,11 +597,16 @@ LOOP (for each CYCLE):
      b. Inject project context into discovery files
      c. story-review loop (sequential, Haiku for review 2+, max 3)
 
-  3. create-tech-spec (PARALLEL):
-     a. create-tech-spec (CREATE MODE) + create-tech-spec-discovery (DISCOVERY MODE)
-        - TWO Task tool calls in single message (concurrent)
-     b. Inject project context into discovery files
-     c. tech-spec-review loop (sequential, Haiku for review 2+, max 3)
+  3. create-tech-spec (SEQUENTIAL - CONDITIONAL):
+     - ONLY runs if tech_spec_needed == true (any story requires it)
+     - If ALL stories marked SKIP, this phase is bypassed
+     a. For each story: create-tech-spec (CREATE MODE with inline discovery)
+        - SINGLE subagent per story (no parallel discovery)
+        - Subagent performs its own discovery during spec creation
+     b. tech-spec-review loop (sequential, Haiku for review 2+, max 3)
+
+  Note: Tech-spec decision is made by create-story subagent based on complexity.
+  Decision output: [TECH-SPEC-DECISION: REQUIRED] or [TECH-SPEC-DECISION: SKIP]
 
   4. DEV + CODE-REVIEW (SEQUENTIAL per story):
      FOR each story:

@@ -67,6 +67,51 @@ IF ANY CHECK FAILS: Fix it before saving. Do not output a flawed story.
 
 ---
 
+## TECH-SPEC DECISION (MANDATORY OUTPUT)
+
+After completing all checks and saving the story file, you MUST evaluate whether a technical specification is necessary for this story.
+
+**OUTPUT REQUIREMENT - Include this line in your final output:**
+
+If tech-spec IS needed:
+```
+[TECH-SPEC-DECISION: REQUIRED]
+```
+
+If tech-spec is OVERKILL:
+```
+[TECH-SPEC-DECISION: SKIP]
+```
+
+**Decision Guidelines:**
+
+SKIP tech-spec (simple/straightforward):
+- Bug fixes with clear, isolated root cause
+- Configuration or environment changes
+- Documentation-only updates
+- Single-file changes with obvious implementation path
+- Copy/paste patterns from existing similar code
+- Simple refactors (rename, move, extract method)
+- Adding/removing feature flags
+- Updating dependencies with no code changes
+
+REQUIRE tech-spec (complex/multi-faceted):
+- New features involving multiple files or components
+- API changes (new endpoints, request/response changes)
+- Database schema modifications
+- Architectural decisions or new patterns
+- Complex business logic with multiple branches
+- Integration with external services or systems
+- Changes spanning multiple layers (UI + backend + data)
+- Performance optimizations requiring analysis
+- Security-sensitive implementations
+
+**DEFAULT TO REQUIRED** - When uncertain, choose REQUIRED. Quality over speed.
+
+The orchestrator will parse this decision to determine whether to run the tech-spec phase.
+
+---
+
 ## Logging Instructions
 
 You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.

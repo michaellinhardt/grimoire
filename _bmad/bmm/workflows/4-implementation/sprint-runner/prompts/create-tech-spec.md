@@ -28,15 +28,14 @@ DECISION RULES:
 - If multiple approaches exist -> choose the most robust one
 - Never wait for human input. You ARE the decision maker.
 
-ADDITIONAL OUTPUT REQUIREMENT:
-After creating the tech spec, save a discovery file to:
-{{implementation_artifacts}}/{{story_key}}-discovery-tech.md
+DISCOVERY INSTRUCTIONS:
+You are responsible for your own technical discovery. As part of creating the tech spec:
+- Explore the codebase to understand existing patterns
+- Identify relevant files and dependencies
+- Analyze architectural constraints
+- Document your findings IN the tech spec itself (not a separate file)
 
-The discovery file MUST contain:
-- Technical Context: Key file paths, component dependencies, patterns to follow
-- Implementation Decisions: Why certain approaches were chosen
-- Risk Areas: Potential issues to watch for during implementation
-- Testing Strategy: What tests are needed and where
+Do NOT create a separate discovery file. Integrate all technical context into the spec.
 
 CHECKLIST ENFORCEMENT:
 Before saving the tech spec, you MUST verify against this checklist and output:
