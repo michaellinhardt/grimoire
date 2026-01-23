@@ -17,6 +17,7 @@ Available prompts:
 - `tech-spec-review.md` - REVIEW MODE
 - `dev-story.md`
 - `code-review.md`
+- `background-review-chain.md` - Background review-2/3 chain (runs in parallel with next step)
 
 Note: create-tech-spec-discovery.md has been removed. Tech-spec discovery is now inline.
 
@@ -322,35 +323,34 @@ development_status:
   </check>
 </step>
 
-<step n="2b" goal="STORY-REVIEW PHASE">
-  <!-- ONE agent reviews ALL stories in the batch (processes them sequentially, logs each) -->
-  <action>Set story_review_attempt = 1</action>
+<step n="2b" goal="STORY-REVIEW PHASE (PARALLEL AFTER REVIEW-1)">
+  <!-- REVIEW-1: Always runs first, blocks until complete -->
+  <action>Load prompt from prompts/story-review.md</action>
+  <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
+  <action>Substitute {{review_attempt}} = 1</action>
+  <action>Spawn ONE subagent with Task tool (default model)</action>
+  <action>Wait for completion</action>
+  <comment>Subagent processes each story sequentially, logging start/end for each</comment>
+  <action>Parse result for critical issues across ALL stories in batch</action>
+  <action>Store has_critical_issues = true/false</action>
 
-  <loop max="3">
-    <action>Load prompt from prompts/story-review.md</action>
-    <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
+  <!-- FORK: Spawn background review chain if critical issues found -->
+  <check if="has_critical_issues == true">
+    <action>Log: "Critical issues found, spawning background review chain (story-review-2/3)"</action>
+    <action>Load prompt from prompts/background-review-chain.md</action>
+    <action>Substitute {{review_type}} = "story-review"</action>
+    <action>Substitute {{story_keys}} with comma-separated story_keys</action>
+    <action>Substitute {{prompt_file}} = "prompts/story-review.md"</action>
+    <action>Spawn subagent with Task tool using run_in_background: true, model: "haiku"</action>
+    <comment>Background chain runs review-2 → review-3 (if needed), does NOT block main flow</comment>
+    <comment>Background chain does NOT update sprint-status</comment>
+  </check>
 
-    <check if="story_review_attempt >= 2">
-      <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
-      <action>Spawn ONE subagent with Task tool using model: "haiku"</action>
-    </check>
-    <check else>
-      <action>Spawn ONE subagent with Task tool (default model)</action>
-    </check>
+  <check if="has_critical_issues == false">
+    <action>Log: "Story review-1 passed for all stories, no background reviews needed"</action>
+  </check>
 
-    <action>Wait for completion</action>
-    <comment>Subagent processes each story sequentially, logging start/end for each</comment>
-    <action>Parse result for critical issues across ALL stories in batch</action>
-
-    <check if="no critical issues found for ANY story">
-      <action>Log: "Story review passed for all stories"</action>
-      <action>Break loop</action>
-    </check>
-
-    <!-- If any story has critical issues, re-run review for all -->
-    <action>Increment story_review_attempt</action>
-  </loop>
-
+  <!-- MAIN FLOW: Continue immediately to next step -->
   <check if="tech_spec_needed == true">
     <action>Go to Step 3 (CREATE-TECH-SPEC)</action>
   </check>
@@ -380,35 +380,34 @@ development_status:
   <action>Go to Step 3b (tech-spec review)</action>
 </step>
 
-<step n="3b" goal="TECH-SPEC-REVIEW PHASE">
-  <!-- ONE agent reviews ALL tech-specs in the batch (processes them sequentially, logs each) -->
-  <action>Set tech_spec_review_attempt = 1</action>
+<step n="3b" goal="TECH-SPEC-REVIEW PHASE (PARALLEL AFTER REVIEW-1)">
+  <!-- REVIEW-1: Always runs first, blocks until complete -->
+  <action>Load prompt from prompts/tech-spec-review.md</action>
+  <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
+  <action>Substitute {{review_attempt}} = 1</action>
+  <action>Spawn ONE subagent with Task tool (default model)</action>
+  <action>Wait for completion</action>
+  <comment>Subagent processes each story sequentially, logging start/end for each</comment>
+  <action>Parse result for critical issues across ALL stories in batch</action>
+  <action>Store has_critical_issues = true/false</action>
 
-  <loop max="3">
-    <action>Load prompt from prompts/tech-spec-review.md</action>
-    <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
+  <!-- FORK: Spawn background review chain if critical issues found -->
+  <check if="has_critical_issues == true">
+    <action>Log: "Critical issues found, spawning background review chain (tech-spec-review-2/3)"</action>
+    <action>Load prompt from prompts/background-review-chain.md</action>
+    <action>Substitute {{review_type}} = "tech-spec-review"</action>
+    <action>Substitute {{story_keys}} with comma-separated story_keys</action>
+    <action>Substitute {{prompt_file}} = "prompts/tech-spec-review.md"</action>
+    <action>Spawn subagent with Task tool using run_in_background: true, model: "haiku"</action>
+    <comment>Background chain runs review-2 → review-3 (if needed), does NOT block main flow</comment>
+    <comment>Background chain does NOT update sprint-status</comment>
+  </check>
 
-    <check if="tech_spec_review_attempt >= 2">
-      <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
-      <action>Spawn ONE subagent with Task tool using model: "haiku"</action>
-    </check>
-    <check else>
-      <action>Spawn ONE subagent with Task tool (default model)</action>
-    </check>
+  <check if="has_critical_issues == false">
+    <action>Log: "Tech-spec review-1 passed for all stories, no background reviews needed"</action>
+  </check>
 
-    <action>Wait for completion</action>
-    <comment>Subagent processes each story sequentially, logging start/end for each</comment>
-    <action>Parse result for critical issues across ALL stories in batch</action>
-
-    <check if="no critical issues found for ANY story">
-      <action>Log: "Tech spec review passed for all stories"</action>
-      <action>Break loop</action>
-    </check>
-
-    <!-- If any story has critical issues, re-run review for all -->
-    <action>Increment tech_spec_review_attempt</action>
-  </loop>
-
+  <!-- MAIN FLOW: Continue immediately to dev-story -->
   <action>Go to Step 4 (DEV + CODE-REVIEW)</action>
 </step>
 
@@ -625,9 +624,16 @@ LOOP (for each CYCLE):
         - Creates discovery file for each story
      c. Inject project context into discovery files
      d. Parse TECH-SPEC DECISIONS from create-story output
-     e. ONE story-review agent (handles ALL stories sequentially)
-        - Review loop (max 3 attempts, Haiku for review 2+)
-        - Processes each story, logs start/end for each
+
+  2b. STORY-REVIEW (PARALLEL AFTER REVIEW-1):
+      - story-review-1 (default model) - BLOCKS until complete
+      - After review-1 ends, FORK:
+        ├── IF critical issues: spawn background chain (review-2 → review-3)
+        │   - Uses Haiku model
+        │   - Runs with run_in_background: true
+        │   - Does NOT block main flow
+        │   - Does NOT update sprint-status
+        └── IMMEDIATELY continue to Step 3 or Step 4
 
   3. create-tech-spec (CONDITIONAL - 1 agent):
      - ONLY runs if tech_spec_needed == true (any story requires it)
@@ -636,17 +642,24 @@ LOOP (for each CYCLE):
         - Receives comma-separated story_keys
         - Processes each story, logs start/end for each
         - Does inline discovery (no separate discovery files)
-     b. ONE tech-spec-review agent (handles ALL stories sequentially)
-        - Review loop (max 3 attempts, Haiku for review 2+)
-        - Processes each story, logs start/end for each
+
+  3b. TECH-SPEC-REVIEW (PARALLEL AFTER REVIEW-1):
+      - tech-spec-review-1 (default model) - BLOCKS until complete
+      - After review-1 ends, FORK:
+        ├── IF critical issues: spawn background chain (review-2 → review-3)
+        │   - Uses Haiku model
+        │   - Runs with run_in_background: true
+        │   - Does NOT block main flow
+        │   - Does NOT update sprint-status
+        └── IMMEDIATELY continue to Step 4
 
   Note: Tech-spec decision is made by create-story subagent based on complexity.
   Decision output: [TECH-SPEC-DECISION: REQUIRED] or [TECH-SPEC-DECISION: SKIP]
 
-  4. DEV + CODE-REVIEW (SEQUENTIAL per story):
+  4. DEV + CODE-REVIEW (FULLY SEQUENTIAL per story):
      FOR each story:
        a. dev-story (default model)
-       b. code-review loop:
+       b. code-review loop (NO parallelism here):
           - Review 1: default model
           - Review 2+: Haiku model
           - Early exit if same error 3x consecutive -> mark "blocked"
@@ -668,6 +681,16 @@ LOOP (for each CYCLE):
      - "fixed" + cycles_completed >= max_cycles -> prompt for next batch
      - "fixed" + cycles remaining -> next cycle
 
+PARALLEL REVIEW CHAINS (background-review-chain.md):
+  - Spawned when review-1 finds critical issues
+  - Run with run_in_background: true
+  - Sequential within chain: review-2 → review-3 (if needed)
+  - Use Haiku model for both review-2 and review-3
+  - Do NOT update sprint-status (only fix files)
+  - Do NOT block main flow
+  - "Fire and forget" fix-up tasks
+  - Main flow continues independently to next step
+
 SUBAGENT RULES:
   - All subagents run AUTONOMOUS (no human input)
   - Make all decisions independently
@@ -677,6 +700,7 @@ SUBAGENT RULES:
   - Prompts receive comma-separated story_keys (e.g., "3a-1,3a-2")
   - Story-review agents use discovery files (context already injected)
   - Tech-spec agents do inline discovery (no separate discovery files)
+  - Background review chains are unaware they run in parallel
 
 LOG FORMAT:
   - CSV: timestamp,epicID,storyID,command,task-id,status
