@@ -46,6 +46,9 @@ interface ConversationStoreState {
   /** Add a system error message to the conversation */
   addErrorMessage: (sessionId: string, errorContent: string) => void
 
+  /** Add a system aborted message to the conversation (Story 3a-4) */
+  addAbortedMessage: (sessionId: string) => void
+
   /** Get messages for a session */
   getMessages: (sessionId: string) => DisplayMessage[]
 
@@ -140,6 +143,24 @@ export const useConversationStore = create<ConversationStoreState>((set, get) =>
       const newMessages = new Map(state.messages)
       const sessionMessages = newMessages.get(sessionId) ?? []
       newMessages.set(sessionId, [...sessionMessages, errorMessage])
+      return { messages: newMessages }
+    })
+  },
+
+  // Add aborted message (Story 3a-4)
+  addAbortedMessage: (sessionId) => {
+    const abortedMessage: SystemMessage = {
+      type: 'system',
+      uuid: `aborted-${crypto.randomUUID()}`,
+      content: 'Response generation was aborted',
+      timestamp: Date.now(),
+      isError: false
+    }
+
+    set((state) => {
+      const newMessages = new Map(state.messages)
+      const sessionMessages = newMessages.get(sessionId) ?? []
+      newMessages.set(sessionId, [...sessionMessages, abortedMessage])
       return { messages: newMessages }
     })
   },

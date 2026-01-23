@@ -270,3 +270,27 @@ export const StreamEndEventSchema = z.object({
 })
 
 export type StreamEndEvent = z.infer<typeof StreamEndEventSchema>
+
+// ============================================================
+// Abort Schemas (Story 3a-4)
+// ============================================================
+
+/**
+ * Request schema for aborting a running CC process.
+ * Note: Can reuse TerminateRequestSchema semantics but keeping separate for clarity.
+ */
+export const AbortRequestSchema = z.object({
+  sessionId: z.string().uuid()
+})
+
+export type AbortRequest = z.infer<typeof AbortRequestSchema>
+
+/**
+ * Response schema for abort operation
+ */
+export const AbortResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional()
+})
+
+export type AbortResponse = z.infer<typeof AbortResponseSchema>

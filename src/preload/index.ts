@@ -74,6 +74,9 @@ const grimoireAPI = {
       isNewSession?: boolean
     }): Promise<{ success: boolean; error?: string }> =>
       ipcRenderer.invoke('sessions:sendMessage', data),
+    // Abort running process (Story 3a-4)
+    abort: (data: { sessionId: string }): Promise<{ success: boolean; error?: string }> =>
+      ipcRenderer.invoke('sessions:abort', data),
     // New methods (Story 2c.2) - Real-time metadata update event listener
     onMetadataUpdated: (callback: (data: SessionMetadataLike) => void): (() => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: SessionMetadataLike): void =>

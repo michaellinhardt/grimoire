@@ -15,10 +15,17 @@ import { cn } from '@renderer/shared/utils/cn'
 import { useActiveTimelineEvent } from '../hooks/useActiveTimelineEvent'
 import { useStreamingMessage } from '../hooks/useStreamingMessage'
 import type { ConversationMessage, SubAgentBlock } from './types'
+import type { DisplayMessage, SystemMessage } from '../store/useConversationStore'
+
+// Type guard for system messages (abort/error) - Story 3a-4
+// SystemMessage has type: 'system', ConversationMessage has role: 'user' | 'assistant'
+function isSystemMessage(msg: DisplayMessage): msg is SystemMessage {
+  return 'type' in msg && msg.type === 'system'
+}
 
 export interface ConversationViewProps {
-  /** Array of conversation messages to display */
-  messages: ConversationMessage[]
+  /** Array of conversation messages to display (including system messages) */
+  messages: DisplayMessage[]
   /** Session ID for scroll position persistence */
   sessionId: string
   /** Session state for loading/thinking indicators */
@@ -296,40 +303,75 @@ export function ConversationView({
           ) : (
             <>
               {messages.map((msg, index) => {
-                // Check if message has tool use blocks or sub-agent blocks (assistant messages only)
-                const hasTools =
-                  msg.role === 'assistant' && msg.toolUseBlocks && msg.toolUseBlocks.length > 0
-                const hasSubAgents =
-                  msg.role === 'assistant' && msg.subAgentBlocks && msg.subAgentBlocks.length > 0
-
-                if (hasTools || hasSubAgents) {
-                  // Filter out Task and Skill tool calls when corresponding sub-agent exists
-                  // This prevents duplicate UI: showing both ToolCallCard AND SubAgentBubble for same spawn
-                  const toolsToRender =
-                    hasSubAgents && hasTools
-                      ? msg.toolUseBlocks!.filter(
-                          (tool) => tool.name !== 'Task' && tool.name !== 'Skill'
-                        )
-                      : (msg.toolUseBlocks ?? [])
-
+                // Handle system messages first (abort/error) - Story 3a-4
+                if (isSystemMessage(msg)) {
                   return (
                     <div
                       key={msg.uuid}
                       data-message-uuid={msg.uuid}
                       className={cn(
-                        'transition-all duration-300',
+                        'flex justify-center py-2',
                         highlightedUuid === msg.uuid && 'ring-2 ring-[var(--accent)] rounded-lg'
                       )}
                       ref={(el) => {
                         if (el) messageRefs.current.set(msg.uuid, el)
                       }}
                     >
+                      <span
+                        className={cn(
+                          'text-sm italic px-3 py-1 rounded-full',
+                          msg.isError
+                            ? 'text-red-400 bg-red-500/10'
+                            : 'text-[var(--text-muted)] bg-[var(--bg-hover)]'
+                        )}
+                      >
+                        {msg.content}
+                      </span>
+                    </div>
+                  )
+                }
+
+                // Cast to ConversationMessage after type guard check
+                const convMsg = msg as ConversationMessage
+
+                // Check if message has tool use blocks or sub-agent blocks (assistant messages only)
+                const hasTools =
+                  convMsg.role === 'assistant' &&
+                  convMsg.toolUseBlocks &&
+                  convMsg.toolUseBlocks.length > 0
+                const hasSubAgents =
+                  convMsg.role === 'assistant' &&
+                  convMsg.subAgentBlocks &&
+                  convMsg.subAgentBlocks.length > 0
+
+                if (hasTools || hasSubAgents) {
+                  // Filter out Task and Skill tool calls when corresponding sub-agent exists
+                  // This prevents duplicate UI: showing both ToolCallCard AND SubAgentBubble for same spawn
+                  const toolsToRender =
+                    hasSubAgents && hasTools
+                      ? convMsg.toolUseBlocks!.filter(
+                          (tool) => tool.name !== 'Task' && tool.name !== 'Skill'
+                        )
+                      : (convMsg.toolUseBlocks ?? [])
+
+                  return (
+                    <div
+                      key={convMsg.uuid}
+                      data-message-uuid={convMsg.uuid}
+                      className={cn(
+                        'transition-all duration-300',
+                        highlightedUuid === convMsg.uuid && 'ring-2 ring-[var(--accent)] rounded-lg'
+                      )}
+                      ref={(el) => {
+                        if (el) messageRefs.current.set(convMsg.uuid, el)
+                      }}
+                    >
                       {/* Render text content first if present */}
-                      {msg.content && (
+                      {convMsg.content && (
                         <MessageBubble
                           role="assistant"
-                          content={msg.content}
-                          timestamp={msg.timestamp}
+                          content={convMsg.content}
+                          timestamp={convMsg.timestamp}
                         />
                       )}
                       {/* Render tool call cards */}
@@ -337,13 +379,13 @@ export function ConversationView({
                         <ToolCallCard
                           key={tool.id}
                           toolCall={tool}
-                          result={findToolResult(tool.id, msg.toolResults)}
+                          result={findToolResult(tool.id, convMsg.toolResults)}
                           isExpanded={expandedTools.has(tool.id)}
                           onToggle={() => toggleTool(tool.id)}
                         />
                       ))}
                       {/* Render sub-agent bubbles (Story 2b.3) */}
-                      {msg.subAgentBlocks?.map((subAgent) => (
+                      {convMsg.subAgentBlocks?.map((subAgent) => (
                         <SubAgentBubble
                           key={subAgent.id}
                           subAgent={subAgent}
@@ -353,9 +395,9 @@ export function ConversationView({
                         />
                       ))}
                       {/* Show timestamp for tool/agent-only messages (no text content) */}
-                      {!msg.content && (
+                      {!convMsg.content && (
                         <span className="text-xs text-[var(--text-muted)] ml-1">
-                          {formatMessageTimestamp(msg.timestamp)}
+                          {formatMessageTimestamp(convMsg.timestamp)}
                         </span>
                       )}
                     </div>
@@ -365,24 +407,24 @@ export function ConversationView({
                 // Regular message without tool blocks or sub-agents
                 return (
                   <div
-                    key={msg.uuid}
-                    data-message-uuid={msg.uuid}
+                    key={convMsg.uuid}
+                    data-message-uuid={convMsg.uuid}
                     className={cn(
                       'transition-all duration-300',
-                      highlightedUuid === msg.uuid && 'ring-2 ring-[var(--accent)] rounded-lg'
+                      highlightedUuid === convMsg.uuid && 'ring-2 ring-[var(--accent)] rounded-lg'
                     )}
                     ref={(el) => {
-                      if (el) messageRefs.current.set(msg.uuid, el)
+                      if (el) messageRefs.current.set(convMsg.uuid, el)
                     }}
                   >
                     <MessageBubble
-                      role={msg.role}
-                      content={msg.content}
-                      timestamp={msg.timestamp}
+                      role={convMsg.role}
+                      content={convMsg.content}
+                      timestamp={convMsg.timestamp}
                       messageIndex={index}
                       onRewind={
-                        msg.role === 'user' && onRewind
-                          ? () => handleRewindClick(msg.uuid)
+                        convMsg.role === 'user' && onRewind
+                          ? () => handleRewindClick(convMsg.uuid)
                           : undefined
                       }
                     />

@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { vi, describe, it, expect, beforeEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { MiddlePanelContent } from './MiddlePanelContent'
 
 // Mock useUIStore with different states for different tests
@@ -31,22 +31,37 @@ vi.mock('@renderer/features/sessions/hooks/useSendMessage', () => ({
   })
 }))
 
+// Mock useAbortSession hook (Story 3a-4)
+const mockAbort = vi.fn()
+vi.mock('@renderer/features/sessions/hooks/useAbortSession', () => ({
+  useAbortSession: () => ({
+    abort: mockAbort,
+    isAborting: false
+  })
+}))
+
 // Mock the session components
 vi.mock('@renderer/features/sessions/components', () => ({
   EmptyStateView: () => <div data-testid="empty-state">EmptyStateView</div>,
   NewSessionView: () => <div data-testid="new-session">NewSessionView</div>,
   ChatInput: ({
     onSend,
+    onAbort,
     disabled,
     placeholder,
     autoFocus,
-    hasMessages
+    hasMessages,
+    isWorking,
+    isAborting
   }: {
     onSend: (message: string) => void
+    onAbort?: () => void
     disabled?: boolean
     placeholder?: string
     autoFocus?: boolean
     hasMessages?: boolean
+    isWorking?: boolean
+    isAborting?: boolean
   }) => {
     // Derive placeholder same as real ChatInput component
     const displayPlaceholder =
@@ -60,10 +75,23 @@ vi.mock('@renderer/features/sessions/components', () => ({
           placeholder={displayPlaceholder}
           data-autofocus={autoFocus}
           data-has-messages={hasMessages}
+          data-is-working={isWorking}
+          data-is-aborting={isAborting}
         />
-        <button aria-label="Send message" disabled={disabled} onClick={() => onSend('test')}>
-          Send
-        </button>
+        {isWorking ? (
+          <button
+            aria-label="Stop generation"
+            disabled={isAborting}
+            onClick={() => onAbort?.()}
+            data-testid="abort-button"
+          >
+            Stop
+          </button>
+        ) : (
+          <button aria-label="Send message" disabled={disabled} onClick={() => onSend('test')}>
+            Send
+          </button>
+        )}
       </div>
     )
   },
@@ -99,6 +127,11 @@ vi.mock('@renderer/features/sessions/components', () => ({
 
 describe('MiddlePanelContent', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
+    mockAbort.mockClear()
+  })
+
+  afterEach(() => {
     vi.clearAllMocks()
   })
 
@@ -381,6 +414,111 @@ describe('MiddlePanelContent', () => {
       const textarea = screen.getByTestId('chat-input-textarea')
       // createMockMessages returns 2 messages, so hasMessages should be true
       expect(textarea).toHaveAttribute('data-has-messages', 'true')
+    })
+  })
+
+  // Story 3a-4: Escape key handler tests
+  describe('Escape key abort handler (Story 3a-4)', () => {
+    it('should call abort when Escape is pressed and sessionState is working', () => {
+      mockUseUIStore.mockReturnValue({
+        tabs: [
+          {
+            id: 'tab-1',
+            type: 'session',
+            title: 'Session',
+            sessionId: 'session-123',
+            sessionState: 'working'
+          }
+        ],
+        activeTabId: 'tab-1'
+      })
+      render(<MiddlePanelContent />)
+
+      fireEvent.keyDown(window, { key: 'Escape' })
+
+      expect(mockAbort).toHaveBeenCalledTimes(1)
+    })
+
+    it('should NOT call abort when Escape is pressed and sessionState is idle', () => {
+      mockUseUIStore.mockReturnValue({
+        tabs: [
+          {
+            id: 'tab-1',
+            type: 'session',
+            title: 'Session',
+            sessionId: 'session-123',
+            sessionState: 'idle'
+          }
+        ],
+        activeTabId: 'tab-1'
+      })
+      render(<MiddlePanelContent />)
+
+      fireEvent.keyDown(window, { key: 'Escape' })
+
+      expect(mockAbort).not.toHaveBeenCalled()
+    })
+
+    it('should NOT call abort when a different key is pressed', () => {
+      mockUseUIStore.mockReturnValue({
+        tabs: [
+          {
+            id: 'tab-1',
+            type: 'session',
+            title: 'Session',
+            sessionId: 'session-123',
+            sessionState: 'working'
+          }
+        ],
+        activeTabId: 'tab-1'
+      })
+      render(<MiddlePanelContent />)
+
+      fireEvent.keyDown(window, { key: 'Enter' })
+
+      expect(mockAbort).not.toHaveBeenCalled()
+    })
+
+    it('should NOT call abort when no sessionId exists', () => {
+      mockUseUIStore.mockReturnValue({
+        tabs: [
+          {
+            id: 'tab-1',
+            type: 'session',
+            title: 'New Session',
+            sessionId: null,
+            sessionState: 'working'
+          }
+        ],
+        activeTabId: 'tab-1'
+      })
+      render(<MiddlePanelContent />)
+
+      fireEvent.keyDown(window, { key: 'Escape' })
+
+      expect(mockAbort).not.toHaveBeenCalled()
+    })
+
+    it('should cleanup event listener on unmount', () => {
+      mockUseUIStore.mockReturnValue({
+        tabs: [
+          {
+            id: 'tab-1',
+            type: 'session',
+            title: 'Session',
+            sessionId: 'session-123',
+            sessionState: 'working'
+          }
+        ],
+        activeTabId: 'tab-1'
+      })
+      const { unmount } = render(<MiddlePanelContent />)
+
+      unmount()
+
+      // After unmount, pressing Escape should not call abort
+      fireEvent.keyDown(window, { key: 'Escape' })
+      expect(mockAbort).not.toHaveBeenCalled()
     })
   })
 })

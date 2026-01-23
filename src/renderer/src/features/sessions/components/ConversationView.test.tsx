@@ -1079,4 +1079,104 @@ describe('ConversationView', () => {
       expect(screen.queryByText('Rewind Conversation')).not.toBeInTheDocument()
     })
   })
+
+  // Story 3a-4: System message rendering tests
+  describe('System messages (Story 3a-4)', () => {
+    it('renders aborted system message with muted styling', () => {
+      const messagesWithAbort = [
+        { uuid: 'msg-1', role: 'user' as const, content: 'Hello', timestamp: 1737630000000 },
+        {
+          type: 'system' as const,
+          uuid: 'aborted-123',
+          content: 'Response generation was aborted',
+          timestamp: 1737630030000,
+          isError: false
+        }
+      ]
+
+      render(<ConversationView messages={messagesWithAbort} sessionId="test-session" />)
+
+      // Aborted message should be displayed
+      expect(screen.getByText('Response generation was aborted')).toBeInTheDocument()
+      // Should NOT have error styling (red)
+      const abortedSpan = screen.getByText('Response generation was aborted')
+      expect(abortedSpan).toHaveClass('italic')
+      expect(abortedSpan).not.toHaveClass('text-red-400')
+    })
+
+    it('renders error system message with red error styling', () => {
+      const messagesWithError = [
+        { uuid: 'msg-1', role: 'user' as const, content: 'Hello', timestamp: 1737630000000 },
+        {
+          type: 'system' as const,
+          uuid: 'error-123',
+          content: 'Something went wrong',
+          timestamp: 1737630030000,
+          isError: true
+        }
+      ]
+
+      render(<ConversationView messages={messagesWithError} sessionId="test-session" />)
+
+      // Error message should be displayed
+      expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+      // Should have error styling (red)
+      const errorSpan = screen.getByText('Something went wrong')
+      expect(errorSpan).toHaveClass('text-red-400')
+    })
+
+    it('renders system messages centered in the conversation', () => {
+      const messagesWithSystem = [
+        { uuid: 'msg-1', role: 'user' as const, content: 'Hello', timestamp: 1737630000000 },
+        {
+          type: 'system' as const,
+          uuid: 'aborted-123',
+          content: 'Response generation was aborted',
+          timestamp: 1737630030000,
+          isError: false
+        }
+      ]
+
+      const { container } = render(
+        <ConversationView messages={messagesWithSystem} sessionId="test-session" />
+      )
+
+      // System message container should have justify-center
+      const systemContainer = container.querySelector('[data-message-uuid="aborted-123"]')
+      expect(systemContainer).toHaveClass('justify-center')
+    })
+
+    it('renders user messages and system messages in order', () => {
+      const mixedMessages = [
+        {
+          uuid: 'msg-1',
+          role: 'user' as const,
+          content: 'First message',
+          timestamp: 1737630000000
+        },
+        { uuid: 'msg-2', role: 'assistant' as const, content: 'Reply', timestamp: 1737630010000 },
+        {
+          type: 'system' as const,
+          uuid: 'aborted-123',
+          content: 'Response generation was aborted',
+          timestamp: 1737630020000,
+          isError: false
+        },
+        {
+          uuid: 'msg-3',
+          role: 'user' as const,
+          content: 'Second message',
+          timestamp: 1737630030000
+        }
+      ]
+
+      render(<ConversationView messages={mixedMessages} sessionId="test-session" />)
+
+      // All messages should be rendered
+      expect(screen.getByText('First message')).toBeInTheDocument()
+      expect(screen.getByText('Reply')).toBeInTheDocument()
+      expect(screen.getByText('Response generation was aborted')).toBeInTheDocument()
+      expect(screen.getByText('Second message')).toBeInTheDocument()
+    })
+  })
 })

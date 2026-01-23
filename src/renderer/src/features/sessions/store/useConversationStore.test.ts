@@ -120,6 +120,45 @@ describe('useConversationStore', () => {
     })
   })
 
+  // Story 3a-4: Abort message tests
+  describe('addAbortedMessage', () => {
+    it('adds system aborted message to session', () => {
+      const { addAbortedMessage, getMessages } = useConversationStore.getState()
+
+      addAbortedMessage(sessionId)
+
+      const messages = getMessages(sessionId)
+      expect(messages).toHaveLength(1)
+      expect(messages[0]).toMatchObject({
+        type: 'system',
+        content: 'Response generation was aborted',
+        isError: false
+      })
+    })
+
+    it('generates unique UUID with aborted prefix', () => {
+      const { addAbortedMessage, getMessages } = useConversationStore.getState()
+
+      addAbortedMessage(sessionId)
+
+      const messages = getMessages(sessionId)
+      expect(messages[0].uuid).toMatch(/^aborted-/)
+    })
+
+    it('appends aborted message after existing messages', () => {
+      const { addOptimisticMessage, addAbortedMessage, getMessages } =
+        useConversationStore.getState()
+
+      addOptimisticMessage(sessionId, 'User message')
+      addAbortedMessage(sessionId)
+
+      const messages = getMessages(sessionId)
+      expect(messages).toHaveLength(2)
+      expect(messages[0].content).toBe('User message')
+      expect(messages[1].content).toBe('Response generation was aborted')
+    })
+  })
+
   describe('getMessages', () => {
     it('returns empty array for unknown session', () => {
       const { getMessages } = useConversationStore.getState()

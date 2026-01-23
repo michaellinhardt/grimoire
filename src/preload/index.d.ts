@@ -44,6 +44,8 @@ export interface GrimoireAPI {
       folderPath: string
       isNewSession?: boolean
     }) => Promise<{ success: boolean; error?: string }>
+    // Abort method (Story 3a-4)
+    abort: (data: { sessionId: string }) => Promise<{ success: boolean; error?: string }>
     // New methods (Story 2c.2) - Real-time metadata update event listener
     onMetadataUpdated: (callback: (data: SessionMetadata) => void) => () => void
     // Streaming event listeners (Story 3a-3)

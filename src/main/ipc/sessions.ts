@@ -13,7 +13,8 @@ import {
   SessionMetadataSchema,
   SessionMetadataUpsertSchema,
   RewindRequestSchema,
-  SendMessageSchema
+  SendMessageSchema,
+  AbortRequestSchema
 } from '../../shared/types/ipc'
 import { toSessionMetadata, type DBSessionMetadataRow } from '../sessions/session-metadata'
 import { processRegistry } from '../process-registry'
@@ -339,6 +340,47 @@ export function registerSessionsIPC(): void {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to send message'
       console.error('[sessions:sendMessage] Error:', errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // Abort running CC process (Story 3a-4)
+  ipcMain.handle('sessions:abort', async (_, data: unknown) => {
+    try {
+      const { sessionId } = AbortRequestSchema.parse(data)
+
+      const child = processRegistry.get(sessionId)
+      if (!child) {
+        // No active process - treat as success (idempotent)
+        return { success: true }
+      }
+
+      // Send SIGTERM for graceful shutdown
+      child.kill('SIGTERM')
+
+      // Wait up to 500ms for graceful exit
+      const exitPromise = new Promise<void>((resolve) => {
+        child.once('exit', () => resolve())
+      })
+
+      const timeoutPromise = new Promise<void>((resolve) => {
+        setTimeout(resolve, 500)
+      })
+
+      await Promise.race([exitPromise, timeoutPromise])
+
+      // Force kill if still running
+      if (!child.killed) {
+        child.kill('SIGKILL')
+      }
+
+      // Remove from registry
+      processRegistry.delete(sessionId)
+
+      return { success: true }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to abort process'
+      console.error('[sessions:abort] Error:', errorMessage)
       return { success: false, error: errorMessage }
     }
   })

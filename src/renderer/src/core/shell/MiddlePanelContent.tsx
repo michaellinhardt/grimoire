@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import type { ReactElement } from 'react'
 import { useUIStore } from '@renderer/shared/store/useUIStore'
 import {
@@ -7,6 +7,7 @@ import {
 } from '@renderer/features/sessions/store/useSessionStore'
 import { useConversationStore } from '@renderer/features/sessions/store/useConversationStore'
 import { useSendMessage } from '@renderer/features/sessions/hooks/useSendMessage'
+import { useAbortSession } from '@renderer/features/sessions/hooks/useAbortSession'
 import {
   ChatInput,
   EmptyStateView,
@@ -14,7 +15,6 @@ import {
   ConversationView,
   createMockMessages
 } from '@renderer/features/sessions/components'
-import type { ConversationMessage } from '@renderer/features/sessions/components/types'
 
 export function MiddlePanelContent(): ReactElement {
   const { tabs, activeTabId } = useUIStore()
@@ -45,6 +45,26 @@ export function MiddlePanelContent(): ReactElement {
     folderPath: session?.folderPath
   })
 
+  // Setup abort session hook (Story 3a-4)
+  const { abort, isAborting } = useAbortSession(activeTab?.sessionId ?? null, activeTab?.id ?? '')
+
+  // Escape key handler for abort (Story 3a-4)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (
+        e.key === 'Escape' &&
+        activeTab?.sessionState === 'working' &&
+        !isAborting &&
+        activeTab?.sessionId
+      ) {
+        abort()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activeTab?.sessionState, activeTab?.sessionId, isAborting, abort])
+
   // No tabs open - show empty state with New Session button
   if (!activeTab) {
     return <EmptyStateView />
@@ -65,7 +85,7 @@ export function MiddlePanelContent(): ReactElement {
       {/* ConversationView fills remaining space - min-h-0 critical for flex overflow */}
       <div className="flex-1 min-h-0">
         <ConversationView
-          messages={displayMessages as ConversationMessage[]}
+          messages={displayMessages}
           sessionId={activeTab.sessionId}
           sessionState={activeTab.sessionState}
         />
@@ -75,9 +95,12 @@ export function MiddlePanelContent(): ReactElement {
       {!isSubAgentTab && (
         <ChatInput
           onSend={sendMessage}
+          onAbort={abort}
           autoFocus={false}
           hasMessages={displayMessages.length > 0}
           disabled={activeTab.sessionState === 'working'}
+          isWorking={activeTab.sessionState === 'working'}
+          isAborting={isAborting}
         />
       )}
     </div>

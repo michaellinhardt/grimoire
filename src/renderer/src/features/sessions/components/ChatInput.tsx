@@ -7,12 +7,14 @@ import {
   type KeyboardEvent,
   type ChangeEvent
 } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Square, Loader2 } from 'lucide-react'
 import { cn } from '@renderer/shared/utils/cn'
 
 export interface ChatInputProps {
   /** Callback when user sends a message */
   onSend: (message: string) => void
+  /** Callback when abort button clicked (Story 3a-4) */
+  onAbort?: () => void
   /** Disable input during processing */
   disabled?: boolean
   /** Custom placeholder text (derived from hasMessages by default) */
@@ -21,6 +23,10 @@ export interface ChatInputProps {
   autoFocus?: boolean
   /** Whether session has existing messages (for placeholder logic) */
   hasMessages?: boolean
+  /** Whether session is currently working (shows abort button) (Story 3a-4) */
+  isWorking?: boolean
+  /** Whether abort is in progress (Story 3a-4) */
+  isAborting?: boolean
 }
 
 /**
@@ -35,10 +41,13 @@ export interface ChatInputProps {
  */
 export function ChatInput({
   onSend,
+  onAbort,
   disabled = false,
   placeholder,
   autoFocus = false,
-  hasMessages = false
+  hasMessages = false,
+  isWorking = false,
+  isAborting = false
 }: ChatInputProps): ReactElement {
   const [value, setValue] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -126,20 +135,43 @@ export function ChatInput({
         )}
         aria-label="Message input"
       />
-      <button
-        type="button"
-        onClick={handleSend}
-        disabled={!canSend}
-        className={cn(
-          'p-2 rounded-[var(--radius-sm)] bg-[var(--accent)] text-white',
-          'hover:bg-[var(--accent)]/80 transition-colors',
-          'focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2',
-          'disabled:opacity-50 disabled:cursor-not-allowed'
-        )}
-        aria-label="Send message"
-      >
-        <Send className="w-4 h-4" />
-      </button>
+      {isWorking ? (
+        <button
+          type="button"
+          onClick={onAbort}
+          disabled={isAborting || !onAbort}
+          title="Stop generation (Esc)"
+          className={cn(
+            'p-2 rounded-[var(--radius-sm)]',
+            'bg-red-500/90 text-white',
+            'hover:bg-red-600 transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
+          aria-label="Stop generation"
+        >
+          {isAborting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Square className="w-4 h-4 fill-current" />
+          )}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={!canSend}
+          className={cn(
+            'p-2 rounded-[var(--radius-sm)] bg-[var(--accent)] text-white',
+            'hover:bg-[var(--accent)]/80 transition-colors',
+            'focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
+          aria-label="Send message"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      )}
     </div>
   )
 }

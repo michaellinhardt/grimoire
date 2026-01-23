@@ -85,6 +85,7 @@ beforeEach(() => {
       upsertMetadata: mockUpsertMetadata,
       rewind: mockRewind,
       sendMessage: mockSendMessage,
+      abort: vi.fn().mockResolvedValue({ success: true }),
       onMetadataUpdated: mockOnMetadataUpdated,
       onStreamChunk: vi.fn(() => vi.fn()),
       onStreamTool: vi.fn(() => vi.fn()),

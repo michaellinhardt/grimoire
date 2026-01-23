@@ -238,4 +238,39 @@ describe('ChatInput', () => {
       expect(document.activeElement).not.toBe(textarea)
     })
   })
+
+  // Story 3a-4: Abort button tests
+  describe('abort button', () => {
+    it('shows abort button when isWorking is true', () => {
+      render(<ChatInput onSend={mockOnSend} onAbort={vi.fn()} isWorking={true} />)
+      expect(screen.getByRole('button', { name: /stop generation/i })).toBeInTheDocument()
+    })
+
+    it('shows send button when isWorking is false', () => {
+      render(<ChatInput onSend={mockOnSend} onAbort={vi.fn()} isWorking={false} />)
+      expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument()
+    })
+
+    it('calls onAbort when abort button clicked', () => {
+      const handleAbort = vi.fn()
+      render(<ChatInput onSend={mockOnSend} onAbort={handleAbort} isWorking={true} />)
+
+      fireEvent.click(screen.getByRole('button', { name: /stop generation/i }))
+
+      expect(handleAbort).toHaveBeenCalledTimes(1)
+    })
+
+    it('shows spinner when isAborting is true', () => {
+      const { container } = render(
+        <ChatInput onSend={mockOnSend} onAbort={vi.fn()} isWorking={true} isAborting={true} />
+      )
+      const spinner = container.querySelector('.animate-spin')
+      expect(spinner).toBeInTheDocument()
+    })
+
+    it('disables abort button when isAborting is true', () => {
+      render(<ChatInput onSend={mockOnSend} onAbort={vi.fn()} isWorking={true} isAborting={true} />)
+      expect(screen.getByRole('button', { name: /stop generation/i })).toBeDisabled()
+    })
+  })
 })
