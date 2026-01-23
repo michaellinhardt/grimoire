@@ -90,7 +90,11 @@ beforeEach(() => {
       onStreamChunk: vi.fn(() => vi.fn()),
       onStreamTool: vi.fn(() => vi.fn()),
       onStreamEnd: vi.fn(() => vi.fn()),
-      onStreamInit: vi.fn(() => vi.fn())
+      onStreamInit: vi.fn(() => vi.fn()),
+      getInstanceState: vi.fn().mockResolvedValue({ state: 'idle' }),
+      acknowledgeError: vi.fn().mockResolvedValue({ success: true, newState: 'idle' }),
+      onInstanceStateChanged: vi.fn(() => vi.fn()),
+      hasActiveProcess: vi.fn().mockResolvedValue({ active: false })
     },
     dialog: {
       selectFolder: mockSelectFolder

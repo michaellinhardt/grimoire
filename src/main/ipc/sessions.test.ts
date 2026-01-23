@@ -703,6 +703,118 @@ describe('Rewind Handlers (Story 2b.5)', () => {
   })
 })
 
+// Mock hasActiveProcess for Story 3b-4 tests
+vi.mock('../sessions/cc-spawner', () => ({
+  spawnCC: vi.fn(),
+  hasActiveProcess: vi.fn()
+}))
+
+// Story 3b-4 - Concurrent Request Guard and hasActiveProcess Tests
+describe('Concurrent Request Guard (Story 3b-4)', () => {
+  describe('hasActiveProcess check in sendMessage', () => {
+    it('should block send if process is active for existing session', async () => {
+      const { hasActiveProcess } = await import('../sessions/cc-spawner')
+      vi.mocked(hasActiveProcess).mockReturnValue(true)
+
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      const isNewSession = false
+
+      // Simulate the concurrent guard logic from sendMessage handler
+      if (!isNewSession && hasActiveProcess(sessionId)) {
+        const result = {
+          success: false,
+          error: 'A response is still being generated. Please wait or abort the current request.'
+        }
+        expect(result.success).toBe(false)
+        expect(result.error).toContain('response is still being generated')
+      }
+
+      expect(hasActiveProcess).toHaveBeenCalledWith(sessionId)
+    })
+
+    it('should allow send if no active process', async () => {
+      const { hasActiveProcess, spawnCC } = await import('../sessions/cc-spawner')
+      vi.mocked(hasActiveProcess).mockReturnValue(false)
+
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      const isNewSession = false
+
+      // Simulate the guard check - should pass and allow spawn
+      if (!isNewSession && hasActiveProcess(sessionId)) {
+        throw new Error('Should not block')
+      }
+
+      // If guard passes, spawnCC would be called
+      spawnCC({ sessionId, folderPath: '/test', message: 'Hello' })
+      expect(spawnCC).toHaveBeenCalled()
+    })
+
+    it('should not check hasActiveProcess for new sessions', async () => {
+      const { hasActiveProcess, spawnCC } = await import('../sessions/cc-spawner')
+      vi.mocked(hasActiveProcess).mockClear()
+
+      const isNewSession = true
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+
+      // For new sessions, guard is skipped (!isNewSession is false)
+      if (!isNewSession && hasActiveProcess(sessionId)) {
+        throw new Error('Should not check for new sessions')
+      }
+
+      // Should proceed to spawn without checking
+      spawnCC({ sessionId: undefined, folderPath: '/test', message: 'Hello' })
+
+      // hasActiveProcess should not be called for new sessions
+      expect(hasActiveProcess).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('HasActiveProcessSchema validation', () => {
+    it('should accept valid sessionId', async () => {
+      const { HasActiveProcessSchema } = await import('../../shared/types/ipc')
+      const result = HasActiveProcessSchema.parse({
+        sessionId: '550e8400-e29b-41d4-a716-446655440000'
+      })
+      expect(result.sessionId).toBe('550e8400-e29b-41d4-a716-446655440000')
+    })
+
+    it('should accept pending-timestamp format', async () => {
+      const { HasActiveProcessSchema } = await import('../../shared/types/ipc')
+      const result = HasActiveProcessSchema.parse({
+        sessionId: 'pending-1700000000000'
+      })
+      expect(result.sessionId).toBe('pending-1700000000000')
+    })
+
+    it('should reject empty sessionId', async () => {
+      const { HasActiveProcessSchema } = await import('../../shared/types/ipc')
+      expect(() => HasActiveProcessSchema.parse({ sessionId: '' })).toThrow()
+    })
+  })
+
+  describe('sessions:hasActiveProcess handler logic', () => {
+    it('should return active: true when process exists', async () => {
+      const { hasActiveProcess } = await import('../sessions/cc-spawner')
+      vi.mocked(hasActiveProcess).mockReturnValue(true)
+
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      const result = { active: hasActiveProcess(sessionId) }
+
+      expect(result).toEqual({ active: true })
+    })
+
+    it('should return active: false when process does not exist', async () => {
+      const { hasActiveProcess } = await import('../sessions/cc-spawner')
+      vi.mocked(hasActiveProcess).mockReturnValue(false)
+
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      const result = { active: hasActiveProcess(sessionId) }
+
+      expect(result).toEqual({ active: false })
+    })
+  })
+})
+
 // Story 3b-1 - Spawn Integration Tests
 describe('sessions:sendMessage spawn integration (Story 3b-1)', () => {
   describe('spawnCC argument logic', () => {

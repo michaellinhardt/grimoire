@@ -11,6 +11,9 @@ export function SessionList(): ReactElement {
   const { sessions, isLoading, loadSessions } = useSessionStore()
   const { focusOrOpenSession, tabs, activeTabId, showArchived } = useUIStore()
   const [activeProcesses, setActiveProcesses] = useState<string[]>([])
+  const [sessionStates, setSessionStates] = useState<Map<string, 'idle' | 'working' | 'error'>>(
+    new Map()
+  )
 
   // Load sessions on mount
   useEffect(() => {
@@ -35,6 +38,18 @@ export function SessionList(): ReactElement {
     }, 2000)
     return () => clearInterval(poll)
   }, []) // Intentionally empty - see comment above
+
+  // Subscribe to instance state changes to track error states
+  useEffect(() => {
+    const unsubscribe = window.grimoireAPI.sessions.onInstanceStateChanged((event) => {
+      setSessionStates((prev) => {
+        const updated = new Map(prev)
+        updated.set(event.sessionId, event.state)
+        return updated
+      })
+    })
+    return unsubscribe
+  }, [])
 
   // Filter sessions: show non-hidden, and include archived only if toggle is on
   const visibleSessions = sessions.filter((s) => !s.isHidden && (showArchived || !s.archived))
@@ -98,6 +113,7 @@ export function SessionList(): ReactElement {
               session={session}
               isActive={isSessionActive(session.id)}
               isWorking={activeProcesses.includes(session.id)}
+              isError={sessionStates.get(session.id) === 'error'}
               onClick={() => handleSessionClick(session)}
               onArchive={() => handleArchive(session.id)}
               onUnarchive={() => handleUnarchive(session.id)}

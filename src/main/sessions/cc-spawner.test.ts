@@ -3,9 +3,13 @@ import type { ChildProcess } from 'child_process'
 import { EventEmitter, Readable, Writable } from 'stream'
 
 // Hoisted mock functions
-const { spawnMock, mockProcessRegistry } = vi.hoisted(() => ({
+const { spawnMock, mockProcessRegistry, mockInstanceStateManager } = vi.hoisted(() => ({
   spawnMock: vi.fn(),
-  mockProcessRegistry: new Map()
+  mockProcessRegistry: new Map(),
+  mockInstanceStateManager: {
+    transition: vi.fn().mockReturnValue('working'),
+    transferState: vi.fn()
+  }
 }))
 
 // Mock child_process - need to provide all used exports
@@ -30,9 +34,14 @@ vi.mock('../process-registry', () => ({
   processRegistry: mockProcessRegistry
 }))
 
+// Mock instance-state-manager (Story 3b-3)
+vi.mock('./instance-state-manager', () => ({
+  instanceStateManager: mockInstanceStateManager
+}))
+
 import { BrowserWindow } from 'electron'
 import { processRegistry } from '../process-registry'
-import { spawnCC } from './cc-spawner'
+import { spawnCC, hasActiveProcess } from './cc-spawner'
 
 // Reference to spawn mock for assertions
 const spawn = spawnMock
@@ -200,8 +209,14 @@ describe('cc-spawner', () => {
     it('handles stdin write errors gracefully', () => {
       spawnCC({ folderPath: '/test/path', message: 'Hello' })
 
+      // Get the pending key from the SEND_MESSAGE transition call
+      const pendingKey = mockInstanceStateManager.transition.mock.calls[0][0]
+
       // Simulate stdin error
       mockStdin.emit('error', new Error('Write failed'))
+
+      // Should transition to error state
+      expect(mockInstanceStateManager.transition).toHaveBeenCalledWith(pendingKey, 'PROCESS_ERROR')
 
       // Should emit stream:end with error
       expect(mockWindow.webContents.send).toHaveBeenCalledWith(
@@ -461,6 +476,154 @@ describe('cc-spawner', () => {
         (c) => c[0] === 'stream:end' && c[1].success === false
       )
       expect(call?.[1]?.error).toMatch(/\.\.\. \(truncated\)/)
+    })
+  })
+
+  describe('instance state manager integration', () => {
+    beforeEach(() => {
+      mockInstanceStateManager.transition.mockClear()
+      mockInstanceStateManager.transferState.mockClear()
+    })
+
+    it('transitions to working on spawn', () => {
+      spawnCC({ folderPath: '/test/path', message: 'Hello' })
+
+      expect(mockInstanceStateManager.transition).toHaveBeenCalledWith(
+        expect.stringMatching(/^pending-\d+$/),
+        'SEND_MESSAGE'
+      )
+    })
+
+    it('transitions to working with sessionId for existing sessions', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      spawnCC({ sessionId, folderPath: '/test/path', message: 'Hello' })
+
+      expect(mockInstanceStateManager.transition).toHaveBeenCalledWith(sessionId, 'SEND_MESSAGE')
+    })
+
+    it('transitions to idle on successful exit', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      spawnCC({ sessionId, folderPath: '/test/path', message: 'Hello' })
+
+      mockChildProcess.emit('exit', 0, null)
+
+      expect(mockInstanceStateManager.transition).toHaveBeenCalledWith(sessionId, 'PROCESS_EXIT')
+    })
+
+    it('transitions to error on non-zero exit', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      spawnCC({ sessionId, folderPath: '/test/path', message: 'Hello' })
+
+      mockChildProcess.emit('exit', 1, null)
+
+      expect(mockInstanceStateManager.transition).toHaveBeenCalledWith(sessionId, 'PROCESS_ERROR')
+    })
+
+    it('transitions to error on spawn error', () => {
+      spawnCC({ folderPath: '/test/path', message: 'Hello' })
+
+      mockChildProcess.emit('error', new Error('Spawn failed'))
+
+      expect(mockInstanceStateManager.transition).toHaveBeenCalledWith(
+        expect.stringMatching(/^pending-\d+$/),
+        'PROCESS_ERROR'
+      )
+    })
+
+    it('transfers state on new session ID capture', async () => {
+      spawnCC({ folderPath: '/test/path', message: 'Hello' })
+
+      // Get the pending key used
+      const pendingKey = mockInstanceStateManager.transition.mock.calls[0][0]
+
+      // Simulate init event
+      const initEvent = JSON.stringify({
+        type: 'system',
+        subtype: 'init',
+        session_id: 'captured-session-id',
+        tools: []
+      })
+
+      mockStdout.push(initEvent + '\n')
+      mockStdout.push(null)
+
+      await new Promise((resolve) => setImmediate(resolve))
+
+      expect(mockInstanceStateManager.transferState).toHaveBeenCalledWith(
+        pendingKey,
+        'captured-session-id'
+      )
+    })
+  })
+
+  // Story 3b-4: hasActiveProcess tests
+  describe('hasActiveProcess helper (Story 3b-4)', () => {
+    it('returns true when process is in registry', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      spawnCC({ sessionId, folderPath: '/test/path', message: 'Hello' })
+
+      expect(hasActiveProcess(sessionId)).toBe(true)
+    })
+
+    it('returns false when process is not in registry', () => {
+      expect(hasActiveProcess('nonexistent-session')).toBe(false)
+    })
+
+    it('returns false after process exits', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      spawnCC({ sessionId, folderPath: '/test/path', message: 'Hello' })
+
+      expect(hasActiveProcess(sessionId)).toBe(true)
+
+      mockChildProcess.emit('exit', 0, null)
+
+      expect(hasActiveProcess(sessionId)).toBe(false)
+    })
+
+    it('returns false after process errors', () => {
+      spawnCC({ folderPath: '/test/path', message: 'Hello' })
+
+      const pendingKey = Array.from(processRegistry.keys())[0]
+      expect(hasActiveProcess(pendingKey)).toBe(true)
+
+      mockChildProcess.emit('error', new Error('Spawn failed'))
+
+      expect(hasActiveProcess(pendingKey)).toBe(false)
+    })
+  })
+
+  // Story 3b-4: Registry accuracy on all exit paths
+  describe('processRegistry accuracy on all exit paths (Story 3b-4)', () => {
+    it('clears registry on SIGTERM exit', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      spawnCC({ sessionId, folderPath: '/test/path', message: 'Hello' })
+
+      expect(processRegistry.has(sessionId)).toBe(true)
+
+      // Simulate SIGTERM exit (aborted)
+      mockChildProcess.emit('exit', null, 'SIGTERM')
+
+      expect(processRegistry.has(sessionId)).toBe(false)
+    })
+
+    it('clears registry on SIGKILL exit', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      spawnCC({ sessionId, folderPath: '/test/path', message: 'Hello' })
+
+      mockChildProcess.emit('exit', null, 'SIGKILL')
+
+      expect(processRegistry.has(sessionId)).toBe(false)
+    })
+
+    it('clears registry on stdin write error', () => {
+      spawnCC({ folderPath: '/test/path', message: 'Hello' })
+
+      const key = Array.from(processRegistry.keys())[0]
+      expect(processRegistry.has(key)).toBe(true)
+
+      mockStdin.emit('error', new Error('Write failed'))
+
+      expect(processRegistry.has(key)).toBe(false)
     })
   })
 })

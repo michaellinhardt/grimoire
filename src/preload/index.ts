@@ -141,7 +141,35 @@ const grimoireAPI = {
       ): void => callback(data)
       ipcRenderer.on('stream:init', handler)
       return () => ipcRenderer.removeListener('stream:init', handler)
-    }
+    },
+    // Instance state methods (Story 3b-3)
+    getInstanceState: (sessionId: string): Promise<{ state: 'idle' | 'working' | 'error' }> =>
+      ipcRenderer.invoke('instance:getState', { sessionId }),
+    acknowledgeError: (
+      sessionId: string
+    ): Promise<{ success: boolean; newState: 'idle' | 'working' | 'error' }> =>
+      ipcRenderer.invoke('instance:acknowledgeError', { sessionId }),
+    onInstanceStateChanged: (
+      callback: (event: {
+        sessionId: string
+        state: 'idle' | 'working' | 'error'
+        previousState: 'idle' | 'working' | 'error'
+      }) => void
+    ): (() => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        data: {
+          sessionId: string
+          state: 'idle' | 'working' | 'error'
+          previousState: 'idle' | 'working' | 'error'
+        }
+      ): void => callback(data)
+      ipcRenderer.on('instance:stateChanged', handler)
+      return () => ipcRenderer.removeListener('instance:stateChanged', handler)
+    },
+    // Check if session has active process (Story 3b-4)
+    hasActiveProcess: (sessionId: string): Promise<{ active: boolean }> =>
+      ipcRenderer.invoke('sessions:hasActiveProcess', { sessionId })
   },
   // New namespace (Story 2a.3)
   dialog: {

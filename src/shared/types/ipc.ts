@@ -309,3 +309,77 @@ export const AbortResponseSchema = z.object({
 })
 
 export type AbortResponse = z.infer<typeof AbortResponseSchema>
+
+// ============================================================
+// Instance State Schemas (Story 3b-3)
+// ============================================================
+
+/**
+ * Request schema for getting instance state.
+ */
+export const GetInstanceStateSchema = z.object({
+  sessionId: z.string().min(1) // Can be pending-{timestamp} for new sessions
+})
+
+export type GetInstanceStateRequest = z.infer<typeof GetInstanceStateSchema>
+
+/**
+ * Response schema for instance state query.
+ */
+export const GetInstanceStateResponseSchema = z.object({
+  state: z.enum(['idle', 'working', 'error'])
+})
+
+export type GetInstanceStateResponse = z.infer<typeof GetInstanceStateResponseSchema>
+
+/**
+ * Request schema for acknowledging an error.
+ */
+export const AcknowledgeErrorSchema = z.object({
+  sessionId: z.string().min(1)
+})
+
+export type AcknowledgeErrorRequest = z.infer<typeof AcknowledgeErrorSchema>
+
+/**
+ * Response schema for error acknowledgement.
+ */
+export const AcknowledgeErrorResponseSchema = z.object({
+  success: z.boolean(),
+  newState: z.enum(['idle', 'working', 'error'])
+})
+
+export type AcknowledgeErrorResponse = z.infer<typeof AcknowledgeErrorResponseSchema>
+
+/**
+ * Instance state changed event schema.
+ */
+export const InstanceStateChangedEventSchema = z.object({
+  sessionId: z.string().min(1),
+  state: z.enum(['idle', 'working', 'error']),
+  previousState: z.enum(['idle', 'working', 'error'])
+})
+
+export type InstanceStateChangedEvent = z.infer<typeof InstanceStateChangedEventSchema>
+
+// ============================================================
+// Process Registry Schemas (Story 3b-4)
+// ============================================================
+
+/**
+ * Request schema for checking if a session has an active process.
+ */
+export const HasActiveProcessSchema = z.object({
+  sessionId: z.string().min(1) // Can be pending-{timestamp} for new sessions
+})
+
+export type HasActiveProcessRequest = z.infer<typeof HasActiveProcessSchema>
+
+/**
+ * Response schema for hasActiveProcess query.
+ */
+export const HasActiveProcessResponseSchema = z.object({
+  active: z.boolean()
+})
+
+export type HasActiveProcessResponse = z.infer<typeof HasActiveProcessResponseSchema>

@@ -50,6 +50,7 @@ const mockUpdateLastAccessed = vi.fn().mockResolvedValue({ success: true })
 const mockGetActiveProcesses = vi.fn().mockResolvedValue([])
 const mockArchive = vi.fn().mockResolvedValue({ success: true })
 const mockUnarchive = vi.fn().mockResolvedValue({ success: true })
+const mockOnInstanceStateChanged = vi.fn(() => vi.fn()) // Returns cleanup function
 
 Object.defineProperty(window, 'grimoireAPI', {
   value: {
@@ -57,7 +58,8 @@ Object.defineProperty(window, 'grimoireAPI', {
       updateLastAccessed: mockUpdateLastAccessed,
       getActiveProcesses: mockGetActiveProcesses,
       archive: mockArchive,
-      unarchive: mockUnarchive
+      unarchive: mockUnarchive,
+      onInstanceStateChanged: mockOnInstanceStateChanged
     }
   },
   writable: true

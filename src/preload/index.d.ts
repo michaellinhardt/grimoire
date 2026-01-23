@@ -72,6 +72,20 @@ export interface GrimoireAPI {
     onStreamInit: (
       callback: (event: { sessionId: string; tools?: unknown[] }) => void
     ) => () => void
+    // Instance state methods (Story 3b-3)
+    getInstanceState: (sessionId: string) => Promise<{ state: 'idle' | 'working' | 'error' }>
+    acknowledgeError: (
+      sessionId: string
+    ) => Promise<{ success: boolean; newState: 'idle' | 'working' | 'error' }>
+    onInstanceStateChanged: (
+      callback: (event: {
+        sessionId: string
+        state: 'idle' | 'working' | 'error'
+        previousState: 'idle' | 'working' | 'error'
+      }) => void
+    ) => () => void
+    // Check if session has active process (Story 3b-4)
+    hasActiveProcess: (sessionId: string) => Promise<{ active: boolean }>
   }
   dialog: {
     selectFolder: () => Promise<{ canceled: boolean; folderPath: string | null }>

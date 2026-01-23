@@ -181,3 +181,31 @@ export type ParsedStreamEvent =
   | ParsedAssistantEvent
   | ParsedToolResultEvent
   | ParsedResultEvent
+
+// ============================================================
+// Instance State Machine Types (Story 3b-3)
+// ============================================================
+
+/**
+ * Session instance lifecycle states.
+ * Matches SessionState in renderer for consistency.
+ */
+export type InstanceState = 'idle' | 'working' | 'error'
+
+/**
+ * State transition events.
+ */
+export type StateEvent =
+  | 'SEND_MESSAGE' // User sends message -> spawns CC
+  | 'PROCESS_EXIT' // CC exits normally
+  | 'PROCESS_ERROR' // CC exits with error or spawn fails
+  | 'ACKNOWLEDGE_ERROR' // User dismisses error
+
+/**
+ * Payload for instance:stateChanged IPC event.
+ */
+export interface InstanceStateChangedEvent {
+  sessionId: string
+  state: InstanceState
+  previousState: InstanceState
+}

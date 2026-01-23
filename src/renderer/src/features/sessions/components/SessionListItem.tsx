@@ -17,6 +17,7 @@ interface SessionListItemProps {
   session: SessionWithExists
   isActive: boolean
   isWorking: boolean
+  isError?: boolean
   onClick: () => void
   onArchive: () => void
   onUnarchive: () => void
@@ -26,6 +27,7 @@ export function SessionListItem({
   session,
   isActive,
   isWorking,
+  isError = false,
   onClick,
   onArchive,
   onUnarchive
@@ -56,6 +58,7 @@ export function SessionListItem({
             'focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-inset',
             isActive && 'bg-[var(--accent-muted)] border border-[var(--accent)]',
             isWorking && 'border-l-2 border-l-[var(--success)]',
+            isError && 'border-l-2 border-l-[var(--error)]',
             !session.exists && 'opacity-75',
             session.archived && 'opacity-60'
           )}
@@ -75,6 +78,12 @@ export function SessionListItem({
                 />
                 <span className="text-[var(--success)] text-xs animate-pulse">...</span>
               </span>
+            )}
+            {isError && (
+              <AlertTriangle
+                className="w-4 h-4 text-[var(--error)] flex-shrink-0"
+                aria-label="Session has error"
+              />
             )}
             {!session.exists && (
               <AlertTriangle

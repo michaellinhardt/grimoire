@@ -31,7 +31,7 @@ export function useSendMessage({
   tabId,
   folderPath: folderPathOverride
 }: UseSendMessageOptions): UseSendMessageResult {
-  const { updateTabSessionState, updateTabSessionId } = useUIStore()
+  const { updateTabSessionId } = useUIStore()
   const { addOptimisticMessage, confirmMessage, markMessageFailed, addErrorMessage } =
     useConversationStore()
   const { sessions } = useSessionStore()
@@ -85,11 +85,12 @@ export function useSendMessage({
       // 1. Add optimistic message
       const { messageId } = addOptimisticMessage(actualSessionId, trimmed)
 
-      // 2. Update session state to 'working'
-      updateTabSessionState(tabId, 'working')
+      // Note: State transition to 'working' is now handled by InstanceStateManager
+      // in cc-spawner when the process spawns. We subscribe via useInstanceState.
+      // DO NOT set state here - let the event-driven flow handle it.
 
       try {
-        // 4. Call IPC to send message
+        // 2. Call IPC to send message
         const result = await window.grimoireAPI.sessions.sendMessage({
           sessionId: actualSessionId,
           message,
@@ -98,32 +99,31 @@ export function useSendMessage({
         })
 
         if (result.success) {
-          // 5. Confirm the optimistic message
+          // 3. Confirm the optimistic message
           confirmMessage(actualSessionId, messageId)
-          // 5b. For new sessions, update tab with persisted sessionId AFTER IPC success
+          // 3b. For new sessions, update tab with persisted sessionId AFTER IPC success
           if (isNewSession) {
             updateTabSessionId(tabId, actualSessionId)
           }
-          // Note: State will be updated to 'idle' when response completes (Story 3a-3)
-          // For now, simulate completion
-          updateTabSessionState(tabId, 'idle')
+          // Note: State transitions (working -> idle/error) are handled by
+          // InstanceStateManager via instance:stateChanged events (Story 3b-3)
         } else {
-          // 6. Handle failure
+          // 4. Handle failure
           markMessageFailed(actualSessionId, messageId)
           addErrorMessage(
             actualSessionId,
             `Failed to send message: ${result.error ?? 'Unknown error'}`
           )
-          updateTabSessionState(tabId, 'error')
-          // Note: Story 3a-3 will handle transition back to 'idle' when user acknowledges error
+          // Note: State transition to 'error' is handled by InstanceStateManager
+          // via PROCESS_ERROR event when spawn fails (Story 3b-3)
         }
       } catch (error) {
-        // 7. Handle unexpected errors
+        // 5. Handle unexpected errors
         const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
         markMessageFailed(actualSessionId, messageId)
         addErrorMessage(actualSessionId, `Error: ${errorMessage}`)
-        updateTabSessionState(tabId, 'error')
-        // Note: Story 3a-3 will handle transition back to 'idle' when user acknowledges error
+        // Note: State transition to 'error' is handled by InstanceStateManager
+        // via PROCESS_ERROR event (Story 3b-3)
       }
     },
     [
@@ -131,7 +131,6 @@ export function useSendMessage({
       tabId,
       folderPathOverride,
       sessions,
-      updateTabSessionState,
       updateTabSessionId,
       addOptimisticMessage,
       confirmMessage,

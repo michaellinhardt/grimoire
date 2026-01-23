@@ -127,7 +127,7 @@ describe('useSendMessage', () => {
       })
     })
 
-    it('updates session state to working during send', async () => {
+    it('does not directly update session state - handled by InstanceStateManager events (Story 3b-3)', async () => {
       let resolvePromise: () => void
       mockSendMessage.mockReturnValue(
         new Promise((resolve) => {
@@ -141,18 +141,17 @@ describe('useSendMessage', () => {
         void result.current.sendMessage('Hello')
       })
 
-      // Check state is 'working' during send
-      await waitFor(() => {
-        const tab = useUIStore.getState().tabs.find((t) => t.id === tabId)
-        expect(tab?.sessionState).toBe('working')
-      })
+      // State should remain 'idle' - the hook no longer directly updates state.
+      // State transitions are now handled by InstanceStateManager via IPC events (Story 3b-3).
+      const tabDuringSend = useUIStore.getState().tabs.find((t) => t.id === tabId)
+      expect(tabDuringSend?.sessionState).toBe('idle')
 
       // Resolve the promise
       act(() => {
         resolvePromise!()
       })
 
-      // State returns to idle
+      // State still idle - transitions are event-driven, not direct
       await waitFor(() => {
         const tab = useUIStore.getState().tabs.find((t) => t.id === tabId)
         expect(tab?.sessionState).toBe('idle')
@@ -177,7 +176,7 @@ describe('useSendMessage', () => {
       expect(messages[1].content).toContain('Connection failed')
     })
 
-    it('sets state to error on failure (held until Story 3a-3)', async () => {
+    it('does not directly set error state - handled by InstanceStateManager events (Story 3b-3)', async () => {
       mockSendMessage.mockResolvedValue({
         success: false,
         error: 'Failed'
@@ -189,9 +188,10 @@ describe('useSendMessage', () => {
         await result.current.sendMessage('Hello')
       })
 
-      // State should remain in error state (will be transitioned back to idle by Story 3a-3)
+      // State should remain idle - the hook no longer directly updates state.
+      // Error state transitions are handled by InstanceStateManager via PROCESS_ERROR event (Story 3b-3).
       const tab = useUIStore.getState().tabs.find((t) => t.id === tabId)
-      expect(tab?.sessionState).toBe('error')
+      expect(tab?.sessionState).toBe('idle')
     })
   })
 

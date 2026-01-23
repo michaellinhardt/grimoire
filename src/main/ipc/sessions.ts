@@ -14,12 +14,16 @@ import {
   SessionMetadataUpsertSchema,
   RewindRequestSchema,
   SendMessageSchema,
-  AbortRequestSchema
+  AbortRequestSchema,
+  GetInstanceStateSchema,
+  AcknowledgeErrorSchema,
+  HasActiveProcessSchema
 } from '../../shared/types/ipc'
 import { toSessionMetadata, type DBSessionMetadataRow } from '../sessions/session-metadata'
 import { processRegistry } from '../process-registry'
 import { scanClaudeConfigDir, syncSessionsToDatabase, listSessions } from '../sessions'
-import { spawnCC } from '../sessions/cc-spawner'
+import { spawnCC, hasActiveProcess } from '../sessions/cc-spawner'
+import { instanceStateManager } from '../sessions/instance-state-manager'
 import { getDatabase } from '../db'
 
 export function registerSessionsIPC(): void {
@@ -317,6 +321,16 @@ export function registerSessionsIPC(): void {
       const db = getDatabase()
       const now = Date.now()
 
+      // Concurrent request guard (Story 3b-4 AC#4)
+      // Block if session already has an active process running
+      if (!isNewSession && hasActiveProcess(sessionId)) {
+        console.warn(`[sessions:sendMessage] Concurrent request blocked for ${sessionId}`)
+        return {
+          success: false,
+          error: 'A response is still being generated. Please wait or abort the current request.'
+        }
+      }
+
       if (!isNewSession) {
         // Update last accessed timestamp for existing session
         db.prepare('UPDATE sessions SET updated_at = ? WHERE id = ?').run(now, sessionId)
@@ -391,5 +405,25 @@ export function registerSessionsIPC(): void {
       console.error('[sessions:abort] Error:', errorMessage)
       return { success: false, error: errorMessage }
     }
+  })
+
+  // Get instance state (Story 3b-3)
+  ipcMain.handle('instance:getState', async (_, data: unknown) => {
+    const { sessionId } = GetInstanceStateSchema.parse(data)
+    const state = instanceStateManager.getState(sessionId)
+    return { state }
+  })
+
+  // Acknowledge error (Story 3b-3)
+  ipcMain.handle('instance:acknowledgeError', async (_, data: unknown) => {
+    const { sessionId } = AcknowledgeErrorSchema.parse(data)
+    const newState = instanceStateManager.transition(sessionId, 'ACKNOWLEDGE_ERROR')
+    return { success: true, newState }
+  })
+
+  // Check if session has active process (Story 3b-4)
+  ipcMain.handle('sessions:hasActiveProcess', async (_, data: unknown) => {
+    const { sessionId } = HasActiveProcessSchema.parse(data)
+    return { active: hasActiveProcess(sessionId) }
   })
 }

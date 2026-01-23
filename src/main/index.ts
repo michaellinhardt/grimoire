@@ -86,7 +86,10 @@ app.on('window-all-closed', () => {
   }
 })
 
-// Graceful shutdown: terminate all child processes before quitting
+// Debug flag for process lifecycle logging (Story 3b-4)
+const DEBUG_LIFECYCLE = process.env.DEBUG_PROCESS_LIFECYCLE === '1'
+
+// Graceful shutdown: terminate all child processes before quitting (Story 3b-4 AC#5)
 app.on('before-quit', async (event) => {
   if (isQuitting) return
   if (processRegistry.size === 0) return
@@ -94,18 +97,39 @@ app.on('before-quit', async (event) => {
   event.preventDefault()
   isQuitting = true
 
-  // Terminate all processes
-  const terminations = Array.from(processRegistry.entries()).map(async ([, child]) => {
+  if (DEBUG_LIFECYCLE) {
+    console.log(
+      `[process-lifecycle] SHUTDOWN Starting graceful shutdown for ${processRegistry.size} process(es)`
+    )
+  }
+
+  // Terminate all processes in parallel with SIGTERM -> wait 3s -> SIGKILL pattern
+  const terminations = Array.from(processRegistry.entries()).map(async ([id, child]) => {
+    if (DEBUG_LIFECYCLE) {
+      console.log(`[process-lifecycle] SHUTDOWN SIGTERM sent to ${id} (pid: ${child.pid})`)
+    }
     child.kill('SIGTERM')
+
     await Promise.race([
       new Promise<void>((resolve) => child.once('exit', () => resolve())),
-      new Promise<void>((resolve) => setTimeout(resolve, 5000))
+      new Promise<void>((resolve) => setTimeout(resolve, 3000)) // 3s timeout per story spec
     ])
-    if (!child.killed) child.kill('SIGKILL')
+
+    if (!child.killed) {
+      if (DEBUG_LIFECYCLE) {
+        console.log(`[process-lifecycle] SHUTDOWN SIGKILL sent to ${id} (pid: ${child.pid})`)
+      }
+      child.kill('SIGKILL')
+    }
   })
 
   await Promise.all(terminations)
   processRegistry.clear()
+
+  if (DEBUG_LIFECYCLE) {
+    console.log('[process-lifecycle] SHUTDOWN Complete, all processes terminated')
+  }
+
   app.quit() // Re-trigger quit after processes terminated
 })
 

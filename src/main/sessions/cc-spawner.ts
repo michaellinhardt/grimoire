@@ -4,6 +4,31 @@ import { join } from 'path'
 import { processRegistry } from '../process-registry'
 import type { SpawnOptions } from './types'
 import { createStreamParser, emitToRenderer } from './stream-parser'
+import { instanceStateManager } from './instance-state-manager'
+
+/**
+ * Debug flag for process lifecycle logging (Story 3b-4)
+ * Set DEBUG_PROCESS_LIFECYCLE=1 to enable detailed lifecycle logs
+ */
+const DEBUG_LIFECYCLE = process.env.DEBUG_PROCESS_LIFECYCLE === '1'
+
+/**
+ * Log process lifecycle events when debugging is enabled
+ */
+function logLifecycle(event: string, data: Record<string, unknown>): void {
+  if (DEBUG_LIFECYCLE) {
+    console.log(`[process-lifecycle] ${event}`, JSON.stringify(data))
+  }
+}
+
+/**
+ * Check if a session has an active process in the registry (Story 3b-4)
+ * @param sessionId - The session ID to check
+ * @returns true if there's an active process for this session
+ */
+export function hasActiveProcess(sessionId: string): boolean {
+  return processRegistry.has(sessionId)
+}
 
 /**
  * Finds the claude executable path.
@@ -68,6 +93,12 @@ export function spawnCC(options: SpawnOptions): ChildProcess {
   const registryId = sessionId ?? `pending-${Date.now()}`
   processRegistry.set(registryId, child)
 
+  // Log spawn event (Story 3b-4)
+  logLifecycle('SPAWN', { sessionId: registryId, pid: child.pid })
+
+  // Transition state to 'working' (Story 3b-3)
+  instanceStateManager.transition(registryId, 'SEND_MESSAGE')
+
   // Send user message via stdin with error handling
   const stdinMessage = JSON.stringify({
     type: 'user',
@@ -79,6 +110,8 @@ export function spawnCC(options: SpawnOptions): ChildProcess {
     console.error('[cc-spawner] stdin write error:', err.message)
     // Process will likely fail anyway, but cleanup just in case
     processRegistry.delete(registryId)
+    // Transition to error state (Story 3b-3)
+    instanceStateManager.transition(registryId, 'PROCESS_ERROR')
     emitToRenderer('stream:end', {
       sessionId: registryId,
       success: false,
@@ -91,6 +124,8 @@ export function spawnCC(options: SpawnOptions): ChildProcess {
     if (err) {
       console.error('[cc-spawner] stdin write callback error:', err.message)
       processRegistry.delete(registryId)
+      // Transition to error state (Story 3b-3)
+      instanceStateManager.transition(registryId, 'PROCESS_ERROR')
       emitToRenderer('stream:end', {
         sessionId: registryId,
         success: false,
@@ -121,6 +156,8 @@ export function spawnCC(options: SpawnOptions): ChildProcess {
         if (!sessionId && newSessionId) {
           processRegistry.delete(registryId)
           processRegistry.set(newSessionId, child)
+          // Transfer state from temp key to real sessionId (Story 3b-3)
+          instanceStateManager.transferState(registryId, newSessionId)
           capturedSessionId = newSessionId
         } else if (sessionId) {
           capturedSessionId = sessionId
@@ -151,8 +188,16 @@ export function spawnCC(options: SpawnOptions): ChildProcess {
     const cleanupKey = capturedSessionId || registryId
     processRegistry.delete(cleanupKey)
 
-    // Emit stream:end event
+    // Log exit event (Story 3b-4)
+    logLifecycle('EXIT', { sessionId: cleanupKey, pid: child.pid, code, signal })
+
+    // Transition state based on exit result (Story 3b-3)
     const success = code === 0
+    if (success) {
+      instanceStateManager.transition(cleanupKey, 'PROCESS_EXIT')
+    } else {
+      instanceStateManager.transition(cleanupKey, 'PROCESS_ERROR')
+    }
     const stderrMessage = stderrBuffer
       ? stderrBuffer.length >= MAX_STDERR_BUFFER
         ? `${stderrBuffer.trim()} ... (truncated)`
@@ -173,6 +218,12 @@ export function spawnCC(options: SpawnOptions): ChildProcess {
     // Remove from registry - use same logic as exit handler for consistency
     const cleanupKey = capturedSessionId || registryId
     processRegistry.delete(cleanupKey)
+
+    // Log error event (Story 3b-4)
+    logLifecycle('ERROR', { sessionId: cleanupKey, error: err.message, code: err.code })
+
+    // Transition to error state (Story 3b-3)
+    instanceStateManager.transition(cleanupKey, 'PROCESS_ERROR')
 
     // Provide better error message for missing executable (Issue #6)
     let errorMsg = err.message
