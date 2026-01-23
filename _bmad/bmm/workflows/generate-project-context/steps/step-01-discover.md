@@ -123,7 +123,7 @@ Based on discovery, create or update the context document:
 
 #### A. Fresh Document Setup (if no existing context)
 
-Copy template from `{installed_path}/project-context-template.md` to `{output_folder}/project-context.md`
+Copy template from `{installed_path}/project-context-template.md` to `{planning_artifacts}/project-context.md`
 Initialize frontmatter fields.
 
 #### B. Existing Document Update

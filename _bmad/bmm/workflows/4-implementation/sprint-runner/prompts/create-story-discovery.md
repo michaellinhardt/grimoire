@@ -49,24 +49,20 @@ IMPORTANT: Generate one discovery file per story. If processing 2a.1 and 2a.2, c
 You MUST log your progress using the orchestrator script. Use the Bash tool to run:
 
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "result_message"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "<step>" "<result>"
 ```
 
-**Required logs:**
-1. Log milestones as you complete them (see list below)
-2. ALWAYS log "end" as your FINAL action before terminating
-
-**Milestone logs for this workflow:**
-- `discovery-files-created` - After all discovery files are saved
-- `end` - ALWAYS log this as your final action
+**Step logs for this workflow:**
+- `discovery-scan` - After scanning artifacts and architecture
+- `discovery-write` - After discovery files are saved
 
 **Example:**
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "discovery-files-created"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "end"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "discovery-scan" "complete"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "discovery-write" "complete"
 ```
 
-**CRITICAL:** Failure to log "end" will break duration tracking in the dashboard.
+**CRITICAL:** Duration is calculated automatically when the next log entry is written.
 
 ---
 

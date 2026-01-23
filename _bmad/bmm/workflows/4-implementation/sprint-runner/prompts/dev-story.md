@@ -38,28 +38,24 @@ DECISION RULES:
 You MUST log your progress using the orchestrator script. Use the Bash tool to run:
 
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "result_message"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "<step>" "<result>"
 ```
 
-**Required logs:**
-1. Log milestones as you complete them (see list below)
-2. ALWAYS log "end" as your FINAL action before terminating
-
-**Milestone logs for this workflow:**
-- `tests-written` - After tests are created
-- `implementation-complete` - After code implementation is done
-- `validation-passed` - After validation passes
-- `end` - ALWAYS log this as your final action
+**Step logs for this workflow:**
+- `study` - After studying the story and tech spec
+- `tests` - After tests are created
+- `implement` - After code implementation is done
+- `validate` - After validation passes
 
 **Example:**
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "tests-written"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "implementation-complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "validation-passed"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "end"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "study" "complete"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "tests" "complete"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "implement" "complete"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "validate" "passed"
 ```
 
-**CRITICAL:** Failure to log "end" will break duration tracking in the dashboard.
+**CRITICAL:** Duration is calculated automatically when the next log entry is written.
 
 ---
 

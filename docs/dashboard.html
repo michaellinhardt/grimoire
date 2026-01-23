@@ -1224,6 +1224,15 @@
             font-size: 10px;
         }
 
+        .step-name {
+            font-size: 0.85rem;
+            color: #555;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         /* Dark mode support */
         @media (prefers-color-scheme: dark) {
             .milestone {
@@ -1590,14 +1599,21 @@
         }
 
         // ============================================================
-        // ORCHESTRATOR PARSERS WITH COMMAND PAIRING
+        // ORCHESTRATOR PARSERS - DUAL FORMAT SUPPORT
         // ============================================================
 
-        // Parse orchestrator CSV log with command pairing and milestones
+        // Parse orchestrator CSV log
+        // Supports two formats:
+        // - 7-column (new): Each row is a step - timestamp,epic_id,story_id,command,step,duration,result
+        // - 5-column (legacy): Uses start/end pairing - timestamp,epic_id,story_id,command,result
         function parseOrchestratorCSV(text) {
             const lines = text.trim().split('\n');
-            const startIndex = lines[0].includes('unix_timestamp') ? 1 : 0;
+            const startIndex = lines[0].includes('unix_timestamp') || lines[0].includes('timestamp') ? 1 : 0;
             const storyMap = new Map();
+
+            // Detect format from first data line
+            const firstDataLine = lines[startIndex]?.trim();
+            const is7Column = firstDataLine && firstDataLine.split(',').length >= 7;
 
             for (let i = startIndex; i < lines.length; i++) {
                 const line = lines[i].trim();
@@ -1606,18 +1622,32 @@
                 const parts = line.split(',');
                 if (parts.length < 5) continue;
 
-                const [timestamp, epicId, storyId, command, result] = parts;
+                let timestamp, epicId, storyId, command, step, duration, result;
+
+                if (parts.length >= 7) {
+                    // 7-column format: timestamp,epic_id,story_id,command,step,duration,result
+                    // Duration in CSV is in SECONDS
+                    [timestamp, epicId, storyId, command, step, duration, result] = parts;
+                    duration = parseFloat(duration) || 0;
+                } else {
+                    // 5-column format: timestamp,epic_id,story_id,command,result
+                    [timestamp, epicId, storyId, command, result] = parts;
+                    step = null;
+                    duration = 0;
+                }
+
                 const ts = parseInt(timestamp, 10);
 
                 if (!storyMap.has(storyId)) {
                     storyMap.set(storyId, {
                         storyId: storyId,
-                        epic: `epic-${epicId}`,
+                        epic: epicId.startsWith('epic-') ? epicId : `epic-${epicId}`,
                         started: null,
                         completed: null,
                         duration: '',
                         steps: [],
                         commandPairs: new Map(),
+                        commandSteps: new Map(),  // For 7-column: group steps by command
                         startTs: null,
                         endTs: null
                     });
@@ -1625,70 +1655,136 @@
 
                 const activity = storyMap.get(storyId);
 
-                if (result === 'start') {
-                    // Command started - create new pair with milestones array
-                    activity.commandPairs.set(command, {
-                        name: command,
-                        startTs: ts,
-                        step: activity.commandPairs.size + 1,
-                        milestones: []  // Track intermediate logs
-                    });
-                    if (!activity.started) {
-                        activity.started = formatTimestamp(ts);
-                        activity.startTs = ts;
-                    }
-                } else if (result === 'end') {
-                    // Command completed - close the pair and calculate duration
-                    const pair = activity.commandPairs.get(command);
-                    if (pair) {
-                        pair.endTs = ts;
-                        pair.durationSecs = ts - pair.startTs;
-                        pair.durationFormatted = formatDuration(pair.durationSecs);
+                // Set story start timestamp from first entry
+                if (!activity.startTs) {
+                    activity.startTs = ts;
+                    activity.started = formatTimestamp(ts);
+                }
+                // Track latest timestamp as end
+                if (!activity.endTs || ts > activity.endTs) {
+                    activity.endTs = ts;
+                }
 
-                        activity.steps.push({
-                            step: pair.step,
+                if (is7Column || parts.length >= 7) {
+                    // NEW 7-COLUMN FORMAT: Each row is a step
+                    // Group steps by command for display
+                    if (!activity.commandSteps.has(command)) {
+                        activity.commandSteps.set(command, {
                             command: command,
-                            result: 'completed',
-                            milestones: pair.milestones,  // Include milestones
-                            duration: pair.durationFormatted,
-                            durationSecs: pair.durationSecs,
-                            startTs: pair.startTs,
-                            endTs: pair.endTs
+                            steps: [],
+                            totalDuration: 0,
+                            startTs: ts,
+                            endTs: ts
                         });
                     }
 
-                    // Track story end timestamp
-                    if (!activity.endTs || ts > activity.endTs) {
-                        activity.endTs = ts;
-                    }
+                    const cmdGroup = activity.commandSteps.get(command);
+                    cmdGroup.steps.push({
+                        stepName: step || '',
+                        result: result,
+                        timestamp: ts,
+                        duration: duration
+                    });
+                    cmdGroup.totalDuration += duration;
+                    if (ts > cmdGroup.endTs) cmdGroup.endTs = ts;
 
-                    // Check if this is the final step (code-review completed)
-                    if (command.startsWith('code-review')) {
-                        activity.completed = formatTimestamp(ts);
-                    }
                 } else {
-                    // Intermediate milestone log - add to current command
-                    const pair = activity.commandPairs.get(command);
-                    if (pair) {
-                        pair.milestones.push({
-                            timestamp: ts,
-                            message: result
+                    // LEGACY 5-COLUMN FORMAT: Uses start/end pairing
+                    if (result === 'start') {
+                        activity.commandPairs.set(command, {
+                            name: command,
+                            startTs: ts,
+                            stepNumber: activity.commandPairs.size + 1,
+                            stepName: step || null,
+                            milestones: [],
+                            durationSum: duration
                         });
+                    } else if (result === 'end') {
+                        const pair = activity.commandPairs.get(command);
+                        if (pair) {
+                            pair.endTs = ts;
+                            pair.durationSum += duration;
+
+                            const commandDurationSecs = pair.durationSum > 0
+                                ? pair.durationSum
+                                : (ts - pair.startTs);
+
+                            activity.steps.push({
+                                stepNumber: pair.stepNumber,
+                                stepName: step || pair.stepName || '',
+                                command: command,
+                                result: 'completed',
+                                milestones: pair.milestones,
+                                duration: formatDuration(commandDurationSecs),
+                                durationSecs: commandDurationSecs,
+                                startTs: pair.startTs,
+                                endTs: pair.endTs
+                            });
+                        }
+
+                        if (command.startsWith('code-review')) {
+                            activity.completed = formatTimestamp(ts);
+                        }
+                    } else {
+                        // Intermediate milestone
+                        const pair = activity.commandPairs.get(command);
+                        if (pair) {
+                            pair.durationSum += duration;
+                            pair.milestones.push({
+                                timestamp: ts,
+                                stepName: step || '',
+                                message: result,
+                                duration: duration
+                            });
+                        }
                     }
                 }
             }
 
             // Convert map to array and calculate totals
             const resultArr = Array.from(storyMap.values()).map(activity => {
-                if (activity.startTs && activity.endTs) {
+                // For 7-column format: convert commandSteps to steps array
+                if (activity.commandSteps.size > 0) {
+                    let stepNumber = 0;
+                    activity.commandSteps.forEach((cmdGroup, cmdName) => {
+                        stepNumber++;
+                        // Create milestones from individual steps
+                        const milestones = cmdGroup.steps.map(s => ({
+                            timestamp: s.timestamp,
+                            stepName: s.stepName,
+                            message: s.result,
+                            duration: s.duration
+                        }));
+
+                        activity.steps.push({
+                            stepNumber: stepNumber,
+                            stepName: cmdGroup.steps[0]?.stepName || '',
+                            command: cmdName,
+                            result: cmdGroup.steps[cmdGroup.steps.length - 1]?.result || 'complete',
+                            milestones: milestones,
+                            duration: formatDuration(cmdGroup.totalDuration),
+                            durationSecs: cmdGroup.totalDuration,
+                            startTs: cmdGroup.startTs,
+                            endTs: cmdGroup.endTs
+                        });
+                    });
+                }
+
+                const totalFromSteps = activity.steps.reduce((sum, s) => sum + (s.durationSecs || 0), 0);
+
+                if (totalFromSteps > 0) {
+                    activity.totalDurationSecs = totalFromSteps;
+                    activity.duration = formatDuration(totalFromSteps);
+                } else if (activity.startTs && activity.endTs) {
                     activity.totalDurationSecs = activity.endTs - activity.startTs;
                     activity.duration = formatDuration(activity.totalDurationSecs);
                 } else {
-                    const totalSecs = activity.steps.reduce((sum, s) => sum + (s.durationSecs || 0), 0);
-                    activity.totalDurationSecs = totalSecs;
-                    activity.duration = formatDuration(totalSecs);
+                    activity.totalDurationSecs = 0;
+                    activity.duration = '';
                 }
+
                 delete activity.commandPairs;
+                delete activity.commandSteps;
                 return activity;
             });
 
@@ -2021,7 +2117,7 @@
             }
 
             logEl.innerHTML = activities.slice(0, 10).map((activity, index) => {
-                const isCompleted = activity.completed !== '';
+                const isCompleted = activity.completed && activity.completed !== '';
                 const statusClass = isCompleted ? 'completed' : 'in-progress';
                 const isCollapsed = index > 0;
                 const badgeText = isCompleted ? 'Done' : 'In Progress';
@@ -2037,8 +2133,9 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Step</th>
+                                    <th>#</th>
                                     <th>Command</th>
+                                    <th>Step</th>
                                     <th>Result</th>
                                     <th>Duration</th>
                                 </tr>
@@ -2046,16 +2143,21 @@
                             <tbody>
                                 ${activity.steps.map(step => `
                                     <tr>
-                                        <td>${escapeHtml(String(step.step))}</td>
-                                        <td>
-                                            ${escapeHtml(step.command)}
+                                        <td>${escapeHtml(String(step.stepNumber))}</td>
+                                        <td>${escapeHtml(step.command)}</td>
+                                        <td class="step-name">${escapeHtml(step.stepName || '-')}</td>
+                                        <td class="step-result">
+                                            ${escapeHtml(step.result)}
                                             ${step.milestones && step.milestones.length > 0 ? `
                                                 <div class="step-milestones">
-                                                    ${step.milestones.map(m => `<span class="milestone">${escapeHtml(m.message)}</span>`).join('<span class="milestone-arrow">→</span>')}
+                                                    ${step.milestones.map(m => {
+                                                        const milestoneText = m.stepName ? m.stepName + ': ' + m.message : m.message;
+                                                        const durationText = m.duration ? ' (' + formatDuration(m.duration) + ')' : '';
+                                                        return '<span class="milestone">' + escapeHtml(milestoneText) + durationText + '</span>';
+                                                    }).join('<span class="milestone-arrow">→</span>')}
                                                 </div>
                                             ` : ''}
                                         </td>
-                                        <td class="step-result">${escapeHtml(step.result)}</td>
                                         <td class="step-duration">${escapeHtml(step.duration || '-')}</td>
                                     </tr>
                                 `).join('')}

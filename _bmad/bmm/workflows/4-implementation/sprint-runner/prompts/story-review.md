@@ -65,26 +65,20 @@ IMPORTANT OUTPUT: At the end, clearly state:
 You MUST log your progress using the orchestrator script. Use the Bash tool to run:
 
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "result_message"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "<step>" "<result>"
 ```
 
-**Required logs:**
-1. Log milestones as you complete them (see list below)
-2. ALWAYS log "end" as your FINAL action before terminating
-
-**Milestone logs for this workflow:**
-- `review-complete` - After review analysis is done
-- `issues-fixed` - If you fixed issues (or `no-issues` if none found)
-- `end` - ALWAYS log this as your final action
+**Step logs for this workflow:**
+- `review` - After review analysis is done
+- `fix` - After fixes are applied (result: "issues-fixed" or "no-issues")
 
 **Example:**
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "review-complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "no-issues"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "end"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "review" "complete"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "fix" "no-issues"
 ```
 
-**CRITICAL:** Failure to log "end" will break duration tracking in the dashboard.
+**CRITICAL:** Duration is calculated automatically when the next log entry is written.
 
 ---
 

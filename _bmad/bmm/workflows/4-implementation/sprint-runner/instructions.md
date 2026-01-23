@@ -33,26 +33,21 @@ To use a prompt:
 
 ## Orchestrator Log Format
 
-Write to `./docs/sprint-runner.csv` in CSV format (no header):
+Subagents write to `./docs/sprint-runner.csv` in CSV format (no header):
 
 ```
-unix_timestamp,epic_id,story_id,command,result
+unix_timestamp,epic_id,story_id,command,step,duration,result
 ```
 
-Use the script: `./_bmad/scripts/orchestrator.sh <epic_id> <story_id> <command> <result>`
+**IMPORTANT:** The orchestrator does NOT log. Only subagents log their milestones using the script.
 
-**IMPORTANT:** Orchestrator only logs "start". Subagents log milestones and "end".
+The script automatically calculates duration by updating the previous row when a new row is added.
 
-Example log entries:
+Example log entries (from subagents):
 ```
-1706054400,epic-2a,2a.1,create-story,start           # Orchestrator logs start
-1706054500,epic-2a,2a.1,create-story,discovery-complete  # Subagent logs milestone
-1706054520,epic-2a,2a.1,create-story,story-created       # Subagent logs milestone
-1706054521,epic-2a,2a.1,create-story,end                 # Subagent logs end
-1706054522,epic-2a,2a.1,story-review-1,start         # Orchestrator (iteration 1)
-1706054620,epic-2a,2a.1,story-review-1,review-complete   # Subagent
-1706054621,epic-2a,2a.1,story-review-1,no-issues         # Subagent
-1706054622,epic-2a,2a.1,story-review-1,end               # Subagent
+1706054400,epic-2a,2a.1,create-story,discovery,0,complete
+1706054500,epic-2a,2a.1,create-story,draft,100,complete
+1706054520,epic-2a,2a.1,create-story,final,20,complete
 ```
 
 ---
@@ -186,7 +181,7 @@ development_status:
       <action>Wait for completion</action>
       <action>Log: "Cleanup complete"</action>
 
-      <!-- Fresh orchestrator.md will be created by first orchestrator.sh call -->
+      <!-- Subagents log directly to sprint-runner.csv -->
     </check>
 
     <check if="is_first_iteration == false">
@@ -199,7 +194,6 @@ development_status:
       <action>Set batch_mode = "all"</action>
       <action>Set batch_size = infinite (no limit)</action>
       <action>Set stories_completed = 0</action>
-      <action>Run: _bmad/scripts/orchestrator.sh batch-start all batch-init start</action>
       <action>Go to Step 1 immediately</action>
     </check>
 
@@ -208,7 +202,6 @@ development_status:
       <action>Set batch_mode = "fixed"</action>
       <action>Set batch_size = parsed number</action>
       <action>Set stories_completed = 0</action>
-      <action>Run: _bmad/scripts/orchestrator.sh batch-start [batch_size] batch-init start</action>
       <action>Go to Step 1 immediately</action>
     </check>
 
@@ -217,7 +210,6 @@ development_status:
       <action>Set batch_size = 2 (default)</action>
       <action>Set stories_completed = 0</action>
       <action>Log: "Using default batch size: 2"</action>
-      <action>Run: _bmad/scripts/orchestrator.sh batch-start 2 batch-init start</action>
       <action>Go to Step 1</action>
     </check>
   </substep>
@@ -272,13 +264,11 @@ development_status:
   </check>
 
   <action>Store: story_keys, current_epic</action>
-  <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] story-select start</action>
 </step>
 
 <step n="2" goal="CREATE-STORY PHASE (PARALLEL)">
   <check if="status == backlog">
     <action>Log: "Starting CREATE-STORY phase for [story_key(s)]"</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] create-story start</action>
 
     <!-- PARALLEL EXECUTION (CRITICAL-2 Resolution: Verified Task tool capability) -->
     <!-- Make TWO Task tool calls in a SINGLE message for concurrent execution -->
@@ -323,7 +313,6 @@ development_status:
   <for-each story in="story_keys">
     <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
     <action>Set story_review_attempt = 1</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review-[story_review_attempt] start</action>
 
     <loop max="3">
       <action>Load prompt from prompts/story-review.md, substitute variables</action>
@@ -343,9 +332,8 @@ development_status:
         <action>Break loop</action>
       </check>
 
-      <!-- Subagent logs milestones and "end" before terminating -->
+      <!-- Subagent logs milestones -->
       <action>Increment story_review_attempt</action>
-      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review-[story_review_attempt] start</action>
     </loop>
   </for-each>
 
@@ -354,7 +342,6 @@ development_status:
 
 <step n="3" goal="CREATE-TECH-SPEC PHASE (PARALLEL)">
   <action>Log: "Starting CREATE-TECH-SPEC phase for [story_key(s)]"</action>
-  <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] create-tech-spec start</action>
 
   <!-- PARALLEL EXECUTION (CRITICAL-2 Resolution: Verified Task tool capability) -->
   <!-- Make TWO Task tool calls in a SINGLE message for concurrent execution -->
@@ -388,7 +375,6 @@ development_status:
   <for-each story in="story_keys">
     <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
     <action>Set tech_spec_review_attempt = 1</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review-[tech_spec_review_attempt] start</action>
 
     <loop max="3">
       <action>Load prompt from prompts/tech-spec-review.md, substitute variables</action>
@@ -408,9 +394,8 @@ development_status:
         <action>Break loop</action>
       </check>
 
-      <!-- Subagent logs milestones and "end" before terminating -->
+      <!-- Subagent logs milestones -->
       <action>Increment tech_spec_review_attempt</action>
-      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review-[tech_spec_review_attempt] start</action>
     </loop>
   </for-each>
 
@@ -420,7 +405,6 @@ development_status:
 <step n="4" goal="DEV + CODE-REVIEW PHASE (SEQUENTIAL per story)">
   <for-each story in="story_keys">
     <action>Log: "Starting DEV phase for [story]"</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] dev-story start</action>
 
     <!-- DEV-STORY -->
     <action>Load prompt from prompts/dev-story.md, substitute variables for [story]</action>
@@ -432,7 +416,6 @@ development_status:
     <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
     <action>Set review_attempt = 1</action>
     <action>Initialize error_history = []</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review-[review_attempt] start</action>
 
     <loop max="10">
       <action>Load prompt from prompts/code-review.md, substitute variables for [story]</action>
@@ -502,9 +485,8 @@ Please review the story manually and resolve before resuming.
         <action>Break loop for this story</action>
       </check>
 
-      <!-- Subagent logs milestones and "end" before terminating -->
+      <!-- Subagent logs milestones -->
       <action>Increment review_attempt</action>
-      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review-[review_attempt] start</action>
     </loop>
   </for-each>
 
@@ -515,7 +497,7 @@ Please review the story manually and resolve before resuming.
 <step n="5" goal="Error recovery">
   <critical>If any step fails or produces unexpected state:</critical>
 
-  <action>Log error to orchestrator via: _bmad/scripts/orchestrator.sh [epic] [story] error "[details]"</action>
+  <action>Log: "Error encountered: [details]"</action>
   <action>Re-read sprint-status.yaml to understand current state</action>
 
   <check if="story stuck in unexpected status">
@@ -532,16 +514,12 @@ Please review the story manually and resolve before resuming.
 
 <step n="6" goal="Batch tracking and next story">
   <check if="batch_mode == 'all'">
-    <action>Run: _bmad/scripts/orchestrator.sh batch [stories_completed] batch-progress "mode:ALL"</action>
     <action>Log: "Story batch complete. ([stories_completed] total, mode: ALL)"</action>
     <action>Go to Step 1 (next story - continues until all done)</action>
   </check>
 
   <check if="batch_mode == 'fixed'">
-    <action>Run: _bmad/scripts/orchestrator.sh batch [stories_completed] batch-progress "[stories_completed]/[batch_size]"</action>
-
     <check if="stories_completed >= batch_size">
-      <action>Run: _bmad/scripts/orchestrator.sh batch [batch_size] batch-complete "Batch done"</action>
       <output>
 **Batch Complete!**
 
@@ -560,7 +538,6 @@ Ready for next batch.
         <action>Set batch_size = user's number</action>
       </check>
       <action>Set stories_completed = 0</action>
-      <action>Run: _bmad/scripts/orchestrator.sh batch-start [batch_size] batch-init "New batch"</action>
     </check>
 
     <action>Go to Step 1 (next story)</action>
@@ -631,8 +608,9 @@ SUBAGENT RULES:
   - Review agents skip discovery steps (use provided file)
 
 LOG FORMAT:
-  - CSV: unix_timestamp,epic_id,story_id,command,result
-  - Via script: _bmad/scripts/orchestrator.sh
+  - CSV: unix_timestamp,epic_id,story_id,command,step,duration,result
+  - Subagents log milestones via: _bmad/scripts/orchestrator.sh
+  - Orchestrator does NOT log
 ```
 
 **Usage Examples:**

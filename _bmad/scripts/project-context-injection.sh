@@ -6,7 +6,7 @@ set -e  # Exit on error (MEDIUM-1 Resolution)
 
 TARGET_FILE="$1"
 OUTPUT_FOLDER="${BMAD_OUTPUT:-_bmad-output}"
-CONTEXT_FILE="${OUTPUT_FOLDER}/project-context.md"
+CONTEXT_FILE="${OUTPUT_FOLDER}/planning-artifacts/project-context.md"
 HEADER="# Project Context Dump Below"
 
 if [ -z "$TARGET_FILE" ]; then
@@ -36,7 +36,7 @@ fi
 cat >> "$TARGET_FILE" << EOF
 
 $HEADER
-The project context from \`${OUTPUT_FOLDER}/project-context.md\` is injected below. Do not read that file separately - use this content.
+The project context from \`${OUTPUT_FOLDER}/planning-artifacts/project-context.md\` is injected below. Do not read that file separately - use this content.
 
 $(cat "$CONTEXT_FILE")
 EOF
