@@ -69,25 +69,24 @@ IF ANY CHECK FAILS: Fix it before saving. Do not output a flawed story.
 
 ## Logging Instructions
 
-You MUST log your progress using the orchestrator script. Use the Bash tool to run:
+You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
+
+**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+- command: "create-story"
+- task-id: identifies the granular task
+- status: "start" or "end"
+
+**Required logs for this workflow:**
 
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "<step>" "<result>"
+# At START of workflow
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story workflow start
+
+# At END of workflow (before terminating)
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-story workflow end
 ```
 
-**Step logs for this workflow:**
-- `discovery` - After discovery phase completes
-- `draft` - After initial story draft is created
-- `final` - After story file is finalized and saved
-
-**Example:**
-```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "discovery" "complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "draft" "complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "final" "complete"
-```
-
-**CRITICAL:** Duration is calculated automatically when the next log entry is written.
+**CRITICAL:** Always log both START and END. Duration is calculated by dashboard (end - start).
 
 ---
 

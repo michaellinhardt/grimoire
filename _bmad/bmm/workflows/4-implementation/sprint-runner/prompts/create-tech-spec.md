@@ -71,25 +71,24 @@ IMPORTANT OUTPUT: At the end, clearly state:
 
 ## Logging Instructions
 
-You MUST log your progress using the orchestrator script. Use the Bash tool to run:
+You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
+
+**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+- command: "create-tech-spec"
+- task-id: identifies the granular task
+- status: "start" or "end"
+
+**Required logs for this workflow:**
 
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "<step>" "<result>"
+# At START of workflow
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-tech-spec workflow start
+
+# At END of workflow (before terminating)
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} create-tech-spec workflow end
 ```
 
-**Step logs for this workflow:**
-- `investigation` - After codebase investigation
-- `draft` - After initial tech spec draft is created
-- `final` - After tech spec file is finalized and saved
-
-**Example:**
-```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "investigation" "complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "draft" "complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "final" "complete"
-```
-
-**CRITICAL:** Duration is calculated automatically when the next log entry is written.
+**CRITICAL:** Always log both START and END. Duration is calculated by dashboard (end - start).
 
 ---
 

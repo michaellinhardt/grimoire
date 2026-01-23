@@ -47,23 +47,24 @@ DECISION RULES:
 
 ## Logging Instructions
 
-You MUST log your progress using the orchestrator script. Use the Bash tool to run:
+You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
+
+**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+- command: "code-review-{{review_attempt}}"
+- task-id: identifies the granular task
+- status: "start" or "end"
+
+**Required logs for this workflow:**
 
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "<step>" "<result>"
+# At START of workflow
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} workflow start
+
+# At END of workflow (before terminating)
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} code-review-{{review_attempt}} workflow end
 ```
 
-**Step logs for this workflow:**
-- `analyze` - After code review analysis is done
-- `fix` - After fixes are applied (result: "issues-fixed" or "zero-issues")
-
-**Example:**
-```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "analyze" "complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "fix" "issues-fixed"
-```
-
-**CRITICAL:** Duration is calculated automatically when the next log entry is written.
+**CRITICAL:** Always log both START and END. Duration is calculated by dashboard (end - start).
 
 ---
 

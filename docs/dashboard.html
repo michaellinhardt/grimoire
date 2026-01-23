@@ -538,6 +538,214 @@
             color: #787774;
         }
 
+        /* Command/Task Hierarchy Styles */
+        .command-group {
+            border: 1px solid #e8e7e5;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            background: #fafaf9;
+            overflow: hidden;
+        }
+
+        .command-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s ease;
+        }
+
+        .command-header:hover {
+            background: #f0efed;
+        }
+
+        .command-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .command-toggle {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #787774;
+            transition: transform 0.2s ease;
+        }
+
+        .command-group.collapsed .command-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .command-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #37352f;
+        }
+
+        .command-duration {
+            font-size: 12px;
+            font-weight: 500;
+            color: #065f46;
+            background: #d1fae5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .command-tasks {
+            border-top: 1px solid #e8e7e5;
+            padding: 8px 0;
+        }
+
+        .command-group.collapsed .command-tasks {
+            display: none;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 12px 6px 32px;
+            font-size: 13px;
+        }
+
+        .task-item:hover {
+            background: #f0efed;
+        }
+
+        .task-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .task-prefix {
+            color: #a8a8a8;
+            font-size: 11px;
+        }
+
+        .task-name {
+            color: #37352f;
+        }
+
+        .task-item-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .task-duration {
+            font-size: 12px;
+            color: #787774;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .task-status {
+            font-size: 11px;
+        }
+
+        .task-status.completed {
+            color: #10b981;
+        }
+
+        .task-status.in-progress {
+            color: #f59e0b;
+        }
+
+        .task-in-progress {
+            background: linear-gradient(
+                90deg,
+                #fef3c7 0%,
+                #fde68a 50%,
+                #fef3c7 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* In-progress stripe pattern for timeline bars */
+        .timeline-bar.in-progress-stripe,
+        .command-bar.in-progress-stripe,
+        .task-bar.in-progress {
+            background: repeating-linear-gradient(
+                45deg,
+                #fbbf24,
+                #fbbf24 10px,
+                #f59e0b 10px,
+                #f59e0b 20px
+            );
+            animation: stripe-scroll 1s linear infinite;
+        }
+
+        @keyframes stripe-scroll {
+            0% { background-position: 0 0; }
+            100% { background-position: 28px 0; }
+        }
+
+        /* Task bar in timeline */
+        .task-bar {
+            position: absolute;
+            height: 14px;
+            top: 7px;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            padding: 0 4px;
+            font-size: 9px;
+            font-weight: 500;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 20px;
+            background: #6b7280;
+        }
+
+        .task-bar.completed {
+            background: #10b981;
+        }
+
+        /* Timeline task rows */
+        .timeline-task-row {
+            display: flex;
+            height: 24px;
+            border-top: 1px dotted #e8e7e5;
+        }
+
+        .timeline-task-row-label {
+            width: var(--timeline-label-width);
+            min-width: var(--timeline-label-width);
+            padding: 0 12px 0 36px;
+            font-size: 11px;
+            color: #a8a8a8;
+            display: flex;
+            align-items: center;
+            background: #fafaf9;
+            border-right: 1px solid #e8e7e5;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .timeline-task-row-content {
+            flex-shrink: 0;
+            position: relative;
+            height: 24px;
+        }
+
         /* Filters */
         .filters {
             display: flex;
@@ -1599,196 +1807,224 @@
         }
 
         // ============================================================
-        // ORCHESTRATOR PARSERS - DUAL FORMAT SUPPORT
+        // ORCHESTRATOR PARSERS - 6-COLUMN FORMAT
         // ============================================================
 
         // Parse orchestrator CSV log
-        // Supports two formats:
-        // - 7-column (new): Each row is a step - timestamp,epic_id,story_id,command,step,duration,result
-        // - 5-column (legacy): Uses start/end pairing - timestamp,epic_id,story_id,command,result
+        // Format: timestamp,epicID,storyID,command,task-id,status
+        // - status = "start" or "end"
+        // - Duration calculated by matching start/end pairs
+        // - Orphan handling: < 30 min = in-progress, >= 30 min = ignore
         function parseOrchestratorCSV(text) {
-            const lines = text.trim().split('\n');
-            const startIndex = lines[0].includes('unix_timestamp') || lines[0].includes('timestamp') ? 1 : 0;
-            const storyMap = new Map();
+            const THIRTY_MINUTES = 30 * 60; // 1800 seconds
+            const currentTime = Math.floor(Date.now() / 1000);
 
-            // Detect format from first data line
-            const firstDataLine = lines[startIndex]?.trim();
-            const is7Column = firstDataLine && firstDataLine.split(',').length >= 7;
+            const lines = text.trim().split('\n');
+            const startIndex = lines[0].includes('timestamp') || lines[0].includes('unix_timestamp') ? 1 : 0;
+
+            // First pass: collect all entries and match start/end pairs
+            // Key format: epicId|storyId|command|taskId
+            const pairMap = new Map(); // key -> { start: entry, end: entry }
+            const allEntries = [];
 
             for (let i = startIndex; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
 
                 const parts = line.split(',');
-                if (parts.length < 5) continue;
+                if (parts.length < 6) continue;
 
-                let timestamp, epicId, storyId, command, step, duration, result;
+                const [timestamp, epicId, storyId, command, taskId, status] = parts;
+                const ts = parseInt(timestamp, 10);
+                if (isNaN(ts)) continue;
 
-                if (parts.length >= 7) {
-                    // 7-column format: timestamp,epic_id,story_id,command,step,duration,result
-                    // Duration in CSV is in SECONDS
-                    [timestamp, epicId, storyId, command, step, duration, result] = parts;
-                    duration = parseFloat(duration) || 0;
-                } else {
-                    // 5-column format: timestamp,epic_id,story_id,command,result
-                    [timestamp, epicId, storyId, command, result] = parts;
-                    step = null;
-                    duration = 0;
+                const entry = {
+                    timestamp: ts,
+                    epicId: epicId.startsWith('epic-') ? epicId : `epic-${epicId}`,
+                    storyId,
+                    command,
+                    taskId,
+                    status: status.trim().toLowerCase()
+                };
+
+                allEntries.push(entry);
+
+                // Build pairing key
+                const pairKey = `${entry.epicId}|${storyId}|${command}|${taskId}`;
+
+                if (!pairMap.has(pairKey)) {
+                    pairMap.set(pairKey, { start: null, end: null });
                 }
 
-                const ts = parseInt(timestamp, 10);
+                const pair = pairMap.get(pairKey);
+                if (entry.status === 'start') {
+                    pair.start = entry;
+                } else if (entry.status === 'end') {
+                    pair.end = entry;
+                }
+            }
 
+            // Second pass: build hierarchical structure
+            // story -> commands -> tasks
+            const storyMap = new Map();
+
+            pairMap.forEach((pair, pairKey) => {
+                const startEntry = pair.start;
+                const endEntry = pair.end;
+
+                // Must have at least a start entry
+                if (!startEntry) return;
+
+                const { epicId, storyId, command, taskId } = startEntry;
+
+                // Handle orphans (start without end)
+                if (!endEntry) {
+                    const age = currentTime - startEntry.timestamp;
+                    if (age >= THIRTY_MINUTES) {
+                        // Stale: ignore entirely
+                        return;
+                    }
+                    // Fresh: will be shown as in-progress
+                }
+
+                // Initialize story if needed
                 if (!storyMap.has(storyId)) {
                     storyMap.set(storyId, {
-                        storyId: storyId,
-                        epic: epicId.startsWith('epic-') ? epicId : `epic-${epicId}`,
+                        storyId,
+                        epic: epicId,
                         started: null,
                         completed: null,
                         duration: '',
-                        steps: [],
-                        commandPairs: new Map(),
-                        commandSteps: new Map(),  // For 7-column: group steps by command
+                        totalDurationSecs: 0,
                         startTs: null,
+                        endTs: null,
+                        commands: new Map(), // command -> { tasks: [], totalDurationSecs, ... }
+                        steps: [] // For timeline compatibility
+                    });
+                }
+
+                const story = storyMap.get(storyId);
+
+                // Track story timing
+                if (!story.startTs || startEntry.timestamp < story.startTs) {
+                    story.startTs = startEntry.timestamp;
+                    story.started = formatTimestamp(startEntry.timestamp);
+                }
+                if (endEntry) {
+                    if (!story.endTs || endEntry.timestamp > story.endTs) {
+                        story.endTs = endEntry.timestamp;
+                    }
+                }
+
+                // Initialize command group if needed
+                if (!story.commands.has(command)) {
+                    story.commands.set(command, {
+                        command,
+                        tasks: [],
+                        totalDurationSecs: 0,
+                        totalDuration: '',
+                        startTs: startEntry.timestamp,
                         endTs: null
                     });
                 }
 
-                const activity = storyMap.get(storyId);
+                const cmdGroup = story.commands.get(command);
 
-                // Set story start timestamp from first entry
-                if (!activity.startTs) {
-                    activity.startTs = ts;
-                    activity.started = formatTimestamp(ts);
-                }
-                // Track latest timestamp as end
-                if (!activity.endTs || ts > activity.endTs) {
-                    activity.endTs = ts;
-                }
+                // Calculate task duration and status
+                let taskDurationSecs = 0;
+                let taskStatus = 'in-progress';
+                let taskEndTs = null;
 
-                if (is7Column || parts.length >= 7) {
-                    // NEW 7-COLUMN FORMAT: Each row is a step
-                    // Group steps by command for display
-                    if (!activity.commandSteps.has(command)) {
-                        activity.commandSteps.set(command, {
-                            command: command,
-                            steps: [],
-                            totalDuration: 0,
-                            startTs: ts,
-                            endTs: ts
-                        });
-                    }
+                if (endEntry) {
+                    taskDurationSecs = endEntry.timestamp - startEntry.timestamp;
+                    taskStatus = 'completed';
+                    taskEndTs = endEntry.timestamp;
 
-                    const cmdGroup = activity.commandSteps.get(command);
-                    cmdGroup.steps.push({
-                        stepName: step || '',
-                        result: result,
-                        timestamp: ts,
-                        duration: duration
-                    });
-                    cmdGroup.totalDuration += duration;
-                    if (ts > cmdGroup.endTs) cmdGroup.endTs = ts;
-
-                } else {
-                    // LEGACY 5-COLUMN FORMAT: Uses start/end pairing
-                    if (result === 'start') {
-                        activity.commandPairs.set(command, {
-                            name: command,
-                            startTs: ts,
-                            stepNumber: activity.commandPairs.size + 1,
-                            stepName: step || null,
-                            milestones: [],
-                            durationSum: duration
-                        });
-                    } else if (result === 'end') {
-                        const pair = activity.commandPairs.get(command);
-                        if (pair) {
-                            pair.endTs = ts;
-                            pair.durationSum += duration;
-
-                            const commandDurationSecs = pair.durationSum > 0
-                                ? pair.durationSum
-                                : (ts - pair.startTs);
-
-                            activity.steps.push({
-                                stepNumber: pair.stepNumber,
-                                stepName: step || pair.stepName || '',
-                                command: command,
-                                result: 'completed',
-                                milestones: pair.milestones,
-                                duration: formatDuration(commandDurationSecs),
-                                durationSecs: commandDurationSecs,
-                                startTs: pair.startTs,
-                                endTs: pair.endTs
-                            });
-                        }
-
-                        if (command.startsWith('code-review')) {
-                            activity.completed = formatTimestamp(ts);
-                        }
-                    } else {
-                        // Intermediate milestone
-                        const pair = activity.commandPairs.get(command);
-                        if (pair) {
-                            pair.durationSum += duration;
-                            pair.milestones.push({
-                                timestamp: ts,
-                                stepName: step || '',
-                                message: result,
-                                duration: duration
-                            });
-                        }
+                    // Update command group end timestamp
+                    if (!cmdGroup.endTs || endEntry.timestamp > cmdGroup.endTs) {
+                        cmdGroup.endTs = endEntry.timestamp;
                     }
                 }
-            }
 
-            // Convert map to array and calculate totals
-            const resultArr = Array.from(storyMap.values()).map(activity => {
-                // For 7-column format: convert commandSteps to steps array
-                if (activity.commandSteps.size > 0) {
-                    let stepNumber = 0;
-                    activity.commandSteps.forEach((cmdGroup, cmdName) => {
-                        stepNumber++;
-                        // Create milestones from individual steps
-                        const milestones = cmdGroup.steps.map(s => ({
-                            timestamp: s.timestamp,
-                            stepName: s.stepName,
-                            message: s.result,
-                            duration: s.duration
-                        }));
+                // Add task to command group
+                cmdGroup.tasks.push({
+                    taskId,
+                    startTs: startEntry.timestamp,
+                    endTs: taskEndTs,
+                    durationSecs: taskDurationSecs,
+                    duration: taskDurationSecs > 0 ? formatDuration(taskDurationSecs) : '',
+                    status: taskStatus
+                });
 
-                        activity.steps.push({
-                            stepNumber: stepNumber,
-                            stepName: cmdGroup.steps[0]?.stepName || '',
-                            command: cmdName,
-                            result: cmdGroup.steps[cmdGroup.steps.length - 1]?.result || 'complete',
-                            milestones: milestones,
-                            duration: formatDuration(cmdGroup.totalDuration),
-                            durationSecs: cmdGroup.totalDuration,
-                            startTs: cmdGroup.startTs,
-                            endTs: cmdGroup.endTs
-                        });
-                    });
-                }
-
-                const totalFromSteps = activity.steps.reduce((sum, s) => sum + (s.durationSecs || 0), 0);
-
-                if (totalFromSteps > 0) {
-                    activity.totalDurationSecs = totalFromSteps;
-                    activity.duration = formatDuration(totalFromSteps);
-                } else if (activity.startTs && activity.endTs) {
-                    activity.totalDurationSecs = activity.endTs - activity.startTs;
-                    activity.duration = formatDuration(activity.totalDurationSecs);
-                } else {
-                    activity.totalDurationSecs = 0;
-                    activity.duration = '';
-                }
-
-                delete activity.commandPairs;
-                delete activity.commandSteps;
-                return activity;
+                cmdGroup.totalDurationSecs += taskDurationSecs;
             });
 
-            return resultArr.reverse();
+            // Third pass: finalize story data
+            const resultArr = Array.from(storyMap.values()).map(story => {
+                // Convert commands Map to array and calculate totals
+                const commandsArray = [];
+                let storyTotalDuration = 0;
+                let allTasksCompleted = true;
+                let stepNumber = 0;
+
+                story.commands.forEach((cmdGroup, cmdName) => {
+                    stepNumber++;
+
+                    // Sort tasks by start time
+                    cmdGroup.tasks.sort((a, b) => a.startTs - b.startTs);
+
+                    cmdGroup.totalDuration = formatDuration(cmdGroup.totalDurationSecs);
+                    storyTotalDuration += cmdGroup.totalDurationSecs;
+
+                    // Check if any task is in-progress
+                    const hasInProgress = cmdGroup.tasks.some(t => t.status === 'in-progress');
+                    if (hasInProgress) {
+                        allTasksCompleted = false;
+                    }
+
+                    commandsArray.push({
+                        command: cmdName,
+                        tasks: cmdGroup.tasks,
+                        totalDurationSecs: cmdGroup.totalDurationSecs,
+                        totalDuration: cmdGroup.totalDuration,
+                        startTs: cmdGroup.startTs,
+                        endTs: cmdGroup.endTs
+                    });
+
+                    // Add to steps array for timeline compatibility
+                    story.steps.push({
+                        stepNumber,
+                        stepName: cmdGroup.tasks[0]?.taskId || '',
+                        command: cmdName,
+                        result: hasInProgress ? 'in-progress' : 'completed',
+                        duration: cmdGroup.totalDuration,
+                        durationSecs: cmdGroup.totalDurationSecs,
+                        startTs: cmdGroup.startTs,
+                        endTs: cmdGroup.endTs,
+                        tasks: cmdGroup.tasks // Include tasks for timeline task-level bars
+                    });
+                });
+
+                // Sort commands by start time
+                commandsArray.sort((a, b) => a.startTs - b.startTs);
+                story.steps.sort((a, b) => a.startTs - b.startTs);
+
+                story.commands = commandsArray;
+                story.totalDurationSecs = storyTotalDuration;
+                story.duration = formatDuration(storyTotalDuration);
+
+                // Set completed timestamp if all tasks are done
+                if (allTasksCompleted && story.endTs) {
+                    story.completed = formatTimestamp(story.endTs);
+                }
+
+                return story;
+            });
+
+            // Sort by start time (most recent first)
+            resultArr.sort((a, b) => (b.startTs || 0) - (a.startTs || 0));
+
+            return resultArr;
         }
 
         // CSV parser wrapper
@@ -2128,43 +2364,53 @@
                 const safeStarted = escapeHtml(activity.started || '');
                 const safeDuration = escapeHtml(activity.duration || '');
 
-                const stepsTable = activity.steps.length > 0 ? `
-                    <div class="activity-steps">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Command</th>
-                                    <th>Step</th>
-                                    <th>Result</th>
-                                    <th>Duration</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${activity.steps.map(step => `
-                                    <tr>
-                                        <td>${escapeHtml(String(step.stepNumber))}</td>
-                                        <td>${escapeHtml(step.command)}</td>
-                                        <td class="step-name">${escapeHtml(step.stepName || '-')}</td>
-                                        <td class="step-result">
-                                            ${escapeHtml(step.result)}
-                                            ${step.milestones && step.milestones.length > 0 ? `
-                                                <div class="step-milestones">
-                                                    ${step.milestones.map(m => {
-                                                        const milestoneText = m.stepName ? m.stepName + ': ' + m.message : m.message;
-                                                        const durationText = m.duration ? ' (' + formatDuration(m.duration) + ')' : '';
-                                                        return '<span class="milestone">' + escapeHtml(milestoneText) + durationText + '</span>';
-                                                    }).join('<span class="milestone-arrow">→</span>')}
-                                                </div>
-                                            ` : ''}
-                                        </td>
-                                        <td class="step-duration">${escapeHtml(step.duration || '-')}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                ` : '';
+                // Build hierarchical command/task structure
+                const commandsHtml = (activity.commands || []).map((cmd, cmdIndex) => {
+                    const safeCmdName = escapeHtml(cmd.command);
+                    const safeCmdDuration = escapeHtml(cmd.totalDuration || '');
+                    const hasInProgressTasks = cmd.tasks.some(t => t.status === 'in-progress');
+
+                    const tasksHtml = cmd.tasks.map(task => {
+                        const safeTaskId = escapeHtml(task.taskId);
+                        const safeTaskDuration = escapeHtml(task.duration || '');
+                        const isTaskInProgress = task.status === 'in-progress';
+                        const statusIcon = isTaskInProgress ? '\u23f3' : '\u2713';
+                        const statusClass = isTaskInProgress ? 'in-progress' : 'completed';
+
+                        return `
+                            <div class="task-item${isTaskInProgress ? ' task-in-progress' : ''}">
+                                <div class="task-item-left">
+                                    <span class="task-prefix">\u2514\u2500</span>
+                                    <span class="task-name">${safeTaskId}</span>
+                                </div>
+                                <div class="task-item-right">
+                                    <span class="task-duration">${safeTaskDuration || (isTaskInProgress ? 'running...' : '-')}</span>
+                                    <span class="task-status ${statusClass}">${statusIcon}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="command-group" data-cmd-index="${cmdIndex}">
+                            <div class="command-header" onclick="toggleCommand(${index}, ${cmdIndex})">
+                                <div class="command-header-left">
+                                    <span class="command-toggle">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                                            <path d="M4 2l4 4-4 4z"/>
+                                        </svg>
+                                    </span>
+                                    <span class="command-name">${safeCmdName}</span>
+                                    ${hasInProgressTasks ? '<span class="activity-badge" style="margin-left: 8px;">Running</span>' : ''}
+                                </div>
+                                <span class="command-duration">${safeCmdDuration || '-'}</span>
+                            </div>
+                            <div class="command-tasks">
+                                ${tasksHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
 
                 return `
                     <div class="activity-item ${statusClass}${isCollapsed ? ' collapsed' : ''}" data-index="${index}">
@@ -2188,7 +2434,9 @@
                                 Epic: ${safeEpic}
                             </div>
                             ${description ? `<div class="activity-description">${description}</div>` : ''}
-                            ${stepsTable}
+                            <div class="activity-commands">
+                                ${commandsHtml || '<div class="empty-state">No commands recorded</div>'}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2200,6 +2448,17 @@
             if (item) {
                 item.classList.toggle('collapsed');
             }
+        }
+
+        function toggleCommand(activityIndex, cmdIndex) {
+            const item = document.querySelector(`.activity-item[data-index="${activityIndex}"]`);
+            if (item) {
+                const cmdGroup = item.querySelectorAll('.command-group')[cmdIndex];
+                if (cmdGroup) {
+                    cmdGroup.classList.toggle('collapsed');
+                }
+            }
+            event.stopPropagation();
         }
 
         // ============================================================
@@ -2714,6 +2973,7 @@
                         const cmdWidth = Math.max(cmdRight - cmdLeft, 20); // Minimum width for visibility
                         const cmdClass = getCommandClass(step.command);
                         const safeCmdDuration = escapeHtml(step.duration || '');
+                        const hasInProgressTasks = step.tasks && step.tasks.some(t => t.status === 'in-progress');
 
                         const cmdRow = document.createElement('div');
                         cmdRow.className = 'timeline-command-row';
@@ -2729,7 +2989,7 @@
                         cmdRowContent.style.minWidth = timelineState.totalTimelineWidth + 'px';
 
                         const cmdBar = document.createElement('div');
-                        cmdBar.className = `command-bar ${cmdClass}`;
+                        cmdBar.className = `command-bar ${cmdClass}${hasInProgressTasks ? ' in-progress-stripe' : ''}`;
                         cmdBar.style.left = cmdLeft + 'px';
                         cmdBar.style.width = cmdWidth + 'px';
                         // Hide text if bar is too narrow
@@ -2741,6 +3001,42 @@
                         cmdRow.appendChild(cmdRowLabel);
                         cmdRow.appendChild(cmdRowContent);
                         commandRows.appendChild(cmdRow);
+
+                        // Add task-level rows within command if tasks exist
+                        if (step.tasks && step.tasks.length > 0) {
+                            step.tasks.forEach(task => {
+                                const taskLeft = timestampToX(task.startTs);
+                                const taskRight = timestampToX(task.endTs || task.startTs + 60);
+                                const taskWidth = Math.max(taskRight - taskLeft, 15);
+                                const isTaskInProgress = task.status === 'in-progress';
+
+                                const taskRow = document.createElement('div');
+                                taskRow.className = 'timeline-task-row';
+
+                                const taskRowLabel = document.createElement('div');
+                                taskRowLabel.className = 'timeline-task-row-label';
+                                taskRowLabel.textContent = task.taskId;
+                                taskRowLabel.title = task.taskId;
+
+                                const taskRowContent = document.createElement('div');
+                                taskRowContent.className = 'timeline-task-row-content';
+                                taskRowContent.style.width = timelineState.totalTimelineWidth + 'px';
+                                taskRowContent.style.minWidth = timelineState.totalTimelineWidth + 'px';
+
+                                const taskBar = document.createElement('div');
+                                taskBar.className = `task-bar ${isTaskInProgress ? 'in-progress' : 'completed'}`;
+                                taskBar.style.left = taskLeft + 'px';
+                                taskBar.style.width = taskWidth + 'px';
+                                const showTaskLabel = taskWidth >= 30;
+                                taskBar.innerHTML = showTaskLabel ? `<span class="task-label">${escapeHtml(task.duration || '')}</span>` : '';
+                                taskBar.title = `${task.taskId}: ${task.duration || (isTaskInProgress ? 'running...' : '')}`;
+
+                                taskRowContent.appendChild(taskBar);
+                                taskRow.appendChild(taskRowLabel);
+                                taskRow.appendChild(taskRowContent);
+                                commandRows.appendChild(taskRow);
+                            });
+                        }
                     });
 
                     row.appendChild(commandRows);

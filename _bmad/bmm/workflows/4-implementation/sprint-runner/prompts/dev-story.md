@@ -35,27 +35,24 @@ DECISION RULES:
 
 ## Logging Instructions
 
-You MUST log your progress using the orchestrator script. Use the Bash tool to run:
+You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
+
+**Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+- command: "dev-story"
+- task-id: identifies the granular task
+- status: "start" or "end"
+
+**Required logs for this workflow:**
 
 ```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "<step>" "<result>"
+# At START of workflow
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story workflow start
+
+# At END of workflow (before terminating)
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} dev-story workflow end
 ```
 
-**Step logs for this workflow:**
-- `study` - After studying the story and tech spec
-- `tests` - After tests are created
-- `implement` - After code implementation is done
-- `validate` - After validation passes
-
-**Example:**
-```bash
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "study" "complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "tests" "complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "implement" "complete"
-./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "validate" "passed"
-```
-
-**CRITICAL:** Duration is calculated automatically when the next log entry is written.
+**CRITICAL:** Always log both START and END. Duration is calculated by dashboard (end - start).
 
 ---
 
