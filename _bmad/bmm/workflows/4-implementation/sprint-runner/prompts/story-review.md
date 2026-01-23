@@ -65,9 +65,13 @@ IMPORTANT OUTPUT: At the end, clearly state:
 You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
 
 **Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
-- command: "story-review-{{review_attempt}}"
+- epicID: Short numeric ID (e.g., `2a`, `2b`) - extract from story key
+- storyID: Short numeric ID (e.g., `2a.1`, `2b-1`) - same as story key
+- command: "story-review-{{review_attempt}}" (includes attempt number)
 - task-id: identifies the granular task
 - status: "start" or "end"
+
+**IMPORTANT:** Always use SHORT NUMERIC IDs, never full story/epic titles.
 
 **Required logs for this workflow:**
 

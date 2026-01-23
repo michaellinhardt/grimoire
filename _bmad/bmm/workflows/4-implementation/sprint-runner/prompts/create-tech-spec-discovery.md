@@ -32,6 +32,10 @@ OUTPUT REQUIREMENT:
 For EACH story in {{story_key}}, create a discovery file at:
 {{implementation_artifacts}}/[story_id]-discovery-tech.md
 
+**IMPORTANT:** Use SHORT NUMERIC IDs only (e.g., `2a.1`, `2b-1`), never full story titles.
+- CORRECT: `2a.1-discovery-tech.md`
+- WRONG: `2a.1-implement-login-feature-discovery-tech.md`
+
 Each discovery file MUST contain:
 - Technical Context: Key file paths, component dependencies, patterns to follow
 - Investigation Results: What was found during codebase analysis
@@ -50,9 +54,13 @@ IMPORTANT: Generate one discovery file per story. If processing 2a.1 and 2a.2, c
 You MUST log your progress using the orchestrator script. Log START at beginning of task, END when complete.
 
 **Format:** `./_bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>`
+- epicID: Short numeric ID (e.g., `2a`, `2b`) - extract from story key
+- storyID: Short numeric ID (e.g., `2a.1`, `2b-1`) - same as story key
 - command: "tech-spec-discovery"
 - task-id: identifies the granular task
 - status: "start" or "end"
+
+**IMPORTANT:** Always use SHORT NUMERIC IDs, never full story/epic titles.
 
 **Required logs for this workflow:**
 

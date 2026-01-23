@@ -25,9 +25,13 @@ To use a prompt:
 3. Pass the substituted prompt to Task tool
 
 **Logging Variables:**
-- `{{epic_id}}` - Extract from story_key (e.g., "2a" from "2a.1")
-- `{{story_id}}` - Same as story_key (e.g., "2a.1")
+- `{{epic_id}}` - Short numeric ID extracted from story_key (e.g., "2a" from "2a.1", "2b" from "2b-1")
+- `{{story_id}}` - Short numeric ID, same as story_key (e.g., "2a.1", "2b-1")
 - `{{command}}` - Workflow name with iteration for reviews (e.g., "story-review-1", "code-review-3")
+
+**IMPORTANT:** Always use SHORT NUMERIC IDs, never full story titles or epic names.
+- CORRECT: `2a`, `2b-1`, `1.2.3`
+- WRONG: `epic-2a-user-authentication`, `story-2b-1-login-feature`
 
 ---
 
@@ -36,18 +40,20 @@ To use a prompt:
 Subagents write to `./docs/sprint-runner.csv` in CSV format (no header):
 
 ```
-unix_timestamp,epic_id,story_id,command,step,duration,result
+timestamp,epicID,storyID,command,task-id,status
 ```
 
-**IMPORTANT:** The orchestrator does NOT log. Only subagents log their milestones using the script.
+- `status` = "start" or "end"
+- Duration is calculated by dashboard (matching start/end pairs)
 
-The script automatically calculates duration by updating the previous row when a new row is added.
+**IMPORTANT:** The orchestrator does NOT log. Only subagents log using the script.
 
 Example log entries (from subagents):
 ```
-1706054400,epic-2a,2a.1,create-story,discovery,0,complete
-1706054500,epic-2a,2a.1,create-story,draft,100,complete
-1706054520,epic-2a,2a.1,create-story,final,20,complete
+1706054400,2a,2a.1,create-story,workflow,start
+1706054500,2a,2a.1,create-story,workflow,end
+1706054501,2a,2a.1,story-discovery,workflow,start
+1706054600,2a,2a.1,story-discovery,workflow,end
 ```
 
 ---
@@ -608,8 +614,10 @@ SUBAGENT RULES:
   - Review agents skip discovery steps (use provided file)
 
 LOG FORMAT:
-  - CSV: unix_timestamp,epic_id,story_id,command,step,duration,result
-  - Subagents log milestones via: _bmad/scripts/orchestrator.sh
+  - CSV: timestamp,epicID,storyID,command,task-id,status
+  - status = "start" or "end" (duration calculated by dashboard)
+  - Subagents log via: _bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>
+  - Use SHORT NUMERIC IDs only (e.g., "2a", "2a.1"), never full titles
   - Orchestrator does NOT log
 ```
 
