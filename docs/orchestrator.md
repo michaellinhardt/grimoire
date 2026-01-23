@@ -1,1 +1,0 @@
-../_bmad-output/implementation-artifacts/orchestrator.md
