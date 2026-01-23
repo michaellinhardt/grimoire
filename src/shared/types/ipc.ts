@@ -89,3 +89,82 @@ export type SessionWithExists = z.infer<typeof SessionWithExistsSchema>
 export const SessionListSchema = z.array(SessionWithExistsSchema)
 
 export type SessionList = z.infer<typeof SessionListSchema>
+
+// ============================================================
+// Session Management Schemas (Story 2a.3)
+// ============================================================
+
+export const CreateSessionSchema = z.object({
+  folderPath: z.string().min(1)
+})
+
+export type CreateSessionRequest = z.infer<typeof CreateSessionSchema>
+
+// ============================================================
+// Session Forking Schemas (Story 2a.5)
+// ============================================================
+
+export const ListSessionsOptionsSchema = z.object({
+  includeHidden: z.boolean().optional().default(false)
+})
+
+export type ListSessionsOptions = z.infer<typeof ListSessionsOptionsSchema>
+
+export const ForkSessionSchema = z.object({
+  parentSessionId: z.string().uuid(),
+  hideParent: z.boolean().optional().default(true)
+})
+
+export type ForkSessionRequest = z.infer<typeof ForkSessionSchema>
+
+export const SessionLineageSchema = z.array(z.string().uuid())
+
+export type SessionLineage = z.infer<typeof SessionLineageSchema>
+
+// ============================================================
+// Session Metadata Schemas (Story 2a.6)
+// ============================================================
+
+export const SessionMetadataSchema = z.object({
+  sessionId: z.string().uuid(),
+  totalInputTokens: z.number().int().nonnegative(),
+  totalOutputTokens: z.number().int().nonnegative(),
+  totalCostUsd: z.number().nonnegative(),
+  model: z.string().nullable(),
+  updatedAt: z.number().nullable()
+})
+
+export type SessionMetadata = z.infer<typeof SessionMetadataSchema>
+
+// For upsert operations - delta values to add to existing totals
+export const SessionMetadataUpsertSchema = z.object({
+  sessionId: z.string().uuid(),
+  inputTokens: z.number().int().nonnegative().optional().default(0),
+  outputTokens: z.number().int().nonnegative().optional().default(0),
+  costUsd: z.number().nonnegative().optional().default(0),
+  model: z.string().optional()
+})
+
+export type SessionMetadataUpsert = z.infer<typeof SessionMetadataUpsertSchema>
+
+// ============================================================
+// Rewind Schemas (Story 2b.5)
+// ============================================================
+
+/**
+ * Request schema for rewinding a conversation from a checkpoint.
+ * Creates a forked session that will resume from a specific message UUID.
+ *
+ * Note: This is distinct from ForkSessionSchema which does a simple fork.
+ * Rewind stores checkpoint context for Epic 3b CC spawn with --checkpoint flag.
+ */
+export const RewindRequestSchema = z.object({
+  /** Current session ID to rewind from */
+  sessionId: z.string().uuid(),
+  /** Message UUID to rewind to (checkpoint) */
+  checkpointUuid: z.string().uuid(),
+  /** New message to send after rewinding */
+  newMessage: z.string().trim().min(1, { message: 'Message cannot be empty' })
+})
+
+export type RewindRequest = z.infer<typeof RewindRequestSchema>

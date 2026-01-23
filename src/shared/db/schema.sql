@@ -1,4 +1,4 @@
--- VERSION: 1
+-- VERSION: 2
 -- IMPORTANT: Bump version number when modifying this file
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -44,8 +44,21 @@ CREATE TABLE IF NOT EXISTS file_edits (
 CREATE INDEX IF NOT EXISTS idx_file_edits_file_path ON file_edits(file_path);
 CREATE INDEX IF NOT EXISTS idx_file_edits_session_id ON file_edits(session_id);
 
+-- Index for session_metadata time-based queries (Story 2a.6)
+CREATE INDEX IF NOT EXISTS idx_session_metadata_updated_at ON session_metadata(updated_at);
+
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT,
   updated_at INTEGER
+);
+
+-- Rewind context storage for Epic 3b CC spawn (Story 2b.5)
+-- Stores checkpoint UUID and new message for sessions created via rewind
+-- Data is consumed when CC is spawned with --checkpoint flag
+CREATE TABLE IF NOT EXISTS rewind_context (
+  session_id TEXT PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE,
+  checkpoint_uuid TEXT NOT NULL,
+  new_message TEXT NOT NULL,
+  created_at INTEGER NOT NULL
 );

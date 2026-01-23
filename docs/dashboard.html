@@ -1,0 +1,2902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grimoire - Project Dashboard</title>
+    <style>
+        /* Reset & Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Timeline CSS Variables */
+            --timeline-label-width: 200px;
+            --timeline-block-width: 120px;
+            --timeline-row-height: 48px;
+            --timeline-command-row-height: 28px;
+            --timeline-story-color: #10b981;
+            --timeline-story-in-progress-color: #fbbf24;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f7f6f3;
+            color: #37352f;
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header - Task 1: Modernized compact header */
+        header {
+            background: white;
+            border-radius: 8px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #37352f;
+            margin-bottom: 0;
+        }
+
+        .last-updated {
+            font-size: 14px;
+            color: #787774;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .update-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .update-dot.inactive {
+            background: #9ca3af;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e8e7e5;
+        }
+
+        .card-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #787774;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #37352f;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: #787774;
+            margin-top: 4px;
+        }
+
+        /* Section Headers */
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #37352f;
+            margin-bottom: 16px;
+            padding-left: 4px;
+        }
+
+        /* Epic Board (Kanban) */
+        .epic-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .epic-column {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #e8e7e5;
+            min-height: 200px;
+        }
+
+        .epic-column-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: #787774;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8e7e5;
+        }
+
+        .epic-card {
+            background: #fafaf9;
+            border: 1px solid #e8e7e5;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .epic-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        /* Task 2: Expandable Epic Cards */
+        .epic-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .epic-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #37352f;
+            margin-bottom: 6px;
+        }
+
+        .epic-expand-icon {
+            font-size: 10px;
+            color: #787774;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .epic-card.expanded .epic-expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .epic-card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .epic-card-progress {
+            font-size: 12px;
+            color: #787774;
+        }
+
+        .epic-card-duration {
+            font-size: 11px;
+            font-weight: 500;
+            color: #065f46;
+            background: #d1fae5;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .epic-card-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e8e7e5;
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .epic-card-progress-fill {
+            height: 100%;
+            background: #10b981;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .epic-stories-list {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e8e7e5;
+        }
+
+        .epic-story-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+            color: #37352f;
+            cursor: pointer;
+        }
+
+        .epic-story-item:hover {
+            background: #f0efed;
+            margin: 0 -8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+        }
+
+        .epic-story-item .story-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .epic-story-item .badge {
+            flex-shrink: 0;
+            margin-left: 8px;
+            font-size: 10px;
+            padding: 2px 6px;
+        }
+
+        /* Story Tooltip */
+        .story-tooltip {
+            position: fixed;
+            background: #37352f;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .story-tooltip.visible {
+            opacity: 1;
+        }
+
+        /* Story Table */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e8e7e5;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #fafaf9;
+            border-bottom: 1px solid #e8e7e5;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #787774;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-top: 1px solid #e8e7e5;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #fafaf9;
+        }
+
+        .story-id {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 13px;
+            color: #787774;
+        }
+
+        .story-duration {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 12px;
+            color: #787774;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .badge-backlog {
+            background: #e8e7e5;
+            color: #787774;
+        }
+
+        .badge-ready-for-dev {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-in-progress {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-review {
+            background: #e9d5ff;
+            color: #6b21a8;
+        }
+
+        .badge-done {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-optional {
+            background: #f3f4f6;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        /* Activity Log */
+        .activity-log {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e8e7e5;
+            padding: 24px;
+        }
+
+        .activity-item {
+            border-left: 3px solid #e8e7e5;
+            padding-left: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+        }
+
+        .activity-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .activity-item.completed {
+            border-left-color: #10b981;
+        }
+
+        .activity-item.in-progress {
+            border-left-color: #fbbf24;
+        }
+
+        .activity-item.collapsed .activity-body {
+            display: none;
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .activity-header:hover {
+            opacity: 0.8;
+        }
+
+        .activity-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .activity-toggle {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #787774;
+            transition: transform 0.2s;
+        }
+
+        .activity-item.collapsed .activity-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .activity-story {
+            font-size: 16px;
+            font-weight: 600;
+            color: #37352f;
+        }
+
+        .activity-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .activity-item.in-progress .activity-badge {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .activity-meta-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .activity-duration {
+            font-size: 12px;
+            font-weight: 600;
+            color: #37352f;
+            background: #e8e7e5;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .activity-date {
+            font-size: 12px;
+            color: #787774;
+        }
+
+        .activity-body {
+            padding-top: 4px;
+        }
+
+        .activity-meta {
+            font-size: 13px;
+            color: #787774;
+            margin-bottom: 12px;
+        }
+
+        .activity-description {
+            font-size: 13px;
+            color: #5a5a58;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        .activity-steps {
+            background: #fafaf9;
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+        }
+
+        .activity-steps table {
+            min-width: 600px;
+        }
+
+        .activity-steps th,
+        .activity-steps td {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        .activity-steps thead {
+            background: transparent;
+        }
+
+        .step-result {
+            font-size: 12px;
+        }
+
+        .step-duration {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 11px;
+            color: #787774;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e8e7e5;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #787774;
+        }
+
+        select {
+            padding: 6px 12px;
+            border: 1px solid #e8e7e5;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            color: #37352f;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #787774;
+            font-size: 14px;
+        }
+
+        .dashboard-content {
+            display: none;
+        }
+
+        .dashboard-content.visible {
+            display: block;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            background: white;
+            padding: 6px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid #e8e7e5;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: #787774;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #f7f6f3;
+            color: #37352f;
+        }
+
+        .tab-btn.active {
+            background: #37352f;
+            color: white;
+        }
+
+        .tab-btn .tab-count {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .tab-btn.active .tab-count {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Tab Panels */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* ============================================================
+           TIMELINE STYLES - REDESIGNED
+           ============================================================ */
+        .timeline-panel {
+            position: relative;
+        }
+
+        .timeline-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: white;
+            border: 1px solid #e8e7e5;
+            border-radius: 8px 8px 0 0;
+            border-bottom: none;
+            height: 48px;
+            gap: 16px;
+        }
+
+        .timeline-zoom {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zoom-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #e8e7e5;
+            background: white;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s ease;
+        }
+
+        .zoom-btn:hover {
+            background: #f7f6f3;
+        }
+
+        .zoom-btn:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 1px;
+        }
+
+        .zoom-level {
+            font-size: 13px;
+            font-weight: 500;
+            color: #787774;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* Visibility button group */
+        .timeline-visibility-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .visibility-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid #e8e7e5;
+            border-radius: 4px;
+            background: white;
+            color: #787774;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .visibility-btn:hover {
+            background: #f7f6f3;
+            color: #37352f;
+            border-color: #d1d0ce;
+        }
+
+        .visibility-btn:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 1px;
+        }
+
+        /* Block size input group */
+        .timeline-block-size {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-block-size label {
+            font-size: 13px;
+            color: #787774;
+        }
+
+        .timeline-block-size input {
+            width: 60px;
+            padding: 4px 8px;
+            border: 1px solid #e8e7e5;
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .timeline-block-size input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .timeline-block-size span {
+            font-size: 13px;
+            color: #787774;
+        }
+
+        .timeline-legend {
+            display: flex;
+            gap: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #787774;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .legend-color.story {
+            background: var(--timeline-story-color);
+        }
+
+        .legend-color.command {
+            background: #3b82f6;
+        }
+
+        /* Scrollable Timeline Container */
+        .timeline-scroll-container {
+            background: white;
+            border: 1px solid #e8e7e5;
+            border-radius: 0 0 8px 8px;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 600px;
+            position: relative;
+        }
+
+        /* Time Header (sticky top) */
+        .timeline-header {
+            display: flex;
+            border-bottom: 1px solid #e8e7e5;
+            background: #fafaf9;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            height: 32px;
+        }
+
+        /* Resizable label column header */
+        .timeline-label-spacer {
+            width: var(--timeline-label-width);
+            min-width: var(--timeline-label-width);
+            flex-shrink: 0;
+            background: #fafaf9;
+            border-right: 1px solid #e8e7e5;
+            position: sticky;
+            left: 0;
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #787774;
+        }
+
+        /* Drag handle for resizing */
+        .timeline-resize-handle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 6px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            transition: background 0.15s ease;
+            z-index: 30;
+        }
+
+        .timeline-resize-handle:hover,
+        .timeline-resize-handle.active {
+            background: #3b82f6;
+        }
+
+        .timeline-hours {
+            display: flex;
+            flex: 1;
+        }
+
+        .timeline-hour {
+            min-width: 60px;
+            padding: 8px 4px;
+            text-align: left;
+            padding-left: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #787774;
+            border-right: 1px solid #e8e7e5;
+            flex-shrink: 0;
+            line-height: 16px;
+        }
+
+        /* Timeline Body */
+        .timeline-body {
+            position: relative;
+            min-height: 200px;
+        }
+
+        /* Grid Lines */
+        .timeline-grid {
+            position: absolute;
+            top: 0;
+            left: var(--timeline-label-width);
+            right: 0;
+            bottom: 0;
+            display: flex;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .timeline-grid-line {
+            min-width: 60px;
+            border-right: 1px solid #e8e7e5;
+            flex-shrink: 0;
+            opacity: 0.5;
+        }
+
+        .timeline-grid-line.quarter {
+            border-right: 1px dashed #e8e7e5;
+        }
+
+        /* Compact empty time block */
+        .timeline-hour.compact {
+            min-width: 20px;
+            width: 20px;
+            padding: 8px 2px;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 3px,
+                #f0efed 3px,
+                #f0efed 6px
+            );
+            color: transparent;
+            overflow: hidden;
+        }
+
+        .timeline-grid-line.compact {
+            min-width: 20px;
+            width: 20px;
+            background: #f7f6f3;
+            border-right: 1px dashed #d1d0ce;
+        }
+
+        /* Story Rows Container */
+        .timeline-rows {
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Story Row */
+        .timeline-row {
+            display: flex;
+            flex-direction: column;
+            min-height: var(--timeline-row-height);
+            position: relative;
+            border-bottom: 1px solid #f0efed;
+        }
+
+        .timeline-row.expanded {
+            min-height: auto;
+        }
+
+        /* Hidden story row styling - shown at bottom with muted appearance */
+        .timeline-row.hidden-story {
+            opacity: 0.5;
+            background: #f7f6f3;
+        }
+
+        .timeline-row.hidden-story .timeline-row-label {
+            background: #f7f6f3;
+        }
+
+        .timeline-row.hidden-story .timeline-row-label:hover {
+            background: #efeeec;
+        }
+
+        /* Row main content (label + bar area) */
+        .timeline-row-main {
+            display: flex;
+            height: var(--timeline-row-height);
+            min-height: var(--timeline-row-height);
+        }
+
+        /* Row Label (Sticky Left) - CLICKABLE for expand */
+        .timeline-row-label {
+            width: var(--timeline-label-width);
+            min-width: var(--timeline-label-width);
+            padding: 0 12px;
+            flex-shrink: 0;
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 10;
+            border-right: 1px solid #e8e7e5;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s ease;
+        }
+
+        .timeline-row-label:hover {
+            background: #f7f6f3;
+        }
+
+        .label-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 13px;
+            font-weight: 500;
+            color: #37352f;
+        }
+
+        .label-duration {
+            flex-shrink: 0;
+            margin-left: 8px;
+            font-size: 11px;
+            font-weight: 400;
+            color: #787774;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        /* Story visibility checkbox */
+        .story-visibility-checkbox {
+            width: 14px;
+            height: 14px;
+            margin-right: 6px;
+            cursor: pointer;
+            accent-color: #10b981;
+            flex-shrink: 0;
+        }
+
+        /* Expand indicator in label */
+        .label-expand-icon {
+            flex-shrink: 0;
+            margin-right: 8px;
+            font-size: 10px;
+            color: #787774;
+            transition: transform 0.2s ease;
+        }
+
+        .timeline-row.expanded .label-expand-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Row Content Area */
+        .timeline-row-content {
+            flex-shrink: 0;
+            position: relative;
+            height: var(--timeline-row-height);
+            min-height: var(--timeline-row-height);
+        }
+
+        /* Story Bar - NOT clickable for expand anymore */
+        .timeline-bar {
+            position: absolute;
+            height: 24px;
+            top: 12px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 11px;
+            font-weight: 500;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            min-width: 40px;
+            z-index: 5;
+        }
+
+        /* Story bars - ONE consistent color */
+        .timeline-bar.story-bar {
+            background: var(--timeline-story-color);
+        }
+
+        .timeline-bar.story-bar.in-progress {
+            background: var(--timeline-story-in-progress-color);
+            color: #37352f;
+        }
+
+        .bar-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Command Rows Container (shown when expanded) */
+        .timeline-command-rows {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .timeline-row.expanded .timeline-command-rows {
+            display: flex;
+        }
+
+        /* Individual command row */
+        .timeline-command-row {
+            display: flex;
+            height: var(--timeline-command-row-height);
+            border-top: 1px dashed #e8e7e5;
+        }
+
+        .timeline-command-row-label {
+            width: var(--timeline-label-width);
+            min-width: var(--timeline-label-width);
+            padding: 0 12px 0 24px;
+            font-size: 12px;
+            color: #787774;
+            display: flex;
+            align-items: center;
+            background: #fafaf9;
+            border-right: 1px solid #e8e7e5;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .timeline-command-row-content {
+            flex-shrink: 0;
+            position: relative;
+            height: var(--timeline-command-row-height);
+        }
+
+        /* Command Bar - Different colors per type */
+        .command-bar {
+            position: absolute;
+            height: 18px;
+            top: 5px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            padding: 0 6px;
+            font-size: 10px;
+            font-weight: 500;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 30px;
+        }
+
+        /* Command Type Colors */
+        .command-bar.create-story { background: #3b82f6; }
+        .command-bar.story-review { background: #f59e0b; color: #37352f; }
+        .command-bar.create-tech-spec { background: #6366f1; }
+        .command-bar.tech-spec-review { background: #8b5cf6; }
+        .command-bar.dev-story { background: #22c55e; }
+        .command-bar.code-review { background: #a855f7; }
+        .command-bar.default { background: #6b7280; }
+
+        .command-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Timeline Tooltip */
+        .timeline-tooltip {
+            position: fixed;
+            background: #37352f;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            max-width: 280px;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            line-height: 1.4;
+        }
+
+        .timeline-tooltip.visible {
+            opacity: 1;
+        }
+
+        .timeline-tooltip-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+
+        .timeline-tooltip-meta {
+            color: #a8a8a8;
+        }
+
+        /* Empty State */
+        .timeline-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #787774;
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .epic-board {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Story Tooltip -->
+        <div class="story-tooltip" id="storyTooltip"></div>
+
+        <!-- Header -->
+        <header>
+            <h1>Grimoire</h1>
+            <div class="last-updated">
+                <span class="update-dot" id="updateDot"></span>
+                <span id="lastUpdated">Loading...</span>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content" id="dashboardContent">
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="card-label">Total Epics</div>
+                    <div class="card-value" id="totalEpics">0</div>
+                    <div class="card-subtitle">In-progress: <span id="epicsInProgress">0</span></div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Stories</div>
+                    <div class="card-value" id="storiesProgress">0/0</div>
+                    <div class="card-subtitle">Completion: <span id="storiesPercent">0%</span></div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Current Story</div>
+                    <div class="card-value" style="font-size: 16px; line-height: 1.4;" id="currentStory">-</div>
+                    <div class="card-subtitle" id="currentStoryStatus">-</div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="epics">Epics <span class="tab-count" id="epicsCount">0</span></button>
+                <button class="tab-btn" data-tab="stories">Stories <span class="tab-count" id="storiesCount">0</span></button>
+                <button class="tab-btn" data-tab="activity">Activity <span class="tab-count" id="activityCount">0</span></button>
+                <button class="tab-btn" data-tab="timeline">Timeline</button>
+            </div>
+
+            <!-- Epic Board Tab -->
+            <div class="tab-panel active" id="tab-epics">
+                <div class="epic-board">
+                    <div class="epic-column">
+                        <div class="epic-column-header">Backlog</div>
+                        <div id="epicsBacklog"></div>
+                    </div>
+                    <div class="epic-column">
+                        <div class="epic-column-header">In Progress</div>
+                        <div id="epicsInProgressCol"></div>
+                    </div>
+                    <div class="epic-column">
+                        <div class="epic-column-header">Done</div>
+                        <div id="epicsDone"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stories Tab -->
+            <div class="tab-panel" id="tab-stories">
+                <div class="filters">
+                    <div class="filter-group">
+                        <label class="filter-label">Epic:</label>
+                        <select id="epicFilter">
+                            <option value="all">All Epics</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Status:</label>
+                        <select id="statusFilter">
+                            <option value="all">All Statuses</option>
+                            <option value="backlog">Backlog</option>
+                            <option value="ready-for-dev">Ready for Dev</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="review">Review</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Story ID</th>
+                                <th>Name</th>
+                                <th>Epic</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="storyTableBody">
+                            <tr><td colspan="5" class="empty-state">No stories loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Activity Tab -->
+            <div class="tab-panel" id="tab-activity">
+                <div class="activity-log" id="activityLog">
+                    <div class="empty-state">No activity loaded</div>
+                </div>
+            </div>
+
+            <!-- Timeline Tab - REDESIGNED -->
+            <div class="tab-panel timeline-panel" id="tab-timeline" role="region" aria-label="Project Timeline">
+                <!-- Controls Bar -->
+                <div class="timeline-controls">
+                    <div class="timeline-zoom">
+                        <button class="zoom-btn" data-action="out" onclick="zoomTimeline('out')" aria-label="Zoom out">-</button>
+                        <span class="zoom-level" id="zoomLevel">100%</span>
+                        <button class="zoom-btn" data-action="in" onclick="zoomTimeline('in')" aria-label="Zoom in">+</button>
+                    </div>
+
+                    <!-- Visibility buttons -->
+                    <div class="timeline-visibility-btns">
+                        <button class="visibility-btn" onclick="showAllStories()">Show All</button>
+                        <button class="visibility-btn" onclick="hideAllStories()">Hide All</button>
+                    </div>
+
+                    <!-- Block size input (minutes) -->
+                    <div class="timeline-block-size">
+                        <label for="blockSizeInput">Block (min):</label>
+                        <input type="number"
+                               id="blockSizeInput"
+                               min="1"
+                               max="480"
+                               step="1"
+                               value="120"
+                               onchange="setBlockSizeMinutes(this.value)">
+                    </div>
+
+                    <div class="timeline-legend">
+                        <span class="legend-item">
+                            <span class="legend-color story"></span>
+                            Story
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-color command"></span>
+                            Command
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Scrollable Container -->
+                <div class="timeline-scroll-container" id="timelineScrollContainer">
+                    <!-- Time Header (sticky top) with resize handle -->
+                    <div class="timeline-header" id="timelineHeader">
+                        <div class="timeline-label-spacer">
+                            <span>Story</span>
+                            <div class="timeline-resize-handle" id="resizeHandle"></div>
+                        </div>
+                        <div class="timeline-hours" id="timelineHours">
+                            <!-- Generated time blocks -->
+                        </div>
+                    </div>
+
+                    <!-- Timeline Body -->
+                    <div class="timeline-body" id="timelineBody">
+                        <!-- Grid Lines (absolute positioned) -->
+                        <div class="timeline-grid" id="timelineGrid"></div>
+
+                        <!-- Story Rows -->
+                        <div class="timeline-rows" id="timelineRows">
+                            <!-- Generated story rows -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tooltip (positioned absolutely) -->
+                <div class="timeline-tooltip" id="timelineTooltip"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let state = {
+            sprintData: null,
+            orchestratorData: null,
+            lastUpdateTime: null,
+            watchInterval: null,
+            isWatching: false,
+            autoLoadWorks: false,
+            lastDataHash: null
+        };
+
+        // Simple string hash function for change detection
+        function hashString(str) {
+            let hash = 0;
+            if (!str || str.length === 0) return hash;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return hash;
+        }
+
+        // Story descriptions cache
+        let storyDescriptions = {};
+
+        // ============================================================
+        // Security: HTML Escaping Utility
+        // ============================================================
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            const str = String(text);
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Escape for use in JavaScript string literals (prevents XSS in inline handlers)
+        function escapeJsString(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r');
+        }
+
+        // Normalize status string for CSS class usage
+        function normalizeStatusForClass(status) {
+            if (!status) return 'backlog';
+            return String(status).toLowerCase().trim().replace(/_/g, '-');
+        }
+
+        // ============================================================
+        // TIMELINE STATE - REDESIGNED
+        // ============================================================
+        // Fixed column width constant
+        const COLUMN_WIDTH_PX = 60;  // Fixed pixel width for all columns (uniform grid)
+
+        let timelineState = {
+            zoomLevel: 100,
+            labelColumnWidth: 200,
+            minLabelWidth: 120,
+            maxLabelWidth: 400,
+            blockSizeMinutes: 120,
+            expandedStoryId: null,
+            timelineStartTs: null,
+            timelineEndTs: null,
+            totalTimelineWidth: 0,  // Continuous timeline width in pixels
+            hiddenStories: new Set(),
+            processedBlocks: []
+        };
+
+        // Column resize state
+        let resizeState = {
+            isResizing: false,
+            startX: 0,
+            startWidth: 0
+        };
+
+        // Timeline cache
+        let timelineCache = {
+            data: null,
+            dataHash: null,
+            hasScrolled: false
+        };
+
+        // Command type color mapping
+        const COMMAND_COLORS = {
+            'create-story': '#3b82f6',
+            'story-review': '#f59e0b',
+            'create-tech-spec': '#6366f1',
+            'tech-spec-review': '#8b5cf6',
+            'dev-story': '#22c55e',
+            'code-review': '#a855f7'
+        };
+
+        // ============================================================
+        // Utility Functions
+        // ============================================================
+
+        // Format unix timestamp to readable date
+        function formatTimestamp(ts) {
+            const date = new Date(ts * 1000);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Format ISO date string to readable date
+        function formatISODate(isoString) {
+            if (!isoString) return '';
+            try {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return isoString;
+                return date.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return isoString;
+            }
+        }
+
+        // Format duration in seconds to human readable
+        function formatDuration(seconds) {
+            if (!seconds || seconds <= 0) return '';
+            if (seconds < 60) {
+                return `${Math.round(seconds)}s`;
+            } else if (seconds < 3600) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.round(seconds % 60);
+                return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+            } else {
+                const hours = Math.floor(seconds / 3600);
+                const mins = Math.floor((seconds % 3600) / 60);
+                return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+            }
+        }
+
+        // Parse duration from ~Xm format to minutes
+        function parseDurationToMinutes(durationStr) {
+            if (!durationStr) return 0;
+            const cleaned = String(durationStr).replace(/^~/, '').trim();
+            const hourMatch = cleaned.match(/(\d+)h/);
+            const minMatch = cleaned.match(/(\d+)m/);
+            const secMatch = cleaned.match(/(\d+)s/);
+
+            let minutes = 0;
+            if (hourMatch) minutes += parseInt(hourMatch[1], 10) * 60;
+            if (minMatch) minutes += parseInt(minMatch[1], 10);
+            if (secMatch) minutes += parseInt(secMatch[1], 10) / 60;
+
+            if (!hourMatch && !minMatch && !secMatch) {
+                const numMatch = cleaned.match(/(\d+)/);
+                if (numMatch) minutes = parseInt(numMatch[1], 10);
+            }
+
+            return minutes;
+        }
+
+        // Get command CSS class
+        function getCommandClass(command) {
+            if (!command) return 'default';
+            const baseCommand = command.split(' ')[0].split('#')[0].trim();
+            return COMMAND_COLORS[baseCommand] ? baseCommand : 'default';
+        }
+
+        // ============================================================
+        // ORCHESTRATOR PARSERS WITH COMMAND PAIRING
+        // ============================================================
+
+        // Parse orchestrator CSV log with command pairing
+        function parseOrchestratorCSV(text) {
+            const lines = text.trim().split('\n');
+            const startIndex = lines[0].includes('unix_timestamp') ? 1 : 0;
+            const storyMap = new Map();
+
+            for (let i = startIndex; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const parts = line.split(',');
+                if (parts.length < 5) continue;
+
+                const [timestamp, epicId, storyId, command, result] = parts;
+                const ts = parseInt(timestamp, 10);
+
+                if (!storyMap.has(storyId)) {
+                    storyMap.set(storyId, {
+                        storyId: storyId,
+                        epic: `epic-${epicId}`,
+                        started: null,
+                        completed: null,
+                        duration: '',
+                        steps: [],
+                        commandPairs: new Map(),
+                        startTs: null,
+                        endTs: null
+                    });
+                }
+
+                const activity = storyMap.get(storyId);
+
+                // Command pairing: result="start" + result!="start"
+                if (result === 'start') {
+                    activity.commandPairs.set(command, {
+                        name: command,
+                        startTs: ts,
+                        step: activity.commandPairs.size + 1
+                    });
+                    if (!activity.started) {
+                        activity.started = formatTimestamp(ts);
+                        activity.startTs = ts;
+                    }
+                } else {
+                    // Command completed - pair with start
+                    const pair = activity.commandPairs.get(command);
+                    if (pair) {
+                        pair.endTs = ts;
+                        pair.result = result;
+                        pair.durationSecs = ts - pair.startTs;
+                        pair.durationFormatted = formatDuration(pair.durationSecs);
+
+                        activity.steps.push({
+                            step: pair.step,
+                            command: command,
+                            result: result,
+                            duration: pair.durationFormatted,
+                            durationSecs: pair.durationSecs,
+                            startTs: pair.startTs,
+                            endTs: pair.endTs
+                        });
+                    }
+
+                    // Track story end
+                    if (!activity.endTs || ts > activity.endTs) {
+                        activity.endTs = ts;
+                    }
+
+                    // Check if this is the final step
+                    if (command === 'code-review' && result === 'success') {
+                        activity.completed = formatTimestamp(ts);
+                    }
+                }
+            }
+
+            // Convert map to array and calculate totals
+            const result = Array.from(storyMap.values()).map(activity => {
+                if (activity.startTs && activity.endTs) {
+                    activity.totalDurationSecs = activity.endTs - activity.startTs;
+                    activity.duration = formatDuration(activity.totalDurationSecs);
+                } else {
+                    const totalSecs = activity.steps.reduce((sum, s) => sum + (s.durationSecs || 0), 0);
+                    activity.totalDurationSecs = totalSecs;
+                    activity.duration = formatDuration(totalSecs);
+                }
+                delete activity.commandPairs;
+                return activity;
+            });
+
+            return result.reverse();
+        }
+
+        // Parse orchestrator markdown log with estimated timestamps
+        function parseOrchestratorMarkdown(text) {
+            const activities = [];
+            const storyBlocks = text.split(/^## Story:/m).slice(1);
+
+            // Base timestamp for estimation (use current time minus some offset)
+            let estimatedTs = Math.floor(Date.now() / 1000) - (storyBlocks.length * 3600);
+
+            for (let block of storyBlocks) {
+                const lines = block.split('\n');
+                const activity = {
+                    storyId: '',
+                    epic: '',
+                    started: '',
+                    completed: '',
+                    duration: '',
+                    steps: [],
+                    startTs: null,
+                    endTs: null,
+                    totalDurationSecs: 0
+                };
+
+                for (let line of lines) {
+                    if (line.includes('Epic:')) {
+                        activity.epic = line.split('Epic:')[1].trim();
+                    }
+                    if (line.includes('Started:')) {
+                        activity.started = formatISODate(line.split('Started:')[1].trim());
+                        // Try to parse actual date
+                        const dateStr = line.split('Started:')[1].trim();
+                        const parsedDate = new Date(dateStr);
+                        if (!isNaN(parsedDate.getTime())) {
+                            activity.startTs = Math.floor(parsedDate.getTime() / 1000);
+                        }
+                    }
+                    if (line.includes('Story completed:')) {
+                        activity.completed = formatISODate(line.split('Story completed:')[1].trim());
+                        const dateStr = line.split('Story completed:')[1].trim();
+                        const parsedDate = new Date(dateStr);
+                        if (!isNaN(parsedDate.getTime())) {
+                            activity.endTs = Math.floor(parsedDate.getTime() / 1000);
+                        }
+                    }
+                    if (line.includes('Total duration:')) {
+                        activity.duration = line.split('Total duration:')[1].trim();
+                    }
+                }
+
+                activity.storyId = lines[0].trim();
+
+                // Parse steps table
+                const tableStart = lines.findIndex(l => l.includes('| Step |'));
+                if (tableStart !== -1) {
+                    const tableLines = lines.slice(tableStart + 2);
+                    let stepOffset = 0;
+
+                    for (let row of tableLines) {
+                        if (!row.startsWith('|') || !row.includes('|')) continue;
+
+                        const cells = row.split('|').map(c => c.trim()).filter(c => c);
+                        if (cells.length >= 4) {
+                            const durationMins = parseDurationToMinutes(cells[3]);
+                            const durationSecs = durationMins * 60;
+
+                            activity.steps.push({
+                                step: cells[0],
+                                command: cells[1],
+                                result: cells[2],
+                                duration: cells[3],
+                                durationSecs: durationSecs,
+                                // Estimate timestamps from durations
+                                startTs: activity.startTs ? activity.startTs + stepOffset : estimatedTs + stepOffset,
+                                endTs: activity.startTs ? activity.startTs + stepOffset + durationSecs : estimatedTs + stepOffset + durationSecs
+                            });
+
+                            stepOffset += durationSecs;
+                        }
+                    }
+                }
+
+                // If no startTs/endTs from dates, estimate from duration
+                if (!activity.startTs) {
+                    activity.startTs = estimatedTs;
+                }
+                if (!activity.endTs) {
+                    const totalSecs = activity.steps.reduce((sum, s) => sum + (s.durationSecs || 0), 0);
+                    activity.endTs = activity.startTs + totalSecs;
+                    activity.totalDurationSecs = totalSecs;
+                }
+
+                if (activity.storyId) {
+                    activities.push(activity);
+                }
+
+                // Move estimated timestamp forward
+                estimatedTs = activity.endTs + 300; // 5 minute gap
+            }
+
+            return activities.reverse();
+        }
+
+        // Main parser with format detection
+        function parseOrchestrator(text) {
+            const firstLine = text.trim().split('\n')[0];
+
+            if (firstLine.match(/^\d+,/) || firstLine.includes('unix_timestamp')) {
+                console.log('Detected CSV orchestrator format');
+                return parseOrchestratorCSV(text);
+            } else if (text.includes('## Story:')) {
+                console.log('Detected Markdown orchestrator format (legacy)');
+                return parseOrchestratorMarkdown(text);
+            }
+
+            console.warn('Unknown orchestrator format, attempting markdown parse');
+            return parseOrchestratorMarkdown(text);
+        }
+
+        // ============================================================
+        // YAML Parser
+        // ============================================================
+
+        function parseSprintStatus(text) {
+            const data = {
+                metadata: {},
+                epics: {},
+                stories: []
+            };
+
+            const lines = text.split('\n');
+            let currentEpic = null;
+
+            for (let line of lines) {
+                if (line.trim().startsWith('#') || !line.trim()) continue;
+
+                if (line.match(/^(\w+):\s*(.+)$/)) {
+                    const [, key, value] = line.match(/^(\w+):\s*(.+)$/);
+                    if (!line.startsWith(' ')) {
+                        data.metadata[key] = value;
+                    }
+                }
+
+                if (line.match(/epic-(\w+):\s*([\w-]+)/)) {
+                    const [, epicId, status] = line.match(/epic-(\w+):\s*([\w-]+)/);
+                    const epicKey = `epic-${epicId}`;
+                    currentEpic = epicKey;
+
+                    if (!data.epics[epicKey]) {
+                        data.epics[epicKey] = {
+                            id: epicKey,
+                            name: `Epic ${epicId.toUpperCase()}`,
+                            status: status,
+                            stories: []
+                        };
+                    } else {
+                        data.epics[epicKey].status = status;
+                    }
+                }
+
+                if (line.match(/^\s+([a-z0-9-]+):\s*([\w-]+)/) && currentEpic) {
+                    const [, storyId, status] = line.match(/^\s+([a-z0-9-]+):\s*([\w-]+)/);
+
+                    if (storyId.includes('retrospective') || storyId.startsWith('epic-')) continue;
+
+                    const story = {
+                        id: storyId,
+                        name: storyId.split('-').slice(2).join(' ').replace(/-/g, ' '),
+                        epic: currentEpic,
+                        status: status
+                    };
+
+                    data.stories.push(story);
+                    if (data.epics[currentEpic]) {
+                        data.epics[currentEpic].stories.push(story);
+                    }
+                }
+            }
+
+            return data;
+        }
+
+        // ============================================================
+        // Story Descriptions
+        // ============================================================
+
+        function showStoryTooltip(event, storyId) {
+            const tooltip = document.getElementById('storyTooltip');
+            const description = storyDescriptions[storyId] || 'No description available';
+            tooltip.textContent = description;
+            tooltip.style.left = (event.clientX + 10) + 'px';
+            tooltip.style.top = (event.clientY + 10) + 'px';
+            tooltip.classList.add('visible');
+        }
+
+        function hideStoryTooltip() {
+            const tooltip = document.getElementById('storyTooltip');
+            tooltip.classList.remove('visible');
+        }
+
+        async function loadStoryDescriptions() {
+            try {
+                const response = await fetch('./story-descriptions.json');
+                if (response.ok) {
+                    storyDescriptions = await response.json();
+                    console.log('Loaded story descriptions:', Object.keys(storyDescriptions).length);
+                }
+            } catch (e) {
+                console.log('Story descriptions not available:', e);
+            }
+        }
+
+        // ============================================================
+        // Render Functions
+        // ============================================================
+
+        function renderSummaryCards(data) {
+            const epics = Object.values(data.epics);
+            const totalEpics = epics.filter(e => !e.id.includes('retrospective')).length;
+            const epicsInProgress = epics.filter(e => {
+                const status = (e.status || '').toLowerCase().trim();
+                return status === 'in-progress' || status === 'in_progress' || status === 'inprogress';
+            }).length;
+
+            const stories = data.stories.filter(s => !s.id.includes('retrospective'));
+            const storiesDone = stories.filter(s => s.status === 'done').length;
+            const storiesTotal = stories.length;
+            const completionPercent = storiesTotal > 0 ? Math.round((storiesDone / storiesTotal) * 100) : 0;
+
+            const currentStory = stories.find(s => s.status !== 'done' && s.status !== 'backlog');
+
+            document.getElementById('totalEpics').textContent = totalEpics;
+            document.getElementById('epicsInProgress').textContent = epicsInProgress;
+            document.getElementById('storiesProgress').textContent = `${storiesDone}/${storiesTotal}`;
+            document.getElementById('storiesPercent').textContent = `${completionPercent}%`;
+
+            if (currentStory) {
+                document.getElementById('currentStory').textContent = currentStory.id;
+                const statusClass = normalizeStatusForClass(currentStory.status);
+                const safeStatus = escapeHtml(currentStory.status);
+                document.getElementById('currentStoryStatus').innerHTML = `<span class="badge badge-${statusClass}">${safeStatus}</span>`;
+            } else if (storiesDone === storiesTotal && storiesTotal > 0) {
+                document.getElementById('currentStory').textContent = 'All complete!';
+                document.getElementById('currentStoryStatus').textContent = '';
+            } else {
+                document.getElementById('currentStory').textContent = '-';
+                document.getElementById('currentStoryStatus').textContent = '';
+            }
+        }
+
+        function renderEpicBoard(data) {
+            const backlogEl = document.getElementById('epicsBacklog');
+            const inProgressEl = document.getElementById('epicsInProgressCol');
+            const doneEl = document.getElementById('epicsDone');
+
+            backlogEl.innerHTML = '';
+            inProgressEl.innerHTML = '';
+            doneEl.innerHTML = '';
+
+            const epics = Object.values(data.epics).filter(e => !e.id.includes('retrospective'));
+
+            epics.forEach(epic => {
+                const epicStories = epic.stories.filter(s => !s.id.includes('retrospective'));
+                const doneStories = epicStories.filter(s => s.status === 'done').length;
+                const totalStories = epicStories.length;
+                const progress = totalStories > 0 ? (doneStories / totalStories) * 100 : 0;
+
+                let totalDurationSecs = 0;
+                epicStories.forEach(story => {
+                    const activity = state.orchestratorData?.find(a => a.storyId === story.id);
+                    if (activity?.totalDurationSecs) {
+                        totalDurationSecs += activity.totalDurationSecs;
+                    }
+                });
+                const totalDuration = totalDurationSecs > 0 ? formatDuration(totalDurationSecs) : '';
+
+                const card = document.createElement('div');
+                card.className = 'epic-card';
+                card.dataset.epicId = epic.id;
+
+                const safeEpicName = escapeHtml(epic.name);
+                const safeTotalDuration = escapeHtml(totalDuration);
+
+                card.innerHTML = `
+                    <div class="epic-card-header">
+                        <div class="epic-card-title">${safeEpicName}</div>
+                        <span class="epic-expand-icon">&#9654;</span>
+                    </div>
+                    <div class="epic-card-meta">
+                        <span class="epic-card-progress">${doneStories}/${totalStories} stories</span>
+                        ${safeTotalDuration ? `<span class="epic-card-duration">${safeTotalDuration}</span>` : ''}
+                    </div>
+                    <div class="epic-card-progress-bar">
+                        <div class="epic-card-progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="epic-stories-list" style="display: none;"></div>
+                `;
+
+                const status = (epic.status || 'backlog').toLowerCase().trim();
+
+                if (status === 'done' || status === 'completed') {
+                    doneEl.appendChild(card);
+                } else if (status === 'in-progress' || status === 'in_progress' || status === 'inprogress') {
+                    inProgressEl.appendChild(card);
+                } else {
+                    backlogEl.appendChild(card);
+                }
+            });
+
+            if (!backlogEl.children.length) {
+                backlogEl.innerHTML = '<div class="empty-state">No epics</div>';
+            }
+            if (!inProgressEl.children.length) {
+                inProgressEl.innerHTML = '<div class="empty-state">No epics</div>';
+            }
+            if (!doneEl.children.length) {
+                doneEl.innerHTML = '<div class="empty-state">No epics</div>';
+            }
+
+            attachEpicCardHandlers();
+        }
+
+        function toggleEpicCard(epicId) {
+            const sanitizedId = CSS.escape(epicId);
+            const card = document.querySelector(`.epic-card[data-epic-id="${sanitizedId}"]`);
+            if (!card) return;
+
+            const isExpanded = card.classList.toggle('expanded');
+            const storiesList = card.querySelector('.epic-stories-list');
+
+            if (isExpanded && state.sprintData) {
+                const epic = state.sprintData.epics[epicId];
+                if (epic && epic.stories.length > 0) {
+                    const stories = epic.stories.filter(s => !s.id.includes('retrospective'));
+                    storiesList.innerHTML = stories.map(story => {
+                        const safeId = escapeHtml(story.id);
+                        const safeIdJs = escapeJsString(story.id);
+                        const statusClass = normalizeStatusForClass(story.status);
+                        const safeStatus = escapeHtml(story.status);
+                        return `
+                            <div class="epic-story-item"
+                                 data-story-id="${safeId}"
+                                 onmouseenter="showStoryTooltip(event, '${safeIdJs}')"
+                                 onmouseleave="hideStoryTooltip()">
+                                <span class="story-name">${safeId}</span>
+                                <span class="badge badge-${statusClass}">${safeStatus}</span>
+                            </div>
+                        `;
+                    }).join('');
+                    storiesList.style.display = 'block';
+                }
+            } else {
+                storiesList.style.display = 'none';
+            }
+        }
+
+        function attachEpicCardHandlers() {
+            document.querySelectorAll('.epic-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('.epic-story-item')) {
+                        toggleEpicCard(card.dataset.epicId);
+                    }
+                });
+            });
+        }
+
+        function renderStoryTable(data, epicFilter = 'all', statusFilter = 'all') {
+            const tbody = document.getElementById('storyTableBody');
+            const stories = data.stories.filter(s => !s.id.includes('retrospective'));
+
+            let filtered = stories;
+            if (epicFilter !== 'all') {
+                filtered = filtered.filter(s => s.epic === epicFilter);
+            }
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(s => s.status === statusFilter);
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No stories found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(story => {
+                const activity = state.orchestratorData?.find(a => a.storyId === story.id);
+                const duration = activity?.duration || '-';
+                const safeId = escapeHtml(story.id);
+                const safeIdJs = escapeJsString(story.id);
+                const safeName = escapeHtml(story.name || story.id);
+                const safeEpic = escapeHtml(story.epic);
+                const safeDuration = escapeHtml(duration);
+                const statusClass = normalizeStatusForClass(story.status);
+                const safeStatus = escapeHtml(story.status);
+
+                return `
+                    <tr class="story-row"
+                        data-story-id="${safeId}"
+                        onmouseenter="showStoryTooltip(event, '${safeIdJs}')"
+                        onmouseleave="hideStoryTooltip()">
+                        <td class="story-id">${safeId}</td>
+                        <td>${safeName}</td>
+                        <td>${safeEpic}</td>
+                        <td class="story-duration">${safeDuration}</td>
+                        <td><span class="badge badge-${statusClass}">${safeStatus}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateEpicFilter(data) {
+            const select = document.getElementById('epicFilter');
+            const currentValue = select.value;
+            const epics = Object.values(data.epics).filter(e => !e.id.includes('retrospective'));
+
+            select.innerHTML = '<option value="all">All Epics</option>';
+            epics.forEach(epic => {
+                const option = document.createElement('option');
+                option.value = epic.id;
+                option.textContent = epic.name;
+                select.appendChild(option);
+            });
+
+            if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function renderActivityLog(activities) {
+            const logEl = document.getElementById('activityLog');
+
+            if (!activities || activities.length === 0) {
+                logEl.innerHTML = '<div class="empty-state">No activity yet</div>';
+                return;
+            }
+
+            logEl.innerHTML = activities.slice(0, 10).map((activity, index) => {
+                const isCompleted = activity.completed !== '';
+                const statusClass = isCompleted ? 'completed' : 'in-progress';
+                const isCollapsed = index > 0;
+                const badgeText = isCompleted ? 'Done' : 'In Progress';
+
+                const description = escapeHtml(storyDescriptions[activity.storyId] || '');
+                const safeStoryId = escapeHtml(activity.storyId);
+                const safeEpic = escapeHtml(activity.epic);
+                const safeStarted = escapeHtml(activity.started || '');
+                const safeDuration = escapeHtml(activity.duration || '');
+
+                const stepsTable = activity.steps.length > 0 ? `
+                    <div class="activity-steps">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Step</th>
+                                    <th>Command</th>
+                                    <th>Result</th>
+                                    <th>Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${activity.steps.map(step => `
+                                    <tr>
+                                        <td>${escapeHtml(step.step)}</td>
+                                        <td>${escapeHtml(step.command)}</td>
+                                        <td class="step-result">${escapeHtml(step.result)}</td>
+                                        <td class="step-duration">${escapeHtml(step.duration || '-')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="activity-item ${statusClass}${isCollapsed ? ' collapsed' : ''}" data-index="${index}">
+                        <div class="activity-header" onclick="toggleActivity(${index})">
+                            <div class="activity-title-row">
+                                <span class="activity-toggle">
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                                        <path d="M4 2l4 4-4 4z"/>
+                                    </svg>
+                                </span>
+                                <span class="activity-story">${safeStoryId}</span>
+                                <span class="activity-badge">${badgeText}</span>
+                            </div>
+                            <div class="activity-meta-right">
+                                ${safeDuration ? `<span class="activity-duration">${safeDuration}</span>` : ''}
+                                <span class="activity-date">${safeStarted}</span>
+                            </div>
+                        </div>
+                        <div class="activity-body">
+                            <div class="activity-meta">
+                                Epic: ${safeEpic}
+                            </div>
+                            ${description ? `<div class="activity-description">${description}</div>` : ''}
+                            ${stepsTable}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleActivity(index) {
+            const item = document.querySelector(`.activity-item[data-index="${index}"]`);
+            if (item) {
+                item.classList.toggle('collapsed');
+            }
+        }
+
+        // ============================================================
+        // TIMELINE VIEW - REDESIGNED IMPLEMENTATION
+        // ============================================================
+
+        // Initialize column resize functionality
+        function initColumnResize() {
+            const handle = document.getElementById('resizeHandle');
+            if (!handle) return;
+
+            handle.addEventListener('mousedown', startResize);
+            document.addEventListener('mousemove', doResize);
+            document.addEventListener('mouseup', stopResize);
+        }
+
+        function startResize(e) {
+            resizeState.isResizing = true;
+            resizeState.startX = e.clientX;
+            resizeState.startWidth = timelineState.labelColumnWidth;
+            document.getElementById('resizeHandle').classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        }
+
+        function doResize(e) {
+            if (!resizeState.isResizing) return;
+
+            const diff = e.clientX - resizeState.startX;
+            const newWidth = Math.min(
+                Math.max(resizeState.startWidth + diff, timelineState.minLabelWidth),
+                timelineState.maxLabelWidth
+            );
+
+            timelineState.labelColumnWidth = newWidth;
+            document.documentElement.style.setProperty('--timeline-label-width', newWidth + 'px');
+        }
+
+        function stopResize() {
+            if (!resizeState.isResizing) return;
+
+            resizeState.isResizing = false;
+            document.getElementById('resizeHandle')?.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+
+            // Persist to localStorage
+            localStorage.setItem('timeline-label-width', timelineState.labelColumnWidth);
+        }
+
+        // Restore column width from localStorage
+        function restoreColumnWidth() {
+            const saved = localStorage.getItem('timeline-label-width');
+            if (saved) {
+                const width = parseInt(saved, 10);
+                if (!isNaN(width) && width >= timelineState.minLabelWidth && width <= timelineState.maxLabelWidth) {
+                    timelineState.labelColumnWidth = width;
+                    document.documentElement.style.setProperty('--timeline-label-width', width + 'px');
+                }
+            }
+        }
+
+        // Set block size in minutes
+        function setBlockSizeMinutes(minutes) {
+            const parsed = parseInt(minutes, 10);
+            if (isNaN(parsed) || parsed < 1 || parsed > 480) {
+                document.getElementById('blockSizeInput').value = timelineState.blockSizeMinutes;
+                return;
+            }
+
+            timelineState.blockSizeMinutes = parsed;
+            renderTimeline();
+        }
+
+        /**
+         * Convert timestamp to X position using continuous time scale.
+         * This is independent of block size - only depends on timeline bounds.
+         * Bar positions stay constant when block size changes.
+         */
+        function timestampToX(timestamp) {
+            const { timelineStartTs, timelineEndTs, totalTimelineWidth } = timelineState;
+
+            if (!timelineStartTs || !timelineEndTs || !totalTimelineWidth) return 0;
+
+            const totalTimeRange = timelineEndTs - timelineStartTs;
+            if (totalTimeRange <= 0) return 0;
+
+            // Position bar proportionally within total width
+            const timeOffset = timestamp - timelineStartTs;
+            return (timeOffset / totalTimeRange) * totalTimelineWidth;
+        }
+
+        /**
+         * Generate time blocks based on timeline bounds.
+         * Also calculates and stores totalTimelineWidth for continuous bar positioning.
+         *
+         * Key insight: totalTimelineWidth is based on blockCount * columnWidth.
+         * When block size changes:
+         *   - blockCount changes
+         *   - columnWidth stays fixed (COLUMN_WIDTH_PX)
+         *   - totalTimelineWidth changes proportionally
+         *   - But bar positions remain correct because timestampToX() uses the ratio:
+         *     (timeOffset / totalTimeRange) * totalTimelineWidth
+         *
+         * This ensures bars stay at the same proportional position even as the
+         * grid resolution changes.
+         */
+        function generateTimeBlocks() {
+            const { timelineStartTs, timelineEndTs, blockSizeMinutes, zoomLevel } = timelineState;
+
+            if (!timelineStartTs || !timelineEndTs) return [];
+
+            // Fixed column width scaled by zoom
+            const blockWidthPx = COLUMN_WIDTH_PX * (zoomLevel / 100);
+            const totalSeconds = timelineEndTs - timelineStartTs;
+            const totalMinutes = totalSeconds / 60;
+            const blockCount = Math.ceil(totalMinutes / blockSizeMinutes);
+
+            // Store total timeline width for continuous bar positioning
+            // All columns are the same width (no compaction)
+            timelineState.totalTimelineWidth = blockCount * blockWidthPx;
+
+            const blocks = [];
+            for (let i = 0; i < blockCount; i++) {
+                const blockStartTs = timelineStartTs + (i * blockSizeMinutes * 60);
+                const minutesFromStart = i * blockSizeMinutes;
+
+                // Format label based on total minutes (smart format)
+                let label;
+                if (minutesFromStart >= 60) {
+                    const hours = Math.floor(minutesFromStart / 60);
+                    const mins = minutesFromStart % 60;
+                    label = mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+                } else {
+                    label = `${minutesFromStart}m`;
+                }
+
+                blocks.push({
+                    timestamp: blockStartTs,
+                    label: label,
+                    widthPx: blockWidthPx,
+                    xPosition: i * blockWidthPx  // Pre-calculate X position for grid line
+                });
+            }
+
+            return blocks;
+        }
+
+        /**
+         * Detect which time blocks are empty (no tasks).
+         * This is now for visual indication only - it does NOT affect bar positioning.
+         * Bars are positioned using continuous timestampToX() independent of block state.
+         *
+         * Note: We no longer merge empty blocks since all columns have the same width.
+         */
+        function detectEmptyBlocks(blocks, activities, blockSizeMinutes) {
+            const blockSizeSeconds = blockSizeMinutes * 60;
+
+            return blocks.map((block) => {
+                const blockStart = block.timestamp;
+                const blockEnd = blockStart + blockSizeSeconds;
+
+                // Check if any activity or step overlaps this block
+                const hasContent = activities.some(activity => {
+                    // Check if story bar overlaps
+                    const storyOverlaps = (
+                        activity.startTs < blockEnd &&
+                        (activity.endTs || activity.startTs + 3600) > blockStart
+                    );
+
+                    if (storyOverlaps) return true;
+
+                    // Check if any command step overlaps
+                    return (activity.steps || []).some(step => {
+                        const stepEnd = step.endTs || step.startTs + 60;
+                        return step.startTs < blockEnd && stepEnd > blockStart;
+                    });
+                });
+
+                return {
+                    ...block,
+                    isEmpty: !hasContent
+                };
+            });
+        }
+
+        // REMOVED: timestampToXWithCompact() - replaced by continuous timestampToX()
+        // The compact block positioning caused bars to shift when block size changed.
+        // Now all bar positioning uses timestampToX() with continuous time scale.
+
+        // Toggle story visibility via checkbox
+        function toggleStoryVisibility(storyId, visible) {
+            if (visible) {
+                timelineState.hiddenStories.delete(storyId);
+            } else {
+                timelineState.hiddenStories.add(storyId);
+            }
+
+            // Re-render timeline to update sort order and bounds
+            renderTimeline();
+        }
+
+        // Hide all stories in timeline
+        function hideAllStories() {
+            const timelineData = getTimelineData(state.orchestratorData);
+            if (!timelineData) return;
+
+            timelineData.forEach(activity => {
+                timelineState.hiddenStories.add(activity.storyId);
+            });
+
+            // Re-render timeline with all stories hidden (moved to bottom)
+            renderTimeline();
+        }
+
+        // Show all stories in timeline
+        function showAllStories() {
+            timelineState.hiddenStories.clear();
+
+            // Remove any empty state message
+            document.querySelectorAll('.timeline-empty').forEach(el => el.remove());
+
+            // Rebuild timeline with full bounds
+            renderTimeline();
+        }
+
+        // Get timeline data with processing
+        function getTimelineData(orchestratorData) {
+            if (!orchestratorData) return null;
+
+            const hash = hashString(JSON.stringify(orchestratorData));
+            if (hash === timelineCache.dataHash && timelineCache.data) {
+                return timelineCache.data;
+            }
+
+            // Filter activities with valid data and reverse to show oldest first
+            const validActivities = orchestratorData
+                .filter(a => a.steps && a.steps.length > 0)
+                .slice()
+                .reverse();
+
+            timelineCache.data = validActivities;
+            timelineCache.dataHash = hash;
+            return timelineCache.data;
+        }
+
+        // Zoom timeline
+        function zoomTimeline(direction) {
+            const levels = [50, 75, 100, 150, 200];
+            const currentIndex = levels.indexOf(timelineState.zoomLevel);
+
+            if (direction === 'in' && currentIndex < levels.length - 1) {
+                timelineState.zoomLevel = levels[currentIndex + 1];
+            } else if (direction === 'out' && currentIndex > 0) {
+                timelineState.zoomLevel = levels[currentIndex - 1];
+            }
+
+            document.getElementById('zoomLevel').textContent = timelineState.zoomLevel + '%';
+            renderTimeline();
+        }
+
+        // Toggle story row expansion via label click
+        function toggleStoryRow(storyId) {
+            const sanitizedId = CSS.escape(String(storyId || ''));
+            const row = document.querySelector(`.timeline-row[data-story-id="${sanitizedId}"]`);
+            if (!row) return;
+
+            const wasExpanded = row.classList.contains('expanded');
+
+            // Collapse all other rows (single expansion mode)
+            document.querySelectorAll('.timeline-row.expanded').forEach(r => {
+                if (r !== row) {
+                    r.classList.remove('expanded');
+                }
+            });
+
+            // Toggle current row
+            row.classList.toggle('expanded', !wasExpanded);
+            timelineState.expandedStoryId = wasExpanded ? null : storyId;
+        }
+
+        // Show timeline tooltip
+        function showTimelineTooltip(event, storyId, duration, stepCount, started) {
+            const tooltip = document.getElementById('timelineTooltip');
+            if (!tooltip) return;
+
+            const safeSteps = Math.max(0, parseInt(stepCount, 10) || 0);
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'timeline-tooltip-title';
+            titleDiv.textContent = storyId || ''; // textContent handles escaping
+
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'timeline-tooltip-meta';
+
+            // Build meta content safely using DOM methods
+            metaDiv.appendChild(document.createTextNode('Duration: ' + (duration || 'In progress')));
+            metaDiv.appendChild(document.createElement('br'));
+            metaDiv.appendChild(document.createTextNode('Steps: ' + safeSteps));
+            if (started) {
+                metaDiv.appendChild(document.createElement('br'));
+                metaDiv.appendChild(document.createTextNode('Started: ' + started));
+            }
+
+            tooltip.innerHTML = '';
+            tooltip.appendChild(titleDiv);
+            tooltip.appendChild(metaDiv);
+
+            tooltip.style.left = (event.clientX + 10) + 'px';
+            tooltip.style.top = (event.clientY - 10) + 'px';
+            tooltip.classList.add('visible');
+        }
+
+        function hideTimelineTooltip() {
+            const tooltip = document.getElementById('timelineTooltip');
+            if (tooltip) {
+                tooltip.classList.remove('visible');
+            }
+        }
+
+        // Render timeline visualization
+        function renderTimeline() {
+            const hoursEl = document.getElementById('timelineHours');
+            const gridEl = document.getElementById('timelineGrid');
+            const rowsEl = document.getElementById('timelineRows');
+            const bodyEl = document.getElementById('timelineBody');
+            const scrollContainer = document.getElementById('timelineScrollContainer');
+
+            if (!hoursEl || !gridEl || !rowsEl || !bodyEl) {
+                console.warn('Timeline elements not found');
+                return;
+            }
+
+            // Get processed timeline data
+            const timelineData = getTimelineData(state.orchestratorData);
+
+            if (!timelineData || timelineData.length === 0) {
+                hoursEl.innerHTML = '';
+                gridEl.innerHTML = '';
+                rowsEl.innerHTML = '<div class="timeline-empty">No timeline data available</div>';
+                return;
+            }
+
+            // Separate visible and hidden stories, maintaining original chronological order
+            const visibleActivities = timelineData.filter(
+                a => !timelineState.hiddenStories.has(a.storyId)
+            );
+            const hiddenActivities = timelineData.filter(
+                a => timelineState.hiddenStories.has(a.storyId)
+            );
+
+            // Sorted display order: visible stories first (chronological), then hidden stories at bottom
+            const sortedActivities = [...visibleActivities, ...hiddenActivities];
+
+            // Calculate timeline bounds from timestamps (fallback for missing timestamps)
+            const allStartTs = visibleActivities.map(a => a.startTs).filter(ts => ts);
+
+            if (allStartTs.length === 0 && visibleActivities.length > 0) {
+                // Fallback: use sequential positioning with realistic base timestamp
+                let offset = Math.floor(Date.now() / 1000) - (timelineData.length * 3600);
+                timelineData.forEach(a => {
+                    a.startTs = offset;
+                    const dur = a.totalDurationSecs || 3600;
+                    a.endTs = offset + dur;
+                    offset = a.endTs + 300;
+                });
+            }
+
+            // Calculate bounds from visible stories only
+            const startTimestamps = visibleActivities.map(a => a.startTs).filter(ts => ts != null);
+            const endTimestamps = visibleActivities.map(a => a.endTs || a.startTs + 3600).filter(ts => ts != null);
+
+            timelineState.timelineStartTs = startTimestamps.length > 0 ? Math.min(...startTimestamps) : 0;
+            timelineState.timelineEndTs = endTimestamps.length > 0 ? Math.max(...endTimestamps) : 3600;
+
+            // Generate time blocks (also calculates totalTimelineWidth)
+            // Note: generateTimeBlocks() must be called first to set totalTimelineWidth
+            let blocks = [];
+            const blockWidthPx = COLUMN_WIDTH_PX * (timelineState.zoomLevel / 100);
+
+            if (visibleActivities.length > 0) {
+                blocks = generateTimeBlocks();
+                // detectEmptyBlocks is now for visual indication only - no compaction
+                blocks = detectEmptyBlocks(blocks, visibleActivities, timelineState.blockSizeMinutes);
+            }
+            timelineState.processedBlocks = blocks;
+
+            // Render time header - all columns have uniform width
+            hoursEl.innerHTML = '';
+            blocks.forEach(block => {
+                const hourDiv = document.createElement('div');
+                hourDiv.className = 'timeline-hour' + (block.isEmpty ? ' empty' : '');
+                hourDiv.style.minWidth = blockWidthPx + 'px';
+                hourDiv.style.width = blockWidthPx + 'px';
+                hourDiv.textContent = '';
+                hoursEl.appendChild(hourDiv);
+            });
+
+            // Render grid lines - all columns have uniform width (no compaction)
+            gridEl.innerHTML = '';
+            blocks.forEach(block => {
+                const gridLine = document.createElement('div');
+                gridLine.className = 'timeline-grid-line' + (block.isEmpty ? ' empty' : '');
+                gridLine.style.minWidth = blockWidthPx + 'px';
+                gridLine.style.width = blockWidthPx + 'px';
+                gridEl.appendChild(gridLine);
+            });
+
+            // Render story rows (visible first, then hidden at bottom)
+            rowsEl.innerHTML = '';
+            sortedActivities.forEach(activity => {
+                const isHidden = timelineState.hiddenStories.has(activity.storyId);
+                const isCompleted = activity.completed && activity.completed !== '';
+
+                const safeStoryId = escapeHtml(activity.storyId);
+                const safeDuration = escapeHtml(activity.duration || '');
+                const safeStepCount = activity.steps ? activity.steps.length : 0;
+                const safeStarted = escapeHtml(activity.started || '');
+
+                // Create row container - hidden stories get 'hidden-story' class for muted styling
+                const row = document.createElement('div');
+                row.className = 'timeline-row' + (isHidden ? ' hidden-story' : '');
+                row.setAttribute('data-story-id', safeStoryId);
+
+                // Create row main area (label + content)
+                const rowMain = document.createElement('div');
+                rowMain.className = 'timeline-row-main';
+
+                // Create row label with checkbox
+                const label = document.createElement('div');
+                label.className = 'timeline-row-label';
+                label.title = safeStoryId;
+
+                // Add visibility checkbox
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'story-visibility-checkbox';
+                checkbox.dataset.storyId = safeStoryId;
+                checkbox.checked = !isHidden;
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    toggleStoryVisibility(activity.storyId, e.target.checked);
+                });
+                checkbox.addEventListener('click', (e) => e.stopPropagation());
+
+                // Only show expand icon for visible stories (hidden ones have no content to expand)
+                if (!isHidden) {
+                    const expandIcon = document.createElement('span');
+                    expandIcon.className = 'label-expand-icon';
+                    expandIcon.innerHTML = '&#9654;';
+                    label.appendChild(checkbox);
+                    label.appendChild(expandIcon);
+                } else {
+                    label.appendChild(checkbox);
+                }
+
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'label-title';
+                titleSpan.textContent = activity.storyId;
+
+                const durationSpan = document.createElement('span');
+                durationSpan.className = 'label-duration';
+                durationSpan.textContent = activity.duration || '';
+
+                label.appendChild(titleSpan);
+                label.appendChild(durationSpan);
+
+                // Only add click handler for expand on visible stories
+                if (!isHidden) {
+                    label.addEventListener('click', () => toggleStoryRow(safeStoryId));
+                }
+
+                // Create row content - set explicit width to match grid
+                const content = document.createElement('div');
+                content.className = 'timeline-row-content';
+                content.style.width = timelineState.totalTimelineWidth + 'px';
+                content.style.minWidth = timelineState.totalTimelineWidth + 'px';
+
+                // Only render timeline bar for visible stories
+                // Use continuous timestampToX() - bars stay at same position when block size changes
+                if (!isHidden && blocks.length > 0) {
+                    const barLeft = timestampToX(activity.startTs);
+                    const barRight = timestampToX(activity.endTs || activity.startTs + 3600);
+                    const barWidth = Math.max(barRight - barLeft, 20); // Minimum width for visibility
+
+                    const bar = document.createElement('div');
+                    bar.className = `timeline-bar story-bar ${isCompleted ? '' : 'in-progress'}`;
+                    bar.style.left = barLeft + 'px';
+                    bar.style.width = barWidth + 'px';
+                    // Hide text if bar is too narrow
+                    const showStoryLabel = barWidth >= 50;
+                    bar.innerHTML = showStoryLabel ? `<span class="bar-label">${safeDuration || '...'}</span>` : '';
+                    bar.addEventListener('mouseenter', (e) => showTimelineTooltip(e, safeStoryId, safeDuration, safeStepCount, safeStarted));
+                    bar.addEventListener('mouseleave', () => hideTimelineTooltip());
+                    content.appendChild(bar);
+                }
+
+                rowMain.appendChild(label);
+                rowMain.appendChild(content);
+                row.appendChild(rowMain);
+
+                // Only create command rows for visible stories
+                if (!isHidden) {
+                    const commandRows = document.createElement('div');
+                    commandRows.className = 'timeline-command-rows';
+
+                    // Generate command rows - use continuous positioning
+                    (activity.steps || []).forEach(step => {
+                        const cmdLeft = timestampToX(step.startTs);
+                        const cmdRight = timestampToX(step.endTs || step.startTs + 60);
+                        const cmdWidth = Math.max(cmdRight - cmdLeft, 20); // Minimum width for visibility
+                        const cmdClass = getCommandClass(step.command);
+                        const safeCmdDuration = escapeHtml(step.duration || '');
+
+                        const cmdRow = document.createElement('div');
+                        cmdRow.className = 'timeline-command-row';
+
+                        const cmdRowLabel = document.createElement('div');
+                        cmdRowLabel.className = 'timeline-command-row-label';
+                        cmdRowLabel.textContent = step.command;
+                        cmdRowLabel.title = step.command;
+
+                        const cmdRowContent = document.createElement('div');
+                        cmdRowContent.className = 'timeline-command-row-content';
+                        cmdRowContent.style.width = timelineState.totalTimelineWidth + 'px';
+                        cmdRowContent.style.minWidth = timelineState.totalTimelineWidth + 'px';
+
+                        const cmdBar = document.createElement('div');
+                        cmdBar.className = `command-bar ${cmdClass}`;
+                        cmdBar.style.left = cmdLeft + 'px';
+                        cmdBar.style.width = cmdWidth + 'px';
+                        // Hide text if bar is too narrow
+                        const showCmdLabel = cmdWidth >= 40;
+                        cmdBar.innerHTML = showCmdLabel ? `<span class="command-label">${safeCmdDuration}</span>` : '';
+                        cmdBar.title = `${step.command}: ${step.duration || ''}`;
+
+                        cmdRowContent.appendChild(cmdBar);
+                        cmdRow.appendChild(cmdRowLabel);
+                        cmdRow.appendChild(cmdRowContent);
+                        commandRows.appendChild(cmdRow);
+                    });
+
+                    row.appendChild(commandRows);
+                }
+
+                rowsEl.appendChild(row);
+            });
+
+            // Auto-scroll to end on initial render
+            if (scrollContainer && timelineData.length > 0) {
+                if (!timelineCache.hasScrolled) {
+                    setTimeout(() => {
+                        scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+                        timelineCache.hasScrolled = true;
+                    }, 100);
+                }
+            }
+        }
+
+        // ============================================================
+        // Tab Switching and Updates
+        // ============================================================
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.toggle('active', panel.id === `tab-${tabName}`);
+            });
+            if (tabName === 'timeline') {
+                timelineCache.hasScrolled = false;
+                renderTimeline();
+            }
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        function updateTabCounts(sprintData, orchestratorData) {
+            if (sprintData) {
+                const epics = Object.values(sprintData.epics).filter(e => !e.id.includes('retrospective'));
+                const stories = sprintData.stories.filter(s => !s.id.includes('retrospective'));
+                document.getElementById('epicsCount').textContent = epics.length;
+                document.getElementById('storiesCount').textContent = stories.length;
+            }
+            if (orchestratorData) {
+                document.getElementById('activityCount').textContent = orchestratorData.length;
+            }
+        }
+
+        function updateLastUpdatedTime() {
+            if (!state.lastUpdateTime) return;
+
+            const now = Date.now();
+            const secondsAgo = Math.floor((now - state.lastUpdateTime) / 1000);
+
+            let timeText = 'just now';
+            if (secondsAgo > 0 && secondsAgo < 60) {
+                timeText = `${secondsAgo}s ago`;
+            } else if (secondsAgo >= 60 && secondsAgo < 3600) {
+                const mins = Math.floor(secondsAgo / 60);
+                timeText = `${mins}m ago`;
+            } else if (secondsAgo >= 3600) {
+                const hours = Math.floor(secondsAgo / 3600);
+                timeText = `${hours}h ago`;
+            }
+
+            document.getElementById('lastUpdated').textContent = `Last updated: ${timeText}`;
+        }
+
+        // ============================================================
+        // Data Loading and Auto-refresh
+        // ============================================================
+
+        async function refreshViaFetch() {
+            try {
+                let sprintText = null;
+                let orchText = null;
+
+                const sprintResponse = await fetch('./sprint-status.yaml');
+                if (sprintResponse.ok) {
+                    sprintText = await sprintResponse.text();
+                }
+
+                const orchMdResponse = await fetch('./orchestrator.md');
+                if (orchMdResponse.ok) {
+                    orchText = await orchMdResponse.text();
+                } else {
+                    const orchCsvResponse = await fetch('./orchestrator.csv');
+                    if (orchCsvResponse.ok) {
+                        orchText = await orchCsvResponse.text();
+                    }
+                }
+
+                const combinedData = (sprintText || '') + '|' + (orchText || '');
+                const newHash = hashString(combinedData);
+
+                if (newHash === state.lastDataHash) {
+                    return;
+                }
+
+                state.lastDataHash = newHash;
+                state.lastUpdateTime = Date.now();
+
+                if (sprintText) {
+                    state.sprintData = parseSprintStatus(sprintText);
+                    renderSummaryCards(state.sprintData);
+                    renderEpicBoard(state.sprintData);
+                    renderStoryTable(state.sprintData,
+                        document.getElementById('epicFilter').value,
+                        document.getElementById('statusFilter').value);
+                }
+
+                if (orchText) {
+                    state.orchestratorData = parseOrchestrator(orchText);
+                    renderActivityLog(state.orchestratorData);
+                }
+
+                updateTabCounts(state.sprintData, state.orchestratorData);
+            } catch (e) {
+                console.log('Fetch refresh failed:', e);
+            }
+        }
+
+        async function tryAutoLoad() {
+            try {
+                await loadStoryDescriptions();
+
+                const sprintResponse = await fetch('./sprint-status.yaml');
+                if (sprintResponse.ok) {
+                    const sprintText = await sprintResponse.text();
+                    state.sprintData = parseSprintStatus(sprintText);
+                    state.lastUpdateTime = Date.now();
+                    renderSummaryCards(state.sprintData);
+                    renderEpicBoard(state.sprintData);
+                    updateEpicFilter(state.sprintData);
+                    renderStoryTable(state.sprintData);
+                }
+
+                let orchText = null;
+                const orchMdResponse = await fetch('./orchestrator.md');
+                if (orchMdResponse.ok) {
+                    orchText = await orchMdResponse.text();
+                } else {
+                    const orchCsvResponse = await fetch('./orchestrator.csv');
+                    if (orchCsvResponse.ok) {
+                        orchText = await orchCsvResponse.text();
+                    }
+                }
+
+                if (orchText) {
+                    state.orchestratorData = parseOrchestrator(orchText);
+                    state.lastUpdateTime = Date.now();
+                    renderActivityLog(state.orchestratorData);
+                }
+
+                if (state.sprintData || state.orchestratorData) {
+                    document.getElementById('dashboardContent').classList.add('visible');
+                    document.getElementById('updateDot').classList.remove('inactive');
+                    state.autoLoadWorks = true;
+                    updateTabCounts(state.sprintData, state.orchestratorData);
+
+                    if (!state.watchInterval) {
+                        state.isWatching = true;
+                        state.watchInterval = setInterval(async () => {
+                            await refreshViaFetch();
+                        }, 5000);
+                        console.log('Auto-refresh enabled (5s interval)');
+                    }
+                }
+            } catch (e) {
+                console.log('Auto-load failed:', e);
+                state.autoLoadWorks = false;
+                document.getElementById('lastUpdated').textContent = 'Failed to load - serve via HTTP';
+            }
+        }
+
+        // Filter event listeners
+        document.getElementById('epicFilter').addEventListener('change', (e) => {
+            if (state.sprintData) {
+                const statusFilter = document.getElementById('statusFilter').value;
+                renderStoryTable(state.sprintData, e.target.value, statusFilter);
+            }
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', (e) => {
+            if (state.sprintData) {
+                const epicFilter = document.getElementById('epicFilter').value;
+                renderStoryTable(state.sprintData, epicFilter, e.target.value);
+            }
+        });
+
+        // Initialize
+        restoreColumnWidth();
+        initColumnResize();
+        tryAutoLoad();
+
+        // Update time display
+        setInterval(updateLastUpdatedTime, 1000);
+    </script>
+</body>
+</html>

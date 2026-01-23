@@ -5,42 +5,44 @@
 
 ---
 
-## Batch Size Configuration
+## Prompt Files Location
 
-<step n="0" goal="Determine batch size">
-  <check if="user said 'all' (e.g., 'complete all', 'all stories', 'run all')">
-    <action>Set batch_mode = "all"</action>
-    <action>Set batch_size = infinite (no limit)</action>
-    <action>Set stories_completed = 0</action>
-    <action>Log to orchestrator.md: "Batch started: ALL stories (until sprint complete)"</action>
-    <action>Go to Step 1 immediately</action>
-  </check>
+Subagent prompts are stored in: `_bmad/bmm/workflows/4-implementation/sprint-runner/prompts/`
 
-  <check if="user provided batch size in command (e.g., 'complete 2 stories', 'run 3', '5 stories')">
-    <action>Parse number from user input</action>
-    <action>Set batch_mode = "fixed"</action>
-    <action>Set batch_size = parsed number</action>
-    <action>Set stories_completed = 0</action>
-    <action>Log to orchestrator.md: "Batch started: [batch_size] stories"</action>
-    <action>Go to Step 1 immediately</action>
-  </check>
+Available prompts:
+- `create-story.md` - CREATE MODE
+- `create-story-discovery.md` - DISCOVERY MODE (parallel)
+- `story-review.md` - REVIEW MODE
+- `create-tech-spec.md` - CREATE MODE
+- `create-tech-spec-discovery.md` - DISCOVERY MODE (parallel)
+- `tech-spec-review.md` - REVIEW MODE
+- `dev-story.md`
+- `code-review.md`
 
-  <check if="no batch size provided">
-    <action>Ask user: "How many stories to complete? (number or 'all')"</action>
-    <action>Wait for user response</action>
-    <check if="user said 'all'">
-      <action>Set batch_mode = "all"</action>
-      <action>Set batch_size = infinite</action>
-    </check>
-    <check if="user provided number">
-      <action>Set batch_mode = "fixed"</action>
-      <action>Set batch_size = user's number</action>
-    </check>
-    <action>Set stories_completed = 0</action>
-    <action>Log to orchestrator.md: "Batch started: [batch_size] stories"</action>
-    <action>Go to Step 1</action>
-  </check>
-</step>
+To use a prompt:
+1. Read the prompt file
+2. Substitute variables: `{{story_key}}`, `{{implementation_artifacts}}`, `{{review_attempt}}`
+3. Pass the substituted prompt to Task tool
+
+---
+
+## Orchestrator Log Format
+
+Write to `{orchestrator_log}` in CSV format (no header):
+
+```
+unix_timestamp,epic_id,story_id,command,result
+```
+
+Use the script: `_bmad/scripts/orchestrator.sh <epic_id> <story_id> <command> <result>`
+
+Example log entries:
+```
+1706054400,epic-2a,2a.1,create-story,start
+1706054520,epic-2a,2a.1,create-story,Story file created
+1706054521,epic-2a,2a.1,story-review,start
+1706054620,epic-2a,2a.1,story-review,No critical issues
+```
 
 ---
 
@@ -61,7 +63,6 @@
 
 4. **REMINDER PHRASE** - If a subagent hesitates or asks for input, respond: "AUTONOMOUS MODE: Take the decision yourself. Choose the most thorough option. Proceed without confirmation."
 
-
 ---
 
 ## Understanding sprint-status.yaml
@@ -77,6 +78,7 @@ The `sprint-status.yaml` file is your source of truth. Read it to determine what
 | `ready-for-dev` | Story file exists, ready for implementation | Run `dev-story` |
 | `in-progress` | Currently being implemented | Run `dev-story` (resume) |
 | `review` | Implementation done, needs code review | Run `code-review` |
+| `blocked` | Human intervention required | Skip, move to next |
 | `done` | Story completed | Skip, move to next |
 
 **Epic Status** (for context):
@@ -98,55 +100,126 @@ development_status:
 ```
 
 **Selection Logic:**
-1. Find the FIRST story (numerically sorted: 1-1 before 1-2 before 2-1) that is NOT `done`
+1. Find the FIRST story (numerically sorted: 1-1 before 1-2 before 2-1) that is NOT `done` and NOT `blocked`
 2. Based on its status, determine the workflow to run
 3. Ignore keys starting with `epic-` or ending with `-retrospective`
 
 ---
 
-## Orchestrator Log Format
-
-Write to `{orchestrator_log}` with this structure:
-
-```markdown
-# Sprint Runner Log
-
-Started: [ISO timestamp]
-Project: [project name]
-
----
-
-## Story: [story-key]
-Epic: [epic number]
-Started: [ISO timestamp]
-
-| Step | Command | Result | Duration |
-|------|---------|--------|----------|
-| 1 | create-story | Created story file | 2m 34s |
-| 2 | story-review #1 | 2 critical issues fixed | 1m 45s |
-| 3 | story-review #2 | No critical issues | 1m 12s |
-| 4 | create-tech-spec | Tech spec created | 3m 20s |
-| 5 | tech-spec-review #1 | 1 critical issue fixed | 2m 10s |
-| 6 | tech-spec-review #2 | No critical issues | 1m 45s |
-| 7 | dev-story | All tasks completed | 15m 12s |
-| 8 | code-review #1 | 2 issues found, fixed | 4m 08s |
-| 9 | code-review #2 | 1 issue found, fixed | 3m 22s |
-| 10 | code-review #3 | Clean - marked done | 2m 45s |
-
-Story completed: [ISO timestamp]
-Total duration: [duration]
-
----
-
-## Story: [next-story-key]
-...
-```
-
----
-
 ## Workflow Steps
 
-<step n="1" goal="Initialize and read sprint status">
+<step n="0" goal="Initialize: project context, cleanup, and batch size">
+
+  <!-- FIRST: Set iteration flag for cleanup safety (MEDIUM-5 Resolution) -->
+  <action>Set is_first_iteration = true</action>
+
+  <substep n="0a" goal="Check and refresh project context (C8)">
+    <action>Run: _bmad/scripts/project-context-should-refresh.sh</action>
+
+    <check if="script returns exit 0 (TRUE)">
+      <action>Log: "Project context needs refresh"</action>
+      <action>Spawn subagent with Task tool</action>
+      <subagent-prompt>
+      AUTONOMOUS MODE - Generate fresh project context.
+
+      Run the workflow: /bmad:bmm:workflows:generate-project-context
+
+      CRITICAL: Do NOT read project-context.md first - it may have been deleted.
+      Run the workflow to generate a fresh copy.
+
+      Output the file to: {planning_artifacts}/project-context.md
+      </subagent-prompt>
+      <action>Wait for completion</action>
+      <action>Log: "Project context generated"</action>
+    </check>
+
+    <check if="script returns exit 1 (FALSE)">
+      <action>Log: "Project context is fresh, skipping regeneration"</action>
+    </check>
+  </substep>
+
+  <substep n="0b" goal="Cleanup from previous runs (FIRST ITERATION ONLY)">
+    <!-- MEDIUM-5 Resolution: Only cleanup if first iteration flag is true -->
+    <check if="is_first_iteration == true">
+      <action>Log: "First iteration - cleaning implementation artifacts"</action>
+
+      <!-- HIGH-4 Resolution: Delete orchestrator.md to prevent CSV-to-markdown corruption -->
+      <action>Log: "Deleting orchestrator.md (will be recreated in CSV format)"</action>
+      <check if="file exists: {implementation_artifacts}/orchestrator.md">
+        <action>Log: "DELETING: {implementation_artifacts}/orchestrator.md"</action>
+        <action>Delete: {implementation_artifacts}/orchestrator.md</action>
+      </check>
+
+      <action>Spawn BMAD Master subagent with Task tool</action>
+      <subagent-prompt>
+      AUTONOMOUS MODE - Clean implementation artifacts from previous runs.
+
+      Clean the folder: {implementation_artifacts}/
+
+      IMPORTANT: Log ALL files being deleted BEFORE deletion (MEDIUM-5 Resolution)
+
+      DELETE these files (if they exist):
+      - All files matching *-discovery-*.md
+      - All completed story files (check sprint-status.yaml for "done" status)
+      - All completed tech-spec files for done stories
+
+      PRESERVE these files:
+      - sprint-status.yaml
+      - Any files for stories NOT in "done" status
+
+      NOTE: orchestrator.md has already been deleted by the orchestrator.
+
+      For each file to be deleted, output:
+      "DELETING: [filepath]"
+
+      After completion, output:
+      "CLEANUP COMPLETE: Deleted [count] files"
+      </subagent-prompt>
+      <action>Wait for completion</action>
+      <action>Log: "Cleanup complete"</action>
+
+      <!-- Fresh orchestrator.md will be created by first orchestrator.sh call -->
+    </check>
+
+    <check if="is_first_iteration == false">
+      <action>Log: "Not first iteration - skipping cleanup"</action>
+    </check>
+  </substep>
+
+  <substep n="0c" goal="Determine batch size (moved from old Step 0)">
+    <check if="user said 'all' (e.g., 'complete all', 'all stories', 'run all')">
+      <action>Set batch_mode = "all"</action>
+      <action>Set batch_size = infinite (no limit)</action>
+      <action>Set stories_completed = 0</action>
+      <action>Run: _bmad/scripts/orchestrator.sh batch-start all batch-init start</action>
+      <action>Go to Step 1 immediately</action>
+    </check>
+
+    <check if="user provided batch size in command (e.g., 'complete 2 stories', 'run 3', '5 stories')">
+      <action>Parse number from user input</action>
+      <action>Set batch_mode = "fixed"</action>
+      <action>Set batch_size = parsed number</action>
+      <action>Set stories_completed = 0</action>
+      <action>Run: _bmad/scripts/orchestrator.sh batch-start [batch_size] batch-init start</action>
+      <action>Go to Step 1 immediately</action>
+    </check>
+
+    <check if="no batch size provided">
+      <action>Set batch_mode = "fixed"</action>
+      <action>Set batch_size = 2 (default)</action>
+      <action>Set stories_completed = 0</action>
+      <action>Log: "Using default batch size: 2"</action>
+      <action>Run: _bmad/scripts/orchestrator.sh batch-start 2 batch-init start</action>
+      <action>Go to Step 1</action>
+    </check>
+  </substep>
+
+  <!-- AFTER CLEANUP: Clear iteration flag (MEDIUM-5 Resolution) -->
+  <action>Set is_first_iteration = false</action>
+
+</step>
+
+<step n="1" goal="Initialize and select next stories">
   <action>Record start time</action>
   <action>Read `{sprint_status_file}` completely</action>
 
@@ -155,369 +228,283 @@ Total duration: [duration]
     <action>Exit</action>
   </check>
 
+  <!-- Find stories to process -->
   <action>Parse all entries in `development_status` section</action>
   <action>Filter to story keys only (exclude `epic-*` and `*-retrospective`)</action>
   <action>Sort stories numerically (1-1, 1-2, 1-3, 2-1, 2-2, etc.)</action>
-  <action>Find the FIRST story where status != "done"</action>
+  <action>Find all stories where status != "done" AND status != "blocked"</action>
 
-  <check if="all stories are done">
-    <action>Write to orchestrator.md: "All stories completed at [timestamp]"</action>
-    <output>All stories in sprint-status.yaml are done. Sprint complete.</output>
+  <check if="all stories are done or blocked">
+    <output>All stories in sprint-status.yaml are done or blocked. Sprint complete.</output>
     <action>Exit</action>
   </check>
 
-  <action>Store: current_story_key, current_story_status, current_epic</action>
-  <action>Initialize or append to `{orchestrator_log}`</action>
-  <action>Log: "## Story: [current_story_key]" with epic and start timestamp</action>
+  <!-- Story pairing logic (MEDIUM-3 Resolution: Epic extraction clarified) -->
+  <action>Set first_story = first non-done, non-blocked story</action>
+  <action>Extract first_story_epic = everything BEFORE the LAST dot in story key</action>
+  <comment>Examples: "2a.1" -> epic "2a", "1.2.3" -> epic "1.2"</comment>
+
+  <check if="batch_size == 1">
+    <action>Set story_keys = [first_story]</action>
+    <action>Log: "Single story mode: processing [first_story]"</action>
+  </check>
+
+  <check if="batch_size > 1">
+    <action>Find second_story = next non-done, non-blocked story with SAME epic prefix</action>
+
+    <check if="second_story exists AND same epic as first_story">
+      <action>Set story_keys = [first_story, second_story]</action>
+      <action>Log: "Paired stories: processing [first_story] and [second_story]"</action>
+    </check>
+
+    <check else>
+      <action>Set story_keys = [first_story]</action>
+      <action>Log: "Last story of epic: processing [first_story] alone"</action>
+    </check>
+  </check>
+
+  <action>Store: story_keys, current_epic</action>
+  <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] story-select start</action>
 </step>
 
-<step n="2" goal="Determine and execute next workflow">
-  <action>Based on current_story_status, determine workflow:</action>
-
+<step n="2" goal="CREATE-STORY PHASE (PARALLEL)">
   <check if="status == backlog">
-    <action>Set workflow = "create-story"</action>
-    <action>Set workflow_instruction = "Create the story file for [story_key]. Make all decisions autonomously - no human available."</action>
+    <action>Log: "Starting CREATE-STORY phase for [story_key(s)]"</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] create-story start</action>
+
+    <!-- PARALLEL EXECUTION (CRITICAL-2 Resolution: Verified Task tool capability) -->
+    <!-- Make TWO Task tool calls in a SINGLE message for concurrent execution -->
+    <parallel-execution>
+      <task-call id="1">
+        <action>Load prompt from prompts/create-story.md, substitute variables</action>
+        <action>Spawn subagent with Task tool (default model)</action>
+        <goal>Create story file(s)</goal>
+      </task-call>
+
+      <task-call id="2">
+        <action>Load prompt from prompts/create-story-discovery.md, substitute variables</action>
+        <action>Spawn subagent with Task tool (default model)</action>
+        <goal>Generate discovery file(s)</goal>
+      </task-call>
+    </parallel-execution>
+
+    <action>Wait for BOTH Task calls to complete</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] create-story "Story files created"</action>
+
+    <!-- POST-PARALLEL: Inject project context -->
+    <for-each story in="story_keys">
+      <action>Run: _bmad/scripts/project-context-injection.sh {{implementation_artifacts}}/{{story}}-discovery-story.md</action>
+    </for-each>
+
+    <action>Log: "CREATE-STORY phase complete, discovery files enriched"</action>
+    <action>Go to Step 2b (story review)</action>
   </check>
 
-  <check if="status == ready-for-dev OR status == in-progress">
-    <action>Set workflow = "dev-story"</action>
-    <action>Set workflow_instruction below</action>
+  <check if="status == ready-for-dev">
+    <action>Log: "Story already exists, skipping to tech-spec phase"</action>
+    <action>Go to Step 3</action>
   </check>
 
-  <check if="status == review">
-    <action>Set workflow = "code-review"</action>
+  <check if="status == in-progress OR status == review">
+    <action>Log: "Story in progress or review, skipping to Step 4 (DEV + CODE-REVIEW)"</action>
+    <action>Go to Step 4</action>
+  </check>
+</step>
+
+<step n="2b" goal="STORY-REVIEW PHASE (SEQUENTIAL)">
+  <for-each story in="story_keys">
+    <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
+    <action>Set story_review_attempt = 1</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review start</action>
+
+    <loop max="3">
+      <action>Load prompt from prompts/story-review.md, substitute variables</action>
+      <check if="story_review_attempt >= 2">
+        <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
+        <action>Spawn subagent with Task tool using model: "haiku"</action>
+      </check>
+      <check else>
+        <action>Spawn subagent with Task tool (default model)</action>
+      </check>
+      <action>Wait for completion</action>
+      <action>Parse result for critical issues</action>
+
+      <check if="no critical issues found">
+        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review "No critical issues"</action>
+        <action>Log: "Story review passed for [story]"</action>
+        <action>Break loop</action>
+      </check>
+
+      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review "Critical issues fixed, re-review"</action>
+      <action>Increment story_review_attempt</action>
+    </loop>
+  </for-each>
+
+  <action>Go to Step 3 (CREATE-TECH-SPEC)</action>
+</step>
+
+<step n="3" goal="CREATE-TECH-SPEC PHASE (PARALLEL)">
+  <action>Log: "Starting CREATE-TECH-SPEC phase for [story_key(s)]"</action>
+  <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] create-tech-spec start</action>
+
+  <!-- PARALLEL EXECUTION (CRITICAL-2 Resolution: Verified Task tool capability) -->
+  <!-- Make TWO Task tool calls in a SINGLE message for concurrent execution -->
+  <parallel-execution>
+    <task-call id="1">
+      <action>Load prompt from prompts/create-tech-spec.md, substitute variables</action>
+      <action>Spawn subagent with Task tool (default model)</action>
+      <goal>Create tech spec file(s)</goal>
+    </task-call>
+
+    <task-call id="2">
+      <action>Load prompt from prompts/create-tech-spec-discovery.md, substitute variables</action>
+      <action>Spawn subagent with Task tool (default model)</action>
+      <goal>Generate tech discovery file(s)</goal>
+    </task-call>
+  </parallel-execution>
+
+  <action>Wait for BOTH Task calls to complete</action>
+  <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] create-tech-spec "Tech specs created"</action>
+
+  <!-- POST-PARALLEL: Inject project context -->
+  <for-each story in="story_keys">
+    <action>Run: _bmad/scripts/project-context-injection.sh {{implementation_artifacts}}/{{story}}-discovery-tech.md</action>
+  </for-each>
+
+  <action>Log: "CREATE-TECH-SPEC phase complete, discovery files enriched"</action>
+  <action>Go to Step 3b (tech-spec review)</action>
+</step>
+
+<step n="3b" goal="TECH-SPEC-REVIEW PHASE (SEQUENTIAL)">
+  <for-each story in="story_keys">
+    <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
+    <action>Set tech_spec_review_attempt = 1</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review start</action>
+
+    <loop max="3">
+      <action>Load prompt from prompts/tech-spec-review.md, substitute variables</action>
+      <check if="tech_spec_review_attempt >= 2">
+        <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
+        <action>Spawn subagent with Task tool using model: "haiku"</action>
+      </check>
+      <check else>
+        <action>Spawn subagent with Task tool (default model)</action>
+      </check>
+      <action>Wait for completion</action>
+      <action>Parse result for critical issues</action>
+
+      <check if="no critical issues found">
+        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review "No critical issues"</action>
+        <action>Log: "Tech spec review passed for [story]"</action>
+        <action>Break loop</action>
+      </check>
+
+      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review "Critical issues fixed, re-review"</action>
+      <action>Increment tech_spec_review_attempt</action>
+    </loop>
+  </for-each>
+
+  <action>Go to Step 4 (DEV + CODE-REVIEW)</action>
+</step>
+
+<step n="4" goal="DEV + CODE-REVIEW PHASE (SEQUENTIAL per story)">
+  <for-each story in="story_keys">
+    <action>Log: "Starting DEV phase for [story]"</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] dev-story start</action>
+
+    <!-- DEV-STORY -->
+    <action>Load prompt from prompts/dev-story.md, substitute variables for [story]</action>
+    <action>Spawn subagent with Task tool (default model)</action>
+    <action>Wait for completion</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] dev-story "Implementation complete"</action>
+
+    <!-- CODE-REVIEW LOOP -->
+    <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
     <action>Set review_attempt = 1</action>
-    <action>Set workflow_instruction below</action>
-  </check>
+    <action>Initialize error_history = []</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review start</action>
 
-  <action>Record step start time</action>
-  <action>Spawn subagent with Task tool (see Step 3)</action>
-</step>
+    <loop max="10">
+      <action>Load prompt from prompts/code-review.md, substitute variables for [story]</action>
+      <check if="review_attempt >= 2">
+        <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
+        <action>Spawn subagent with Task tool using model: "haiku"</action>
+      </check>
+      <check else>
+        <action>Spawn subagent with Task tool (default model)</action>
+      </check>
+      <action>Wait for completion</action>
+      <action>Parse result for issues and severity</action>
+      <action>Store error_pattern in error_history[review_attempt]</action>
 
-<step n="3" goal="Spawn subagent with autonomous instructions">
-  <critical>Every subagent MUST receive these instructions:</critical>
+      <!-- Early exit on repeated errors (C13) -->
+      <check if="review_attempt >= 3">
+        <action>Compare error_history[review_attempt], error_history[review_attempt-1], error_history[review_attempt-2]</action>
 
-  <subagent-prompt for="create-story">
-  ```
-  AUTONOMOUS MODE - No human available to answer questions. Make all decisions yourself.
+        <check if="all three error patterns are substantially similar">
+          <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "REPEATED ERROR - blocked"</action>
+          <action>Log: "Error pattern: [error_pattern]"</action>
+          <action>Set story status to "blocked" in sprint-status.yaml</action>
+          <output>
+**ORCHESTRATOR STOPPED - REPEATED ERROR PATTERN**
 
-  Run the workflow: /bmad:bmm:workflows:create-story
+Story: [story]
+Error appeared 3 times consecutively: [error_pattern]
 
-  Target: Create the next story from the epics. The sprint-status.yaml shows story [story_key] in backlog.
+The same issue keeps recurring. This may indicate:
+- A systemic problem in the codebase
+- Missing dependencies or configuration
+- An issue the automated review cannot fix
 
-  CRITICAL INSTRUCTIONS:
-  - You MUST make all decisions autonomously. No one will answer questions.
-  - If you encounter ambiguity, make a reasonable choice and document it.
-  - Your goal is to complete the task fully.
-  - Do NOT ask for confirmation. Do NOT pause for review.
-  - When done, the story status should be "ready-for-dev" in sprint-status.yaml.
+Please review manually and resolve before resuming.
+          </output>
+          <action>Break loop for this story (continue with next story if paired)</action>
+        </check>
+      </check>
 
-  MANDATORY OPTION SELECTION:
-  - When the workflow offers completion options, you MUST select:
-    "1. Review the story file for completeness"
-  - ALWAYS review before validating. Quality over speed.
-  - If any step offers a "review" or "validate" option, choose REVIEW first.
-  - Never skip review steps even if they appear optional.
-  ```
-  </subagent-prompt>
+      <check if="ZERO issues found">
+        <action>Mark story as "done" in sprint-status.yaml</action>
+        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "ZERO ISSUES - done"</action>
+        <action>Log: "Story [story] completed with ZERO issues"</action>
+        <action>Break loop</action>
+      </check>
 
-  <subagent-prompt for="dev-story">
-  ```
-  AUTONOMOUS MODE - No human available to answer questions. Make all decisions yourself.
+      <check if="review_attempt >= 3 AND no CRITICAL issues">
+        <action>Mark story as "done" in sprint-status.yaml</action>
+        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "Done after 3 reviews (non-critical may remain)"</action>
+        <action>Log: "Story [story] completed after 3 reviews (non-critical may remain)"</action>
+        <action>Break loop</action>
+      </check>
 
-  Run the workflow: /bmad:bmm:workflows:dev-story
-
-  Target story: [story_key]
-  Story file: {implementation_artifacts}/[story_key].md
-
-  CRITICAL INSTRUCTIONS:
-  - You MUST make all decisions autonomously. No one will answer questions.
-  - If you encounter ambiguity, make a reasonable choice and document it.
-  - Complete ALL tasks and subtasks in the story file.
-  - Write tests, implement code, validate everything.
-  - Do NOT ask for confirmation. Do NOT pause for review.
-  - When done, the story status should be "review" in sprint-status.yaml.
-  - If you encounter blocking issues, document them in the story file and continue with what you can.
-
-  DECISION RULES:
-  - If the workflow asks for approval → proceed without approval, you have full authority.
-  - If the workflow offers optional validation/review → ALWAYS choose to validate/review.
-  - If multiple approaches exist → choose the most thorough one.
-  - Never wait for human input. You ARE the decision maker.
-  ```
-  </subagent-prompt>
-
-  <subagent-prompt for="code-review">
-  ```
-  AUTONOMOUS MODE - No human available to answer questions. Make all decisions yourself.
-
-  Run the workflow: /bmad:bmm:workflows:code-review
-
-  Target story: [story_key]
-  Story file: {implementation_artifacts}/[story_key].md
-  Review attempt: [review_attempt]
-
-  CRITICAL INSTRUCTIONS:
-  - You MUST make all decisions autonomously. No one will answer questions.
-  - Perform adversarial code review as the workflow instructs.
-  - If you find ANY issues (CRITICAL, HIGH, MEDIUM, or LOW severity):
-    - FIX THEM AUTOMATICALLY (choose option 1 "Fix them automatically" when prompted)
-    - Do NOT create action items
-    - Do NOT change story status to "done"
-    - Keep story status as "review" so another review pass happens
-  - ONLY if you find ZERO issues:
-    - Mark story status as "done" in sprint-status.yaml
-    - Update story file status to "done"
-  - Do NOT ask for confirmation. Fix everything you find.
-
-  IMPORTANT: After fixing issues, the story stays in "review" status for another review pass.
-
-  MANDATORY OUTPUT FORMAT - At the end of your review, clearly state:
-  - "HIGHEST SEVERITY: CRITICAL" or "HIGHEST SEVERITY: HIGH" or "HIGHEST SEVERITY: MEDIUM" or "HIGHEST SEVERITY: LOW" or "ZERO ISSUES"
-  - Include counts: "Issues: X CRITICAL, X HIGH, X MEDIUM, X LOW"
-  - This determines the re-review logic
-
-  DECISION RULES:
-  - If the workflow asks "What should I do with these issues?" → ALWAYS choose option 1 "Fix them automatically"
-  - If the workflow asks for approval → proceed without approval, you have full authority.
-  - Never wait for human input. You ARE the decision maker.
-  - Be thorough in finding issues. The goal is quality, not speed.
-  ```
-  </subagent-prompt>
-
-  <action>Use Task tool with subagent_type="general-purpose"</action>
-  <action>Wait for subagent completion</action>
-  <action>Record end time and calculate duration</action>
-</step>
-
-<step n="4" goal="Process subagent result and log">
-  <action>Parse subagent result for outcome summary</action>
-  <action>Log to orchestrator.md table: step number, command, one-sentence result, duration</action>
-
-  <check if="workflow was code-review">
-    <action>Re-read sprint-status.yaml to check current_story_key status</action>
-    <action>Parse subagent result for highest severity found (CRITICAL/HIGH/MEDIUM/LOW/NONE)</action>
-    <action>Increment review_attempt</action>
-
-    <check if="review_attempt >= 10">
-      <action>Log to orchestrator.md: "HARD LIMIT REACHED: 10 code reviews on story [story_key]"</action>
-      <action>Log: "STOPPING - Human review required. Too many review cycles."</action>
-      <output>
+      <check if="review_attempt >= 10">
+        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "HARD LIMIT - blocked"</action>
+        <action>Log: "HARD LIMIT REACHED: 10 code reviews on story [story]"</action>
+        <action>Set story status to "blocked" in sprint-status.yaml</action>
+        <output>
 **ORCHESTRATOR STOPPED - HUMAN REVIEW REQUIRED**
 
-Story: [story_key]
+Story: [story]
 Code reviews attempted: 10 (hard limit)
 Issues keep recurring - possible systemic problem.
 
 Please review the story manually and resolve before resuming.
-      </output>
-      <action>EXIT workflow - do not continue</action>
-    </check>
+        </output>
+        <action>Break loop for this story</action>
+      </check>
 
-    <check if="status == done OR zero issues found">
-      <action>Log: "Story completed - code review passed with ZERO issues"</action>
-      <action>Go to Step 6 (batch tracking)</action>
-    </check>
+      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "Issues fixed, re-review [review_attempt]"</action>
+      <action>Increment review_attempt</action>
+    </loop>
+  </for-each>
 
-    <check if="CRITICAL issues found">
-      <action>Log: "CRITICAL issues found and fixed, mandatory re-review (attempt [review_attempt]/10)"</action>
-      <action>Go to Step 3 (another code-review)</action>
-    </check>
-
-    <check if="non-critical issues (HIGH/MEDIUM/LOW) AND review_attempt < 3">
-      <action>Log: "Non-critical issues found, attempt [review_attempt] of 3"</action>
-      <action>Go to Step 3 (another code-review)</action>
-    </check>
-
-    <check if="non-critical issues (HIGH/MEDIUM/LOW) AND review_attempt >= 3">
-      <action>Log: "3 review attempts completed, non-critical issues may remain"</action>
-      <action>Update sprint-status.yaml: set story to "done"</action>
-      <action>Log: "Marked done after 3 review cycles (no critical issues)"</action>
-      <action>Go to Step 6 (batch tracking)</action>
-    </check>
-  </check>
-
-  <check if="workflow was create-story">
-    <action>Re-read sprint-status.yaml to verify status changed to ready-for-dev</action>
-    <action>Set story_review_attempt = 1</action>
-    <action>Go to Step 4b (story review loop)</action>
-  </check>
-
-  <check if="workflow was story-review">
-    <action>Parse subagent result for critical issues found</action>
-
-    <check if="critical issues found AND story_review_attempt < 3">
-      <action>Increment story_review_attempt</action>
-      <action>Log: "Story review found critical issues, attempt [n] of 3"</action>
-      <action>Go to Step 4b (another story-review)</action>
-    </check>
-
-    <check if="no critical issues OR story_review_attempt >= 3">
-      <action>Log: "Story review complete, proceeding to create-tech-spec"</action>
-      <action>Go to Step 4c (create tech spec)</action>
-    </check>
-  </check>
-
-  <check if="workflow was create-tech-spec">
-    <action>Set tech_spec_review_attempt = 1</action>
-    <action>Log: "Tech spec created, starting review"</action>
-    <action>Go to Step 4d (tech-spec review loop)</action>
-  </check>
-
-  <check if="workflow was tech-spec-review">
-    <action>Parse subagent result for critical issues found</action>
-
-    <check if="critical issues found AND tech_spec_review_attempt < 3">
-      <action>Increment tech_spec_review_attempt</action>
-      <action>Log: "Tech spec review found critical issues, attempt [n] of 3"</action>
-      <action>Go to Step 4d (another tech-spec-review)</action>
-    </check>
-
-    <check if="no critical issues OR tech_spec_review_attempt >= 3">
-      <action>Log: "Tech spec review complete, proceeding to dev-story"</action>
-      <action>Go to Step 2 (run dev-story)</action>
-    </check>
-  </check>
-
-  <check if="workflow was dev-story">
-    <action>Re-read sprint-status.yaml to verify status changed to review</action>
-    <action>Set review_attempt = 1</action>
-    <action>Go to Step 2 (run code-review)</action>
-  </check>
-</step>
-
-<step n="4b" goal="Story review loop after create-story">
-  <critical>After create-story, we MUST review the story before dev-story</critical>
-
-  <action>Record step start time</action>
-  <action>Spawn NEW subagent with story-review instructions</action>
-
-  <subagent-prompt for="story-review">
-  ```
-  AUTONOMOUS MODE - No human available to answer questions. Make all decisions yourself.
-
-  Run the workflow: /bmad:bmm:workflows:create-story
-
-  Target story: [story_key] (status: ready-for-dev)
-  Story file: {implementation_artifacts}/[story_key].md
-
-  MODE: REVIEW ONLY - The story already exists. Do NOT create a new story.
-
-  When the workflow asks what to do, select:
-  "1. Review the story file for completeness"
-
-  CRITICAL INSTRUCTIONS:
-  - Review the existing story file for completeness and quality
-  - Fix ANY issues you find (critical, high, medium, low)
-  - You MUST make all decisions autonomously. No one will answer questions.
-  - Do NOT ask for confirmation. Fix everything you find.
-  - After fixing, report what critical issues were found and fixed
-
-  DECISION RULES:
-  - If the workflow asks for approval → proceed without approval
-  - Always choose review/validate options when offered
-  - Never wait for human input. You ARE the decision maker.
-
-  IMPORTANT OUTPUT: At the end, clearly state:
-  - "CRITICAL ISSUES FOUND: [count]" or "NO CRITICAL ISSUES FOUND"
-  - This determines if another review pass is needed
-  ```
-  </subagent-prompt>
-
-  <action>Wait for subagent completion</action>
-  <action>Record end time and calculate duration</action>
-  <action>Log to orchestrator.md: step number, "story-review", result summary, duration</action>
-  <action>Go to Step 4 to process story-review result</action>
-</step>
-
-<step n="4c" goal="Create tech spec for story">
-  <critical>After story review passes, create a tech spec for the story</critical>
-
-  <action>Record step start time</action>
-  <action>Spawn NEW subagent with create-tech-spec instructions</action>
-
-  <subagent-prompt for="create-tech-spec">
-  ```
-  AUTONOMOUS MODE - No human available to answer questions. Make all decisions yourself.
-
-  Run the workflow: /bmad:bmm:workflows:create-tech-spec
-
-  Target story: [story_key]
-  Story file: {implementation_artifacts}/[story_key].md
-
-  CRITICAL INSTRUCTIONS:
-  - Create a technical specification for implementing this story
-  - You MUST make all decisions autonomously. No one will answer questions.
-  - Read the story file to understand requirements and acceptance criteria
-  - Design the technical approach, data structures, APIs, components needed
-  - Do NOT ask for confirmation. Complete the tech spec fully.
-  - Save the tech spec in the appropriate location
-
-  DECISION RULES:
-  - If the workflow asks for approval → proceed without approval
-  - If multiple approaches exist → choose the most robust one
-  - Never wait for human input. You ARE the decision maker.
-
-  IMPORTANT OUTPUT: At the end, clearly state:
-  - "TECH SPEC CREATED: [filename]"
-  - Location where the tech spec was saved
-  ```
-  </subagent-prompt>
-
-  <action>Wait for subagent completion</action>
-  <action>Record end time and calculate duration</action>
-  <action>Log to orchestrator.md: step number, "create-tech-spec", result summary, duration</action>
-  <action>Go to Step 4 to process create-tech-spec result</action>
-</step>
-
-<step n="4d" goal="Tech spec review loop">
-  <critical>After tech spec creation, review it before dev-story</critical>
-
-  <action>Record step start time</action>
-  <action>Spawn NEW subagent with tech-spec-review instructions</action>
-
-  <subagent-prompt for="tech-spec-review">
-  ```
-  AUTONOMOUS MODE - No human available to answer questions. Make all decisions yourself.
-
-  Run the workflow: /bmad:bmm:workflows:create-tech-spec
-
-  Target story: [story_key]
-  Story file: {implementation_artifacts}/[story_key].md
-
-  MODE: REVIEW ONLY - The tech spec already exists. Do NOT create a new one.
-
-  When the workflow asks what to do, select the REVIEW option.
-
-  CRITICAL INSTRUCTIONS:
-  - Review the existing tech spec for completeness and quality
-  - Verify it aligns with the story requirements and acceptance criteria
-  - Check for missing components, unclear specifications, potential issues
-  - Fix ANY issues you find (critical, high, medium, low)
-  - You MUST make all decisions autonomously. No one will answer questions.
-  - Do NOT ask for confirmation. Fix everything you find.
-
-  DECISION RULES:
-  - If the workflow asks for approval → proceed without approval
-  - Always choose review/validate options when offered
-  - Never wait for human input. You ARE the decision maker.
-
-  IMPORTANT OUTPUT: At the end, clearly state:
-  - "CRITICAL ISSUES FOUND: [count]" or "NO CRITICAL ISSUES FOUND"
-  - This determines if another review pass is needed
-  ```
-  </subagent-prompt>
-
-  <action>Wait for subagent completion</action>
-  <action>Record end time and calculate duration</action>
-  <action>Log to orchestrator.md: step number, "tech-spec-review", result summary, duration</action>
-  <action>Go to Step 4 to process tech-spec-review result</action>
+  <action>Increment stories_completed by length of story_keys (count non-blocked)</action>
+  <action>Go to Step 5 (batch tracking)</action>
 </step>
 
 <step n="5" goal="Error recovery">
   <critical>If any step fails or produces unexpected state:</critical>
 
-  <action>Log error to orchestrator.md with full details</action>
+  <action>Log error to orchestrator via: _bmad/scripts/orchestrator.sh [epic] [story] error "[details]"</action>
   <action>Re-read sprint-status.yaml to understand current state</action>
 
   <check if="story stuck in unexpected status">
@@ -528,23 +515,22 @@ Please review the story manually and resolve before resuming.
   <check if="subagent returned error or incomplete">
     <action>Log: "Subagent error: [details]"</action>
     <action>Attempt to continue from current sprint-status.yaml state</action>
-    <action>If 3 consecutive errors on same story, log and skip to next story</action>
+    <action>If 3 consecutive errors on same story, set story to "blocked" and skip to next story</action>
   </check>
 </step>
 
 <step n="6" goal="Batch tracking and next story">
-  <action>Increment stories_completed by 1</action>
-
   <check if="batch_mode == 'all'">
-    <action>Log to orchestrator.md: "Story [story_key] fully completed. ([stories_completed] total, mode: ALL)"</action>
+    <action>Run: _bmad/scripts/orchestrator.sh batch [stories_completed] batch-progress "mode:ALL"</action>
+    <action>Log: "Story batch complete. ([stories_completed] total, mode: ALL)"</action>
     <action>Go to Step 1 (next story - continues until all done)</action>
   </check>
 
   <check if="batch_mode == 'fixed'">
-    <action>Log to orchestrator.md: "Story [story_key] fully completed. ([stories_completed]/[batch_size])"</action>
+    <action>Run: _bmad/scripts/orchestrator.sh batch [stories_completed] batch-progress "[stories_completed]/[batch_size]"</action>
 
     <check if="stories_completed >= batch_size">
-      <action>Log to orchestrator.md: "=== BATCH COMPLETE: [batch_size] stories ==="</action>
+      <action>Run: _bmad/scripts/orchestrator.sh batch [batch_size] batch-complete "Batch done"</action>
       <output>
 **Batch Complete!**
 
@@ -563,7 +549,7 @@ Ready for next batch.
         <action>Set batch_size = user's number</action>
       </check>
       <action>Set stories_completed = 0</action>
-      <action>Log to orchestrator.md: "New batch started: [batch_size] stories"</action>
+      <action>Run: _bmad/scripts/orchestrator.sh batch-start [batch_size] batch-init "New batch"</action>
     </check>
 
     <action>Go to Step 1 (next story)</action>
@@ -576,41 +562,72 @@ Ready for next batch.
 
 ```
 START:
-  0. Get batch_size from command or ask user:
-     - Number (e.g., "3") → complete 3 stories then prompt
-     - "all" → complete ALL stories until sprint done
+  0a. Run project-context-should-refresh.sh
+      - If TRUE: spawn subagent to generate fresh project context
+      - If FALSE: skip (context is fresh)
 
-LOOP (for each story):
-  1. Read sprint-status.yaml → find first non-done story
+  0b. FIRST LOOP ONLY: Cleanup (is_first_iteration flag)
+      - DELETE orchestrator.md (for CSV migration)
+      - Spawn BMAD Master to clean discovery files and done story files
+      - Log all deletions before deleting
 
-  2. If status == backlog:
-     a. create-story (subagent)
-     b. story-review loop (until no critical, max 3)
-     c. create-tech-spec (subagent)
-     d. tech-spec-review loop (until no critical, max 3)
+  0c. Get batch_size from command or use default (2):
+      - Number (e.g., "3") -> complete 3 stories then prompt
+      - "all" -> complete ALL stories until sprint done
+      - Default: 2 stories
 
-  3. dev-story (subagent) - implements the story using tech spec
+LOOP (for each story or story pair):
+  1. Read sprint-status.yaml -> find next 1-2 stories (same epic)
+     - Story pairing: pair only from same epic
+     - Last story of epic runs alone
+     - batch_size=1 processes single story
 
-  4. code-review loop:
-     - CRITICAL found → re-review (unlimited, hard limit 10)
-     - Non-critical found → re-review (max 3)
-     - ZERO issues → done
+  2. If status == backlog (PARALLEL):
+     a. create-story (CREATE MODE) + create-story-discovery (DISCOVERY MODE)
+        - TWO Task tool calls in single message (concurrent)
+     b. Inject project context into discovery files
+     c. story-review loop (sequential, Haiku for review 2+, max 3)
 
-  5. Mark story done, increment counter
+  3. create-tech-spec (PARALLEL):
+     a. create-tech-spec (CREATE MODE) + create-tech-spec-discovery (DISCOVERY MODE)
+        - TWO Task tool calls in single message (concurrent)
+     b. Inject project context into discovery files
+     c. tech-spec-review loop (sequential, Haiku for review 2+, max 3)
+
+  4. DEV + CODE-REVIEW (SEQUENTIAL per story):
+     FOR each story:
+       a. dev-story (default model)
+       b. code-review loop:
+          - Review 1: default model
+          - Review 2+: Haiku model
+          - Early exit if same error 3x consecutive -> mark "blocked"
+          - ZERO issues -> done
+          - No critical after 3 -> done
+          - Hard limit 10 -> mark "blocked"
+
+  5. Increment stories_completed by 1 or 2
 
   6. Check batch mode:
-     - "all" → next story
-     - "fixed" + complete → prompt for next batch
-     - "fixed" + incomplete → next story
+     - "all" -> next story pair
+     - "fixed" + complete -> prompt for next batch
+     - "fixed" + incomplete -> next story pair
 
 SUBAGENT RULES:
   - All subagents run AUTONOMOUS (no human input)
   - Make all decisions independently
+  - Review 2+: model: "haiku"
+  - Review agents receive discovery file paths (context already injected)
+  - Review agents skip discovery steps (use provided file)
+
+LOG FORMAT:
+  - CSV: unix_timestamp,epic_id,story_id,command,result
+  - Via script: _bmad/scripts/orchestrator.sh
 ```
 
 **Usage Examples:**
-- `/sprint-runner` → asks "How many stories to complete?"
-- `/sprint-runner 3` → completes 3 stories then prompts
-- `/sprint-runner all` → runs until all stories done
+- `/sprint-runner` -> uses default batch size (2)
+- `/sprint-runner 3` -> completes 3 stories then prompts
+- `/sprint-runner all` -> runs until all stories done
+- `/sprint-runner 1` -> processes one story at a time (no pairing)
 
-<critical>BEGIN NOW. Check for batch size in command, or ask user, then start the loop.</critical>
+<critical>BEGIN NOW. Parse batch size from command, run Step 0 (project context + cleanup), then start the loop.</critical>

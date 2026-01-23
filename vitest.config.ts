@@ -18,6 +18,7 @@ export default defineConfig({
     ],
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['./src/test-setup.ts'],
     environmentMatchGlobs: [
       ['src/main/**/*.test.ts', 'node'],
       ['src/preload/**/*.test.ts', 'node'],

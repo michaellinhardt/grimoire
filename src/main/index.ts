@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initDatabase, closeDatabase } from './db'
-import { registerSessionsIPC } from './ipc'
+import { registerSessionsIPC, registerDialogIPC } from './ipc'
 import { processRegistry } from './process-registry'
 
 // Flag to prevent infinite loop when app.quit() triggers before-quit again
@@ -52,6 +52,7 @@ app.whenReady().then(() => {
 
   // Register IPC handlers
   registerSessionsIPC()
+  registerDialogIPC()
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.grimoire')

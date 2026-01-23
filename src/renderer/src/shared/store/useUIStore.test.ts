@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useUIStore, Tab } from './useUIStore'
+import type { SubAgentBlock } from '@renderer/features/sessions/components/types'
 
 describe('useUIStore', () => {
   beforeEach(() => {
@@ -9,7 +10,9 @@ describe('useUIStore', () => {
       rightPanelCollapsed: false,
       tabs: [],
       activeTabId: null,
-      activeSection: 'sessions'
+      activeSection: 'sessions',
+      showArchived: false,
+      scrollPositions: new Map()
     })
   })
 
@@ -401,6 +404,244 @@ describe('useUIStore', () => {
       expect(state.tabs.length).toBe(1)
       expect(state.tabs[0].id).toBe('working-tab')
       expect(state.activeTabId).toBe('working-tab')
+    })
+  })
+
+  describe('scroll position persistence (Story 2b.1)', () => {
+    const sessionId1 = '550e8400-e29b-41d4-a716-446655440001'
+    const sessionId2 = '550e8400-e29b-41d4-a716-446655440002'
+
+    it('stores scroll position for session', () => {
+      const { setScrollPosition, getScrollPosition } = useUIStore.getState()
+
+      setScrollPosition(sessionId1, 500)
+
+      expect(getScrollPosition(sessionId1)).toBe(500)
+    })
+
+    it('returns 0 for unknown session', () => {
+      const { getScrollPosition } = useUIStore.getState()
+      expect(getScrollPosition('unknown-session')).toBe(0)
+    })
+
+    it('clears scroll position for session', () => {
+      const { setScrollPosition, clearScrollPosition, getScrollPosition } = useUIStore.getState()
+
+      setScrollPosition(sessionId1, 500)
+      expect(getScrollPosition(sessionId1)).toBe(500)
+
+      clearScrollPosition(sessionId1)
+      expect(getScrollPosition(sessionId1)).toBe(0)
+    })
+
+    it('stores multiple scroll positions independently', () => {
+      const { setScrollPosition, getScrollPosition } = useUIStore.getState()
+
+      setScrollPosition(sessionId1, 100)
+      setScrollPosition(sessionId2, 200)
+
+      expect(getScrollPosition(sessionId1)).toBe(100)
+      expect(getScrollPosition(sessionId2)).toBe(200)
+    })
+
+    it('updates existing scroll position', () => {
+      const { setScrollPosition, getScrollPosition } = useUIStore.getState()
+
+      setScrollPosition(sessionId1, 100)
+      expect(getScrollPosition(sessionId1)).toBe(100)
+
+      setScrollPosition(sessionId1, 300)
+      expect(getScrollPosition(sessionId1)).toBe(300)
+    })
+
+    it('clears scroll position when closing session tab', () => {
+      const { addTab, setScrollPosition, getScrollPosition, closeTab } = useUIStore.getState()
+
+      // Add tab and set scroll position
+      addTab({
+        id: 'tab-1',
+        type: 'session',
+        title: 'Test Session',
+        sessionId: sessionId1
+      })
+      setScrollPosition(sessionId1, 500)
+
+      expect(getScrollPosition(sessionId1)).toBe(500)
+
+      // Close the tab
+      closeTab('tab-1')
+
+      expect(getScrollPosition(sessionId1)).toBe(0)
+    })
+
+    it('does not clear scroll position when closing tab without sessionId', () => {
+      const { addTab, setScrollPosition, getScrollPosition, closeTab } = useUIStore.getState()
+
+      // Add session tab with scroll position
+      addTab({
+        id: 'tab-1',
+        type: 'session',
+        title: 'Session Tab',
+        sessionId: sessionId1
+      })
+      setScrollPosition(sessionId1, 500)
+
+      // Add new unsaved session tab (no sessionId)
+      addTab({
+        id: 'tab-2',
+        type: 'session',
+        title: 'New Session',
+        sessionId: null
+      })
+
+      // Close the tab without sessionId
+      closeTab('tab-2')
+
+      // Session scroll position should remain
+      expect(getScrollPosition(sessionId1)).toBe(500)
+    })
+
+    it('preserves other scroll positions when clearing one', () => {
+      const { setScrollPosition, clearScrollPosition, getScrollPosition } = useUIStore.getState()
+
+      setScrollPosition(sessionId1, 100)
+      setScrollPosition(sessionId2, 200)
+
+      clearScrollPosition(sessionId1)
+
+      expect(getScrollPosition(sessionId1)).toBe(0)
+      expect(getScrollPosition(sessionId2)).toBe(200)
+    })
+  })
+
+  describe('openSubAgentTab (Story 2b.3)', () => {
+    const mockSubAgent: SubAgentBlock = {
+      type: 'sub_agent',
+      id: 'subagent-001-a8b2',
+      agentType: 'Explore',
+      label: 'Code Analysis Agent',
+      parentMessageUuid: 'msg-001',
+      path: '/.claude/sub-agents/subagent-001-a8b2.jsonl',
+      status: 'done',
+      messageCount: 8,
+      toolCount: 5,
+      summary: 'Analyzed authentication module.'
+    }
+
+    const mockRunningAgent: SubAgentBlock = {
+      ...mockSubAgent,
+      id: 'subagent-002-f3c1',
+      status: 'running'
+    }
+
+    const mockErrorAgent: SubAgentBlock = {
+      ...mockSubAgent,
+      id: 'subagent-003-d4e5',
+      status: 'error'
+    }
+
+    it('creates new tab with type "subagent"', () => {
+      const { openSubAgentTab } = useUIStore.getState()
+
+      openSubAgentTab(mockSubAgent)
+
+      const state = useUIStore.getState()
+      expect(state.tabs.length).toBe(1)
+      expect(state.tabs[0].type).toBe('subagent')
+    })
+
+    it('sets tab title to "{agentType}-{shortId}" format', () => {
+      const { openSubAgentTab } = useUIStore.getState()
+
+      openSubAgentTab(mockSubAgent)
+
+      const state = useUIStore.getState()
+      expect(state.tabs[0].title).toBe('Explore-a8b2') // Last 4 chars of ID
+    })
+
+    it('sets sessionId to sub-agent ID', () => {
+      const { openSubAgentTab } = useUIStore.getState()
+
+      openSubAgentTab(mockSubAgent)
+
+      const state = useUIStore.getState()
+      expect(state.tabs[0].sessionId).toBe('subagent-001-a8b2')
+    })
+
+    it('sets tab ID with subagent prefix', () => {
+      const { openSubAgentTab } = useUIStore.getState()
+
+      openSubAgentTab(mockSubAgent)
+
+      const state = useUIStore.getState()
+      expect(state.tabs[0].id).toBe('subagent-subagent-001-a8b2')
+    })
+
+    it('makes new tab active', () => {
+      const { openSubAgentTab } = useUIStore.getState()
+
+      openSubAgentTab(mockSubAgent)
+
+      const state = useUIStore.getState()
+      expect(state.activeTabId).toBe('subagent-subagent-001-a8b2')
+    })
+
+    it('focuses existing tab if sub-agent already open', () => {
+      const { openSubAgentTab, addTab } = useUIStore.getState()
+
+      // First, open the sub-agent tab
+      openSubAgentTab(mockSubAgent)
+
+      // Add another tab and make it active
+      addTab({ id: 'other-tab', type: 'session', title: 'Other' })
+      expect(useUIStore.getState().activeTabId).toBe('other-tab')
+
+      // Open the same sub-agent again
+      openSubAgentTab(mockSubAgent)
+
+      // Should focus existing tab, not create new one
+      const state = useUIStore.getState()
+      expect(state.tabs.filter((t) => t.type === 'subagent').length).toBe(1)
+      expect(state.activeTabId).toBe('subagent-subagent-001-a8b2')
+    })
+
+    it('maps "running" status to "working" sessionState', () => {
+      const { openSubAgentTab } = useUIStore.getState()
+
+      openSubAgentTab(mockRunningAgent)
+
+      const state = useUIStore.getState()
+      expect(state.tabs[0].sessionState).toBe('working')
+    })
+
+    it('maps "error" status to "error" sessionState', () => {
+      const { openSubAgentTab } = useUIStore.getState()
+
+      openSubAgentTab(mockErrorAgent)
+
+      const state = useUIStore.getState()
+      expect(state.tabs[0].sessionState).toBe('error')
+    })
+
+    it('maps "done" status to "idle" sessionState', () => {
+      const { openSubAgentTab } = useUIStore.getState()
+
+      openSubAgentTab(mockSubAgent) // status: 'done'
+
+      const state = useUIStore.getState()
+      expect(state.tabs[0].sessionState).toBe('idle')
+    })
+
+    it('can open multiple different sub-agent tabs', () => {
+      const { openSubAgentTab } = useUIStore.getState()
+
+      openSubAgentTab(mockSubAgent)
+      openSubAgentTab(mockRunningAgent)
+      openSubAgentTab(mockErrorAgent)
+
+      const state = useUIStore.getState()
+      expect(state.tabs.length).toBe(3)
+      expect(state.tabs.map((t) => t.type)).toEqual(['subagent', 'subagent', 'subagent'])
     })
   })
 })

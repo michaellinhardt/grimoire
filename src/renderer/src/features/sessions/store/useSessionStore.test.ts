@@ -4,7 +4,8 @@ import {
   useSessionStore,
   selectSessionById,
   selectOrphanedSessions,
-  selectActiveSessions
+  selectActiveSessions,
+  selectDisplayableSessions
 } from './useSessionStore'
 import type { SessionWithExists, ScanResult, SyncResult } from '../../../../../shared/types/ipc'
 
@@ -29,7 +30,8 @@ describe('useSessionStore', () => {
       sessions: [],
       isLoading: false,
       isScanning: false,
-      error: null
+      error: null,
+      showHiddenSessions: false // Story 2a.5
     })
     vi.clearAllMocks()
   })
@@ -314,5 +316,106 @@ describe('selectors', () => {
       expect(result).toHaveLength(1)
       expect(result[0].id).toBe('550e8400-e29b-41d4-a716-446655440000')
     })
+  })
+
+  describe('selectDisplayableSessions (Story 2a.5)', () => {
+    it('should return active sessions when showHidden is false', () => {
+      const result = selectDisplayableSessions(mockSessions, false)
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe('550e8400-e29b-41d4-a716-446655440000')
+    })
+
+    it('should include hidden sessions when showHidden is true', () => {
+      const result = selectDisplayableSessions(mockSessions, true)
+      // Should include the active session and the hidden session (but not archived or orphaned)
+      expect(result).toHaveLength(2)
+      const ids = result.map((s) => s.id)
+      expect(ids).toContain('550e8400-e29b-41d4-a716-446655440000') // active
+      expect(ids).toContain('850e8400-e29b-41d4-a716-446655440003') // hidden
+    })
+
+    it('should still exclude archived sessions when showHidden is true', () => {
+      const result = selectDisplayableSessions(mockSessions, true)
+      const ids = result.map((s) => s.id)
+      expect(ids).not.toContain('750e8400-e29b-41d4-a716-446655440002') // archived
+    })
+
+    it('should still exclude non-existent sessions when showHidden is true', () => {
+      const result = selectDisplayableSessions(mockSessions, true)
+      const ids = result.map((s) => s.id)
+      expect(ids).not.toContain('650e8400-e29b-41d4-a716-446655440001') // orphaned
+    })
+  })
+})
+
+describe('showHiddenSessions toggle (Story 2a.5)', () => {
+  beforeEach(() => {
+    // Reset store state including new field
+    useSessionStore.setState({
+      sessions: [],
+      isLoading: false,
+      isScanning: false,
+      error: null,
+      showHiddenSessions: false
+    })
+    vi.clearAllMocks()
+  })
+
+  it('should default showHiddenSessions to false', () => {
+    expect(useSessionStore.getState().showHiddenSessions).toBe(false)
+  })
+
+  it('should toggle showHiddenSessions state', () => {
+    expect(useSessionStore.getState().showHiddenSessions).toBe(false)
+
+    act(() => {
+      useSessionStore.getState().toggleShowHidden()
+    })
+
+    expect(useSessionStore.getState().showHiddenSessions).toBe(true)
+  })
+
+  it('should toggle showHiddenSessions back to false', () => {
+    useSessionStore.setState({ showHiddenSessions: true })
+
+    act(() => {
+      useSessionStore.getState().toggleShowHidden()
+    })
+
+    expect(useSessionStore.getState().showHiddenSessions).toBe(false)
+  })
+
+  it('should call loadSessions after toggle', async () => {
+    mockGrimoireAPI.sessions.list.mockResolvedValueOnce([])
+
+    await act(async () => {
+      useSessionStore.getState().toggleShowHidden()
+    })
+
+    // loadSessions was called (indirectly verified by list being called)
+    expect(mockGrimoireAPI.sessions.list).toHaveBeenCalled()
+  })
+
+  it('should pass includeHidden: true when showHiddenSessions is true', async () => {
+    // First toggle to true
+    useSessionStore.setState({ showHiddenSessions: true })
+    mockGrimoireAPI.sessions.list.mockResolvedValueOnce([])
+
+    await act(async () => {
+      await useSessionStore.getState().loadSessions()
+    })
+
+    expect(mockGrimoireAPI.sessions.list).toHaveBeenCalledWith({ includeHidden: true })
+  })
+
+  it('should pass includeHidden: false when showHiddenSessions is false', async () => {
+    useSessionStore.setState({ showHiddenSessions: false })
+    mockGrimoireAPI.sessions.list.mockResolvedValueOnce([])
+
+    await act(async () => {
+      await useSessionStore.getState().loadSessions()
+    })
+
+    expect(mockGrimoireAPI.sessions.list).toHaveBeenCalledWith({ includeHidden: false })
   })
 })

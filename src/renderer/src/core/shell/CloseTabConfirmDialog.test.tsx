@@ -9,6 +9,19 @@ const mockTerminate = vi.fn()
 const mockScan = vi.fn()
 const mockSync = vi.fn()
 const mockList = vi.fn()
+const mockUpdateLastAccessed = vi.fn()
+const mockGetActiveProcesses = vi.fn()
+const mockArchive = vi.fn()
+const mockUnarchive = vi.fn()
+const mockCreate = vi.fn()
+const mockHide = vi.fn()
+const mockUnhide = vi.fn()
+const mockFork = vi.fn()
+const mockGetLineage = vi.fn()
+const mockGetMetadata = vi.fn()
+const mockUpsertMetadata = vi.fn()
+const mockRewind = vi.fn()
+const mockSelectFolder = vi.fn()
 beforeEach(() => {
   mockTerminate.mockReset()
   mockTerminate.mockResolvedValue({ success: true })
@@ -18,12 +31,53 @@ beforeEach(() => {
   mockSync.mockResolvedValue({ added: 0, updated: 0, orphaned: 0, errors: [] })
   mockList.mockReset()
   mockList.mockResolvedValue([])
+  mockUpdateLastAccessed.mockReset()
+  mockUpdateLastAccessed.mockResolvedValue({ success: true })
+  mockGetActiveProcesses.mockReset()
+  mockGetActiveProcesses.mockResolvedValue([])
+  mockArchive.mockReset()
+  mockArchive.mockResolvedValue({ success: true })
+  mockUnarchive.mockReset()
+  mockUnarchive.mockResolvedValue({ success: true })
+  mockCreate.mockReset()
+  mockCreate.mockResolvedValue({ sessionId: 'new-session-id' })
+  mockHide.mockReset()
+  mockHide.mockResolvedValue({ success: true })
+  mockUnhide.mockReset()
+  mockUnhide.mockResolvedValue({ success: true })
+  mockFork.mockReset()
+  mockFork.mockResolvedValue({ sessionId: 'forked-session-id' })
+  mockGetLineage.mockReset()
+  mockGetLineage.mockResolvedValue([])
+  mockGetMetadata.mockReset()
+  mockGetMetadata.mockResolvedValue(null)
+  mockUpsertMetadata.mockReset()
+  mockUpsertMetadata.mockResolvedValue({ success: true })
+  mockRewind.mockReset()
+  mockRewind.mockResolvedValue({ sessionId: 'rewind-session-id' })
+  mockSelectFolder.mockReset()
+  mockSelectFolder.mockResolvedValue({ canceled: false, folderPath: '/test/path' })
   window.grimoireAPI = {
     sessions: {
       terminate: mockTerminate,
       scan: mockScan,
       sync: mockSync,
-      list: mockList
+      list: mockList,
+      updateLastAccessed: mockUpdateLastAccessed,
+      getActiveProcesses: mockGetActiveProcesses,
+      archive: mockArchive,
+      unarchive: mockUnarchive,
+      create: mockCreate,
+      hide: mockHide,
+      unhide: mockUnhide,
+      fork: mockFork,
+      getLineage: mockGetLineage,
+      getMetadata: mockGetMetadata,
+      upsertMetadata: mockUpsertMetadata,
+      rewind: mockRewind
+    },
+    dialog: {
+      selectFolder: mockSelectFolder
     }
   }
 })

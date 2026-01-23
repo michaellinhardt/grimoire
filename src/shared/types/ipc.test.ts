@@ -9,7 +9,10 @@ import {
   ScanResultSchema,
   SyncResultSchema,
   SessionWithExistsSchema,
-  SyncRequestSchema
+  SyncRequestSchema,
+  SessionMetadataSchema,
+  SessionMetadataUpsertSchema,
+  RewindRequestSchema
 } from './ipc'
 
 describe('IPC Schemas', () => {
@@ -288,6 +291,216 @@ describe('IPC Schemas', () => {
         isHidden: false
       }
       expect(() => SessionWithExistsSchema.parse(invalid)).toThrow()
+    })
+  })
+
+  // Story 2a.6 - Session Metadata Schemas
+  describe('SessionMetadataSchema', () => {
+    it('accepts valid metadata', () => {
+      const valid = {
+        sessionId: '550e8400-e29b-41d4-a716-446655440000',
+        totalInputTokens: 1000,
+        totalOutputTokens: 500,
+        totalCostUsd: 0.05,
+        model: 'claude-sonnet-4-20250514',
+        updatedAt: Date.now()
+      }
+      expect(() => SessionMetadataSchema.parse(valid)).not.toThrow()
+    })
+
+    it('accepts metadata with null model and updatedAt', () => {
+      const valid = {
+        sessionId: '550e8400-e29b-41d4-a716-446655440000',
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        totalCostUsd: 0,
+        model: null,
+        updatedAt: null
+      }
+      expect(() => SessionMetadataSchema.parse(valid)).not.toThrow()
+    })
+
+    it('rejects non-UUID sessionId', () => {
+      expect(() =>
+        SessionMetadataSchema.parse({
+          sessionId: 'not-a-uuid',
+          totalInputTokens: 100,
+          totalOutputTokens: 50,
+          totalCostUsd: 0.05,
+          model: 'claude-sonnet-4-20250514',
+          updatedAt: Date.now()
+        })
+      ).toThrow()
+    })
+
+    it('rejects negative token counts', () => {
+      expect(() =>
+        SessionMetadataSchema.parse({
+          sessionId: '550e8400-e29b-41d4-a716-446655440000',
+          totalInputTokens: -100,
+          totalOutputTokens: 50,
+          totalCostUsd: 0.05,
+          model: null,
+          updatedAt: null
+        })
+      ).toThrow()
+    })
+
+    it('rejects negative cost', () => {
+      expect(() =>
+        SessionMetadataSchema.parse({
+          sessionId: '550e8400-e29b-41d4-a716-446655440000',
+          totalInputTokens: 100,
+          totalOutputTokens: 50,
+          totalCostUsd: -0.05,
+          model: null,
+          updatedAt: null
+        })
+      ).toThrow()
+    })
+  })
+
+  describe('SessionMetadataUpsertSchema', () => {
+    it('accepts minimal upsert with only sessionId', () => {
+      const result = SessionMetadataUpsertSchema.parse({
+        sessionId: '550e8400-e29b-41d4-a716-446655440000'
+      })
+      expect(result.inputTokens).toBe(0)
+      expect(result.outputTokens).toBe(0)
+      expect(result.costUsd).toBe(0)
+      expect(result.model).toBeUndefined()
+    })
+
+    it('accepts full upsert with all fields', () => {
+      const valid = {
+        sessionId: '550e8400-e29b-41d4-a716-446655440000',
+        inputTokens: 100,
+        outputTokens: 50,
+        costUsd: 0.01,
+        model: 'claude-sonnet-4-20250514'
+      }
+      expect(() => SessionMetadataUpsertSchema.parse(valid)).not.toThrow()
+    })
+
+    it('rejects non-UUID sessionId', () => {
+      expect(() =>
+        SessionMetadataUpsertSchema.parse({
+          sessionId: 'invalid'
+        })
+      ).toThrow()
+    })
+
+    it('rejects negative inputTokens', () => {
+      expect(() =>
+        SessionMetadataUpsertSchema.parse({
+          sessionId: '550e8400-e29b-41d4-a716-446655440000',
+          inputTokens: -100
+        })
+      ).toThrow()
+    })
+
+    it('rejects negative cost', () => {
+      expect(() =>
+        SessionMetadataUpsertSchema.parse({
+          sessionId: '550e8400-e29b-41d4-a716-446655440000',
+          costUsd: -0.01
+        })
+      ).toThrow()
+    })
+  })
+
+  // Story 2b.5 - Rewind Request Schema
+  describe('RewindRequestSchema', () => {
+    const validSessionId = '550e8400-e29b-41d4-a716-446655440000'
+    const validCheckpointUuid = '660e8400-e29b-41d4-a716-446655440001'
+
+    it('accepts valid rewind request', () => {
+      const valid = {
+        sessionId: validSessionId,
+        checkpointUuid: validCheckpointUuid,
+        newMessage: 'Let me try a different approach'
+      }
+      const result = RewindRequestSchema.parse(valid)
+      expect(result.sessionId).toBe(validSessionId)
+      expect(result.checkpointUuid).toBe(validCheckpointUuid)
+      expect(result.newMessage).toBe('Let me try a different approach')
+    })
+
+    it('trims whitespace from newMessage', () => {
+      const valid = {
+        sessionId: validSessionId,
+        checkpointUuid: validCheckpointUuid,
+        newMessage: '  Test message with spaces  '
+      }
+      const result = RewindRequestSchema.parse(valid)
+      expect(result.newMessage).toBe('Test message with spaces')
+    })
+
+    it('rejects non-UUID sessionId', () => {
+      expect(() =>
+        RewindRequestSchema.parse({
+          sessionId: 'not-a-uuid',
+          checkpointUuid: validCheckpointUuid,
+          newMessage: 'Test'
+        })
+      ).toThrow()
+    })
+
+    it('rejects non-UUID checkpointUuid', () => {
+      expect(() =>
+        RewindRequestSchema.parse({
+          sessionId: validSessionId,
+          checkpointUuid: 'not-a-uuid',
+          newMessage: 'Test'
+        })
+      ).toThrow()
+    })
+
+    it('rejects empty newMessage', () => {
+      expect(() =>
+        RewindRequestSchema.parse({
+          sessionId: validSessionId,
+          checkpointUuid: validCheckpointUuid,
+          newMessage: ''
+        })
+      ).toThrow(/Message cannot be empty/)
+    })
+
+    it('rejects whitespace-only newMessage', () => {
+      expect(() =>
+        RewindRequestSchema.parse({
+          sessionId: validSessionId,
+          checkpointUuid: validCheckpointUuid,
+          newMessage: '   '
+        })
+      ).toThrow(/Message cannot be empty/)
+    })
+
+    it('rejects missing sessionId', () => {
+      expect(() =>
+        RewindRequestSchema.parse({
+          checkpointUuid: validCheckpointUuid,
+          newMessage: 'Test'
+        })
+      ).toThrow()
+    })
+
+    it('rejects missing checkpointUuid', () => {
+      expect(() =>
+        RewindRequestSchema.parse({
+          sessionId: validSessionId,
+          newMessage: 'Test'
+        })
+      ).toThrow()
+    })
+
+    it('rejects missing newMessage', () => {
+      expect(() =>
+        RewindRequestSchema.parse({
+          sessionId: validSessionId,
+          checkpointUuid: validCheckpointUuid
+        })
+      ).toThrow()
     })
   })
 })

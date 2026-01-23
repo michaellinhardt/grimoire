@@ -1,54 +1,50 @@
+import { useMemo } from 'react'
 import { useUIStore } from '@renderer/shared/store/useUIStore'
+import {
+  ChatInputPlaceholder,
+  EmptyStateView,
+  NewSessionView,
+  ConversationView,
+  createMockMessages
+} from '@renderer/features/sessions/components'
 import type { ReactElement } from 'react'
 
 export function MiddlePanelContent(): ReactElement {
   const { tabs, activeTabId } = useUIStore()
   const activeTab = tabs.find((t) => t.id === activeTabId)
 
-  // No tabs open - show empty state
+  // Create mock messages once per component mount (stable reference prevents re-renders)
+  // Will be replaced by real data from session file in Epic 3b
+  const mockMessages = useMemo(() => createMockMessages(), [])
+
+  // No tabs open - show empty state with New Session button
   if (!activeTab) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[var(--bg-elevated)] p-4">
-        <p className="text-sm text-[var(--text-muted)]">Select a session or create a new one</p>
-      </div>
-    )
+    return <EmptyStateView />
   }
 
   // Tab with no sessionId (new unsaved session) - show empty conversation with placeholder
   if (!activeTab.sessionId) {
-    return (
-      <div className="flex-1 flex flex-col bg-[var(--bg-elevated)] p-4">
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-[var(--text-muted)]">New session - start typing to begin</p>
-        </div>
-        {/* Chat input placeholder - will be implemented in Epic 3a */}
-        <div className="h-12 border-t border-[var(--border)] flex items-center px-4">
-          <div className="flex-1 h-8 bg-[var(--bg-hover)] rounded-[var(--radius-sm)] px-3 flex items-center">
-            <span className="text-sm text-[var(--text-muted)]">
-              Type a message... (input coming in Epic 3a)
-            </span>
-          </div>
-        </div>
-      </div>
-    )
+    return <NewSessionView />
   }
 
-  // Tab with sessionId - show session conversation placeholder
+  // Sub-agent tabs are read-only - show conversation without chat input
+  const isSubAgentTab = activeTab.type === 'subagent'
+
+  // Tab with sessionId - show session conversation
   return (
-    <div className="flex-1 flex flex-col bg-[var(--bg-elevated)] p-4">
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-sm text-[var(--text-muted)]">
-          Session: {activeTab.title} (conversation rendering in Epic 2b)
-        </p>
+    <div className="flex-1 flex flex-col bg-[var(--bg-elevated)]">
+      {/* ConversationView fills remaining space - min-h-0 critical for flex overflow */}
+      <div className="flex-1 min-h-0">
+        <ConversationView
+          messages={mockMessages}
+          sessionId={activeTab.sessionId}
+          sessionState={activeTab.sessionState}
+        />
       </div>
       {/* Chat input placeholder - will be implemented in Epic 3a */}
-      <div className="h-12 border-t border-[var(--border)] flex items-center px-4">
-        <div className="flex-1 h-8 bg-[var(--bg-hover)] rounded-[var(--radius-sm)] px-3 flex items-center">
-          <span className="text-sm text-[var(--text-muted)]">
-            Type a message... (input coming in Epic 3a)
-          </span>
-        </div>
-      </div>
+      {/* NOTE: Sub-agent tabs hide chat input (read-only view) */}
+      {/* NOTE: Existing sessions do NOT auto-focus per UX spec (only new sessions auto-focus) */}
+      {!isSubAgentTab && <ChatInputPlaceholder placeholder="Type your message..." />}
     </div>
   )
 }

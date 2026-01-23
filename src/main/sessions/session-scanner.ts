@@ -274,18 +274,34 @@ export async function syncSessionsToDatabase(discovered: DiscoveredSession[]): P
 /**
  * List all sessions from database with runtime folder existence check
  * Uses async fs.access for non-blocking folder existence checks
+ * @param options - Optional settings for filtering
+ * @param options.includeHidden - If true, include hidden sessions (default: false)
  */
-export async function listSessions(): Promise<SessionWithExists[]> {
+export async function listSessions(options?: {
+  includeHidden?: boolean
+}): Promise<SessionWithExists[]> {
   const db = getDatabase()
+  const includeHidden = options?.includeHidden ?? false
 
-  const rows = db
-    .prepare(
-      `SELECT id, folder_path, created_at, updated_at, last_accessed_at,
+  // Use separate prepared statements - avoid string interpolation for SQL
+  const rows = includeHidden
+    ? (db
+        .prepare(
+          `SELECT id, folder_path, created_at, updated_at, last_accessed_at,
               archived, is_pinned, forked_from_session_id, is_hidden
        FROM sessions
        ORDER BY updated_at DESC`
-    )
-    .all() as DBSessionRow[]
+        )
+        .all() as DBSessionRow[])
+    : (db
+        .prepare(
+          `SELECT id, folder_path, created_at, updated_at, last_accessed_at,
+              archived, is_pinned, forked_from_session_id, is_hidden
+       FROM sessions
+       WHERE is_hidden = 0
+       ORDER BY updated_at DESC`
+        )
+        .all() as DBSessionRow[])
 
   // Check folder existence asynchronously to avoid blocking event loop
   const sessionsWithExists = await Promise.all(

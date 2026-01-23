@@ -11,12 +11,14 @@ interface SessionStoreState {
   isLoading: boolean
   isScanning: boolean
   error: string | null
+  showHiddenSessions: boolean // Story 2a.5
 
   // Actions
   loadSessions: () => Promise<void>
   triggerScan: () => Promise<SyncResult | null>
   setSessions: (sessions: SessionWithExists[]) => void
   clearError: () => void
+  toggleShowHidden: () => void // Story 2a.5
 }
 
 export const useSessionStore = create<SessionStoreState>((set, get) => ({
@@ -25,12 +27,14 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
   isLoading: false,
   isScanning: false,
   error: null,
+  showHiddenSessions: false, // Story 2a.5
 
   // Actions
   loadSessions: async () => {
     set({ isLoading: true, error: null })
     try {
-      const sessions = await window.grimoireAPI.sessions.list()
+      const options = { includeHidden: get().showHiddenSessions }
+      const sessions = await window.grimoireAPI.sessions.list(options)
       set({ sessions, isLoading: false })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load sessions'
@@ -66,6 +70,12 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
 
   clearError: () => {
     set({ error: null })
+  },
+
+  // Story 2a.5: Toggle show hidden sessions
+  toggleShowHidden: () => {
+    set((state) => ({ showHiddenSessions: !state.showHiddenSessions }))
+    get().loadSessions() // Reload with new filter
   }
 }))
 
@@ -100,4 +110,21 @@ export const selectOrphanedSessions = (sessions: SessionWithExists[]): SessionWi
  */
 export const selectActiveSessions = (sessions: SessionWithExists[]): SessionWithExists[] => {
   return sessions.filter((s) => s.exists && !s.archived && !s.isHidden)
+}
+
+/**
+ * Filter sessions for display, conditionally including hidden sessions (Story 2a.5)
+ * @param sessions - Array of sessions to filter
+ * @param showHidden - If true, include hidden sessions in the result
+ * @returns Sessions that should be displayed based on showHidden setting
+ *
+ * Usage notes:
+ * - When showHidden = false: Same as selectActiveSessions
+ * - When showHidden = true: Includes hidden sessions but still excludes archived/non-existent
+ */
+export const selectDisplayableSessions = (
+  sessions: SessionWithExists[],
+  showHidden: boolean
+): SessionWithExists[] => {
+  return sessions.filter((s) => s.exists && !s.archived && (showHidden || !s.isHidden))
 }

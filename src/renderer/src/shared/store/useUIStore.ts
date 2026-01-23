@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { SubAgentBlock } from '@renderer/features/sessions/components/types'
 
 export type SessionState = 'idle' | 'working' | 'error'
 
@@ -26,10 +27,17 @@ interface UIState {
   // Section state
   activeSection: 'sessions' | 'settings'
 
+  // Session list state (Story 2a.3)
+  showArchived: boolean
+
+  // Scroll positions per session for tab switching persistence (Story 2b.1)
+  scrollPositions: Map<string, number>
+
   // Actions
   setLeftPanelCollapsed: (collapsed: boolean) => void
   setRightPanelCollapsed: (collapsed: boolean) => void
   setActiveSection: (section: 'sessions' | 'settings') => void
+  setShowArchived: (show: boolean) => void
   addTab: (tab: AddTabInput) => void
   closeTab: (id: string) => void
   setActiveTabId: (id: string | null) => void
@@ -37,6 +45,10 @@ interface UIState {
   focusOrOpenSession: (sessionId: string, title: string) => void
   updateTabSessionState: (tabId: string, sessionState: SessionState) => void
   updateTabTitle: (tabId: string, title: string) => void
+  setScrollPosition: (sessionId: string, position: number) => void
+  getScrollPosition: (sessionId: string) => number
+  clearScrollPosition: (sessionId: string) => void
+  openSubAgentTab: (subAgent: SubAgentBlock) => void
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -46,11 +58,14 @@ export const useUIStore = create<UIState>((set, get) => ({
   tabs: [],
   activeTabId: null,
   activeSection: 'sessions',
+  showArchived: false,
+  scrollPositions: new Map(),
 
   // Actions
   setLeftPanelCollapsed: (collapsed) => set({ leftPanelCollapsed: collapsed }),
   setRightPanelCollapsed: (collapsed) => set({ rightPanelCollapsed: collapsed }),
   setActiveSection: (section) => set({ activeSection: section }),
+  setShowArchived: (show) => set({ showArchived: show }),
 
   addTab: (tab) =>
     set((state) => {
@@ -67,6 +82,7 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   closeTab: (id) =>
     set((state) => {
+      const closingTab = state.tabs.find((t) => t.id === id)
       const index = state.tabs.findIndex((t) => t.id === id)
       const newTabs = state.tabs.filter((t) => t.id !== id)
 
@@ -80,7 +96,13 @@ export const useUIStore = create<UIState>((set, get) => ({
         }
       }
 
-      return { tabs: newTabs, activeTabId: newActiveId }
+      // Clear scroll position for closed session tab
+      const newScrollPositions = new Map(state.scrollPositions)
+      if (closingTab?.sessionId) {
+        newScrollPositions.delete(closingTab.sessionId)
+      }
+
+      return { tabs: newTabs, activeTabId: newActiveId, scrollPositions: newScrollPositions }
     }),
 
   setActiveTabId: (id) => set({ activeTabId: id }),
@@ -113,5 +135,46 @@ export const useUIStore = create<UIState>((set, get) => ({
   updateTabTitle: (tabId, title) =>
     set((state) => ({
       tabs: state.tabs.map((t) => (t.id === tabId ? { ...t, title } : t))
-    }))
+    })),
+
+  setScrollPosition: (sessionId, position) =>
+    set((state) => ({
+      scrollPositions: new Map(state.scrollPositions).set(sessionId, position)
+    })),
+
+  getScrollPosition: (sessionId) => get().scrollPositions.get(sessionId) ?? 0,
+
+  clearScrollPosition: (sessionId) =>
+    set((state) => {
+      const newMap = new Map(state.scrollPositions)
+      newMap.delete(sessionId)
+      return { scrollPositions: newMap }
+    }),
+
+  openSubAgentTab: (subAgent) =>
+    set((state) => {
+      // Check if sub-agent tab already open
+      const existing = state.tabs.find((t) => t.type === 'subagent' && t.sessionId === subAgent.id)
+      if (existing) {
+        return { activeTabId: existing.id }
+      }
+
+      // Create new sub-agent tab
+      const shortId = subAgent.id.slice(-4)
+      const title = `${subAgent.agentType}-${shortId}` // e.g., "Explore-a8b2"
+
+      const newTab: Tab = {
+        id: `subagent-${subAgent.id}`,
+        type: 'subagent',
+        title,
+        sessionId: subAgent.id,
+        sessionState:
+          subAgent.status === 'running' ? 'working' : subAgent.status === 'error' ? 'error' : 'idle'
+      }
+
+      return {
+        tabs: [...state.tabs, newTab],
+        activeTabId: newTab.id
+      }
+    })
 }))

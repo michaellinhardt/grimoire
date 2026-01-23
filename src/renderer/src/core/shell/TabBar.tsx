@@ -102,7 +102,8 @@ export function TabBar(): ReactElement {
               tab.id === activeTabId &&
                 'text-[var(--text-primary)] border-b-2 border-b-[var(--accent)]',
               tab.sessionState === 'working' && 'tab--working',
-              tab.sessionState === 'error' && 'tab--error'
+              tab.sessionState === 'error' && 'tab--error',
+              tab.type === 'subagent' && 'tab--subagent'
             )}
           >
             <span className="text-sm truncate max-w-[120px]">{tab.title}</span>
