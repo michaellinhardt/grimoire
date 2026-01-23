@@ -9,7 +9,7 @@ EPIC_ID="$1"
 STORY_ID="$2"
 COMMAND="$3"
 RESULT="$4"
-OUTPUT_FILE="${BMAD_OUTPUT:-_bmad-output}/implementation-artifacts/orchestrator.md"
+OUTPUT_FILE="./docs/sprint-runner.csv"
 
 # Get Unix timestamp
 TIMESTAMP=$(date +%s)

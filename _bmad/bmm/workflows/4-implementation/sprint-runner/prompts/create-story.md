@@ -67,5 +67,33 @@ IF ANY CHECK FAILS: Fix it before saving. Do not output a flawed story.
 
 ---
 
+## Logging Instructions
+
+You MUST log your progress using the orchestrator script. Use the Bash tool to run:
+
+```bash
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "result_message"
+```
+
+**Required logs:**
+1. Log milestones as you complete them (see list below)
+2. ALWAYS log "end" as your FINAL action before terminating
+
+**Milestone logs for this workflow:**
+- `discovery-complete` - After discovery phase completes
+- `story-created` - After story file is saved
+- `end` - ALWAYS log this as your final action
+
+**Example:**
+```bash
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "discovery-complete"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "story-created"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "end"
+```
+
+**CRITICAL:** Failure to log "end" will break duration tracking in the dashboard.
+
+---
+
 ## Model Routing
 - Default: general-purpose

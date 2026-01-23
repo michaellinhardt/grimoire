@@ -1200,6 +1200,40 @@
                 min-width: 600px;
             }
         }
+
+        /* Milestone display styles */
+        .step-milestones {
+            margin-top: 6px;
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .milestone {
+            display: inline-block;
+            background: #e8e8e5;
+            color: #555;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin: 2px 0;
+        }
+
+        .milestone-arrow {
+            color: #999;
+            margin: 0 4px;
+            font-size: 10px;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .milestone {
+                background: #3a3a3a;
+                color: #ccc;
+            }
+            .milestone-arrow {
+                color: #666;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1559,7 +1593,7 @@
         // ORCHESTRATOR PARSERS WITH COMMAND PAIRING
         // ============================================================
 
-        // Parse orchestrator CSV log with command pairing
+        // Parse orchestrator CSV log with command pairing and milestones
         function parseOrchestratorCSV(text) {
             const lines = text.trim().split('\n');
             const startIndex = lines[0].includes('unix_timestamp') ? 1 : 0;
@@ -1591,30 +1625,31 @@
 
                 const activity = storyMap.get(storyId);
 
-                // Command pairing: result="start" + result!="start"
                 if (result === 'start') {
+                    // Command started - create new pair with milestones array
                     activity.commandPairs.set(command, {
                         name: command,
                         startTs: ts,
-                        step: activity.commandPairs.size + 1
+                        step: activity.commandPairs.size + 1,
+                        milestones: []  // Track intermediate logs
                     });
                     if (!activity.started) {
                         activity.started = formatTimestamp(ts);
                         activity.startTs = ts;
                     }
-                } else {
-                    // Command completed - pair with start
+                } else if (result === 'end') {
+                    // Command completed - close the pair and calculate duration
                     const pair = activity.commandPairs.get(command);
                     if (pair) {
                         pair.endTs = ts;
-                        pair.result = result;
                         pair.durationSecs = ts - pair.startTs;
                         pair.durationFormatted = formatDuration(pair.durationSecs);
 
                         activity.steps.push({
                             step: pair.step,
                             command: command,
-                            result: result,
+                            result: 'completed',
+                            milestones: pair.milestones,  // Include milestones
                             duration: pair.durationFormatted,
                             durationSecs: pair.durationSecs,
                             startTs: pair.startTs,
@@ -1622,20 +1657,29 @@
                         });
                     }
 
-                    // Track story end
+                    // Track story end timestamp
                     if (!activity.endTs || ts > activity.endTs) {
                         activity.endTs = ts;
                     }
 
-                    // Check if this is the final step
-                    if (command === 'code-review' && result === 'success') {
+                    // Check if this is the final step (code-review completed)
+                    if (command.startsWith('code-review')) {
                         activity.completed = formatTimestamp(ts);
+                    }
+                } else {
+                    // Intermediate milestone log - add to current command
+                    const pair = activity.commandPairs.get(command);
+                    if (pair) {
+                        pair.milestones.push({
+                            timestamp: ts,
+                            message: result
+                        });
                     }
                 }
             }
 
             // Convert map to array and calculate totals
-            const result = Array.from(storyMap.values()).map(activity => {
+            const resultArr = Array.from(storyMap.values()).map(activity => {
                 if (activity.startTs && activity.endTs) {
                     activity.totalDurationSecs = activity.endTs - activity.startTs;
                     activity.duration = formatDuration(activity.totalDurationSecs);
@@ -1648,124 +1692,16 @@
                 return activity;
             });
 
-            return result.reverse();
+            return resultArr.reverse();
         }
 
-        // Parse orchestrator markdown log with estimated timestamps
-        function parseOrchestratorMarkdown(text) {
-            const activities = [];
-            const storyBlocks = text.split(/^## Story:/m).slice(1);
-
-            // Base timestamp for estimation (use current time minus some offset)
-            let estimatedTs = Math.floor(Date.now() / 1000) - (storyBlocks.length * 3600);
-
-            for (let block of storyBlocks) {
-                const lines = block.split('\n');
-                const activity = {
-                    storyId: '',
-                    epic: '',
-                    started: '',
-                    completed: '',
-                    duration: '',
-                    steps: [],
-                    startTs: null,
-                    endTs: null,
-                    totalDurationSecs: 0
-                };
-
-                for (let line of lines) {
-                    if (line.includes('Epic:')) {
-                        activity.epic = line.split('Epic:')[1].trim();
-                    }
-                    if (line.includes('Started:')) {
-                        activity.started = formatISODate(line.split('Started:')[1].trim());
-                        // Try to parse actual date
-                        const dateStr = line.split('Started:')[1].trim();
-                        const parsedDate = new Date(dateStr);
-                        if (!isNaN(parsedDate.getTime())) {
-                            activity.startTs = Math.floor(parsedDate.getTime() / 1000);
-                        }
-                    }
-                    if (line.includes('Story completed:')) {
-                        activity.completed = formatISODate(line.split('Story completed:')[1].trim());
-                        const dateStr = line.split('Story completed:')[1].trim();
-                        const parsedDate = new Date(dateStr);
-                        if (!isNaN(parsedDate.getTime())) {
-                            activity.endTs = Math.floor(parsedDate.getTime() / 1000);
-                        }
-                    }
-                    if (line.includes('Total duration:')) {
-                        activity.duration = line.split('Total duration:')[1].trim();
-                    }
-                }
-
-                activity.storyId = lines[0].trim();
-
-                // Parse steps table
-                const tableStart = lines.findIndex(l => l.includes('| Step |'));
-                if (tableStart !== -1) {
-                    const tableLines = lines.slice(tableStart + 2);
-                    let stepOffset = 0;
-
-                    for (let row of tableLines) {
-                        if (!row.startsWith('|') || !row.includes('|')) continue;
-
-                        const cells = row.split('|').map(c => c.trim()).filter(c => c);
-                        if (cells.length >= 4) {
-                            const durationMins = parseDurationToMinutes(cells[3]);
-                            const durationSecs = durationMins * 60;
-
-                            activity.steps.push({
-                                step: cells[0],
-                                command: cells[1],
-                                result: cells[2],
-                                duration: cells[3],
-                                durationSecs: durationSecs,
-                                // Estimate timestamps from durations
-                                startTs: activity.startTs ? activity.startTs + stepOffset : estimatedTs + stepOffset,
-                                endTs: activity.startTs ? activity.startTs + stepOffset + durationSecs : estimatedTs + stepOffset + durationSecs
-                            });
-
-                            stepOffset += durationSecs;
-                        }
-                    }
-                }
-
-                // If no startTs/endTs from dates, estimate from duration
-                if (!activity.startTs) {
-                    activity.startTs = estimatedTs;
-                }
-                if (!activity.endTs) {
-                    const totalSecs = activity.steps.reduce((sum, s) => sum + (s.durationSecs || 0), 0);
-                    activity.endTs = activity.startTs + totalSecs;
-                    activity.totalDurationSecs = totalSecs;
-                }
-
-                if (activity.storyId) {
-                    activities.push(activity);
-                }
-
-                // Move estimated timestamp forward
-                estimatedTs = activity.endTs + 300; // 5 minute gap
-            }
-
-            return activities.reverse();
-        }
-
-        // Main parser with format detection
+        // CSV parser wrapper
         function parseOrchestrator(text) {
-            const firstLine = text.trim().split('\n')[0];
-
-            if (firstLine.match(/^\d+,/) || firstLine.includes('unix_timestamp')) {
-                console.log('Detected CSV orchestrator format');
-                return parseOrchestratorCSV(text);
-            } else if (text.includes('## Story:')) {
-                console.log('Detected Markdown orchestrator format (legacy)');
-                return parseOrchestratorMarkdown(text);
+            if (!text || !text.trim()) {
+                return [];
             }
-
-            console.warn('Unknown orchestrator format, attempting markdown parse');
-            return parseOrchestratorMarkdown(text);
+            console.log('Parsing sprint-runner.csv');
+            return parseOrchestratorCSV(text);
         }
 
         // ============================================================
@@ -2110,8 +2046,15 @@
                             <tbody>
                                 ${activity.steps.map(step => `
                                     <tr>
-                                        <td>${escapeHtml(step.step)}</td>
-                                        <td>${escapeHtml(step.command)}</td>
+                                        <td>${escapeHtml(String(step.step))}</td>
+                                        <td>
+                                            ${escapeHtml(step.command)}
+                                            ${step.milestones && step.milestones.length > 0 ? `
+                                                <div class="step-milestones">
+                                                    ${step.milestones.map(m => `<span class="milestone">${escapeHtml(m.message)}</span>`).join('<span class="milestone-arrow">→</span>')}
+                                                </div>
+                                            ` : ''}
+                                        </td>
                                         <td class="step-result">${escapeHtml(step.result)}</td>
                                         <td class="step-duration">${escapeHtml(step.duration || '-')}</td>
                                     </tr>
@@ -2782,14 +2725,10 @@
                     sprintText = await sprintResponse.text();
                 }
 
-                const orchMdResponse = await fetch('./orchestrator.md');
-                if (orchMdResponse.ok) {
-                    orchText = await orchMdResponse.text();
-                } else {
-                    const orchCsvResponse = await fetch('./orchestrator.csv');
-                    if (orchCsvResponse.ok) {
-                        orchText = await orchCsvResponse.text();
-                    }
+                const csvResponse = await fetch('./sprint-runner.csv');
+                if (csvResponse.ok) {
+                    orchText = await csvResponse.text();
+                    console.log('Loading sprint-runner.csv');
                 }
 
                 const combinedData = (sprintText || '') + '|' + (orchText || '');
@@ -2838,14 +2777,10 @@
                 }
 
                 let orchText = null;
-                const orchMdResponse = await fetch('./orchestrator.md');
-                if (orchMdResponse.ok) {
-                    orchText = await orchMdResponse.text();
-                } else {
-                    const orchCsvResponse = await fetch('./orchestrator.csv');
-                    if (orchCsvResponse.ok) {
-                        orchText = await orchCsvResponse.text();
-                    }
+                const csvResponse = await fetch('./sprint-runner.csv');
+                if (csvResponse.ok) {
+                    orchText = await csvResponse.text();
+                    console.log('Loading sprint-runner.csv');
                 }
 
                 if (orchText) {

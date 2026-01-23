@@ -21,27 +21,38 @@ Available prompts:
 
 To use a prompt:
 1. Read the prompt file
-2. Substitute variables: `{{story_key}}`, `{{implementation_artifacts}}`, `{{review_attempt}}`
+2. Substitute variables: `{{story_key}}`, `{{implementation_artifacts}}`, `{{review_attempt}}`, `{{epic_id}}`, `{{story_id}}`, `{{command}}`
 3. Pass the substituted prompt to Task tool
+
+**Logging Variables:**
+- `{{epic_id}}` - Extract from story_key (e.g., "2a" from "2a.1")
+- `{{story_id}}` - Same as story_key (e.g., "2a.1")
+- `{{command}}` - Workflow name with iteration for reviews (e.g., "story-review-1", "code-review-3")
 
 ---
 
 ## Orchestrator Log Format
 
-Write to `{orchestrator_log}` in CSV format (no header):
+Write to `./docs/sprint-runner.csv` in CSV format (no header):
 
 ```
 unix_timestamp,epic_id,story_id,command,result
 ```
 
-Use the script: `_bmad/scripts/orchestrator.sh <epic_id> <story_id> <command> <result>`
+Use the script: `./_bmad/scripts/orchestrator.sh <epic_id> <story_id> <command> <result>`
+
+**IMPORTANT:** Orchestrator only logs "start". Subagents log milestones and "end".
 
 Example log entries:
 ```
-1706054400,epic-2a,2a.1,create-story,start
-1706054520,epic-2a,2a.1,create-story,Story file created
-1706054521,epic-2a,2a.1,story-review,start
-1706054620,epic-2a,2a.1,story-review,No critical issues
+1706054400,epic-2a,2a.1,create-story,start           # Orchestrator logs start
+1706054500,epic-2a,2a.1,create-story,discovery-complete  # Subagent logs milestone
+1706054520,epic-2a,2a.1,create-story,story-created       # Subagent logs milestone
+1706054521,epic-2a,2a.1,create-story,end                 # Subagent logs end
+1706054522,epic-2a,2a.1,story-review-1,start         # Orchestrator (iteration 1)
+1706054620,epic-2a,2a.1,story-review-1,review-complete   # Subagent
+1706054621,epic-2a,2a.1,story-review-1,no-issues         # Subagent
+1706054622,epic-2a,2a.1,story-review-1,end               # Subagent
 ```
 
 ---
@@ -143,12 +154,9 @@ development_status:
     <check if="is_first_iteration == true">
       <action>Log: "First iteration - cleaning implementation artifacts"</action>
 
-      <!-- HIGH-4 Resolution: Delete orchestrator.md to prevent CSV-to-markdown corruption -->
-      <action>Log: "Deleting orchestrator.md (will be recreated in CSV format)"</action>
-      <check if="file exists: {implementation_artifacts}/orchestrator.md">
-        <action>Log: "DELETING: {implementation_artifacts}/orchestrator.md"</action>
-        <action>Delete: {implementation_artifacts}/orchestrator.md</action>
-      </check>
+      <!-- LOG FILE PRESERVED: ./docs/sprint-runner.csv is NOT deleted -->
+      <!-- Dashboard can filter by date, preserving history across runs -->
+      <action>Log: "Log file preserved at ./docs/sprint-runner.csv"</action>
 
       <action>Spawn BMAD Master subagent with Task tool</action>
       <subagent-prompt>
@@ -167,7 +175,7 @@ development_status:
       - sprint-status.yaml
       - Any files for stories NOT in "done" status
 
-      NOTE: orchestrator.md has already been deleted by the orchestrator.
+      NOTE: sprint-runner.csv is preserved (not deleted) - history is kept.
 
       For each file to be deleted, output:
       "DELETING: [filepath]"
@@ -289,7 +297,7 @@ development_status:
     </parallel-execution>
 
     <action>Wait for BOTH Task calls to complete</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] create-story "Story files created"</action>
+    <!-- Subagents log their own milestones and "end" -->
 
     <!-- POST-PARALLEL: Inject project context -->
     <for-each story in="story_keys">
@@ -315,7 +323,7 @@ development_status:
   <for-each story in="story_keys">
     <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
     <action>Set story_review_attempt = 1</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review start</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review-[story_review_attempt] start</action>
 
     <loop max="3">
       <action>Load prompt from prompts/story-review.md, substitute variables</action>
@@ -330,13 +338,14 @@ development_status:
       <action>Parse result for critical issues</action>
 
       <check if="no critical issues found">
-        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review "No critical issues"</action>
+        <!-- Subagent logs its own "end" before terminating -->
         <action>Log: "Story review passed for [story]"</action>
         <action>Break loop</action>
       </check>
 
-      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review "Critical issues fixed, re-review"</action>
+      <!-- Subagent logs milestones and "end" before terminating -->
       <action>Increment story_review_attempt</action>
+      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] story-review-[story_review_attempt] start</action>
     </loop>
   </for-each>
 
@@ -364,7 +373,7 @@ development_status:
   </parallel-execution>
 
   <action>Wait for BOTH Task calls to complete</action>
-  <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story_keys] create-tech-spec "Tech specs created"</action>
+  <!-- Subagents log their own milestones and "end" -->
 
   <!-- POST-PARALLEL: Inject project context -->
   <for-each story in="story_keys">
@@ -379,7 +388,7 @@ development_status:
   <for-each story in="story_keys">
     <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
     <action>Set tech_spec_review_attempt = 1</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review start</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review-[tech_spec_review_attempt] start</action>
 
     <loop max="3">
       <action>Load prompt from prompts/tech-spec-review.md, substitute variables</action>
@@ -394,13 +403,14 @@ development_status:
       <action>Parse result for critical issues</action>
 
       <check if="no critical issues found">
-        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review "No critical issues"</action>
+        <!-- Subagent logs its own "end" before terminating -->
         <action>Log: "Tech spec review passed for [story]"</action>
         <action>Break loop</action>
       </check>
 
-      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review "Critical issues fixed, re-review"</action>
+      <!-- Subagent logs milestones and "end" before terminating -->
       <action>Increment tech_spec_review_attempt</action>
+      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] tech-spec-review-[tech_spec_review_attempt] start</action>
     </loop>
   </for-each>
 
@@ -416,13 +426,13 @@ development_status:
     <action>Load prompt from prompts/dev-story.md, substitute variables for [story]</action>
     <action>Spawn subagent with Task tool (default model)</action>
     <action>Wait for completion</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] dev-story "Implementation complete"</action>
+    <!-- Subagent logs milestones and "end" before terminating -->
 
     <!-- CODE-REVIEW LOOP -->
     <!-- MEDIUM-4 Resolution: Review counters are PER-STORY and reset for each story -->
     <action>Set review_attempt = 1</action>
     <action>Initialize error_history = []</action>
-    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review start</action>
+    <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review-[review_attempt] start</action>
 
     <loop max="10">
       <action>Load prompt from prompts/code-review.md, substitute variables for [story]</action>
@@ -442,7 +452,7 @@ development_status:
         <action>Compare error_history[review_attempt], error_history[review_attempt-1], error_history[review_attempt-2]</action>
 
         <check if="all three error patterns are substantially similar">
-          <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "REPEATED ERROR - blocked"</action>
+          <!-- Subagent will log "end" before terminating -->
           <action>Log: "Error pattern: [error_pattern]"</action>
           <action>Set story status to "blocked" in sprint-status.yaml</action>
           <output>
@@ -464,20 +474,20 @@ Please review manually and resolve before resuming.
 
       <check if="ZERO issues found">
         <action>Mark story as "done" in sprint-status.yaml</action>
-        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "ZERO ISSUES - done"</action>
+        <!-- Subagent logs "zero-issues" and "end" before terminating -->
         <action>Log: "Story [story] completed with ZERO issues"</action>
         <action>Break loop</action>
       </check>
 
       <check if="review_attempt >= 3 AND no CRITICAL issues">
         <action>Mark story as "done" in sprint-status.yaml</action>
-        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "Done after 3 reviews (non-critical may remain)"</action>
+        <!-- Subagent logs "issues-fixed" and "end" before terminating -->
         <action>Log: "Story [story] completed after 3 reviews (non-critical may remain)"</action>
         <action>Break loop</action>
       </check>
 
       <check if="review_attempt >= 10">
-        <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "HARD LIMIT - blocked"</action>
+        <!-- Subagent logs "end" before terminating -->
         <action>Log: "HARD LIMIT REACHED: 10 code reviews on story [story]"</action>
         <action>Set story status to "blocked" in sprint-status.yaml</action>
         <output>
@@ -492,8 +502,9 @@ Please review the story manually and resolve before resuming.
         <action>Break loop for this story</action>
       </check>
 
-      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review "Issues fixed, re-review [review_attempt]"</action>
+      <!-- Subagent logs milestones and "end" before terminating -->
       <action>Increment review_attempt</action>
+      <action>Run: _bmad/scripts/orchestrator.sh [current_epic] [story] code-review-[review_attempt] start</action>
     </loop>
   </for-each>
 

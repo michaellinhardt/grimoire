@@ -6,7 +6,7 @@ set -e  # Exit on error (MEDIUM-1 Resolution)
 # If refresh needed, deletes existing file to force regeneration
 
 OUTPUT_FOLDER="${BMAD_OUTPUT:-_bmad-output}"
-CONTEXT_FILE="${OUTPUT_FOLDER}/planning-artifacts/project-context.md"
+CONTEXT_FILE="${OUTPUT_FOLDER}/project-context.md"
 MAX_AGE_HOURS=6
 
 # Check if file exists

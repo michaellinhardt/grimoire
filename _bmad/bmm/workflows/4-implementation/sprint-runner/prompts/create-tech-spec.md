@@ -69,5 +69,33 @@ IMPORTANT OUTPUT: At the end, clearly state:
 
 ---
 
+## Logging Instructions
+
+You MUST log your progress using the orchestrator script. Use the Bash tool to run:
+
+```bash
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "result_message"
+```
+
+**Required logs:**
+1. Log milestones as you complete them (see list below)
+2. ALWAYS log "end" as your FINAL action before terminating
+
+**Milestone logs for this workflow:**
+- `investigation-complete` - After codebase investigation
+- `spec-created` - After tech spec file is saved
+- `end` - ALWAYS log this as your final action
+
+**Example:**
+```bash
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "investigation-complete"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "spec-created"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "end"
+```
+
+**CRITICAL:** Failure to log "end" will break duration tracking in the dashboard.
+
+---
+
 ## Model Routing
 - Default: general-purpose

@@ -33,5 +33,35 @@ DECISION RULES:
 
 ---
 
+## Logging Instructions
+
+You MUST log your progress using the orchestrator script. Use the Bash tool to run:
+
+```bash
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "result_message"
+```
+
+**Required logs:**
+1. Log milestones as you complete them (see list below)
+2. ALWAYS log "end" as your FINAL action before terminating
+
+**Milestone logs for this workflow:**
+- `tests-written` - After tests are created
+- `implementation-complete` - After code implementation is done
+- `validation-passed` - After validation passes
+- `end` - ALWAYS log this as your final action
+
+**Example:**
+```bash
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "tests-written"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "implementation-complete"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "validation-passed"
+./_bmad/scripts/orchestrator.sh {{epic_id}} {{story_id}} {{command}} "end"
+```
+
+**CRITICAL:** Failure to log "end" will break duration tracking in the dashboard.
+
+---
+
 ## Model Routing
 - Default: general-purpose
