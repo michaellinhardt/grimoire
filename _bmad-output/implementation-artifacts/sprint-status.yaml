@@ -150,9 +150,17 @@ development_status:
   epic-3b: in-progress
   3b-1-cc-child-process-spawning: done
   3b-2-ndjson-stream-parser: done
-  3b-3-instance-state-machine: backlog
-  3b-4-request-response-process-model: backlog
+  3b-3-instance-state-machine: done
+  3b-4-request-response-process-model: done
   epic-3b-retrospective: optional
+
+# Code Review Status - Story 3b.4
+# Review Attempt: 2 (FINAL VERIFICATION)
+# Final Status: APPROVED (Zero Issues)
+# Issues Found: 0 CRITICAL, 0 HIGH, 0 MEDIUM, 0 LOW
+# Reviewer: Claude Haiku 4.5
+# Date: 2026-01-24
+# Summary: Complete implementation of request-response process model with all 6 ACs verified: (AC1) Fresh process per message with natural completion, (AC2) Session returns to Idle state on completion, (AC3) Session resume with --resume flag for existing sessions, (AC4) Concurrent request guard with hasActiveProcess check, (AC5) Graceful process cleanup on app quit with SIGTERM->wait->SIGKILL pattern, (AC6) Process registry accuracy with immediate updates on exit. Comprehensive test coverage with 928 tests passing, including 20 integration tests specifically for process lifecycle. All file modifications properly documented and validated.
 
   # Epic 4: Application Lifecycle & Persistence
   epic-4: backlog
