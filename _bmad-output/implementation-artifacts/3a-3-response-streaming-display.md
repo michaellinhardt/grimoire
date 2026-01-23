@@ -2,6 +2,27 @@
 
 Status: review
 
+## Code Review Record (Attempt 2)
+
+**Reviewer:** Claude Opus 4.5 (Haiku 4.5)
+**Date:** 2026-01-24
+**Status:** Review complete - 1 MEDIUM issue fixed
+
+**Issues Found and Fixed:**
+1. [MEDIUM] Incomplete streaming completion logic in useConversationStore
+   - Error messages from failed streams were not persisted or displayed to users (data loss)
+   - Tool-only messages (no text content) weren't being saved if streaming completed successfully
+   - **Fix Applied:**
+     - Updated completeStreaming() to accept optional error parameter
+     - Modified condition to persist messages with tool calls even without text
+     - Added system error message creation when stream fails
+     - Updated test to verify error messages are created
+
+**Root Causes:**
+- completeStreaming checked only for `streaming.content` before creating message
+- No error message persistence when `success=false`
+- Both issues violated acceptance criteria (AC5: tool-only responses, AC6: error state handling)
+
 ## Story
 
 As a **user**,
