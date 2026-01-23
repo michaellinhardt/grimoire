@@ -41,9 +41,9 @@ export function LoadingScreen({
       </p>
 
       {/* Error Modal */}
-      {status === 'error' && errorMessage && errorType && (
+      {status === 'error' && errorMessage && (
         <ErrorModal
-          errorType={errorType}
+          errorType={errorType ?? 'claude'}
           errorMessage={errorMessage}
           onRetry={onRetry}
           onQuit={onQuit}

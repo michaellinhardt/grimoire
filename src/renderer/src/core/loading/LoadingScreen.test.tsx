@@ -53,4 +53,18 @@ describe('LoadingScreen', () => {
     render(<LoadingScreen {...defaultProps} />)
     expect(screen.getByTestId('loading-screen')).not.toHaveClass('loading-screen-fade-out')
   })
+
+  it('shows ErrorModal with default errorType when errorType is null', () => {
+    render(
+      <LoadingScreen
+        {...defaultProps}
+        status="error"
+        errorMessage="Network error"
+        errorType={null}
+      />
+    )
+    expect(screen.getByTestId('error-modal')).toBeInTheDocument()
+    // Falls back to 'claude' error type instructions
+    expect(screen.getByTestId('error-instructions')).toHaveTextContent('not installed')
+  })
 })

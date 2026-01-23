@@ -24,8 +24,11 @@ export function useAppInit(): StartupState & { retry: () => void } {
 
   const startTimeRef = useRef<number>(Date.now())
   const hasStartedRef = useRef(false)
+  const isMountedRef = useRef(true)
 
   const runVerification = useCallback(async () => {
+    if (!isMountedRef.current) return
+
     setState({
       status: 'loading',
       currentStep: 'Initializing...',
@@ -36,6 +39,8 @@ export function useAppInit(): StartupState & { retry: () => void } {
 
     try {
       const result = await window.grimoireAPI.startup.verify()
+
+      if (!isMountedRef.current) return
 
       if (result.success) {
         const elapsed = Date.now() - startTimeRef.current
@@ -54,6 +59,7 @@ export function useAppInit(): StartupState & { retry: () => void } {
         }))
       }
     } catch (error) {
+      if (!isMountedRef.current) return
       setState((prev) => ({
         ...prev,
         status: 'error',
@@ -69,6 +75,7 @@ export function useAppInit(): StartupState & { retry: () => void } {
 
     // Subscribe to step completion events
     const unsubscribeStep = window.grimoireAPI.startup.onStepComplete((data) => {
+      if (!isMountedRef.current) return
       if (data.success) {
         setState((prev) => ({
           ...prev,
@@ -81,14 +88,31 @@ export function useAppInit(): StartupState & { retry: () => void } {
     runVerification()
 
     return () => {
-      unsubscribeStep()
+      if (typeof unsubscribeStep === 'function') {
+        unsubscribeStep()
+      }
     }
   }, [runVerification])
 
   const retry = useCallback(() => {
+    // Reset startup state before retrying
+    setState({
+      status: 'loading',
+      currentStep: 'Initializing...',
+      errorMessage: null,
+      errorType: null
+    })
+    // Reset the start flag and run verification again
     hasStartedRef.current = false
     runVerification()
   }, [runVerification])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   return { ...state, retry }
 }

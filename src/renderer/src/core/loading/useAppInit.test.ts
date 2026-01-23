@@ -90,4 +90,15 @@ describe('useAppInit', () => {
     })
     expect(mockVerify).toHaveBeenCalledTimes(2)
   })
+
+  it('handles exception errors with null errorType', async () => {
+    mockVerify.mockRejectedValue(new Error('Network error'))
+    const { result } = renderHook(() => useAppInit())
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('error')
+    })
+    expect(result.current.errorMessage).toBe('Network error')
+    expect(result.current.errorType).toBeNull()
+  })
 })

@@ -32,6 +32,16 @@ function execPromise(
   env?: Record<string, string>
 ): Promise<StepResult> {
   return new Promise((resolve) => {
+    let hasResolved = false
+    let timeoutHandle: NodeJS.Timeout | null = null
+
+    const cleanup = (): void => {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle)
+        timeoutHandle = null
+      }
+    }
+
     const childProcess = exec(
       command,
       {
@@ -39,6 +49,9 @@ function execPromise(
         env: env ? { ...process.env, ...env } : process.env
       },
       (error) => {
+        if (hasResolved) return
+        hasResolved = true
+        cleanup()
         if (error) {
           resolve({
             success: false,
@@ -50,13 +63,28 @@ function execPromise(
       }
     )
 
-    // Handle timeout explicitly
+    // Handle timeout and error events
     childProcess.on('error', (err) => {
+      if (hasResolved) return
+      hasResolved = true
+      cleanup()
       resolve({
         success: false,
         error: err.message
       })
     })
+
+    // Add a safety timeout in case exec timeout doesn't fire
+    timeoutHandle = setTimeout(() => {
+      if (hasResolved) return
+      hasResolved = true
+      cleanup()
+      childProcess.kill('SIGTERM')
+      resolve({
+        success: false,
+        error: `Command timeout after ${timeout}ms`
+      })
+    }, timeout + 500) // Add 500ms buffer for exec's own timeout
   })
 }
 

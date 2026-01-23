@@ -24,9 +24,14 @@ export function ErrorModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       data-testid="error-modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="error-modal-title"
     >
       <div className="bg-[var(--bg-elevated)] rounded-lg p-6 max-w-md mx-4 shadow-xl border border-[var(--border)]">
-        <h2 className="text-lg font-semibold text-[var(--error)] mb-2">Startup Error</h2>
+        <h2 id="error-modal-title" className="text-lg font-semibold text-[var(--error)] mb-2">
+          Startup Error
+        </h2>
 
         <p className="text-[var(--text-primary)] mb-4" data-testid="error-message">
           {errorMessage}
@@ -38,6 +43,7 @@ export function ErrorModal({
 
         <div className="flex justify-end gap-3">
           <button
+            type="button"
             onClick={onQuit}
             className="px-4 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
             data-testid="quit-button"
@@ -45,6 +51,7 @@ export function ErrorModal({
             Quit
           </button>
           <button
+            type="button"
             onClick={onRetry}
             className="px-4 py-2 text-sm bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)] transition-colors"
             data-testid="retry-button"
