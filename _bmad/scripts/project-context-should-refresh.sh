@@ -7,7 +7,7 @@ set -e  # Exit on error (MEDIUM-1 Resolution)
 
 OUTPUT_FOLDER="${BMAD_OUTPUT:-_bmad-output}"
 CONTEXT_FILE="${OUTPUT_FOLDER}/planning-artifacts/project-context.md"
-MAX_AGE_HOURS=6
+MAX_AGE_HOURS=24
 
 # Check if file exists
 if [ ! -f "$CONTEXT_FILE" ]; then
