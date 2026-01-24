@@ -201,6 +201,16 @@ const grimoireAPI = {
       ipcRenderer.on('startup:allComplete', handler)
       return () => ipcRenderer.removeListener('startup:allComplete', handler)
     }
+  },
+  // Network status (Story 4-2)
+  network: {
+    getStatus: (): Promise<{ online: boolean }> => ipcRenderer.invoke('network:getStatus'),
+    onStatusChanged: (callback: (data: { online: boolean }) => void): (() => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { online: boolean }): void =>
+        callback(data)
+      ipcRenderer.on('network:statusChanged', handler)
+      return () => ipcRenderer.removeListener('network:statusChanged', handler)
+    }
   }
 }
 

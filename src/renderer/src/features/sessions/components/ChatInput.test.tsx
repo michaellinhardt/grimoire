@@ -3,11 +3,21 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ChatInput } from './ChatInput'
 
+// Mock useNetworkStatus hook (Story 4-2)
+vi.mock('@renderer/shared/hooks/useNetworkStatus', () => ({
+  useNetworkStatus: vi.fn()
+}))
+
+import { useNetworkStatus } from '@renderer/shared/hooks/useNetworkStatus'
+const mockUseNetworkStatus = vi.mocked(useNetworkStatus)
+
 describe('ChatInput', () => {
   const mockOnSend = vi.fn()
 
   beforeEach(() => {
     mockOnSend.mockClear()
+    // Default to online state for all tests (Story 4-2)
+    mockUseNetworkStatus.mockReturnValue({ online: true, lastChecked: Date.now() })
   })
 
   describe('rendering', () => {
@@ -271,6 +281,66 @@ describe('ChatInput', () => {
     it('disables abort button when isAborting is true', () => {
       render(<ChatInput onSend={mockOnSend} onAbort={vi.fn()} isWorking={true} isAborting={true} />)
       expect(screen.getByRole('button', { name: /stop generation/i })).toBeDisabled()
+    })
+  })
+
+  // Story 4-2: Offline behavior tests
+  describe('offline behavior (Story 4-2)', () => {
+    it('disables send button when offline', () => {
+      mockUseNetworkStatus.mockReturnValue({ online: false, lastChecked: Date.now() })
+      render(<ChatInput onSend={mockOnSend} />)
+
+      const textarea = screen.getByRole('textbox')
+      fireEvent.change(textarea, { target: { value: 'test message' } })
+
+      const sendButton = screen.getByRole('button', { name: /send/i })
+      expect(sendButton).toBeDisabled()
+    })
+
+    it('shows offline tooltip on send button when offline', () => {
+      mockUseNetworkStatus.mockReturnValue({ online: false, lastChecked: Date.now() })
+      render(<ChatInput onSend={mockOnSend} />)
+
+      const sendButton = screen.getByRole('button', { name: /send/i })
+      expect(sendButton).toHaveAttribute('title', 'Internet required to send messages')
+    })
+
+    it('enables send button when online', () => {
+      mockUseNetworkStatus.mockReturnValue({ online: true, lastChecked: Date.now() })
+      render(<ChatInput onSend={mockOnSend} />)
+
+      const textarea = screen.getByRole('textbox')
+      fireEvent.change(textarea, { target: { value: 'test message' } })
+
+      const sendButton = screen.getByRole('button', { name: /send/i })
+      expect(sendButton).not.toBeDisabled()
+    })
+
+    it('does not show offline tooltip when online', () => {
+      mockUseNetworkStatus.mockReturnValue({ online: true, lastChecked: Date.now() })
+      render(<ChatInput onSend={mockOnSend} />)
+
+      const sendButton = screen.getByRole('button', { name: /send message/i })
+      expect(sendButton).not.toHaveAttribute('title')
+    })
+
+    it('has offline-specific aria-label when offline', () => {
+      mockUseNetworkStatus.mockReturnValue({ online: false, lastChecked: Date.now() })
+      render(<ChatInput onSend={mockOnSend} />)
+
+      expect(screen.getByRole('button', { name: 'Send message (offline)' })).toBeInTheDocument()
+    })
+
+    it('does not call onSend when Enter pressed while offline', async () => {
+      mockUseNetworkStatus.mockReturnValue({ online: false, lastChecked: Date.now() })
+      const user = userEvent.setup()
+      render(<ChatInput onSend={mockOnSend} />)
+
+      const textarea = screen.getByRole('textbox')
+      await user.type(textarea, 'Hello')
+      await user.keyboard('{Enter}')
+
+      expect(mockOnSend).not.toHaveBeenCalled()
     })
   })
 })

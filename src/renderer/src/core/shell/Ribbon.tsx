@@ -2,6 +2,7 @@ import { MessagesSquare, Settings } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { cn } from '@renderer/shared/utils/cn'
 import { useUIStore } from '@renderer/shared/store/useUIStore'
+import { NetworkIndicator } from '@renderer/shared/components/NetworkIndicator'
 import type { ReactNode, KeyboardEvent, ReactElement } from 'react'
 
 interface RibbonButtonProps {
@@ -85,6 +86,10 @@ export function Ribbon(): ReactElement {
         disabled
         onClick={() => setActiveSection('settings')}
       />
+      {/* Network status indicator - pushed to bottom (Story 4-2) */}
+      <div className="mt-auto pb-2">
+        <NetworkIndicator />
+      </div>
     </div>
   )
 }

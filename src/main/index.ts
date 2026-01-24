@@ -3,7 +3,14 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initDatabase, closeDatabase } from './db'
-import { registerSessionsIPC, registerDialogIPC, registerShellIPC, registerStartupIPC } from './ipc'
+import {
+  registerSessionsIPC,
+  registerDialogIPC,
+  registerShellIPC,
+  registerStartupIPC,
+  registerNetworkIPC
+} from './ipc'
+import { startNetworkMonitoring } from './network-monitor'
 import { processRegistry } from './process-registry'
 
 // Flag to prevent infinite loop when app.quit() triggers before-quit again
@@ -55,6 +62,10 @@ app.whenReady().then(() => {
   registerDialogIPC()
   registerShellIPC()
   registerStartupIPC()
+  registerNetworkIPC()
+
+  // Start network monitoring (Story 4-2)
+  startNetworkMonitoring()
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.grimoire')

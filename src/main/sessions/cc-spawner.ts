@@ -5,6 +5,7 @@ import { processRegistry } from '../process-registry'
 import type { SpawnOptions } from './types'
 import { createStreamParser, emitToRenderer } from './stream-parser'
 import { instanceStateManager } from './instance-state-manager'
+import { isOnline } from '../network-monitor'
 
 /**
  * Debug flag for process lifecycle logging (Story 3b-4)
@@ -54,8 +55,21 @@ function findClaudeExecutable(): string {
  * @param options - Spawn configuration
  * @returns The spawned child process
  */
-export function spawnCC(options: SpawnOptions): ChildProcess {
+export function spawnCC(options: SpawnOptions): ChildProcess | null {
   const { sessionId, folderPath, message } = options
+
+  // Network check (Story 4-2 AC4)
+  if (!isOnline()) {
+    const errorId = sessionId ?? `pending-${Date.now()}`
+    instanceStateManager.transition(errorId, 'PROCESS_ERROR')
+    emitToRenderer('stream:end', {
+      sessionId: errorId,
+      success: false,
+      error:
+        'Internet connection required to use Claude Code. Please check your network connection and try again.'
+    })
+    return null
+  }
 
   // Build CLI arguments
   const args = [

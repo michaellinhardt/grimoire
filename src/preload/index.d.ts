@@ -102,6 +102,11 @@ export interface GrimoireAPI {
     ) => () => void
     onAllComplete: (callback: (data: { success: boolean }) => void) => () => void
   }
+  // Network status (Story 4-2)
+  network: {
+    getStatus: () => Promise<{ online: boolean }>
+    onStatusChanged: (callback: (data: { online: boolean }) => void) => () => void
+  }
 }
 
 declare global {

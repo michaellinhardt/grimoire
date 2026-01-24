@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { Send, Square, Loader2 } from 'lucide-react'
 import { cn } from '@renderer/shared/utils/cn'
+import { useNetworkStatus } from '@renderer/shared/hooks/useNetworkStatus'
 
 export interface ChatInputProps {
   /** Callback when user sends a message */
@@ -51,6 +52,8 @@ export function ChatInput({
 }: ChatInputProps): ReactElement {
   const [value, setValue] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { online } = useNetworkStatus()
+  const isOffline = !online
 
   // Derive placeholder from hasMessages if not provided
   const displayPlaceholder =
@@ -86,7 +89,7 @@ export function ChatInput({
   // Internal send logic - shared between keyboard and button handlers
   const performSend = useCallback(() => {
     const trimmed = value.trim()
-    if (trimmed && !disabled) {
+    if (trimmed && !disabled && online) {
       onSend(trimmed)
       setValue('')
       // Reset height after clearing
@@ -94,7 +97,7 @@ export function ChatInput({
         textareaRef.current.style.height = 'auto'
       }
     }
-  }, [value, disabled, onSend])
+  }, [value, disabled, online, onSend])
 
   // Handle keyboard events (Enter to send, Shift+Enter for newline)
   const handleKeyDown = useCallback(
@@ -113,7 +116,7 @@ export function ChatInput({
     performSend()
   }, [performSend])
 
-  const canSend = value.trim().length > 0 && !disabled
+  const canSend = value.trim().length > 0 && !disabled && online
 
   return (
     <div className="h-auto border-t border-[var(--border)] flex items-end px-4 py-3 gap-2">
@@ -161,13 +164,14 @@ export function ChatInput({
           type="button"
           onClick={handleSend}
           disabled={!canSend}
+          title={isOffline ? 'Internet required to send messages' : undefined}
           className={cn(
             'p-2 rounded-[var(--radius-sm)] bg-[var(--accent)] text-white',
             'hover:bg-[var(--accent)]/80 transition-colors',
             'focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2',
             'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
-          aria-label="Send message"
+          aria-label={isOffline ? 'Send message (offline)' : 'Send message'}
         >
           <Send className="w-4 h-4" />
         </button>

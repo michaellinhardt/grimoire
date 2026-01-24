@@ -103,6 +103,10 @@ beforeEach(() => {
       verify: vi.fn().mockResolvedValue({ success: true }),
       onStepComplete: vi.fn(() => vi.fn()),
       onAllComplete: vi.fn(() => vi.fn())
+    },
+    network: {
+      getStatus: vi.fn().mockResolvedValue({ online: true }),
+      onStatusChanged: vi.fn(() => vi.fn())
     }
   }
 
@@ -384,6 +388,10 @@ describe('SessionInfoView loading state', () => {
         verify: vi.fn().mockResolvedValue({ success: true }),
         onStepComplete: vi.fn(() => vi.fn()),
         onAllComplete: vi.fn(() => vi.fn())
+      },
+      network: {
+        getStatus: vi.fn().mockResolvedValue({ online: true }),
+        onStatusChanged: vi.fn(() => vi.fn())
       }
     }
   })

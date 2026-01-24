@@ -1,6 +1,11 @@
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { NewSessionView } from './NewSessionView'
+
+// Mock useNetworkStatus hook (Story 4-2)
+vi.mock('@renderer/shared/hooks/useNetworkStatus', () => ({
+  useNetworkStatus: vi.fn(() => ({ online: true, lastChecked: Date.now() }))
+}))
 
 describe('NewSessionView', () => {
   it('renders empty state message', () => {
