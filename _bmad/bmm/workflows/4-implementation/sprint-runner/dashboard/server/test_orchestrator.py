@@ -10,6 +10,8 @@ Tests cover:
 - Error pattern detection
 - Sprint status updates
 - Batch control logic
+
+Run with: cd dashboard && pytest -v server/test_orchestrator.py
 """
 
 from __future__ import annotations
@@ -17,13 +19,17 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
+# Add dashboard/ to path so we can import server package
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 # Import the module under test
-from orchestrator import (
+from server.orchestrator import (
     Orchestrator,
     OrchestratorState,
 )

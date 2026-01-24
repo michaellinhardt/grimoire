@@ -35,24 +35,8 @@ from typing import Any, Optional
 
 from aiohttp import web, WSMsgType
 
-PORT = 8080
-
-# Paths - Robust project root detection
-DASHBOARD_DIR = Path(__file__).parent
-
-
-def find_project_root() -> Path:
-    """Find project root by looking for package.json or .git"""
-    current = Path(__file__).parent
-    while current != current.parent:
-        if (current / "package.json").exists() or (current / ".git").exists():
-            return current
-        current = current.parent
-    raise RuntimeError("Could not find project root (no package.json or .git found)")
-
-
-PROJECT_ROOT = find_project_root()
-ARTIFACTS_DIR = PROJECT_ROOT / "_bmad-output" / "implementation-artifacts"
+from .shared import PROJECT_ROOT, ARTIFACTS_DIR, FRONTEND_DIR
+from .settings import get_settings
 
 # =============================================================================
 # WebSocket Connection Management (AC: #2, #5)
@@ -323,7 +307,7 @@ async def get_initial_state() -> dict[str, Any]:
     to WebSocket event format for frontend consistency.
     """
     try:
-        from db import get_active_batch, get_events_by_batch
+        from .db import get_active_batch, get_events_by_batch
 
         batch = get_active_batch()
 
@@ -361,7 +345,8 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
     - Handles incoming messages (for future extensions)
     - Removes client from tracking set on disconnect
     """
-    ws = web.WebSocketResponse(heartbeat=30.0)  # Enable auto ping/pong
+    settings = get_settings()
+    ws = web.WebSocketResponse(heartbeat=float(settings.websocket_heartbeat_seconds))
     await ws.prepare(request)
 
     # Add to tracking set
@@ -527,7 +512,7 @@ async def scan_artifacts() -> dict[str, str]:
 
 async def index_handler(request: web.Request) -> web.Response:
     """Serve dashboard.html"""
-    dashboard_path = DASHBOARD_DIR / "dashboard.html"
+    dashboard_path = FRONTEND_DIR / "index.html"
     if dashboard_path.exists():
         return web.FileResponse(dashboard_path)
     return web.Response(status=404, text="Dashboard not found")
@@ -571,7 +556,7 @@ async def orchestrator_start_handler(request: web.Request) -> web.Response:
         return web.Response(status=409, text="Orchestrator is already running")
 
     try:
-        from orchestrator import Orchestrator
+        from .orchestrator import Orchestrator
 
         if batch_size == "all":
             _orchestrator_instance = Orchestrator(batch_mode="all", max_cycles=999)
@@ -612,7 +597,7 @@ async def orchestrator_stop_handler(request: web.Request) -> web.Response:
     if not _orchestrator_instance or _orchestrator_instance.state.value == "idle":
         # Check if database has a stale active batch that needs cleanup
         try:
-            from db import get_active_batch, update_batch
+            from .db import get_active_batch, update_batch
             batch = get_active_batch()
             if batch:
                 update_batch(
@@ -688,17 +673,18 @@ async def batches_list_handler(request: web.Request) -> web.Response:
         total: number
     }
     """
+    settings = get_settings()
     try:
-        limit = int(request.query.get("limit", "20"))
+        limit = int(request.query.get("limit", str(settings.default_batch_list_limit)))
         offset = int(request.query.get("offset", "0"))
         limit = min(max(limit, 1), 100)  # Clamp between 1 and 100
         offset = max(offset, 0)
     except ValueError:
-        limit = 20
+        limit = settings.default_batch_list_limit
         offset = 0
 
     try:
-        from db import get_connection
+        from .db import get_connection
 
         with get_connection() as conn:
             # Get total count
@@ -766,7 +752,7 @@ async def batch_detail_handler(request: web.Request) -> web.Response:
         return web.Response(status=400, text="Invalid batch ID")
 
     try:
-        from db import get_batch, get_stories_by_batch, get_commands_by_story, get_events_by_batch
+        from .db import get_batch, get_stories_by_batch, get_commands_by_story, get_events_by_batch
 
         batch = get_batch(batch_id)
         if not batch:
@@ -852,10 +838,10 @@ async def serve_file_handler(request: web.Request) -> web.Response:
     }
 
     if filename in ALLOWED_DATA_FILES:
-        # Try artifacts first, then dashboard
+        # Try artifacts first, then frontend
         filepath = ARTIFACTS_DIR / filename
         if not filepath.exists():
-            filepath = DASHBOARD_DIR / filename
+            filepath = FRONTEND_DIR / filename
         if not filepath.exists():
             return web.Response(status=404, text=f"File not found: {filename}")
 
@@ -890,9 +876,26 @@ async def serve_file_handler(request: web.Request) -> web.Response:
     except Exception as e:
         return web.Response(status=400, text=f"Bad Request: Invalid path - {e}")
 
-    # Try serving from dashboard directory
-    filepath = DASHBOARD_DIR / filename
+    # Try serving from frontend directory
+    filepath = FRONTEND_DIR / filename
     if filepath.exists() and filepath.is_file():
+        # Determine content type for static assets
+        content_type = None
+        if filename.endswith(".css"):
+            content_type = "text/css"
+        elif filename.endswith(".js"):
+            content_type = "application/javascript"
+        elif filename.endswith(".html"):
+            content_type = "text/html"
+        elif filename.endswith(".svg"):
+            content_type = "image/svg+xml"
+        elif filename.endswith(".png"):
+            content_type = "image/png"
+        elif filename.endswith(".ico"):
+            content_type = "image/x-icon"
+
+        if content_type:
+            return web.FileResponse(filepath, headers={"Content-Type": content_type})
         return web.FileResponse(filepath)
 
     return web.Response(status=404, text="File not found")
@@ -906,7 +909,7 @@ async def serve_file_handler(request: web.Request) -> web.Response:
 def cleanup_stale_batches() -> None:
     """Mark any 'running' batches as 'stopped' on server start."""
     try:
-        from db import get_active_batch, update_batch
+        from .db import get_active_batch, update_batch
         batch = get_active_batch()
         if batch:
             update_batch(
@@ -957,10 +960,49 @@ async def cors_preflight_handler(request: web.Request) -> web.Response:
         status=204,
         headers={
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",
         },
     )
+
+
+# =============================================================================
+# Settings API Handlers
+# =============================================================================
+
+
+async def settings_get_handler(request: web.Request) -> web.Response:
+    """GET /api/settings - Retrieve all settings."""
+    from .settings import get_settings
+    settings = get_settings()
+    return web.json_response(
+        settings.to_dict(),
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
+
+
+async def settings_update_handler(request: web.Request) -> web.Response:
+    """PUT /api/settings - Update settings."""
+    from .settings import update_settings
+    try:
+        data = await request.json()
+        settings = update_settings(**data)
+        return web.json_response(
+            settings.to_dict(),
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except ValueError as e:
+        return web.Response(
+            status=400,
+            text=str(e),
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except json.JSONDecodeError:
+        return web.Response(
+            status=400,
+            text="Invalid JSON",
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
 
 
 def create_app() -> web.Application:
@@ -985,8 +1027,14 @@ def create_app() -> web.Application:
     app.router.add_options("/api/batches", cors_preflight_handler)
     app.router.add_options("/api/batches/{batch_id}", cors_preflight_handler)
 
+    # Settings API endpoints
+    app.router.add_get("/api/settings", settings_get_handler)
+    app.router.add_put("/api/settings", settings_update_handler)
+    app.router.add_options("/api/settings", cors_preflight_handler)
+
     # Static file handler (must be last due to wildcard pattern)
-    app.router.add_get("/{filename}", serve_file_handler)
+    # Use {filename:.*} regex pattern to match nested paths like css/styles.css
+    app.router.add_get("/{filename:.*}", serve_file_handler)
 
     # Add lifecycle handlers
     app.on_startup.append(on_startup)
@@ -997,11 +1045,12 @@ def create_app() -> web.Application:
 
 def main() -> None:
     """Main entry point."""
+    port = get_settings().server_port
     print(f"\n{'='*50}")
     print("Grimoire Dashboard Server (aiohttp)")
     print(f"{'='*50}")
-    print(f"\nServing at: http://localhost:{PORT}/")
-    print(f"WebSocket at: ws://localhost:{PORT}/ws")
+    print(f"\nServing at: http://localhost:{port}/")
+    print(f"WebSocket at: ws://localhost:{port}/ws")
     print(f"\nEndpoints:")
     print(f"  - /                              Dashboard")
     print(f"  - /ws                            WebSocket (real-time events)")
@@ -1011,9 +1060,11 @@ def main() -> None:
     print(f"  - POST /api/orchestrator/start   Start sprint run")
     print(f"  - POST /api/orchestrator/stop    Stop sprint run")
     print(f"  - GET  /api/orchestrator/status  Get current status")
+    print(f"  - GET  /api/settings             Get settings")
+    print(f"  - PUT  /api/settings             Update settings")
     print(f"\nPress Ctrl+C to stop\n")
 
-    web.run_app(create_app(), port=PORT, print=None)
+    web.run_app(create_app(), host="0.0.0.0", port=port, print=None)
 
 
 if __name__ == "__main__":

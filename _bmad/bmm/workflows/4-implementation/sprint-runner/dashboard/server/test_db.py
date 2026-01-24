@@ -2,14 +2,19 @@
 """
 Unit tests for db.py SQLite database module.
 
-Run with: pytest test_db.py -v
+Run with: cd dashboard && pytest -v server/test_db.py
 """
 
 from __future__ import annotations
+import sys
 import time
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
+# Add dashboard/ to path so we can import server package
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 # =============================================================================
@@ -20,7 +25,7 @@ import pytest
 @pytest.fixture
 def temp_db(tmp_path):
     """Create a temporary database for testing."""
-    import db
+    from server import db
 
     # Override DB_PATH to use temp directory
     test_db_path = tmp_path / 'test-sprint-runner.db'
@@ -125,9 +130,9 @@ class TestBatchOperations:
 
     def test_create_batch_sets_timestamp(self, temp_db):
         """create_batch should set started_at to current time."""
-        before = int(time.time())
+        before = int(time.time() * 1000)
         batch_id = temp_db.create_batch(max_cycles=1)
-        after = int(time.time())
+        after = int(time.time() * 1000)
 
         batch = temp_db.get_batch(batch_id)
         assert before <= batch['started_at'] <= after
@@ -400,6 +405,7 @@ class TestEventOperations:
             batch_id=sample_batch,
             story_id=sample_story,
             command_id=None,
+            event_type="info",
             epic_id="2a",
             story_key="2a-1",
             command="dev-story",
@@ -429,6 +435,7 @@ class TestEventOperations:
             batch_id=sample_batch,
             story_id=sample_story,
             command_id=cmd_id,
+            event_type="info",
             epic_id="2a",
             story_key="2a-1",
             command="cmd",
@@ -448,6 +455,7 @@ class TestEventOperations:
                 batch_id=sample_batch,
                 story_id=None,
                 command_id=None,
+                event_type="info",
                 epic_id="1",
                 story_key=f"1-{i}",
                 command="test",
@@ -470,9 +478,9 @@ class TestEventOperations:
 
     def test_get_events_returns_newest_first(self, temp_db, sample_batch):
         """get_events should return events in descending timestamp order."""
-        temp_db.create_event(sample_batch, None, None, "1", "1-1", "cmd", "task", "start", "First")
+        temp_db.create_event(sample_batch, None, None, "info", "1", "1-1", "cmd", "task", "start", "First")
         time.sleep(0.1)  # Ensure different timestamps
-        temp_db.create_event(sample_batch, None, None, "1", "1-2", "cmd", "task", "start", "Second")
+        temp_db.create_event(sample_batch, None, None, "info", "1", "1-2", "cmd", "task", "start", "Second")
 
         events = temp_db.get_events(limit=10)
         assert "Second" in events[0]['message']
@@ -483,8 +491,8 @@ class TestEventOperations:
         batch1 = temp_db.create_batch(max_cycles=1)
         batch2 = temp_db.create_batch(max_cycles=1)
 
-        temp_db.create_event(batch1, None, None, "1", "1-1", "cmd", "task", "start", "Batch 1")
-        temp_db.create_event(batch2, None, None, "2", "2-1", "cmd", "task", "start", "Batch 2")
+        temp_db.create_event(batch1, None, None, "info", "1", "1-1", "cmd", "task", "start", "Batch 1")
+        temp_db.create_event(batch2, None, None, "info", "2", "2-1", "cmd", "task", "start", "Batch 2")
 
         events1 = temp_db.get_events_by_batch(batch1)
         assert len(events1) == 1
@@ -496,9 +504,9 @@ class TestEventOperations:
 
     def test_get_events_by_batch_ordered_ascending(self, temp_db, sample_batch):
         """get_events_by_batch should return events in ascending timestamp order."""
-        temp_db.create_event(sample_batch, None, None, "1", "1-1", "cmd", "task", "start", "First")
+        temp_db.create_event(sample_batch, None, None, "info", "1", "1-1", "cmd", "task", "start", "First")
         time.sleep(0.1)
-        temp_db.create_event(sample_batch, None, None, "1", "1-2", "cmd", "task", "start", "Second")
+        temp_db.create_event(sample_batch, None, None, "info", "1", "1-2", "cmd", "task", "start", "Second")
 
         events = temp_db.get_events_by_batch(sample_batch)
         assert "First" in events[0]['message']
@@ -516,6 +524,7 @@ class TestEventOperations:
                 batch_id=sample_batch,
                 story_id=99999,  # Non-existent
                 command_id=None,
+                event_type="info",
                 epic_id="1",
                 story_key="1-1",
                 command="cmd",
@@ -532,6 +541,7 @@ class TestEventOperations:
                 batch_id=sample_batch,
                 story_id=None,
                 command_id=99999,  # Non-existent
+                event_type="info",
                 epic_id="1",
                 story_key="1-1",
                 command="cmd",
@@ -776,6 +786,7 @@ class TestEdgeCases:
             batch_id=sample_batch,
             story_id=story_id,
             command_id=None,
+            event_type="info",
             epic_id="epic",
             story_key="story-unicode",
             command="cmd",

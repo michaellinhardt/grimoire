@@ -2,22 +2,27 @@
 """
 Unit tests for server.py WebSocket and HTTP server module.
 
-Run with: pytest test_server.py -v
+Run with: cd dashboard && pytest -v server/test_server.py
 """
 
 from __future__ import annotations
 
 import asyncio
 import json
+import sys
 import time
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 
+# Add dashboard/ to path so we can import server package
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 # Import server module
-import server
+from server import server
 
 
 # =============================================================================

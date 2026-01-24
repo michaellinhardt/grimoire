@@ -6,30 +6,47 @@ Python-based orchestrator and real-time dashboard for automated sprint execution
 
 The Sprint Runner Dashboard provides:
 
-- **Python Orchestrator** (`orchestrator.py`): Manages sprint execution workflow
-- **WebSocket Server** (`server.py`): Real-time event streaming with batch history API
-- **SQLite Database** (`db.py`): Persistent state tracking with event types and status validation
-- **Dashboard UI** (`dashboard.html`): Split panel layout with batch history sidebar and real-time updates
-- **Logging Script** (`sprint-log.sh`): CSV output for orchestrator parsing
+- **Python Server** (`server/`): aiohttp HTTP/WebSocket server with orchestrator and settings API
+- **SQLite Database** (`server/db.py`): Persistent state tracking with event types and status validation
+- **Frontend UI** (`frontend/`): Modular JavaScript dashboard with 9 JS modules
+- **Logging Script** (`sprint-log.sh`): Uses date +%s (Unix epoch) for direct SQLite logging
 
 ## File Structure
 
 ```
 dashboard/
-├── orchestrator.py       # Main orchestration engine
-├── server.py            # aiohttp WebSocket server with batch history API
-├── db.py                # SQLite database module with event types
-├── dashboard.html       # Browser-based monitoring UI (split panel layout)
-├── requirements.txt     # Python dependencies
-├── sprint-runner.db     # SQLite database (auto-created)
-├── sprint.log           # Human-readable log output
-├── test_orchestrator.py # Orchestrator unit tests
-├── test_server.py       # Server unit tests
-├── test_db.py          # Database unit tests
-├── test_integration.py  # Integration tests
-├── test_parity.py      # Functional parity tests
-├── UIUX-SPECIFICATION.md # Complete UI/UX design specification
-└── README.md           # This file
+├── server/
+│   ├── __init__.py          # Package exports
+│   ├── shared.py            # Path constants, find_project_root()
+│   ├── settings.py          # 9 configurable settings + validation
+│   ├── server.py            # aiohttp HTTP/WebSocket server
+│   ├── orchestrator.py      # Workflow automation
+│   ├── db.py                # SQLite database module
+│   ├── requirements.txt     # Python dependencies
+│   ├── sprint-runner.db     # SQLite database (auto-created)
+│   ├── test_db.py           # Database unit tests
+│   ├── test_server.py       # Server unit tests
+│   ├── test_orchestrator.py # Orchestrator unit tests
+│   ├── test_integration.py  # Integration tests
+│   └── test_parity.py       # Functional parity tests
+├── frontend/
+│   ├── index.html           # Main dashboard page
+│   ├── css/
+│   │   └── styles.css       # All CSS
+│   ├── js/
+│   │   ├── utils.js         # Pure utility functions
+│   │   ├── websocket.js     # WebSocket connection
+│   │   ├── sidebar.js       # Batch history sidebar
+│   │   ├── controls.js      # Start/stop controls
+│   │   ├── batch.js         # Batch display
+│   │   ├── stories.js       # Story cards
+│   │   ├── operations.js    # Active operations
+│   │   ├── settings.js      # Settings page (API-backed)
+│   │   └── main.js          # Main entry, state management
+│   └── assets/              # Static assets
+├── sprint-log.sh            # Uses date +%s (Unix epoch)
+├── UIUX-SPECIFICATION.md    # Complete UI/UX design specification
+└── README.md                # This file
 ```
 
 ## Quick Start
@@ -44,16 +61,16 @@ dashboard/
 
 ```bash
 cd _bmad/bmm/workflows/4-implementation/sprint-runner/dashboard
-pip install -r requirements.txt
+pip install -r server/requirements.txt
 ```
 
 ### Running the Server
 
 ```bash
-python server.py
+python -m server.server
 ```
 
-The server starts on `http://localhost:8080` by default.
+The server starts on `http://localhost:8080` by default (configurable via Settings API).
 
 ### Accessing the Dashboard
 
@@ -95,6 +112,7 @@ The dashboard uses a split panel layout with three main sections:
 2. **Batch Header**: Current batch status with progress bar and cycle information
 3. **Active Operations**: Real-time display of running commands with pulse animations
 4. **Story List**: Expandable cards showing story > command > task hierarchy
+5. **Settings Tab**: Configure 9 runtime settings via the Settings API
 
 ### Responsive Behavior
 
@@ -184,7 +202,62 @@ The dashboard uses CSS custom properties for consistent theming. Key variables i
 | `/api/orchestrator/status` | GET | Get current status |
 | `/api/batches` | GET | List batches with pagination |
 | `/api/batches/:id` | GET | Get batch details with stories |
+| `/api/settings` | GET | Get all configurable settings |
+| `/api/settings` | PUT | Update settings (partial or full) |
 | `/story-descriptions.json` | GET | Story metadata |
+
+### Settings API
+
+The Settings API provides runtime configuration for 9 parameters:
+
+#### Get Settings
+
+```
+GET /api/settings
+```
+
+Response:
+```json
+{
+  "project_context_max_age_hours": 24,
+  "injection_warning_kb": 100,
+  "injection_error_kb": 150,
+  "default_max_cycles": 2,
+  "max_code_review_attempts": 10,
+  "haiku_after_review": 2,
+  "server_port": 8080,
+  "websocket_heartbeat_seconds": 30,
+  "default_batch_list_limit": 20
+}
+```
+
+#### Update Settings
+
+```
+PUT /api/settings
+Content-Type: application/json
+
+{
+  "default_max_cycles": 5,
+  "haiku_after_review": 3
+}
+```
+
+Partial updates are supported. Invalid keys or values return 400 errors.
+
+#### Setting Descriptions
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `project_context_max_age_hours` | 24 | Hours before project context is considered stale |
+| `injection_warning_kb` | 100 | Warn when prompt injection exceeds this size |
+| `injection_error_kb` | 150 | Error when prompt injection exceeds this size |
+| `default_max_cycles` | 2 | Default number of cycles for fixed batch mode |
+| `max_code_review_attempts` | 10 | Maximum code review retry attempts |
+| `haiku_after_review` | 2 | Switch to Haiku model after N code reviews |
+| `server_port` | 8080 | HTTP server port |
+| `websocket_heartbeat_seconds` | 30 | WebSocket ping interval |
+| `default_batch_list_limit` | 20 | Default limit for batch list API |
 
 ### Batch History API
 
@@ -380,24 +453,13 @@ All timestamps are stored in milliseconds since epoch for precise timing.
 
 ### sprint-log.sh
 
-The logging script outputs CSV format for orchestrator parsing:
+The logging script writes events directly to SQLite using Unix epoch timestamps:
 
 ```bash
 ./sprint-log.sh '{"epic_id":"2a","story_id":"2a-1","command":"create-story","task_id":"setup","status":"start","message":"Initializing"}'
 ```
 
-#### Output Formats
-
-**stdout (CSV):**
-```
-timestamp,epicID,storyID,command,task-id,status,"message"
-2026-01-24 10:30:00,2a,2a-1,create-story,setup,start,"Initializing"
-```
-
-**Log file (Human-readable):**
-```
-[2026-01-24 10:30:00] [2a/2a-1] [create-story:setup] [start] Initializing
-```
+Events are written directly to the SQLite database (no intermediate log file).
 
 #### Required JSON Fields
 
@@ -462,26 +524,27 @@ Response:
 ### Run All Tests
 
 ```bash
-python -m pytest test_*.py -v
+cd dashboard
+python -m pytest server/test_*.py -v
 ```
 
 ### Run Specific Test Suites
 
 ```bash
 # Unit tests
-python -m pytest test_orchestrator.py test_server.py test_db.py -v
+python -m pytest server/test_orchestrator.py server/test_server.py server/test_db.py -v
 
 # Integration tests
-python -m pytest test_integration.py -v
+python -m pytest server/test_integration.py -v
 
 # Functional parity tests
-python -m pytest test_parity.py -v
+python -m pytest server/test_parity.py -v
 ```
 
 ### Test Coverage
 
 ```bash
-python -m pytest test_*.py --cov=. --cov-report=html
+python -m pytest server/test_*.py --cov=server --cov-report=html
 ```
 
 ## Architecture
@@ -512,29 +575,35 @@ Orchestrator → emit_event() → WebSocket broadcast → Dashboard UI
 ### Component Architecture
 
 ```
-dashboard.html
-├── app-layout (CSS Grid)
-│   ├── app-header
-│   │   ├── controls (Start/Stop)
-│   │   ├── batch-mode-controls
-│   │   └── connection-indicator
-│   ├── batch-sidebar
-│   │   ├── sidebar-header
-│   │   ├── batch-items (virtual scroll)
-│   │   └── load-more button
-│   ├── main-content
-│   │   ├── batch-header
-│   │   ├── active-operations
-│   │   └── story-list
-│   └── app-footer
+frontend/
+├── index.html (app-layout CSS Grid)
+├── css/styles.css (all styles)
+└── js/
+    ├── main.js          # Entry point, state management
+    ├── utils.js         # Pure utility functions
+    ├── websocket.js     # WebSocket connection handling
+    ├── sidebar.js       # Batch history sidebar
+    ├── controls.js      # Start/stop controls
+    ├── batch.js         # Batch header display
+    ├── stories.js       # Story cards rendering
+    ├── operations.js    # Active operations panel
+    └── settings.js      # Settings tab (API-backed)
+
+server/
+├── server.py           # HTTP routes + WebSocket handler
+├── orchestrator.py     # Workflow execution engine
+├── db.py               # SQLite operations
+├── settings.py         # Settings storage + validation
+└── shared.py           # Path utilities
 ```
 
 ## Deprecated Scripts
 
 The following shell scripts are deprecated in favor of this Python implementation:
 
-- `_bmad/scripts/project-context-should-refresh.sh` - Replaced by `orchestrator.check_project_context_status()`
-- `_bmad/scripts/orchestrator.sh` - Replaced by `db.create_event()` and `server.emit_event()`
+- `_bmad/scripts/project-context-should-refresh.sh` - Replaced by `server/orchestrator.check_project_context_status()`
+- `_bmad/scripts/orchestrator.sh` - Replaced by `server/db.create_event()` and `server/server.emit_event()`
+- `sprint.log` file - Events now go directly to SQLite database
 
 These scripts are kept for backwards compatibility but should not be used for new implementations.
 
@@ -554,8 +623,8 @@ These scripts are kept for backwards compatibility but should not be used for ne
 
 ### Database issues
 
-1. Delete `sprint-runner.db` to reset state
-2. Check write permissions in dashboard folder
+1. Delete `server/sprint-runner.db` to reset state
+2. Check write permissions in server folder
 3. Server cleans up stale batches on startup
 
 ### Batch history not loading

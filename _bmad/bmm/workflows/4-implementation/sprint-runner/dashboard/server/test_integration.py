@@ -5,7 +5,7 @@ Integration tests for sprint-runner dashboard.
 Tests complete workflow from dashboard start to story completion.
 Verifies server, WebSocket, orchestrator control, and event streaming.
 
-Run with: pytest test_integration.py -v
+Run with: cd dashboard && pytest -v server/test_integration.py
 
 Note: These tests mock the Claude CLI subprocess to enable CI testing.
 For full end-to-end testing with real Claude CLI, use manual testing.
@@ -17,6 +17,7 @@ import asyncio
 import json
 import os
 import sqlite3
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -26,10 +27,13 @@ import pytest
 from aiohttp import web
 from aiohttp.test_utils import AioHTTPTestCase
 
+# Add dashboard/ to path so we can import server package
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 # Import modules under test
-import db
-import server
-from orchestrator import Orchestrator, OrchestratorState
+from server import db
+from server import server
+from server.orchestrator import Orchestrator, OrchestratorState
 
 
 # =============================================================================

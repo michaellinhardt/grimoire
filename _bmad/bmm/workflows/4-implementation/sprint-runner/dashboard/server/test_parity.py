@@ -11,18 +11,22 @@ Tests cover:
 - Retry/blocking logic (3 consecutive errors = blocked)
 - Output file structure expectations
 
-Run with: pytest test_parity.py -v
+Run with: cd dashboard && pytest -v server/test_parity.py
 """
 
 from __future__ import annotations
 
+import sys
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from orchestrator import Orchestrator, OrchestratorState
+# Add dashboard/ to path so we can import server package
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from server.orchestrator import Orchestrator, OrchestratorState
 
 
 # =============================================================================

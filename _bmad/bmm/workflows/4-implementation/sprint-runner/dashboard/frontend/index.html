@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Runner Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Story Tooltip (global) -->
+    <div class="story-tooltip" id="storyTooltip"></div>
+
+    <!-- App Layout Container -->
+    <div class="app-layout" id="appLayout">
+        <!-- App Header -->
+        <header class="app-header">
+            <div class="app-header__left">
+                <button class="mobile-sidebar-toggle" onclick="toggleMobileSidebar()">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <rect y="3" width="20" height="2"></rect>
+                        <rect y="9" width="20" height="2"></rect>
+                        <rect y="15" width="20" height="2"></rect>
+                    </svg>
+                </button>
+                <h1 class="app-header__title">Sprint Runner</h1>
+            </div>
+
+            <div class="app-header__controls">
+                <button class="header-btn header-btn--primary" id="headerStartBtn">
+                    <span>&#9654;</span> Start
+                </button>
+                <button class="header-btn header-btn--danger" id="headerStopBtn" disabled>
+                    <span>&#9632;</span> Stop
+                </button>
+                <div class="batch-mode-controls">
+                    <span class="batch-mode-controls__label">Batch:</span>
+                    <input type="number" class="batch-mode-controls__input" id="headerBatchSize" value="2" min="1">
+                    <label><input type="checkbox" id="headerRunAll"> All</label>
+                </div>
+            </div>
+
+            <div class="app-header__right">
+                <div class="connection-indicator" id="headerConnectionIndicator">
+                    <span class="connection-indicator__dot" id="headerConnectionDot"></span>
+                    <span class="connection-indicator__text" id="headerConnectionText">Disconnected</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+        <!-- Batch History Sidebar -->
+        <aside class="batch-sidebar" id="batchSidebar">
+            <div class="batch-sidebar__header">
+                <span class="batch-sidebar__title">Batch History</span>
+                <button class="batch-sidebar__toggle" onclick="toggleBatchSidebar()">
+                    <span class="batch-sidebar__toggle-icon">&#9664;</span>
+                </button>
+            </div>
+            <div class="batch-sidebar__content" id="batchSidebarContent">
+                <div class="batch-sidebar__loading">Loading batches...</div>
+            </div>
+            <div class="batch-sidebar__footer">
+                <button class="batch-sidebar__load-more" id="loadMoreBatches">Load More...</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="mainContent">
+            <!-- Legacy container wrapper for existing content -->
+            <div class="container">
+                <!-- Dashboard Content -->
+                <div class="dashboard-content" id="dashboardContent">
+                    <!-- Last Updated indicator -->
+                    <div class="last-updated" style="margin-bottom: var(--space-4); justify-content: flex-end;">
+                        <span class="update-dot" id="updateDot"></span>
+                        <span id="lastUpdated">Loading...</span>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="summary-cards">
+                        <div class="card">
+                            <div class="card-label">Total Epics</div>
+                            <div class="card-value" id="totalEpics">0</div>
+                            <div class="card-subtitle">In-progress: <span id="epicsInProgress">0</span></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">Stories</div>
+                            <div class="card-value" id="storiesProgress">0/0</div>
+                            <div class="card-subtitle">Completion: <span id="storiesPercent">0%</span></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">Current Story</div>
+                            <div class="card-value" style="font-size: 16px; line-height: 1.4;" id="currentStory">-</div>
+                            <div class="card-subtitle" id="currentStoryStatus">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Navigation -->
+                    <div class="tab-nav">
+                        <button class="tab-btn active" data-tab="epics">Epics <span class="tab-count" id="epicsCount">0</span></button>
+                        <button class="tab-btn" data-tab="stories">Stories <span class="tab-count" id="storiesCount">0</span></button>
+                        <button class="tab-btn" data-tab="activity">Activity <span class="tab-count" id="activityCount">0</span></button>
+                        <button class="tab-btn" data-tab="timeline">Timeline</button>
+                        <button class="tab-btn" data-tab="sprint-run">Sprint Run <span class="tab-count" id="sprintRunCount"></span></button>
+                        <button class="tab-btn" data-tab="settings">Settings</button>
+                    </div>
+
+                    <!-- Epic Board Tab -->
+                    <div class="tab-panel active" id="tab-epics">
+                        <div class="epic-board">
+                            <div class="epic-column">
+                                <div class="epic-column-header">Backlog</div>
+                                <div id="epicsBacklog"></div>
+                            </div>
+                            <div class="epic-column">
+                                <div class="epic-column-header">In Progress</div>
+                                <div id="epicsInProgressCol"></div>
+                            </div>
+                            <div class="epic-column">
+                                <div class="epic-column-header">Done</div>
+                                <div id="epicsDone"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stories Tab -->
+                    <div class="tab-panel" id="tab-stories">
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label class="filter-label">Epic:</label>
+                                <select id="epicFilter">
+                                    <option value="all">All Epics</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Status:</label>
+                                <select id="statusFilter">
+                                    <option value="all">All Statuses</option>
+                                    <option value="backlog">Backlog</option>
+                                    <option value="ready-for-dev">Ready for Dev</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="review">Review</option>
+                                    <option value="done">Done</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Story ID</th>
+                                        <th>Name</th>
+                                        <th>Epic</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="storyTableBody">
+                                    <tr><td colspan="5" class="empty-state">No stories loaded</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Activity Tab -->
+                    <div class="tab-panel" id="tab-activity">
+                        <div class="activity-log" id="activityLog">
+                            <div class="empty-state">No activity loaded</div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Tab -->
+                    <div class="tab-panel timeline-panel" id="tab-timeline" role="region" aria-label="Project Timeline">
+                        <div class="timeline-controls">
+                            <div class="timeline-zoom">
+                                <button class="zoom-btn" data-action="out" onclick="zoomTimeline('out')" aria-label="Zoom out">-</button>
+                                <span class="zoom-level" id="zoomLevel">100%</span>
+                                <button class="zoom-btn" data-action="in" onclick="zoomTimeline('in')" aria-label="Zoom in">+</button>
+                            </div>
+                            <div class="timeline-visibility-btns">
+                                <button class="visibility-btn" onclick="showAllStories()">Show All</button>
+                                <button class="visibility-btn" onclick="hideAllStories()">Hide All</button>
+                            </div>
+                            <div class="timeline-block-size">
+                                <label for="blockSizeInput">Block (min):</label>
+                                <input type="number" id="blockSizeInput" min="1" max="480" step="1" value="10"
+                                       onkeydown="if(event.key==='Enter'){this.blur();}"
+                                       onblur="setBlockSizeMinutes(this.value)">
+                            </div>
+                        </div>
+                        <div class="timeline-scroll-container" id="timelineScrollContainer">
+                            <div class="timeline-cursor-line" id="timelineCursorLine"></div>
+                            <div class="timeline-header" id="timelineHeader">
+                                <div class="timeline-label-spacer">
+                                    <span>Story</span>
+                                    <div class="timeline-resize-handle" id="resizeHandle"></div>
+                                </div>
+                                <div class="timeline-hours" id="timelineHours"></div>
+                            </div>
+                            <div class="timeline-body" id="timelineBody">
+                                <div class="timeline-grid" id="timelineGrid"></div>
+                                <div class="timeline-rows" id="timelineRows"></div>
+                            </div>
+                        </div>
+                        <div class="timeline-tooltip" id="timelineTooltip"></div>
+                    </div>
+
+                    <!-- Sprint Run Tab -->
+                    <div class="tab-panel" id="tab-sprint-run">
+                        <div class="sprint-controls">
+                            <div class="sprint-controls-row">
+                                <button class="sprint-btn start" id="sprintStartBtn">
+                                    <span>&#9654;</span> Start
+                                </button>
+                                <button class="sprint-btn stop" id="sprintStopBtn" disabled>
+                                    <span>&#9632;</span> Stop
+                                </button>
+                            </div>
+                            <div class="batch-size-group">
+                                <label for="batchSizeInput">Batch Size:</label>
+                                <input type="number" id="batchSizeInput" class="batch-size-input" value="2" min="1" max="100">
+                            </div>
+                            <div class="run-all-group">
+                                <input type="checkbox" id="runAllCheckbox">
+                                <label for="runAllCheckbox">Run All</label>
+                            </div>
+                            <div class="sprint-status">
+                                <div class="sprint-status-row">
+                                    <span class="sprint-status-label">Status:</span>
+                                    <span class="sprint-status-value idle" id="sprintStatusValue">Idle</span>
+                                </div>
+                                <div class="sprint-status-row">
+                                    <span class="sprint-status-label">Current:</span>
+                                    <span class="sprint-status-value" id="sprintCurrentOp">-</span>
+                                </div>
+                            </div>
+                            <div class="ws-connection-status">
+                                <span class="ws-connection-dot" id="wsConnectionDot"></span>
+                                <span id="wsConnectionText">Disconnected</span>
+                            </div>
+                        </div>
+
+                        <div class="sprint-progress" id="sprintProgressSection" style="display: none;">
+                            <div class="sprint-progress-header">
+                                <span class="sprint-progress-title">Cycle Progress</span>
+                                <span class="sprint-progress-stats" id="sprintProgressStats">0/0 cycles</span>
+                            </div>
+                            <div class="sprint-progress-bar">
+                                <div class="sprint-progress-fill" id="sprintProgressFill" style="width: 0%;"></div>
+                            </div>
+                            <div class="sprint-active-stories" id="sprintActiveStories"></div>
+                        </div>
+
+                        <div class="sprint-log" id="sprintLog">
+                            <div class="sprint-log-header">
+                                <span class="sprint-log-title">Event Log</span>
+                                <div class="sprint-log-actions">
+                                    <button class="sprint-log-btn" onclick="clearSprintLog()">Clear</button>
+                                    <button class="sprint-log-btn" onclick="toggleAutoScroll()">Auto-scroll: <span id="autoScrollState">ON</span></button>
+                                </div>
+                            </div>
+                            <div class="sprint-log-entries" id="sprintLogEntries">
+                                <div class="log-empty">No events yet. Start a sprint run to see live events.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div class="tab-panel" id="tab-settings">
+                        <div class="settings-container">
+                            <div class="settings-header">
+                                <h2>Settings</h2>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-title">Server Configuration</div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label" for="settingServerPort">
+                                        Server Port
+                                        <span class="settings-hint">HTTP server port (requires restart)</span>
+                                    </label>
+                                    <input type="number" class="settings-input" id="settingServerPort" value="8080" min="1024" max="65535">
+                                    <div class="settings-error" id="settingServerPortError"></div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label" for="settingWsHeartbeat">
+                                        WebSocket Heartbeat
+                                        <span class="settings-hint">Heartbeat interval (10-120)</span>
+                                    </label>
+                                    <div class="settings-input-row">
+                                        <input type="number" class="settings-input" id="settingWsHeartbeat" value="30" min="10" max="120">
+                                        <span class="settings-input-suffix">seconds</span>
+                                    </div>
+                                    <div class="settings-error" id="settingWsHeartbeatError"></div>
+                                </div>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-title">Orchestrator Settings</div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label" for="settingDefaultMaxCycles">
+                                        Default Max Cycles
+                                        <span class="settings-hint">Default number of batch cycles (1-999)</span>
+                                    </label>
+                                    <input type="number" class="settings-input" id="settingDefaultMaxCycles" value="2" min="1" max="999">
+                                    <div class="settings-error" id="settingDefaultMaxCyclesError"></div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label" for="settingProjectContextMaxAge">
+                                        Project Context Max Age
+                                        <span class="settings-hint">Context freshness in hours (1-168)</span>
+                                    </label>
+                                    <div class="settings-input-row">
+                                        <input type="number" class="settings-input" id="settingProjectContextMaxAge" value="24" min="1" max="168">
+                                        <span class="settings-input-suffix">hours</span>
+                                    </div>
+                                    <div class="settings-error" id="settingProjectContextMaxAgeError"></div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label" for="settingMaxCodeReviewAttempts">
+                                        Max Code Review Attempts
+                                        <span class="settings-hint">Maximum code review iterations (1-20)</span>
+                                    </label>
+                                    <input type="number" class="settings-input" id="settingMaxCodeReviewAttempts" value="10" min="1" max="20">
+                                    <div class="settings-error" id="settingMaxCodeReviewAttemptsError"></div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label" for="settingHaikuAfterReview">
+                                        Switch to Haiku After
+                                        <span class="settings-hint">Switch to Haiku model after N reviews (1-10)</span>
+                                    </label>
+                                    <div class="settings-input-row">
+                                        <input type="number" class="settings-input" id="settingHaikuAfterReview" value="2" min="1" max="10">
+                                        <span class="settings-input-suffix">reviews</span>
+                                    </div>
+                                    <div class="settings-error" id="settingHaikuAfterReviewError"></div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label" for="settingDefaultBatchListLimit">
+                                        Default Batch List Limit
+                                        <span class="settings-hint">Default pagination limit (10-100)</span>
+                                    </label>
+                                    <input type="number" class="settings-input" id="settingDefaultBatchListLimit" value="20" min="10" max="100">
+                                    <div class="settings-error" id="settingDefaultBatchListLimitError"></div>
+                                </div>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-title">Safety Thresholds</div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label" for="settingInjectionWarningKb">
+                                        Injection Warning Threshold
+                                        <span class="settings-hint">Warn if injection exceeds this size (50-200)</span>
+                                    </label>
+                                    <div class="settings-input-row">
+                                        <input type="number" class="settings-input" id="settingInjectionWarningKb" value="100" min="50" max="200">
+                                        <span class="settings-input-suffix">KB</span>
+                                    </div>
+                                    <div class="settings-error" id="settingInjectionWarningKbError"></div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label" for="settingInjectionErrorKb">
+                                        Injection Error Threshold
+                                        <span class="settings-hint">Error if injection exceeds this size (100-300)</span>
+                                    </label>
+                                    <div class="settings-input-row">
+                                        <input type="number" class="settings-input" id="settingInjectionErrorKb" value="150" min="100" max="300">
+                                        <span class="settings-input-suffix">KB</span>
+                                    </div>
+                                    <div class="settings-error" id="settingInjectionErrorKbError"></div>
+                                </div>
+                            </div>
+
+                            <div class="settings-actions">
+                                <button class="settings-save-btn" id="settingsSaveBtn">Save Settings</button>
+                                <button class="settings-reset-btn" id="settingsResetBtn">Reset to Defaults</button>
+                                <span class="settings-status" id="settingsStatus"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /.dashboard-content -->
+            </div><!-- /.container -->
+        </main><!-- /.main-content -->
+
+        <!-- Footer Status Bar -->
+        <footer class="app-footer">
+            <div class="app-footer__left">
+                <div class="app-footer__status">
+                    <span>Sprint Runner Dashboard</span>
+                </div>
+            </div>
+            <div class="app-footer__right">
+                <span class="app-footer__timestamp" id="footerTimestamp">--</span>
+            </div>
+        </footer>
+    </div><!-- /.app-layout -->
+
+    <!-- JavaScript Modules - Load Order Matters -->
+    <script src="js/utils.js"></script>
+    <script src="js/websocket.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/controls.js"></script>
+    <script src="js/batch.js"></script>
+    <script src="js/stories.js"></script>
+    <script src="js/operations.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

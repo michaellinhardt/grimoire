@@ -30,8 +30,10 @@ from typing import Any, AsyncGenerator, Optional
 import yaml
 
 # Imports from sibling modules (Story 5-SR-2 and 5-SR-5)
+from .settings import get_settings
+
 try:
-    from db import (
+    from .db import (
         init_db,
         create_batch,
         update_batch,
@@ -90,7 +92,7 @@ except ImportError:
 
 # WebSocket broadcast - import from server module (Story 5-SR-5)
 try:
-    from server import broadcast, emit_event as server_emit_event, EventType
+    from .server import broadcast, emit_event as server_emit_event, EventType
     _websocket_available = True
 except ImportError:
     _websocket_available = False
@@ -139,7 +141,7 @@ class Orchestrator:
     def __init__(
         self,
         batch_mode: str = "fixed",
-        max_cycles: int = 2,
+        max_cycles: Optional[int] = None,
         project_root: Optional[Path] = None,
     ):
         """
@@ -147,10 +149,13 @@ class Orchestrator:
 
         Args:
             batch_mode: "fixed" for limited cycles, "all" for infinite
-            max_cycles: Maximum cycles for "fixed" mode
+            max_cycles: Maximum cycles for "fixed" mode (defaults from settings)
             project_root: Project root path (defaults to cwd)
         """
         self.batch_mode = batch_mode
+        # Use settings default if not specified
+        if max_cycles is None:
+            max_cycles = get_settings().default_max_cycles
         self.max_cycles = max_cycles
         self.project_root = project_root or Path.cwd()
 
@@ -250,12 +255,17 @@ class Orchestrator:
     # Step 0: Project Context Check (Story 5-SR-4)
     # =========================================================================
 
-    # Constants for project context freshness
-    PROJECT_CONTEXT_MAX_AGE_SECONDS = 24 * 3600  # 24 hours
+    def _get_context_max_age_seconds(self) -> int:
+        """Get project context max age from settings."""
+        return get_settings().project_context_max_age_hours * 3600
 
-    # Prompt system append size limits (Story A-1)
-    INJECTION_WARNING_THRESHOLD_BYTES = 100 * 1024  # 100KB - warn if larger
-    INJECTION_ERROR_THRESHOLD_BYTES = 150 * 1024    # 150KB - error if larger
+    def _get_injection_warning_threshold(self) -> int:
+        """Get injection warning threshold in bytes from settings."""
+        return get_settings().injection_warning_kb * 1024
+
+    def _get_injection_error_threshold(self) -> int:
+        """Get injection error threshold in bytes from settings."""
+        return get_settings().injection_error_kb * 1024
 
     def copy_project_context(self) -> bool:
         """
@@ -460,7 +470,7 @@ class Orchestrator:
         current_time = time.time()
         age_seconds = current_time - file_mtime
 
-        if age_seconds > self.PROJECT_CONTEXT_MAX_AGE_SECONDS:
+        if age_seconds > self._get_context_max_age_seconds():
             return "expired"
 
         return "fresh"
@@ -1115,19 +1125,21 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
 
         # Size monitoring with threshold checks
         size_bytes = len(result.encode('utf-8'))
-        if size_bytes > self.INJECTION_ERROR_THRESHOLD_BYTES:
+        error_threshold = self._get_injection_error_threshold()
+        warning_threshold = self._get_injection_warning_threshold()
+        if size_bytes > error_threshold:
             raise ValueError(
                 f"Injection size ({size_bytes} bytes) exceeds maximum "
-                f"({self.INJECTION_ERROR_THRESHOLD_BYTES} bytes). "
+                f"({error_threshold} bytes). "
                 f"Consider reducing included files for command '{command_name}'."
             )
-        if size_bytes > self.INJECTION_WARNING_THRESHOLD_BYTES:
+        if size_bytes > warning_threshold:
             self.emit_event(
                 "injection:warning",
                 {
                     "command": command_name,
                     "size_bytes": size_bytes,
-                    "threshold_bytes": self.INJECTION_WARNING_THRESHOLD_BYTES,
+                    "threshold_bytes": warning_threshold,
                     "message": f"Injection size ({size_bytes} bytes) exceeds warning threshold",
                 },
             )
@@ -1421,10 +1433,11 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
         review_attempt = 1
         error_history: list[str] = []
         epic_id = self._extract_epic(story_key)
+        settings = get_settings()
 
-        while review_attempt <= 10:
-            # Use Haiku for review-2+
-            model = "haiku" if review_attempt >= 2 else None
+        while review_attempt <= settings.max_code_review_attempts:
+            # Use Haiku for review after threshold
+            model = "haiku" if review_attempt >= settings.haiku_after_review else None
 
             # Build injection with project_context, discovery, and tech_spec files
             injection = self.build_prompt_system_append(

@@ -9,8 +9,7 @@
 # Outputs:
 #   stdout: CSV format for orchestrator parsing
 #           Format: timestamp,epicID,storyID,command,task-id,status,"message"
-#   Log file: Human-readable format
-#           Format: [timestamp] [epic_id/story_id] [command:task_id] [status] message
+#           Timestamp is Unix epoch seconds (compatible with orchestrator)
 
 # Validate JSON argument
 JSON="$1"
@@ -60,22 +59,8 @@ if [ -n "$MISSING_FIELDS" ]; then
     exit 1
 fi
 
-# Generate timestamp
-TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-
-# Format human-readable log entry: [timestamp] [epic_id/story_id] [command:task_id] [status] message
-LOG_ENTRY="[$TIMESTAMP] [$EPIC_ID/$STORY_ID] [$COMMAND:$TASK_ID] [$STATUS] $MESSAGE"
-
-# Resolve paths relative to script location
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="$SCRIPT_DIR/../dashboard"
-LOG_FILE="$LOG_DIR/sprint.log"
-
-# Ensure log directory exists
-mkdir -p "$LOG_DIR"
-
-# Append human-readable log entry to file (atomic operation for single-line writes)
-echo "$LOG_ENTRY" >> "$LOG_FILE"
+# Generate Unix epoch timestamp (seconds since 1970-01-01)
+TIMESTAMP=$(date +%s)
 
 # Output CSV to stdout for orchestrator parsing
 # Format: timestamp,epicID,storyID,command,task-id,status,"message"

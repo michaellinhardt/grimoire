@@ -34,14 +34,35 @@ sprint-runner/
 │   ├── sprint-code-review/
 │   └── sprint-commit/
 ├── scripts/
-│   └── sprint-log.sh         # Direct subagent logging to sprint.log
+│   └── sprint-log.sh         # Direct subagent logging to SQLite
 └── dashboard/
     ├── README.md             # Dashboard-specific documentation
-    ├── orchestrator.py       # v3 with prompt injection
-    ├── server.py             # WebSocket server + HTTP API
-    ├── db.py                 # SQLite state management
-    ├── dashboard.html        # Real-time monitoring UI
-    └── test_*.py             # Test suites
+    ├── sprint-log.sh         # Uses date +%s (Unix epoch)
+    ├── server/
+    │   ├── __init__.py       # Package exports
+    │   ├── shared.py         # Path constants, find_project_root()
+    │   ├── settings.py       # 9 configurable settings + validation
+    │   ├── server.py         # aiohttp HTTP/WebSocket server
+    │   ├── orchestrator.py   # v3 with prompt injection
+    │   ├── db.py             # SQLite state management
+    │   ├── requirements.txt  # Python dependencies
+    │   ├── sprint-runner.db  # SQLite database (auto-created)
+    │   └── test_*.py         # Test suites
+    └── frontend/
+        ├── index.html        # Main dashboard page
+        ├── css/
+        │   └── styles.css    # All CSS
+        ├── js/
+        │   ├── utils.js      # Pure utility functions
+        │   ├── websocket.js  # WebSocket connection
+        │   ├── sidebar.js    # Batch history sidebar
+        │   ├── controls.js   # Start/stop controls
+        │   ├── batch.js      # Batch display
+        │   ├── stories.js    # Story cards
+        │   ├── operations.js # Active operations
+        │   ├── settings.js   # Settings page (API-backed)
+        │   └── main.js       # Main entry, state management
+        └── assets/           # Static assets
 ```
 
 ## v3 Key Concepts
@@ -94,7 +115,7 @@ claude --command sprint-create-story --prompt-system-append "..."
 
 ### sprint-log.sh - Subagent Logging
 
-Direct logging script for subagents to log structured events:
+Direct logging script for subagents to log structured events to SQLite:
 
 ```bash
 sprint-log.sh '{"epic_id":"2a","story_id":"2a-1","command":"create-story","task_id":"setup","status":"start","message":"Initializing"}'
@@ -103,10 +124,7 @@ sprint-log.sh '{"epic_id":"2a","story_id":"2a-1","command":"create-story","task_
 **Required fields:** `epic_id`, `story_id`, `command`, `task_id`, `status`
 **Optional fields:** `message`, `metrics`, `attempt`
 
-Logs are written to `dashboard/sprint.log` with format:
-```
-[timestamp] [epic_id/story_id] [command:task_id] [status] message
-```
+Events are written directly to the SQLite database (no intermediate log file).
 
 ## Key Components
 
@@ -146,12 +164,19 @@ The orchestrator invokes these via Claude CLI with `--command` flag and injects 
 
 ### 4. `dashboard/` - Automated Orchestrator
 
-Python implementation that:
+The dashboard is split into `server/` (Python backend) and `frontend/` (HTML/CSS/JS):
+
+**Server** (`server/` package):
 - Builds prompt system append content via `build_prompt_system_append()`
 - Spawns Claude CLI subagents with injected context
 - Tracks state in SQLite database
 - Provides real-time WebSocket updates
-- Offers web-based control dashboard
+- Exposes Settings API with 9 configurable parameters
+
+**Frontend** (`frontend/`):
+- Modular JavaScript architecture (9 modules)
+- Settings tab for runtime configuration
+- Real-time WebSocket-based updates
 
 See `dashboard/README.md` for detailed usage.
 
@@ -222,9 +247,13 @@ See `dashboard/README.md` for detailed usage.
 3. Update `orchestrator.py` to invoke the new command
 
 ### To change logging/events:
-1. Edit `dashboard/db.py` for database schema
-2. Edit `dashboard/server.py` for WebSocket events
-3. Edit `dashboard/dashboard.html` for UI display
+1. Edit `dashboard/server/db.py` for database schema
+2. Edit `dashboard/server/server.py` for WebSocket events
+3. Edit `dashboard/frontend/js/*.js` for UI display
+
+### To change settings:
+1. Edit `dashboard/server/settings.py` to add/modify settings
+2. Edit `dashboard/frontend/js/settings.js` for UI controls
 
 ## Running the Orchestrator
 
@@ -232,8 +261,8 @@ See `dashboard/README.md` for detailed usage.
 
 ```bash
 cd dashboard
-pip install -r requirements.txt
-python server.py
+pip install -r server/requirements.txt
+python -m server.server
 ```
 
 Open `http://localhost:8080` and use the Sprint Run tab.
@@ -305,8 +334,7 @@ v3 uses consistent prefixes for all generated files:
 | File | Location | Purpose |
 |------|----------|---------|
 | `sprint-status.yaml` | `_bmad-output/implementation-artifacts/` | Story status tracking |
-| `sprint.log` | `dashboard/` | v3 subagent event log |
-| `sprint-runner.db` | `dashboard/` | SQLite state database |
+| `sprint-runner.db` | `dashboard/server/` | SQLite state database |
 | `sprint-*.md` | `_bmad-output/implementation-artifacts/` | Generated story/discovery files |
 | `sprint-tech-spec-*.md` | `_bmad-output/implementation-artifacts/` | Generated tech specs |
 | `sprint-project-context.md` | `_bmad-output/planning-artifacts/` | Frozen project context |
@@ -329,12 +357,12 @@ v3 uses consistent prefixes for all generated files:
 
 ```bash
 cd dashboard
-python -m pytest test_*.py -v
+python -m pytest server/test_*.py -v
 ```
 
-232 tests covering:
-- Database operations (66 tests)
-- Orchestrator logic (68 tests)
-- Server/WebSocket (50 tests)
-- Integration (24 tests)
-- Functional parity (24 tests)
+Test suites:
+- `test_db.py` - Database operations
+- `test_orchestrator.py` - Orchestrator logic
+- `test_server.py` - Server/WebSocket
+- `test_integration.py` - Integration tests
+- `test_parity.py` - Functional parity tests

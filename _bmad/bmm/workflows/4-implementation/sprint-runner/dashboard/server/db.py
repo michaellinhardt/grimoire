@@ -19,8 +19,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional, Any, Generator, List
 
-# Database location - same directory as this file
-DB_PATH = Path(__file__).parent / 'sprint-runner.db'
+from .shared import DB_PATH
 
 # =============================================================================
 # Field Whitelists for SQL Injection Prevention
