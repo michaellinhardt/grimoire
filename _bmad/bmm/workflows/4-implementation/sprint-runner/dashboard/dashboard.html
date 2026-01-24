@@ -30,9 +30,8 @@
             padding: 20px;
         }
 
-        /* Container */
+        /* Container - Full width layout (Story 5-SR-7) */
         .container {
-            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -1713,6 +1712,166 @@
             lastDataHash: null
         };
 
+        // ============================================================
+        // UI State Persistence (Story 5-SR-7)
+        // ============================================================
+        const UI_STATE_KEYS = {
+            ACTIVE_TAB: 'dashboard-active-tab',           // existing
+            TIMELINE_WIDTH: 'timeline-label-width',       // existing
+            EXPANDED_EPICS: 'dashboard-expanded-epics',   // new: ['epic-1', 'epic-2']
+            FILTERS: 'dashboard-filters',                 // new: {epic: 'all', status: 'all'}
+            CHECKBOXES: 'dashboard-checkboxes',           // new: (reserved for future checkboxes)
+            BATCH_SIZE: 'dashboard-batch-size',           // new: number or 'all'
+            SORT_PREFS: 'dashboard-sort-prefs',           // new: {column: 'story', dir: 'asc'}
+            SCROLL_POSITIONS: 'dashboard-scroll-positions', // new: {tableContainer: 0, activityLog: 0}
+            EXPANDED_ACTIVITIES: 'dashboard-expanded-activities', // new: activity indices to keep expanded
+            TIMELINE_EXPANDED_STORIES: 'dashboard-timeline-expanded-stories', // new: timeline story rows
+            TIMELINE_HIDDEN_STORIES: 'dashboard-timeline-hidden-stories' // new: hidden stories
+        };
+
+        // Save all UI state to localStorage
+        function saveUIState() {
+            try {
+                // Get expanded epic IDs
+                const expandedEpics = Array.from(document.querySelectorAll('.epic-card.expanded'))
+                    .map(el => el.dataset.epicId)
+                    .filter(Boolean);
+                localStorage.setItem(UI_STATE_KEYS.EXPANDED_EPICS, JSON.stringify(expandedEpics));
+
+                // Get filter values
+                const epicFilter = document.getElementById('epicFilter')?.value || 'all';
+                const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+                localStorage.setItem(UI_STATE_KEYS.FILTERS, JSON.stringify({ epic: epicFilter, status: statusFilter }));
+
+                // Get batch size (if exists)
+                const batchSizeEl = document.getElementById('batchSize');
+                if (batchSizeEl) {
+                    localStorage.setItem(UI_STATE_KEYS.BATCH_SIZE, batchSizeEl.value);
+                }
+
+                // Get scroll positions
+                const scrollPositions = {};
+                const tableContainer = document.querySelector('.table-container');
+                if (tableContainer) scrollPositions.tableContainer = tableContainer.scrollTop;
+                const activityLog = document.getElementById('activityLog');
+                if (activityLog) scrollPositions.activityLog = activityLog.scrollTop;
+                const timelineScroll = document.getElementById('timelineScrollContainer');
+                if (timelineScroll) scrollPositions.timelineScroll = timelineScroll.scrollLeft;
+                localStorage.setItem(UI_STATE_KEYS.SCROLL_POSITIONS, JSON.stringify(scrollPositions));
+
+                // Get expanded activity items (collapsed is default, track non-collapsed)
+                const expandedActivities = Array.from(document.querySelectorAll('.activity-item:not(.collapsed)'))
+                    .map((el, idx) => idx)
+                    .filter(idx => idx > 0); // First item is expanded by default
+                localStorage.setItem(UI_STATE_KEYS.EXPANDED_ACTIVITIES, JSON.stringify(expandedActivities));
+
+                // Save timeline expanded stories
+                localStorage.setItem(UI_STATE_KEYS.TIMELINE_EXPANDED_STORIES,
+                    JSON.stringify(Array.from(timelineState.expandedStoryIds)));
+
+                // Save timeline hidden stories
+                localStorage.setItem(UI_STATE_KEYS.TIMELINE_HIDDEN_STORIES,
+                    JSON.stringify(Array.from(timelineState.hiddenStories)));
+            } catch (e) {
+                console.warn('Failed to save UI state:', e);
+            }
+        }
+
+        // Restore UI state from localStorage (call before initial render)
+        function restoreUIState() {
+            try {
+                // Restore filters
+                const filtersJson = localStorage.getItem(UI_STATE_KEYS.FILTERS);
+                if (filtersJson) {
+                    const filters = JSON.parse(filtersJson);
+                    const epicFilter = document.getElementById('epicFilter');
+                    const statusFilter = document.getElementById('statusFilter');
+                    if (epicFilter && filters.epic) epicFilter.value = filters.epic;
+                    if (statusFilter && filters.status) statusFilter.value = filters.status;
+                }
+
+                // Restore batch size
+                const batchSize = localStorage.getItem(UI_STATE_KEYS.BATCH_SIZE);
+                if (batchSize) {
+                    const batchSizeEl = document.getElementById('batchSize');
+                    if (batchSizeEl) batchSizeEl.value = batchSize;
+                }
+
+                // Restore timeline expanded stories
+                const timelineExpandedJson = localStorage.getItem(UI_STATE_KEYS.TIMELINE_EXPANDED_STORIES);
+                if (timelineExpandedJson) {
+                    const expanded = JSON.parse(timelineExpandedJson);
+                    timelineState.expandedStoryIds = new Set(expanded);
+                }
+
+                // Restore timeline hidden stories
+                const timelineHiddenJson = localStorage.getItem(UI_STATE_KEYS.TIMELINE_HIDDEN_STORIES);
+                if (timelineHiddenJson) {
+                    const hidden = JSON.parse(timelineHiddenJson);
+                    timelineState.hiddenStories = new Set(hidden);
+                }
+            } catch (e) {
+                console.warn('Failed to restore UI state:', e);
+            }
+        }
+
+        // Restore scroll positions (call after render)
+        function restoreScrollPositions() {
+            try {
+                const scrollJson = localStorage.getItem(UI_STATE_KEYS.SCROLL_POSITIONS);
+                if (scrollJson) {
+                    const positions = JSON.parse(scrollJson);
+                    const tableContainer = document.querySelector('.table-container');
+                    if (tableContainer && positions.tableContainer) tableContainer.scrollTop = positions.tableContainer;
+                    const activityLog = document.getElementById('activityLog');
+                    if (activityLog && positions.activityLog) activityLog.scrollTop = positions.activityLog;
+                    const timelineScroll = document.getElementById('timelineScrollContainer');
+                    if (timelineScroll && positions.timelineScroll) timelineScroll.scrollLeft = positions.timelineScroll;
+                }
+            } catch (e) {
+                console.warn('Failed to restore scroll positions:', e);
+            }
+        }
+
+        // Restore expanded epics (call after renderEpicBoard)
+        function restoreExpandedEpics() {
+            try {
+                const expandedJson = localStorage.getItem(UI_STATE_KEYS.EXPANDED_EPICS);
+                if (expandedJson) {
+                    const expandedIds = JSON.parse(expandedJson);
+                    expandedIds.forEach(epicId => {
+                        const card = document.querySelector(`.epic-card[data-epic-id="${CSS.escape(epicId)}"]`);
+                        if (card && !card.classList.contains('expanded')) {
+                            toggleEpicCard(epicId);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Failed to restore expanded epics:', e);
+            }
+        }
+
+        // Restore expanded activities (call after renderActivityLog)
+        function restoreExpandedActivities() {
+            try {
+                const expandedJson = localStorage.getItem(UI_STATE_KEYS.EXPANDED_ACTIVITIES);
+                if (expandedJson) {
+                    const expandedIndices = JSON.parse(expandedJson);
+                    const items = document.querySelectorAll('.activity-item');
+                    items.forEach((item, idx) => {
+                        if (idx === 0) {
+                            // First item should be expanded by default
+                            item.classList.remove('collapsed');
+                        } else if (expandedIndices.includes(idx)) {
+                            item.classList.remove('collapsed');
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Failed to restore expanded activities:', e);
+            }
+        }
+
         // Simple string hash function for change detection
         function hashString(str) {
             let hash = 0;
@@ -1754,6 +1913,45 @@
         function normalizeStatusForClass(status) {
             if (!status) return 'backlog';
             return String(status).toLowerCase().trim().replace(/_/g, '-');
+        }
+
+        // ============================================================
+        // Incremental DOM Update Helpers (Story 5-SR-7)
+        // ============================================================
+
+        // Update element content only if changed (prevents flicker)
+        function updateElement(selector, newContent) {
+            const el = typeof selector === 'string' ? document.querySelector(selector) : selector;
+            if (!el) return false;
+            if (el.innerHTML !== newContent) {
+                el.innerHTML = newContent;
+                return true;
+            }
+            return false;
+        }
+
+        // Update text content only if changed
+        function updateTextContent(selector, newText) {
+            const el = typeof selector === 'string' ? document.querySelector(selector) : selector;
+            if (!el) return false;
+            if (el.textContent !== newText) {
+                el.textContent = newText;
+                return true;
+            }
+            return false;
+        }
+
+        // Save scroll position before updates
+        function saveScrollPosition(el) {
+            if (!el) return { top: 0, left: 0 };
+            return { top: el.scrollTop, left: el.scrollLeft };
+        }
+
+        // Restore scroll position after updates
+        function restoreScrollPosition(el, pos) {
+            if (!el || !pos) return;
+            el.scrollTop = pos.top;
+            el.scrollLeft = pos.left;
         }
 
         // ============================================================

@@ -1,6 +1,24 @@
 #!/bin/bash
 set -e  # Exit on error (MEDIUM-1 Resolution)
 
+# =============================================================================
+# DEPRECATED: Story 5-SR-4 (2026-01-24)
+# =============================================================================
+# This shell script has been replaced by Python implementation in:
+#   _bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/orchestrator.py
+#
+# The Python implementation provides:
+#   - check_project_context_status() -> "missing" | "expired" | "fresh"
+#   - create_project_context() -> blocking creation when missing
+#   - refresh_project_context_background() -> non-blocking refresh when expired
+#
+# Key behavioral difference: This script DELETES the file when expired.
+# The Python implementation does NOT delete - it starts a background refresh
+# while the existing (stale) file remains available for subagents.
+#
+# This script is kept for backwards compatibility but should not be used.
+# =============================================================================
+
 # project-context-should-refresh.sh - Check if project context needs regeneration
 # Returns: exit 0 (TRUE/needs refresh), exit 1 (FALSE/no refresh needed)
 # If refresh needed, deletes existing file to force regeneration

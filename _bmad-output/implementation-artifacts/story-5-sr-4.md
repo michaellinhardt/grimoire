@@ -1,6 +1,6 @@
 # Story 5-SR.4: Project Context Refresh Integration
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -20,45 +20,45 @@ so that **agents always have current project context without manual intervention
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Implement project context freshness check in Python (AC: 3)
-  - [ ] 1.1 Create `check_project_context_status()` function in orchestrator.py
-  - [ ] 1.2 Check if file exists at `_bmad-output/planning-artifacts/project-context.md`
-  - [ ] 1.3 If exists, check file modification time using `os.path.getmtime()`
-  - [ ] 1.4 Compare against 24-hour (86400 seconds) threshold
-  - [ ] 1.5 Return status: "missing", "expired", or "fresh"
+- [x] Task 1: Implement project context freshness check in Python (AC: 3)
+  - [x] 1.1 Create `check_project_context_status()` function in orchestrator.py
+  - [x] 1.2 Check if file exists at `_bmad-output/planning-artifacts/project-context.md`
+  - [x] 1.3 If exists, check file modification time using `os.path.getmtime()`
+  - [x] 1.4 Compare against 24-hour (86400 seconds) threshold
+  - [x] 1.5 Return status: "missing", "expired", or "fresh"
 
-- [ ] Task 2: Implement blocking context creation flow (AC: 1)
-  - [ ] 2.1 Add `create_project_context()` async function
-  - [ ] 2.2 Spawn Claude CLI: `claude -p --output-format stream-json`
-  - [ ] 2.3 Pass generate-project-context prompt via stdin
-  - [ ] 2.4 Parse NDJSON events, emit to WebSocket as "context:create" events
-  - [ ] 2.5 Block (await) until subprocess completes
-  - [ ] 2.6 Log "context:create" event to database
+- [x] Task 2: Implement blocking context creation flow (AC: 1)
+  - [x] 2.1 Add `create_project_context()` async function
+  - [x] 2.2 Spawn Claude CLI: `claude -p --output-format stream-json`
+  - [x] 2.3 Pass generate-project-context prompt via stdin
+  - [x] 2.4 Parse NDJSON events, emit to WebSocket as "context:create" events
+  - [x] 2.5 Block (await) until subprocess completes
+  - [x] 2.6 Log "context:create" event to database
 
-- [ ] Task 3: Implement background context refresh flow (AC: 2, 4)
-  - [ ] 3.1 Add `refresh_project_context_background()` async function
-  - [ ] 3.2 Create record in `background_tasks` table with status "running"
-  - [ ] 3.3 Spawn subprocess (same as Task 2) with asyncio but DO NOT await
-  - [ ] 3.4 Log "context:refresh" event immediately
-  - [ ] 3.5 Continue main loop without waiting
-  - [ ] 3.6 Create callback/task that updates `background_tasks.completed_at` on finish
-  - [ ] 3.7 Emit "context:complete" WebSocket event when done
+- [x] Task 3: Implement background context refresh flow (AC: 2, 4)
+  - [x] 3.1 Add `refresh_project_context_background()` async function
+  - [x] 3.2 Create record in `background_tasks` table with status "running"
+  - [x] 3.3 Spawn subprocess (same as Task 2) with asyncio but DO NOT await
+  - [x] 3.4 Log "context:refresh" event immediately
+  - [x] 3.5 Continue main loop without waiting
+  - [x] 3.6 Create callback/task that updates `background_tasks.completed_at` on finish
+  - [x] 3.7 Emit "context:complete" WebSocket event when done
 
-- [ ] Task 4: Integrate into orchestrator main loop (AC: 1, 2)
-  - [ ] 4.1 Call `check_project_context_status()` at start of each batch (Step 0a)
-  - [ ] 4.2 If "missing": call `create_project_context()` and WAIT
-  - [ ] 4.3 If "expired": call `refresh_project_context_background()` and CONTINUE
-  - [ ] 4.4 If "fresh": log "Project context is fresh, skipping regeneration"
+- [x] Task 4: Integrate into orchestrator main loop (AC: 1, 2)
+  - [x] 4.1 Call `check_project_context_status()` at start of each batch (Step 0a)
+  - [x] 4.2 If "missing": call `create_project_context()` and WAIT
+  - [x] 4.3 If "expired": call `refresh_project_context_background()` and CONTINUE
+  - [x] 4.4 If "fresh": log "Project context is fresh, skipping regeneration"
 
-- [ ] Task 5: Remove shell script dependency (AC: 3)
-  - [ ] 5.1 Remove all calls to `project-context-should-refresh.sh` from orchestrator
-  - [ ] 5.2 Update instructions.md Step 0a to reflect Python implementation
-  - [ ] 5.3 Mark shell script as deprecated (add comment, do not delete)
+- [x] Task 5: Remove shell script dependency (AC: 3)
+  - [x] 5.1 Remove all calls to `project-context-should-refresh.sh` from orchestrator
+  - [x] 5.2 Update instructions.md Step 0a to reflect Python implementation
+  - [x] 5.3 Mark shell script as deprecated (add comment, do not delete)
 
-- [ ] Task 6: Add WebSocket event types and database logging (AC: 1, 2, 4)
-  - [ ] 6.1 Add event types to WebSocket emit: "context:create", "context:refresh", "context:complete"
-  - [ ] 6.2 Add event logging to `events` table for all context operations
-  - [ ] 6.3 Ensure background task tracking in `background_tasks` table
+- [x] Task 6: Add WebSocket event types and database logging (AC: 1, 2, 4)
+  - [x] 6.1 Add event types to WebSocket emit: "context:create", "context:refresh", "context:complete"
+  - [x] 6.2 Add event logging to `events` table for all context operations
+  - [x] 6.3 Ensure background task tracking in `background_tasks` table
 
 ## Dev Notes
 
@@ -276,9 +276,32 @@ CREATE TABLE background_tasks (
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.5
 
 ### Debug Log References
+N/A - No debug issues encountered during implementation.
 
 ### Completion Notes List
+- Implemented `check_project_context_status()` method in Orchestrator class that returns "missing", "expired", or "fresh"
+- Implemented `create_project_context()` async method for blocking context creation when file is missing
+- Implemented `refresh_project_context_background()` async method for non-blocking background refresh when file is expired
+- Implemented `_run_background_context_refresh()` helper for actual background task execution with completion tracking
+- Updated `check_project_context()` to use the new status-based flow instead of direct file checks
+- Added WebSocket event types: "context:create", "context:refresh", "context:complete", "context:fresh", "context:error"
+- Added database event logging for all context operations (create, refresh, complete)
+- Added background_tasks table tracking for context refresh operations
+- Updated instructions.md Step 0a to document Python implementation instead of shell script
+- Added deprecation notice to project-context-should-refresh.sh shell script
+- Key behavioral improvement: Python implementation does NOT delete expired file (unlike shell script), allowing stale context to remain available during background refresh
 
 ### File List
+- _bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/orchestrator.py (modified)
+- _bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/test_orchestrator.py (modified - added 15 new tests)
+- _bmad/bmm/workflows/4-implementation/sprint-runner/instructions.md (modified - Step 0a and Execution Summary)
+- _bmad/scripts/project-context-should-refresh.sh (modified - added deprecation notice)
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-01-24 | Implemented project context refresh integration with Python replacing shell script. Added blocking creation for missing files, non-blocking background refresh for expired files. All 64 orchestrator tests pass. | Claude Opus 4.5 |

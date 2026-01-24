@@ -1,6 +1,6 @@
 # Story 5-SR-5: WebSocket Real-Time Events
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -31,58 +31,58 @@ so that **I can monitor sprint progress without polling or page refresh**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Migrate server.py from http.server to aiohttp (AC: 1)
-  - [ ] 1.1 Create new server.py based on aiohttp with async handlers
-  - [ ] 1.2 Implement HTTP route for `/` serving dashboard.html
-  - [ ] 1.3 Implement HTTP route for `/story-descriptions.json` (dynamic)
-  - [ ] 1.4 Implement HTTP routes for whitelisted data files (sprint-status.yaml, orchestrator.md)
-  - [ ] 1.5 Add WebSocket route at `/ws` using `aiohttp.web.WebSocketResponse`
-  - [ ] 1.6 Configure server to run HTTP + WebSocket on same port (default 8080)
+- [x] Task 1: Migrate server.py from http.server to aiohttp (AC: 1)
+  - [x] 1.1 Create new server.py based on aiohttp with async handlers
+  - [x] 1.2 Implement HTTP route for `/` serving dashboard.html
+  - [x] 1.3 Implement HTTP route for `/story-descriptions.json` (dynamic)
+  - [x] 1.4 Implement HTTP routes for whitelisted data files (sprint-status.yaml, orchestrator.md)
+  - [x] 1.5 Add WebSocket route at `/ws` using `aiohttp.web.WebSocketResponse`
+  - [x] 1.6 Configure server to run HTTP + WebSocket on same port (default 8080)
 
-- [ ] Task 2: Implement WebSocket connection management (AC: 2, 5)
-  - [ ] 2.1 Create global `connected_clients: set[web.WebSocketResponse]` to track connections
-  - [ ] 2.2 Implement connection handler that adds to set on connect
-  - [ ] 2.3 Implement disconnect detection with removal from set
-  - [ ] 2.4 Add try/except wrapper around all WebSocket sends to handle closed connections
-  - [ ] 2.5 Clean up stale connections on any send failure
+- [x] Task 2: Implement WebSocket connection management (AC: 2, 5)
+  - [x] 2.1 Create global `connected_clients: set[web.WebSocketResponse]` to track connections
+  - [x] 2.2 Implement connection handler that adds to set on connect
+  - [x] 2.3 Implement disconnect detection with removal from set
+  - [x] 2.4 Add try/except wrapper around all WebSocket sends to handle closed connections
+  - [x] 2.5 Clean up stale connections on any send failure
 
-- [ ] Task 3: Implement initial state transmission on connect (AC: 2)
-  - [ ] 3.1 On new connection, query db.get_active_batch() for current batch status
-  - [ ] 3.2 Query db.get_events() for recent events (last 50)
-  - [ ] 3.3 Send initial state message: `{ type: "init", payload: { batch, events } }`
-  - [ ] 3.4 Handle case when no active batch exists (send null batch)
+- [x] Task 3: Implement initial state transmission on connect (AC: 2)
+  - [x] 3.1 On new connection, query db.get_active_batch() for current batch status
+  - [x] 3.2 Query db.get_events() for recent events (last 50)
+  - [x] 3.3 Send initial state message: `{ type: "init", payload: { batch, events } }`
+  - [x] 3.4 Handle case when no active batch exists (send null batch)
 
-- [ ] Task 4: Implement broadcast function for orchestrator integration (AC: 3, 4)
-  - [ ] 4.1 Create `async def broadcast(event: dict)` function
-  - [ ] 4.2 Serialize event to JSON string once
-  - [ ] 4.3 Iterate over connected_clients set and send to each
-  - [ ] 4.4 Use asyncio.gather for parallel send to all clients
-  - [ ] 4.5 Remove failed connections from set during broadcast
-  - [ ] 4.6 Add timestamp to each event before broadcast
+- [x] Task 4: Implement broadcast function for orchestrator integration (AC: 3, 4)
+  - [x] 4.1 Create `async def broadcast(event: dict)` function
+  - [x] 4.2 Serialize event to JSON string once
+  - [x] 4.3 Iterate over connected_clients set and send to each
+  - [x] 4.4 Use asyncio.gather for parallel send to all clients
+  - [x] 4.5 Remove failed connections from set during broadcast
+  - [x] 4.6 Add timestamp to each event before broadcast
 
-- [ ] Task 5: Define event type constants and validation (AC: 3)
-  - [ ] 5.1 Create EVENT_TYPES enum/constants for all event types
-  - [ ] 5.2 Create payload validation schemas for each event type
-  - [ ] 5.3 Implement `emit_event(event_type: str, payload: dict)` helper
-  - [ ] 5.4 Validate payload matches expected schema before broadcast
+- [x] Task 5: Define event type constants and validation (AC: 3)
+  - [x] 5.1 Create EVENT_TYPES enum/constants for all event types
+  - [x] 5.2 Create payload validation schemas for each event type
+  - [x] 5.3 Implement `emit_event(event_type: str, payload: dict)` helper
+  - [x] 5.4 Validate payload matches expected schema before broadcast
 
-- [ ] Task 6: Integrate with orchestrator.py (AC: 3, 4)
-  - [ ] 6.1 Export broadcast function for import by orchestrator
-  - [ ] 6.2 Add emit calls in orchestrator for batch:start/end events
-  - [ ] 6.3 Add emit calls for cycle:start/end events
-  - [ ] 6.4 Add emit calls for command:start/progress/end events
-  - [ ] 6.5 Add emit calls for story:status transitions
-  - [ ] 6.6 Add emit calls for error events
+- [x] Task 6: Integrate with orchestrator.py (AC: 3, 4)
+  - [x] 6.1 Export broadcast function for import by orchestrator
+  - [x] 6.2 Add emit calls in orchestrator for batch:start/end events
+  - [x] 6.3 Add emit calls for cycle:start/end events
+  - [x] 6.4 Add emit calls for command:start/progress/end events
+  - [x] 6.5 Add emit calls for story:status transitions
+  - [x] 6.6 Add emit calls for error events
 
-- [ ] Task 7: Add WebSocket heartbeat/ping-pong (AC: 5)
-  - [ ] 7.1 Send ping frame every 30 seconds to detect dead connections
-  - [ ] 7.2 Remove connection if pong not received within 10 seconds
-  - [ ] 7.3 Handle client-initiated ping with automatic pong response
+- [x] Task 7: Add WebSocket heartbeat/ping-pong (AC: 5)
+  - [x] 7.1 Send ping frame every 30 seconds to detect dead connections
+  - [x] 7.2 Remove connection if pong not received within 10 seconds
+  - [x] 7.3 Handle client-initiated ping with automatic pong response
 
-- [ ] Task 8: Add requirements and update documentation
-  - [ ] 8.1 Update requirements.txt with aiohttp version
-  - [ ] 8.2 Add websockets library if needed for any utilities
-  - [ ] 8.3 Update server startup documentation
+- [x] Task 8: Add requirements and update documentation
+  - [x] 8.1 Update requirements.txt with aiohttp version
+  - [x] 8.2 Add websockets library if needed for any utilities
+  - [x] 8.3 Update server startup documentation
 
 ## Dev Notes
 
@@ -485,9 +485,46 @@ This is a standard aiohttp WebSocket implementation following well-established p
 ## Dev Agent Record
 
 ### Agent Model Used
+- Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
+- None (clean implementation)
 
 ### Completion Notes List
 
+1. **Task 1 - aiohttp Migration**: Completely rewrote server.py from http.server to aiohttp. Preserved all existing features (story-descriptions.json dynamic endpoint, whitelisted data files, path traversal security, CORS headers). Added WebSocket endpoint at /ws.
+
+2. **Task 2 - Connection Management**: Implemented `connected_clients` global set with thread-safe asyncio Lock for modifications. Added `add_client()` and `remove_client()` async functions. Connection handler properly adds on connect and removes in finally block on disconnect.
+
+3. **Task 3 - Initial State**: On WebSocket connect, sends `{ type: "init", payload: { batch, events } }` message. Queries db.get_active_batch() and db.get_events(limit=50). Handles ImportError when db module not available and returns null defaults.
+
+4. **Task 4 - Broadcast Function**: Created `async def broadcast(event: dict)` that serializes once, sends to all clients in parallel via asyncio.gather, and removes failed connections. Adds timestamp if not present.
+
+5. **Task 5 - Event Types**: Created EventType enum with all 9 required event types plus 3 context events. Created EVENT_PAYLOAD_SCHEMAS dict for validation. Implemented `emit_event()` helper that validates payloads and schedules broadcast task.
+
+6. **Task 6 - Orchestrator Integration**: Updated orchestrator.py to import broadcast/emit_event from server. The orchestrator already had emit_event calls in place - they now route to the WebSocket broadcast function.
+
+7. **Task 7 - Heartbeat**: Configured WebSocketResponse with heartbeat=30.0 for automatic ping/pong. Added heartbeat_task() that runs every 30 seconds to clean up closed connections. Client-initiated ping messages receive pong response.
+
+8. **Task 8 - Documentation**: Updated requirements.txt to document aiohttp as core server framework. Existing aiohttp>=3.9.0 and websockets>=12.0 entries now have comments explaining their purpose.
+
 ### File List
+
+**Modified:**
+- `_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py` - Complete rewrite from http.server to aiohttp with WebSocket support
+- `_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/orchestrator.py` - Updated to import broadcast from server module
+- `_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/requirements.txt` - Updated comments for aiohttp/websockets
+
+**Created:**
+- `_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/test_server.py` - 42 unit tests for WebSocket functionality
+
+### Change Log
+
+- 2026-01-24: Implemented Story 5-SR-5 - WebSocket Real-Time Events
+  - Migrated server from http.server to aiohttp with async handlers
+  - Added WebSocket endpoint at /ws with connection tracking
+  - Implemented broadcast function for parallel event delivery
+  - Added EventType enum and payload validation
+  - Integrated with orchestrator.py for real-time event emission
+  - Added heartbeat/ping-pong for connection health
+  - All 42 tests passing, 65 existing db tests still passing

@@ -153,11 +153,14 @@ development_status:
 <step n="0" goal="Initialize: project context and batch size">
 
   <substep n="0a" goal="Check and refresh project context (C8)">
-    <action>Run: _bmad/scripts/project-context-should-refresh.sh</action>
+    <action>Call: orchestrator.check_project_context_status() - returns "missing", "expired", or "fresh"</action>
+    <!-- NOTE: Python implementation replaces shell script project-context-should-refresh.sh (Story 5-SR-4) -->
 
-    <check if="script returns exit 0 (TRUE)">
-      <action>Log: "Project context needs refresh"</action>
-      <action>Spawn subagent with Task tool</action>
+    <check if="status == 'missing'">
+      <action>Log: "Project context missing, creating (blocking)"</action>
+      <action>Emit WebSocket event: context:create with status=starting</action>
+      <action>Log event to database: task_id=context, status=create</action>
+      <action>Spawn subagent with generate-project-context workflow</action>
       <subagent-prompt>
       AUTONOMOUS MODE - Generate fresh project context.
 
@@ -168,11 +171,23 @@ development_status:
 
       Output the file to: {planning_artifacts}/project-context.md
       </subagent-prompt>
-      <action>Wait for completion</action>
-      <action>Log: "Project context generated"</action>
+      <action>WAIT for completion (blocking)</action>
+      <action>Emit WebSocket event: context:create with status=complete</action>
     </check>
 
-    <check if="script returns exit 1 (FALSE)">
+    <check if="status == 'expired'">
+      <action>Log: "Project context expired, refreshing in background (non-blocking)"</action>
+      <action>Create record in background_tasks table with task_type=project-context-refresh</action>
+      <action>Log event to database: task_id=context, status=refresh</action>
+      <action>Emit WebSocket event: context:refresh with status=started</action>
+      <action>Spawn background task (asyncio.create_task) for refresh</action>
+      <action>CONTINUE immediately without waiting</action>
+      <action>Background task updates background_tasks.completed_at on finish</action>
+      <action>Background task emits context:complete event when done</action>
+    </check>
+
+    <check if="status == 'fresh'">
+      <action>Emit WebSocket event: context:fresh</action>
       <action>Log: "Project context is fresh, skipping regeneration"</action>
     </check>
   </substep>
@@ -598,9 +613,10 @@ Ready for next batch.
 
 ```
 START:
-  0a. Run project-context-should-refresh.sh
-      - If TRUE: spawn subagent to generate fresh project context
-      - If FALSE: skip (context is fresh)
+  0a. Check project context status (Python: orchestrator.check_project_context_status())
+      - If MISSING: spawn subagent to create project context (BLOCKING - wait)
+      - If EXPIRED (>24h): spawn background refresh (NON-BLOCKING - continue immediately)
+      - If FRESH: skip regeneration
 
   0b. Get number of CYCLES from command or use default (2):
       - Number (e.g., "3") -> run 3 cycles then prompt
