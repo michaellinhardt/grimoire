@@ -25,7 +25,7 @@
 
   <step n="1" goal="Setup and validate injected context">
     <action>Log start of setup phase</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"setup","status":"start","message":"Initializing story review"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-story-review","task_id":"setup","status":"start","message":"Initializing story review"}'</bash>
 
     <action>Parse story_keys variable to identify stories to review</action>
     <action>For comma-separated keys (e.g., "2a-1,2a-2"), process each sequentially</action>
@@ -39,19 +39,19 @@
 
     <check if="required story files missing from injection">
       <output>ERROR: Story file not found in injected context</output>
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"setup","status":"end","message":"ERROR: Missing story file in injection"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-story-review","task_id":"setup","status":"end","message":"ERROR: Missing story file in injection"}'</bash>
       <action>Output: [CRITICAL-ISSUES-FOUND: YES]</action>
       <action>HALT</action>
     </check>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"setup","status":"end","message":"Setup complete - files validated"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-story-review","task_id":"setup","status":"end","message":"Setup complete - files validated"}'</bash>
   </step>
 
   <step n="2" goal="Analyze story files for issues">
     <action>For each story in story_keys, perform analysis:</action>
 
     <foreach story_key="in story_keys">
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"analyze","status":"start","message":"Analyzing story {{story_key}}"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-story-review","task_id":"analyze","status":"start","message":"Analyzing story {{story_key}}"}'</bash>
 
       <analyze_criteria>
         <category name="Structure Completeness">
@@ -92,7 +92,7 @@
       <action>Count issues by severity: CRITICAL, HIGH, MEDIUM, LOW</action>
       <action>Document each issue with specific location and description</action>
 
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"analyze","status":"end","message":"Analysis complete (issues:N)"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-story-review","task_id":"analyze","status":"end","message":"Analysis complete (issues:N)"}'</bash>
     </foreach>
   </step>
 
@@ -100,7 +100,7 @@
     <check if="issues found">
       <foreach story_key="in story_keys">
         <check if="story has issues">
-          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"fix","status":"start","message":"Fixing issues in story {{story_key}}"}'</bash>
+          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-story-review","task_id":"fix","status":"start","message":"Fixing issues in story {{story_key}}"}'</bash>
 
           <fix_priority_order>
             <priority level="1">CRITICAL issues - missing required sections, invalid format</priority>
@@ -114,19 +114,19 @@
           <action>Preserve existing valid content - only modify problem areas</action>
           <action>Save updated story file</action>
 
-          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"fix","status":"end","message":"Fixes applied (issues:N)"}'</bash>
+          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-story-review","task_id":"fix","status":"end","message":"Fixes applied (issues:N)"}'</bash>
         </check>
       </foreach>
     </check>
 
     <check if="no issues found">
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"fix","status":"start","message":"No issues to fix"}'</bash>
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"fix","status":"end","message":"Skipped - no issues"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-story-review","task_id":"fix","status":"start","message":"No issues to fix"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-story-review","task_id":"fix","status":"end","message":"Skipped - no issues"}'</bash>
     </check>
   </step>
 
   <step n="4" goal="Validate fixes and output result">
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"validate","status":"start","message":"Validating fixes"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-story-review","task_id":"validate","status":"start","message":"Validating fixes"}'</bash>
 
     <check if="fixes were applied">
       <action>Re-read fixed story files</action>
@@ -147,7 +147,7 @@
       - Story [key]: [summary of findings and fixes]
     </summary_format>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-story-review","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
   </step>
 
   <output_requirement>
@@ -166,7 +166,7 @@
     <command_name>story-review</command_name>
     <task_ids>setup, analyze, fix, validate</task_ids>
     <format>
-      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
+      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-story-review","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
     </format>
   </logging_reference>
 

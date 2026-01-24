@@ -13,21 +13,579 @@
         }
 
         :root {
-            /* Timeline CSS Variables */
+            /* ==============================================
+               CSS Custom Properties from UI/UX Specification
+               Appendix A - Complete CSS Variables
+               ============================================== */
+
+            /* Colors - Base */
+            --color-bg: #f7f6f3;
+            --color-surface: #ffffff;
+            --color-text: #37352f;
+            --color-text-secondary: #787774;
+            --color-text-muted: #9ca3af;
+            --color-border: #e8e7e5;
+            --color-border-hover: #d1d0cd;
+
+            /* Colors - Status */
+            --color-running: #3b82f6;
+            --color-success: #10b981;
+            --color-error: #ef4444;
+            --color-warning: #f59e0b;
+            --color-pending: #9ca3af;
+            --color-in-progress: #60a5fa;
+
+            /* Colors - Commands */
+            --color-cmd-create-story: #3b82f6;
+            --color-cmd-create-story-bg: #dbeafe;
+            --color-cmd-story-review: #f59e0b;
+            --color-cmd-story-review-bg: #fef3c7;
+            --color-cmd-create-tech-spec: #6366f1;
+            --color-cmd-create-tech-spec-bg: #e0e7ff;
+            --color-cmd-tech-spec-review: #8b5cf6;
+            --color-cmd-tech-spec-review-bg: #ede9fe;
+            --color-cmd-dev-story: #22c55e;
+            --color-cmd-dev-story-bg: #dcfce7;
+            --color-cmd-code-review: #a855f7;
+            --color-cmd-code-review-bg: #f3e8ff;
+            --color-cmd-commit: #14b8a6;
+            --color-cmd-commit-bg: #ccfbf1;
+
+            /* Colors - Interactive States */
+            --color-hover-bg: #f7f6f3;
+            --color-active-bg: #e8e7e5;
+            --color-selected-bg: #dbeafe;
+            --color-selected-border: #3b82f6;
+            --color-selected-text: #1e40af;
+            --color-disabled-bg: #f7f6f3;
+            --color-disabled-text: #9ca3af;
+
+            /* Typography - Font Stacks */
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+
+            /* Typography - Font Sizes */
+            --text-xs: 11px;
+            --text-sm: 13px;
+            --text-base: 14px;
+            --text-lg: 16px;
+            --text-xl: 20px;
+            --text-2xl: 24px;
+
+            /* Typography - Line Heights */
+            --leading-xs: 16px;
+            --leading-sm: 18px;
+            --leading-base: 20px;
+            --leading-lg: 24px;
+            --leading-xl: 28px;
+            --leading-2xl: 32px;
+
+            /* Spacing Scale */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
+            --space-8: 32px;
+            --space-10: 40px;
+            --space-12: 48px;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+
+            /* Border Radius */
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --radius-xl: 12px;
+            --radius-full: 9999px;
+
+            /* Animation - Durations */
+            --duration-fast: 150ms;
+            --duration-normal: 300ms;
+            --duration-slow: 500ms;
+            --duration-pulse: 2s;
+            --duration-shimmer: 2s;
+            --duration-flash: 600ms;
+            --duration-shake: 500ms;
+
+            /* Animation - Easing */
+            --easing-default: ease-out;
+            --easing-smooth: ease-in-out;
+            --easing-linear: linear;
+
+            /* Layout */
+            --sidebar-width: 240px;
+            --sidebar-collapsed: 48px;
+            --sidebar-mobile: 200px;
+            --header-height: 56px;
+
+            /* Z-Index Hierarchy */
+            --z-base: 0;
+            --z-elevated: 10;
+            --z-overlay: 100;
+            --z-modal: 1000;
+            --z-toast: 2000;
+
+            /* Legacy Timeline Variables (kept for compatibility) */
             --timeline-label-width: 200px;
             --timeline-block-width: 120px;
             --timeline-row-height: 48px;
             --timeline-command-row-height: 28px;
-            --timeline-story-color: #10b981;
-            --timeline-story-in-progress-color: #fbbf24;
+            --timeline-story-color: var(--color-success);
+            --timeline-story-in-progress-color: var(--color-warning);
+
+            /* Footer height for split panel layout */
+            --footer-height: 32px;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f7f6f3;
-            color: #37352f;
+            font-family: var(--font-sans);
+            background: var(--color-bg);
+            color: var(--color-text);
             line-height: 1.5;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* ==========================================================
+           Split Panel Layout (E2-S2)
+           Section 1.2 from UI/UX Specification
+           ========================================================== */
+
+        .app-layout {
+            display: grid;
+            grid-template-rows: var(--header-height) 1fr var(--footer-height);
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-areas:
+                "header header"
+                "sidebar main"
+                "footer footer";
+            min-height: 100vh;
+            transition: grid-template-columns var(--duration-normal) var(--easing-default);
+        }
+
+        .app-layout.sidebar-collapsed {
+            grid-template-columns: var(--sidebar-collapsed) 1fr;
+        }
+
+        .app-header {
+            grid-area: header;
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 var(--space-6);
+            height: var(--header-height);
+            z-index: var(--z-elevated);
+        }
+
+        .app-header__left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .app-header__title {
+            font-size: var(--text-xl);
+            font-weight: 600;
+            color: var(--color-text);
+            margin: 0;
+        }
+
+        .app-header__controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .app-header__right {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .header-btn {
+            padding: var(--space-2) var(--space-3);
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--color-text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all var(--duration-fast);
+        }
+
+        .header-btn:hover {
+            background: var(--color-hover-bg);
+            border-color: var(--color-border-hover);
+        }
+
+        .header-btn--primary {
+            background: var(--color-success);
+            border-color: var(--color-success);
+            color: white;
+        }
+
+        .header-btn--danger {
+            background: var(--color-error);
+            border-color: var(--color-error);
+            color: white;
+        }
+
+        .header-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .batch-mode-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-1) var(--space-2);
+            background: var(--color-bg);
+            border-radius: var(--radius-md);
+        }
+
+        .batch-mode-controls__label {
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+        }
+
+        .batch-mode-controls__input {
+            width: 60px;
+            padding: var(--space-1) var(--space-2);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-sm);
+            font-family: var(--font-mono);
+        }
+
+        .connection-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            cursor: pointer;
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-md);
+        }
+
+        .connection-indicator:hover {
+            background: var(--color-hover-bg);
+        }
+
+        .connection-indicator__dot {
+            width: 10px;
+            height: 10px;
+            border-radius: var(--radius-full);
+            background: var(--color-pending);
+        }
+
+        .connection-indicator__dot--connected {
+            background: var(--color-success);
+            animation: connection-pulse var(--duration-pulse) var(--easing-smooth) infinite;
+        }
+
+        .connection-indicator__dot--disconnected {
+            background: var(--color-error);
+        }
+
+        .connection-indicator__text {
+            font-size: var(--text-xs);
+            color: var(--color-text-secondary);
+        }
+
+        @keyframes connection-pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { opacity: 0.8; box-shadow: 0 0 8px 2px rgba(16, 185, 129, 0.2); }
+        }
+
+        .batch-sidebar {
+            grid-area: sidebar;
+            background: var(--color-surface);
+            border-right: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: var(--z-elevated);
+        }
+
+        .batch-sidebar__header {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 56px;
+        }
+
+        .batch-sidebar__title {
+            font-size: var(--text-xs);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
+        }
+
+        .batch-sidebar__toggle {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-text-secondary);
+            transition: all var(--duration-fast);
+            flex-shrink: 0;
+        }
+
+        .batch-sidebar__toggle:hover {
+            background: var(--color-hover-bg);
+            border-color: var(--color-border-hover);
+        }
+
+        .batch-sidebar__toggle-icon {
+            transition: transform var(--duration-normal);
+            font-size: var(--text-sm);
+        }
+
+        .app-layout.sidebar-collapsed .batch-sidebar__toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .batch-sidebar__content {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-2);
+        }
+
+        .batch-sidebar__footer {
+            padding: var(--space-3);
+            border-top: 1px solid var(--color-border);
+        }
+
+        .batch-sidebar__load-more {
+            width: 100%;
+            padding: var(--space-2) var(--space-3);
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+        }
+
+        .batch-sidebar__load-more:hover {
+            background: var(--color-hover-bg);
+        }
+
+        .app-layout.sidebar-collapsed .batch-sidebar__title,
+        .app-layout.sidebar-collapsed .batch-sidebar__footer {
+            display: none;
+        }
+
+        .app-layout.sidebar-collapsed .batch-sidebar__header {
+            justify-content: center;
+            padding: var(--space-2);
+        }
+
+        .batch-item {
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-2);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all var(--duration-fast);
+            position: relative;
+        }
+
+        .batch-item:hover {
+            background: var(--color-hover-bg);
+        }
+
+        .batch-item--selected {
+            background: var(--color-selected-bg);
+            border-left: 3px solid var(--color-selected-border);
+        }
+
+        .batch-item--running {
+            border-color: var(--color-warning);
+        }
+
+        .batch-item__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-1);
+        }
+
+        .batch-item__id {
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .batch-item__status {
+            font-size: var(--text-xs);
+            color: var(--color-text-secondary);
+        }
+
+        .batch-item__stats {
+            font-size: var(--text-xs);
+            color: var(--color-text-muted);
+        }
+
+        .app-layout.sidebar-collapsed .batch-item {
+            padding: var(--space-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-layout.sidebar-collapsed .batch-item__header,
+        .app-layout.sidebar-collapsed .batch-item__stats {
+            display: none;
+        }
+
+        .batch-item__status-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-xs);
+        }
+
+        .batch-item__status-icon--running {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--color-warning);
+        }
+
+        .batch-item__status-icon--completed {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--color-success);
+        }
+
+        .batch-item__status-icon--failed {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--color-error);
+        }
+
+        .main-content {
+            grid-area: main;
+            overflow-y: auto;
+            padding: var(--space-5);
+            background: var(--color-bg);
+        }
+
+        .app-footer {
+            grid-area: footer;
+            background: var(--color-surface);
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 var(--space-6);
+            height: var(--footer-height);
+            font-size: var(--text-xs);
+            color: var(--color-text-secondary);
+        }
+
+        .app-footer__left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .app-footer__right {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .app-footer__status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .app-footer__timestamp {
+            font-family: var(--font-mono);
+        }
+
+        .mobile-sidebar-toggle {
+            display: none;
+            padding: var(--space-2);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+        }
+
+        @media (max-width: 1199px) and (min-width: 900px) {
+            .app-layout {
+                grid-template-columns: var(--sidebar-mobile) 1fr;
+            }
+            .app-layout.sidebar-collapsed {
+                grid-template-columns: var(--sidebar-collapsed) 1fr;
+            }
+        }
+
+        @media (max-width: 899px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "main"
+                    "footer";
+            }
+
+            .mobile-sidebar-toggle {
+                display: flex;
+            }
+
+            .batch-sidebar {
+                position: fixed;
+                left: 0;
+                top: var(--header-height);
+                bottom: var(--footer-height);
+                width: var(--sidebar-width);
+                transform: translateX(-100%);
+                z-index: var(--z-overlay);
+                box-shadow: var(--shadow-lg);
+                transition: transform var(--duration-normal) var(--easing-default);
+            }
+
+            .app-layout.sidebar-open .batch-sidebar {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: calc(var(--z-overlay) - 1);
+            }
+
+            .app-layout.sidebar-open .sidebar-overlay {
+                display: block;
+            }
         }
 
         /* Container - Full width layout (Story 5-SR-7) */
@@ -37,11 +595,11 @@
 
         /* Header - Task 1: Modernized compact header */
         header {
-            background: white;
-            border-radius: 8px;
-            padding: 16px 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4) var(--space-6);
+            margin-bottom: var(--space-6);
+            box-shadow: var(--shadow-sm);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -50,28 +608,28 @@
         h1 {
             font-size: 22px;
             font-weight: 600;
-            color: #37352f;
+            color: var(--color-text);
             margin-bottom: 0;
         }
 
         .last-updated {
-            font-size: 14px;
-            color: #787774;
+            font-size: var(--text-base);
+            color: var(--color-text-secondary);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .update-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #10b981;
-            animation: pulse 2s infinite;
+            width: var(--space-2);
+            height: var(--space-2);
+            border-radius: var(--radius-full);
+            background: var(--color-success);
+            animation: pulse var(--duration-pulse) infinite;
         }
 
         .update-dot.inactive {
-            background: #9ca3af;
+            background: var(--color-pending);
             animation: none;
         }
 
@@ -84,91 +642,91 @@
         .summary-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
         }
 
         .card {
-            background: white;
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-            border: 1px solid #e8e7e5;
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border);
         }
 
         .card-label {
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: #787774;
-            margin-bottom: 8px;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-2);
             font-weight: 600;
         }
 
         .card-value {
             font-size: 32px;
             font-weight: 700;
-            color: #37352f;
+            color: var(--color-text);
         }
 
         .card-subtitle {
-            font-size: 14px;
-            color: #787774;
-            margin-top: 4px;
+            font-size: var(--text-base);
+            color: var(--color-text-secondary);
+            margin-top: var(--space-1);
         }
 
         /* Section Headers */
         .section {
-            margin-bottom: 24px;
+            margin-bottom: var(--space-6);
         }
 
         .section-title {
-            font-size: 20px;
+            font-size: var(--text-xl);
             font-weight: 600;
-            color: #37352f;
-            margin-bottom: 16px;
-            padding-left: 4px;
+            color: var(--color-text);
+            margin-bottom: var(--space-4);
+            padding-left: var(--space-1);
         }
 
         /* Epic Board (Kanban) */
         .epic-board {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
         }
 
         .epic-column {
-            background: white;
-            border-radius: 8px;
-            padding: 16px;
-            border: 1px solid #e8e7e5;
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            border: 1px solid var(--color-border);
             min-height: 200px;
         }
 
         .epic-column-header {
-            font-size: 14px;
+            font-size: var(--text-base);
             font-weight: 600;
-            color: #787774;
+            color: var(--color-text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e8e7e5;
+            margin-bottom: var(--space-3);
+            padding-bottom: var(--space-2);
+            border-bottom: 2px solid var(--color-border);
         }
 
         .epic-card {
-            background: #fafaf9;
-            border: 1px solid #e8e7e5;
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 8px;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-3);
+            margin-bottom: var(--space-2);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all var(--duration-fast) var(--easing-default);
         }
 
         .epic-card:hover {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: var(--shadow-md);
             transform: translateY(-1px);
         }
 
@@ -180,16 +738,16 @@
         }
 
         .epic-card-title {
-            font-size: 14px;
+            font-size: var(--text-base);
             font-weight: 600;
-            color: #37352f;
-            margin-bottom: 6px;
+            color: var(--color-text);
+            margin-bottom: var(--space-1);
         }
 
         .epic-expand-icon {
             font-size: 10px;
-            color: #787774;
-            transition: transform 0.2s ease;
+            color: var(--color-text-secondary);
+            transition: transform var(--duration-fast) var(--easing-default);
             cursor: pointer;
         }
 
@@ -201,60 +759,60 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: var(--space-1);
         }
 
         .epic-card-progress {
             font-size: 12px;
-            color: #787774;
+            color: var(--color-text-secondary);
         }
 
         .epic-card-duration {
-            font-size: 11px;
+            font-size: var(--text-xs);
             font-weight: 500;
             color: #065f46;
-            background: #d1fae5;
+            background: var(--color-cmd-dev-story-bg);
             padding: 2px 6px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
 
         .epic-card-progress-bar {
             width: 100%;
-            height: 4px;
-            background: #e8e7e5;
+            height: var(--space-1);
+            background: var(--color-border);
             border-radius: 2px;
-            margin-top: 6px;
+            margin-top: var(--space-1);
             overflow: hidden;
         }
 
         .epic-card-progress-fill {
             height: 100%;
-            background: #10b981;
+            background: var(--color-success);
             border-radius: 2px;
-            transition: width 0.3s ease;
+            transition: width var(--duration-normal) var(--easing-default);
         }
 
         .epic-stories-list {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #e8e7e5;
+            margin-top: var(--space-3);
+            padding-top: var(--space-3);
+            border-top: 1px solid var(--color-border);
         }
 
         .epic-story-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 0;
-            font-size: 13px;
-            color: #37352f;
+            padding: var(--space-1) 0;
+            font-size: var(--text-sm);
+            color: var(--color-text);
             cursor: pointer;
         }
 
         .epic-story-item:hover {
-            background: #f0efed;
-            margin: 0 -8px;
-            padding: 6px 8px;
-            border-radius: 4px;
+            background: var(--color-hover-bg);
+            margin: 0 calc(-1 * var(--space-2));
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
         }
 
         .epic-story-item .story-name {
@@ -266,7 +824,7 @@
 
         .epic-story-item .badge {
             flex-shrink: 0;
-            margin-left: 8px;
+            margin-left: var(--space-2);
             font-size: 10px;
             padding: 2px 6px;
         }
@@ -274,17 +832,17 @@
         /* Story Tooltip */
         .story-tooltip {
             position: fixed;
-            background: #37352f;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
+            background: var(--color-text);
+            color: var(--color-surface);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
             font-size: 12px;
             max-width: 300px;
-            z-index: 1000;
+            z-index: var(--z-modal);
             pointer-events: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-lg);
             opacity: 0;
-            transition: opacity 0.15s ease;
+            transition: opacity var(--duration-fast) var(--easing-default);
         }
 
         .story-tooltip.visible {
@@ -293,11 +851,11 @@
 
         /* Story Table */
         .table-container {
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e8e7e5;
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
             overflow: hidden;
-            margin-bottom: 24px;
+            margin-bottom: var(--space-6);
         }
 
         table {
@@ -306,96 +864,96 @@
         }
 
         thead {
-            background: #fafaf9;
-            border-bottom: 1px solid #e8e7e5;
+            background: var(--color-bg);
+            border-bottom: 1px solid var(--color-border);
         }
 
         th {
             text-align: left;
-            padding: 12px 16px;
+            padding: var(--space-3) var(--space-4);
             font-size: 12px;
             font-weight: 600;
-            color: #787774;
+            color: var(--color-text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         td {
-            padding: 12px 16px;
-            border-top: 1px solid #e8e7e5;
-            font-size: 14px;
+            padding: var(--space-3) var(--space-4);
+            border-top: 1px solid var(--color-border);
+            font-size: var(--text-base);
         }
 
         tr:hover {
-            background: #fafaf9;
+            background: var(--color-bg);
         }
 
         .story-id {
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-size: 13px;
-            color: #787774;
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
         }
 
         .story-duration {
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-family: var(--font-mono);
             font-size: 12px;
-            color: #787774;
+            color: var(--color-text-secondary);
         }
 
         /* Status Badges */
         .badge {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
+            padding: var(--space-1) 10px;
+            border-radius: var(--radius-xl);
             font-size: 12px;
             font-weight: 500;
             text-transform: capitalize;
         }
 
         .badge-backlog {
-            background: #e8e7e5;
-            color: #787774;
+            background: var(--color-border);
+            color: var(--color-text-secondary);
         }
 
         .badge-ready-for-dev {
-            background: #dbeafe;
-            color: #1e40af;
+            background: var(--color-cmd-create-story-bg);
+            color: var(--color-selected-text);
         }
 
         .badge-in-progress {
-            background: #fef3c7;
+            background: var(--color-cmd-story-review-bg);
             color: #92400e;
         }
 
         .badge-review {
-            background: #e9d5ff;
+            background: var(--color-cmd-code-review-bg);
             color: #6b21a8;
         }
 
         .badge-done {
-            background: #d1fae5;
+            background: var(--color-cmd-dev-story-bg);
             color: #065f46;
         }
 
         .badge-optional {
             background: #f3f4f6;
-            color: #9ca3af;
+            color: var(--color-text-muted);
             font-style: italic;
         }
 
         /* Activity Log */
         .activity-log {
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e8e7e5;
-            padding: 24px;
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            padding: var(--space-6);
         }
 
         .activity-item {
-            border-left: 3px solid #e8e7e5;
-            padding-left: 16px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
+            border-left: 3px solid var(--color-border);
+            padding-left: var(--space-4);
+            margin-bottom: var(--space-6);
+            padding-bottom: var(--space-4);
         }
 
         .activity-item:last-child {
@@ -404,11 +962,11 @@
         }
 
         .activity-item.completed {
-            border-left-color: #10b981;
+            border-left-color: var(--color-success);
         }
 
         .activity-item.in-progress {
-            border-left-color: #fbbf24;
+            border-left-color: var(--color-warning);
         }
 
         .activity-item.collapsed .activity-body {
@@ -419,7 +977,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: var(--space-2);
             cursor: pointer;
             user-select: none;
         }
@@ -431,17 +989,17 @@
         .activity-title-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .activity-toggle {
-            width: 20px;
-            height: 20px;
+            width: var(--space-5);
+            height: var(--space-5);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #787774;
-            transition: transform 0.2s;
+            color: var(--color-text-secondary);
+            transition: transform var(--duration-fast);
         }
 
         .activity-item.collapsed .activity-toggle {
@@ -449,21 +1007,21 @@
         }
 
         .activity-story {
-            font-size: 16px;
+            font-size: var(--text-lg);
             font-weight: 600;
-            color: #37352f;
+            color: var(--color-text);
         }
 
         .activity-badge {
-            font-size: 11px;
-            padding: 2px 8px;
+            font-size: var(--text-xs);
+            padding: 2px var(--space-2);
             border-radius: 10px;
-            background: #d1fae5;
+            background: var(--color-cmd-dev-story-bg);
             color: #065f46;
         }
 
         .activity-item.in-progress .activity-badge {
-            background: #fef3c7;
+            background: var(--color-cmd-story-review-bg);
             color: #92400e;
         }
 
@@ -477,39 +1035,39 @@
         .activity-duration {
             font-size: 12px;
             font-weight: 600;
-            color: #37352f;
-            background: #e8e7e5;
-            padding: 2px 8px;
-            border-radius: 4px;
+            color: var(--color-text);
+            background: var(--color-border);
+            padding: 2px var(--space-2);
+            border-radius: var(--radius-sm);
         }
 
         .activity-date {
             font-size: 12px;
-            color: #787774;
+            color: var(--color-text-secondary);
         }
 
         .activity-body {
-            padding-top: 4px;
+            padding-top: var(--space-1);
         }
 
         .activity-meta {
-            font-size: 13px;
-            color: #787774;
-            margin-bottom: 12px;
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-3);
         }
 
         .activity-description {
-            font-size: 13px;
+            font-size: var(--text-sm);
             color: #5a5a58;
-            margin-bottom: 12px;
+            margin-bottom: var(--space-3);
             line-height: 1.5;
             font-style: italic;
         }
 
         .activity-steps {
-            background: #fafaf9;
-            border-radius: 6px;
-            padding: 12px;
+            background: var(--color-bg);
+            border-radius: var(--radius-md);
+            padding: var(--space-3);
             overflow-x: auto;
         }
 
@@ -519,8 +1077,8 @@
 
         .activity-steps th,
         .activity-steps td {
-            padding: 8px 12px;
-            font-size: 13px;
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--text-sm);
         }
 
         .activity-steps thead {
@@ -532,17 +1090,17 @@
         }
 
         .step-duration {
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-size: 11px;
-            color: #787774;
+            font-family: var(--font-mono);
+            font-size: var(--text-xs);
+            color: var(--color-text-secondary);
         }
 
         /* Command/Task Hierarchy Styles */
         .command-group {
-            border: 1px solid #e8e7e5;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            background: #fafaf9;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-2);
+            background: var(--color-bg);
             overflow: hidden;
         }
 
@@ -550,30 +1108,30 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 12px;
+            padding: 10px var(--space-3);
             cursor: pointer;
             user-select: none;
-            transition: background 0.15s ease;
+            transition: background var(--duration-fast) var(--easing-default);
         }
 
         .command-header:hover {
-            background: #f0efed;
+            background: var(--color-hover-bg);
         }
 
         .command-header-left {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .command-toggle {
-            width: 16px;
-            height: 16px;
+            width: var(--space-4);
+            height: var(--space-4);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #787774;
-            transition: transform 0.2s ease;
+            color: var(--color-text-secondary);
+            transition: transform var(--duration-fast) var(--easing-default);
         }
 
         .command-group.collapsed .command-toggle {
@@ -581,27 +1139,27 @@
         }
 
         .command-name {
-            font-size: 13px;
+            font-size: var(--text-sm);
             font-weight: 600;
-            color: #37352f;
+            color: var(--color-text);
         }
 
         .command-duration {
             font-size: 12px;
             font-weight: 500;
             color: #065f46;
-            background: #d1fae5;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: 'SF Mono', Monaco, monospace;
+            background: var(--color-cmd-dev-story-bg);
+            padding: 2px var(--space-2);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
         }
 
         /* Simplified command row for single-task commands (no expand toggle) */
         .command-header-simple {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
+            gap: var(--space-3);
+            padding: 10px var(--space-3);
         }
 
         .command-header-simple .command-name {
@@ -609,7 +1167,7 @@
         }
 
         .command-header-simple .task-status {
-            font-size: 14px;
+            font-size: var(--text-base);
         }
 
         .command-group.single-task {
@@ -617,8 +1175,8 @@
         }
 
         .command-tasks {
-            border-top: 1px solid #e8e7e5;
-            padding: 8px 0;
+            border-top: 1px solid var(--color-border);
+            padding: var(--space-2) 0;
         }
 
         .command-group.collapsed .command-tasks {
@@ -629,62 +1187,62 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 12px 6px 32px;
-            font-size: 13px;
+            padding: var(--space-1) var(--space-3) var(--space-1) var(--space-8);
+            font-size: var(--text-sm);
         }
 
         .task-item:hover {
-            background: #f0efed;
+            background: var(--color-hover-bg);
         }
 
         .task-item-left {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .task-prefix {
             color: #a8a8a8;
-            font-size: 11px;
+            font-size: var(--text-xs);
         }
 
         .task-name {
-            color: #37352f;
+            color: var(--color-text);
         }
 
         .task-item-right {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .task-duration {
             font-size: 12px;
-            color: #787774;
-            font-family: 'SF Mono', Monaco, monospace;
+            color: var(--color-text-secondary);
+            font-family: var(--font-mono);
         }
 
         .task-status {
-            font-size: 11px;
+            font-size: var(--text-xs);
         }
 
         .task-status.completed {
-            color: #10b981;
+            color: var(--color-success);
         }
 
         .task-status.in-progress {
-            color: #f59e0b;
+            color: var(--color-warning);
         }
 
         .task-in-progress {
             background: linear-gradient(
                 90deg,
-                #fef3c7 0%,
+                var(--color-cmd-story-review-bg) 0%,
                 #fde68a 50%,
-                #fef3c7 100%
+                var(--color-cmd-story-review-bg) 100%
             );
             background-size: 200% 100%;
-            animation: shimmer 2s infinite linear;
+            animation: shimmer var(--duration-shimmer) infinite var(--easing-linear);
         }
 
         @keyframes shimmer {
@@ -698,12 +1256,12 @@
         .task-bar.in-progress {
             background: repeating-linear-gradient(
                 45deg,
-                #fbbf24,
-                #fbbf24 10px,
+                var(--color-warning),
+                var(--color-warning) 10px,
                 #f59e0b 10px,
                 #f59e0b 20px
             );
-            animation: stripe-scroll 1s linear infinite;
+            animation: stripe-scroll 1s var(--easing-linear) infinite;
         }
 
         @keyframes stripe-scroll {
@@ -719,41 +1277,41 @@
             border-radius: 2px;
             display: flex;
             align-items: center;
-            padding: 0 4px;
+            padding: 0 var(--space-1);
             font-size: 9px;
             font-weight: 500;
-            color: white;
+            color: var(--color-surface);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            min-width: 20px;
+            min-width: var(--space-5);
             background: #6b7280;
         }
 
         .task-bar.completed {
-            background: #10b981;
+            background: var(--color-success);
         }
 
         /* Timeline task rows */
         .timeline-task-row {
             display: flex;
-            height: 24px;
-            border-top: 1px dotted #e8e7e5;
+            height: var(--space-6);
+            border-top: 1px dotted var(--color-border);
         }
 
         .timeline-task-row-label {
             width: var(--timeline-label-width);
             min-width: var(--timeline-label-width);
-            padding: 0 12px 0 36px;
-            font-size: 11px;
-            color: #a8a8a8;
+            padding: 0 var(--space-3) 0 36px;
+            font-size: var(--text-xs);
+            color: var(--color-text-muted);
             display: flex;
             align-items: center;
-            background: #fafaf9;
-            border-right: 1px solid #e8e7e5;
+            background: var(--color-bg);
+            border-right: 1px solid var(--color-border);
             position: sticky;
             left: 0;
-            z-index: 10;
+            z-index: var(--z-elevated);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -762,7 +1320,7 @@
         .timeline-task-row-content {
             flex-shrink: 0;
             position: relative;
-            height: 24px;
+            height: var(--space-6);
         }
 
         /* Timeline command group (for expand/collapse) */
@@ -776,11 +1334,11 @@
 
         .timeline-command-group .cmd-expand-icon {
             display: inline-block;
-            width: 12px;
+            width: var(--space-3);
             font-size: 8px;
-            color: #a8a8a8;
-            transition: transform 0.2s ease;
-            margin-right: 4px;
+            color: var(--color-text-muted);
+            transition: transform var(--duration-fast) var(--easing-default);
+            margin-right: var(--space-1);
             cursor: pointer;
         }
 
@@ -795,44 +1353,44 @@
         /* Timeline message row */
         .timeline-message-row {
             display: flex;
-            height: 20px;
+            height: var(--space-5);
         }
 
         .timeline-message-label {
             width: var(--timeline-label-width);
             min-width: var(--timeline-label-width);
-            background: #fafaf9;
-            border-right: 1px solid #e8e7e5;
+            background: var(--color-bg);
+            border-right: 1px solid var(--color-border);
             position: sticky;
             left: 0;
-            z-index: 10;
+            z-index: var(--z-elevated);
         }
 
         .timeline-message-content {
             flex-shrink: 0;
             position: relative;
-            height: 20px;
+            height: var(--space-5);
             display: flex;
             align-items: center;
         }
 
         .timeline-message-text {
             font-size: 10px;
-            color: #787774;
+            color: var(--color-text-secondary);
             font-style: italic;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 300px;
-            padding-left: 4px;
+            padding-left: var(--space-1);
         }
 
         /* Task message in activity log */
         .task-message {
-            font-size: 11px;
-            color: #787774;
+            font-size: var(--text-xs);
+            color: var(--color-text-secondary);
             font-style: italic;
-            padding: 2px 12px 6px 44px;
+            padding: 2px var(--space-3) var(--space-1) 44px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -841,48 +1399,48 @@
         /* Filters */
         .filters {
             display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-            padding: 16px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e8e7e5;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+            padding: var(--space-4);
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
         }
 
         .filter-group {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .filter-label {
-            font-size: 13px;
+            font-size: var(--text-sm);
             font-weight: 500;
-            color: #787774;
+            color: var(--color-text-secondary);
         }
 
         select {
-            padding: 6px 12px;
-            border: 1px solid #e8e7e5;
-            border-radius: 6px;
-            font-size: 13px;
-            background: white;
-            color: #37352f;
+            padding: var(--space-1) var(--space-3);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            background: var(--color-surface);
+            color: var(--color-text);
             font-family: inherit;
             cursor: pointer;
         }
 
         select:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: var(--color-running);
         }
 
         /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 40px;
-            color: #787774;
-            font-size: 14px;
+            padding: var(--space-10);
+            color: var(--color-text-secondary);
+            font-size: var(--text-base);
         }
 
         .dashboard-content {
@@ -896,41 +1454,41 @@
         /* Tab Navigation */
         .tab-nav {
             display: flex;
-            gap: 4px;
-            background: white;
-            padding: 6px;
+            gap: var(--space-1);
+            background: var(--color-surface);
+            padding: var(--space-1);
             border-radius: 10px;
-            margin-bottom: 24px;
-            border: 1px solid #e8e7e5;
+            margin-bottom: var(--space-6);
+            border: 1px solid var(--color-border);
         }
 
         .tab-btn {
             flex: 1;
-            padding: 12px 24px;
+            padding: var(--space-3) var(--space-6);
             border: none;
             background: transparent;
-            font-size: 14px;
+            font-size: var(--text-base);
             font-weight: 500;
-            color: #787774;
+            color: var(--color-text-secondary);
             cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
+            border-radius: var(--radius-md);
+            transition: all var(--duration-fast);
         }
 
         .tab-btn:hover {
-            background: #f7f6f3;
-            color: #37352f;
+            background: var(--color-bg);
+            color: var(--color-text);
         }
 
         .tab-btn.active {
-            background: #37352f;
-            color: white;
+            background: var(--color-text);
+            color: var(--color-surface);
         }
 
         .tab-btn .tab-count {
             display: inline-block;
-            margin-left: 6px;
-            padding: 2px 8px;
+            margin-left: var(--space-1);
+            padding: 2px var(--space-2);
             background: rgba(0,0,0,0.1);
             border-radius: 10px;
             font-size: 12px;
@@ -1911,8 +2469,477 @@
         }
 
         .ws-connection-dot.connecting {
-            background: #fbbf24;
-            animation: pulse 1s infinite;
+            background: #9ca3af;
+            animation: spin 1s linear infinite;
+        }
+
+        .ws-connection-dot.reconnecting {
+            background: #f59e0b;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .ws-connection-status {
+            cursor: pointer;
+        }
+
+        .ws-connection-status:hover {
+            opacity: 0.8;
+        }
+
+        .ws-connection-status[title] {
+            position: relative;
+        }
+
+        /* ============================================================
+           Real-time Update Animations (Epic 6 - UI/UX Spec Section 3)
+           ============================================================ */
+
+        /* Running Operation: Pulse Glow (Section 3.2) */
+        .operation-running {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+                border-color: rgba(59, 130, 246, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 16px 4px rgba(59, 130, 246, 0.15);
+                border-color: rgba(59, 130, 246, 0.8);
+            }
+        }
+
+        /* Progress Bar: Shimmer Effect (Section 3.3) */
+        .progress-active {
+            background: linear-gradient(
+                90deg,
+                #3b82f6 0%,
+                #60a5fa 50%,
+                #3b82f6 100%
+            );
+            background-size: 200% 100%;
+            animation: progress-shimmer 2s linear infinite;
+        }
+
+        @keyframes progress-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Completion: Success Flash (Section 3.4) */
+        .just-completed {
+            animation: complete-flash 600ms ease-out forwards;
+        }
+
+        @keyframes complete-flash {
+            0% {
+                background-color: transparent;
+                transform: scale(1);
+            }
+            30% {
+                background-color: rgba(16, 185, 129, 0.2);
+                transform: scale(1.01);
+            }
+            100% {
+                background-color: transparent;
+                transform: scale(1);
+            }
+        }
+
+        /* Error: Shake Effect (Section 3.5) */
+        .error-shake {
+            animation: shake 500ms ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-3px); }
+            40%, 80% { transform: translateX(3px); }
+        }
+
+        /* New Item: Slide In (Section 3.1) */
+        .new-item-slide {
+            animation: new-item-slide 300ms ease-out;
+        }
+
+        @keyframes new-item-slide {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ---------------------------------------------------------
+           E4-S3: Expand/Collapse Transitions (Section 3.6)
+           --------------------------------------------------------- */
+
+        /* Expandable content container */
+        .expandable-content {
+            overflow: hidden;
+            transition: max-height var(--duration-normal) var(--easing-default),
+                        opacity var(--duration-normal) var(--easing-default),
+                        padding var(--duration-normal) var(--easing-default);
+        }
+
+        .expandable-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .expandable-content.expanded {
+            max-height: 2000px; /* Large enough for content */
+            opacity: 1;
+        }
+
+        /* Chevron rotation for expand/collapse indicators */
+        .expand-chevron {
+            transition: transform var(--duration-normal) var(--easing-default);
+            display: inline-block;
+        }
+
+        .expand-chevron.rotated,
+        .expanded .expand-chevron {
+            transform: rotate(90deg);
+        }
+
+        /* Story card expand/collapse animation */
+        .story-card {
+            transition: background-color var(--duration-fast) var(--easing-default);
+        }
+
+        .story-card-content {
+            overflow: hidden;
+            transition: max-height var(--duration-normal) var(--easing-default),
+                        opacity var(--duration-normal) var(--easing-default);
+        }
+
+        .story-card.collapsed .story-card-content {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .story-card.expanded .story-card-content {
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        /* Command group expand/collapse (enhanced existing) */
+        .command-group .command-tasks {
+            transition: max-height var(--duration-normal) var(--easing-default),
+                        opacity var(--duration-fast) var(--easing-default);
+        }
+
+        /* ---------------------------------------------------------
+           Status Change Transitions
+           --------------------------------------------------------- */
+
+        /* Status badge transition */
+        .badge,
+        .status-badge {
+            transition: background-color var(--duration-normal) var(--easing-default),
+                        color var(--duration-normal) var(--easing-default),
+                        border-color var(--duration-normal) var(--easing-default);
+        }
+
+        /* Status change highlight animation */
+        .status-changed {
+            animation: status-highlight var(--duration-flash) var(--easing-default);
+        }
+
+        @keyframes status-highlight {
+            0% {
+                background-color: inherit;
+            }
+            30% {
+                background-color: rgba(59, 130, 246, 0.15);
+            }
+            100% {
+                background-color: inherit;
+            }
+        }
+
+        /* Story row status transition */
+        .story-row,
+        .epic-story-item {
+            transition: background-color var(--duration-fast) var(--easing-default),
+                        border-color var(--duration-fast) var(--easing-default);
+        }
+
+        /* Command row status transition */
+        .command-row,
+        .task-item {
+            transition: background-color var(--duration-fast) var(--easing-default);
+        }
+
+        /* ---------------------------------------------------------
+           Running Indicator Animation (Enhanced)
+           --------------------------------------------------------- */
+
+        .running-indicator {
+            animation: running-pulse 1.5s var(--easing-smooth) infinite;
+        }
+
+        @keyframes running-pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+        }
+
+        /* Running dot in sidebar batch items */
+        .running-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-warning);
+            animation: running-pulse 1.5s var(--easing-smooth) infinite;
+        }
+
+        /* ---------------------------------------------------------
+           Log Entry Animation
+           --------------------------------------------------------- */
+
+        .log-entry {
+            transition: background-color var(--duration-fast) var(--easing-default);
+        }
+
+        .log-entry.new-entry {
+            animation: log-entry-appear var(--duration-normal) var(--easing-default);
+        }
+
+        @keyframes log-entry-appear {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+                background-color: rgba(59, 130, 246, 0.1);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+                background-color: transparent;
+            }
+        }
+
+        /* Error log entry animation */
+        .log-entry.error.new-entry {
+            animation: log-entry-error var(--duration-normal) var(--easing-default);
+        }
+
+        @keyframes log-entry-error {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+                background-color: rgba(239, 68, 68, 0.15);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+                background-color: transparent;
+            }
+        }
+
+        /* ---------------------------------------------------------
+           Progress Bar Animations (Enhanced)
+           --------------------------------------------------------- */
+
+        /* Determinate progress bar with smooth transition */
+        .progress-bar-fill,
+        .epic-card-progress-fill {
+            transition: width var(--duration-normal) var(--easing-default);
+        }
+
+        /* Indeterminate progress bar for unlimited mode */
+        .progress-indeterminate {
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                var(--color-running) 50%,
+                transparent 100%
+            );
+            background-size: 200% 100%;
+            animation: indeterminate-progress 1.5s var(--easing-linear) infinite;
+        }
+
+        @keyframes indeterminate-progress {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ---------------------------------------------------------
+           Card and Panel Transitions
+           --------------------------------------------------------- */
+
+        .card,
+        .epic-card,
+        .activity-item {
+            transition: box-shadow var(--duration-fast) var(--easing-default),
+                        transform var(--duration-fast) var(--easing-default);
+        }
+
+        /* ---------------------------------------------------------
+           Sidebar Transitions
+           --------------------------------------------------------- */
+
+        .batch-sidebar {
+            transition: width var(--duration-normal) var(--easing-default);
+        }
+
+        .batch-sidebar.collapsed {
+            width: var(--sidebar-collapsed);
+        }
+
+        .batch-sidebar-item {
+            transition: background-color var(--duration-fast) var(--easing-default),
+                        border-color var(--duration-fast) var(--easing-default);
+        }
+
+        .batch-sidebar-item:hover {
+            background-color: var(--color-hover-bg);
+        }
+
+        .batch-sidebar-item.selected {
+            border-left: 3px solid var(--color-selected-border);
+            background-color: var(--color-selected-bg);
+        }
+
+        /* ---------------------------------------------------------
+           E4-S4: Reduced Motion Support (Section 3.7) - Enhanced
+           --------------------------------------------------------- */
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+
+            /* Ensure static states for all animated elements */
+            .operation-running,
+            .progress-active,
+            .just-completed,
+            .error-shake,
+            .running-indicator,
+            .running-dot,
+            .ws-connection-dot.connected,
+            .ws-connection-dot.connecting,
+            .ws-connection-dot.reconnecting,
+            .progress-indeterminate,
+            .new-item-slide,
+            .log-entry.new-entry,
+            .status-changed,
+            .task-in-progress {
+                animation: none !important;
+            }
+
+            /* Disable transitions for expandable content */
+            .expandable-content,
+            .story-card-content,
+            .command-tasks,
+            .expand-chevron,
+            .badge,
+            .status-badge,
+            .progress-bar-fill,
+            .epic-card-progress-fill,
+            .card,
+            .epic-card,
+            .activity-item,
+            .batch-sidebar,
+            .batch-sidebar-item,
+            .story-row,
+            .epic-story-item,
+            .command-row,
+            .task-item,
+            .log-entry {
+                transition: none !important;
+            }
+        }
+
+        /* Active Operation Card Styles */
+        .active-operation-card {
+            background: var(--color-surface);
+            border: 2px solid var(--color-running);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-3);
+        }
+
+        .active-operation-card.operation-running {
+            border-color: var(--color-running);
+        }
+
+        .active-operation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-2);
+        }
+
+        .active-operation-story {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            font-size: var(--text-base);
+            color: var(--color-text);
+        }
+
+        .active-operation-timer {
+            font-family: var(--font-mono);
+            font-size: var(--text-base);
+            font-weight: 500;
+            color: var(--color-running);
+        }
+
+        .active-operation-command {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            margin-bottom: var(--space-2);
+        }
+
+        .active-operation-progress {
+            height: 4px;
+            background: var(--color-border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: var(--space-2);
+        }
+
+        .active-operation-progress-fill {
+            height: 100%;
+            width: 100%;
+        }
+
+        .active-operation-message {
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* Toast Notifications */
@@ -2002,27 +3029,284 @@
             color: white;
         }
 
+        /* BATCH HISTORY SIDEBAR (Epic 5) */
+        .dashboard-layout { display: flex; gap: var(--space-4); }
+        .batch-sidebar { width: var(--sidebar-width); min-width: var(--sidebar-width); background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); display: flex; flex-direction: column; max-height: calc(100vh - var(--header-height) - 200px); }
+        .batch-sidebar.collapsed { width: var(--sidebar-collapsed); min-width: var(--sidebar-collapsed); }
+        .batch-sidebar__header { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; }
+        .batch-sidebar__title { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-secondary); }
+        .batch-sidebar.collapsed .batch-sidebar__title { display: none; }
+        .batch-sidebar__toggle { width: 24px; height: 24px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--color-text-secondary); border-radius: var(--radius-sm); }
+        .batch-sidebar__toggle:hover { background: var(--color-hover-bg); }
+        .batch-sidebar.collapsed .batch-sidebar__toggle-icon { transform: rotate(180deg); }
+        .batch-sidebar__list { flex: 1; overflow-y: auto; padding: var(--space-2); }
+        .batch-sidebar__item { padding: var(--space-3); border-radius: var(--radius-md); cursor: pointer; margin-bottom: var(--space-1); border-left: 3px solid transparent; position: relative; }
+        .batch-sidebar__item:hover { background: var(--color-hover-bg); }
+        .batch-sidebar__item--selected { background: var(--color-selected-bg); border-left-color: var(--color-selected-border); }
+        .batch-sidebar__item--current { position: sticky; top: 0; background: var(--color-surface); z-index: 1; border-bottom: 1px solid var(--color-border); margin-bottom: var(--space-2); }
+        .batch-sidebar__item--current::after { content: 'CURRENT'; position: absolute; top: var(--space-1); right: var(--space-2); font-size: 9px; font-weight: 600; color: var(--color-running); background: var(--color-cmd-create-story-bg); padding: 1px 4px; border-radius: var(--radius-sm); }
+        .batch-sidebar__item-header { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1); }
+        .batch-sidebar__status-dot { width: 8px; height: 8px; border-radius: var(--radius-full); }
+        .batch-sidebar__status-dot--running { background: var(--color-warning); animation: pulse var(--duration-pulse) infinite; }
+        .batch-sidebar__status-dot--completed { background: var(--color-success); }
+        .batch-sidebar__status-dot--stopped, .batch-sidebar__status-dot--failed { background: var(--color-error); }
+        .batch-sidebar__batch-id { font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 600; }
+        .batch-sidebar__status-label { font-size: var(--text-xs); color: var(--color-text-secondary); text-transform: capitalize; }
+        .batch-sidebar__stats { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+        .batch-sidebar__duration { font-size: var(--text-xs); font-family: var(--font-mono); color: var(--color-text-secondary); }
+        .batch-sidebar.collapsed .batch-sidebar__item { padding: var(--space-2); display: flex; align-items: center; justify-content: center; }
+        .batch-sidebar.collapsed .batch-sidebar__item-header, .batch-sidebar.collapsed .batch-sidebar__stats, .batch-sidebar.collapsed .batch-sidebar__duration, .batch-sidebar.collapsed .batch-sidebar__item--current::after { display: none; }
+        .batch-sidebar.collapsed .batch-sidebar__status-dot { width: 12px; height: 12px; }
+        .batch-sidebar__footer { padding: var(--space-3); border-top: 1px solid var(--color-border); display: flex; justify-content: center; }
+        .batch-sidebar.collapsed .batch-sidebar__footer { display: none; }
+        .batch-sidebar__load-more { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: transparent; color: var(--color-text-secondary); font-size: var(--text-sm); cursor: pointer; }
+        .batch-sidebar__load-more:hover { background: var(--color-hover-bg); }
+        .batch-sidebar__load-more:disabled { opacity: 0.5; cursor: not-allowed; }
+        .batch-sidebar__loading, .batch-sidebar__empty { text-align: center; padding: var(--space-4); color: var(--color-text-muted); font-size: var(--text-sm); }
+        .dashboard-main { flex: 1; min-width: 0; }
+        .past-batch-header { background: var(--color-surface); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-6); margin-bottom: var(--space-4); border: 1px solid var(--color-border); display: flex; align-items: center; gap: var(--space-4); }
+        .past-batch-header__back { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: transparent; color: var(--color-text); font-size: var(--text-sm); cursor: pointer; }
+        .past-batch-header__back:hover { background: var(--color-hover-bg); }
+        .past-batch-header__info { flex: 1; }
+        .past-batch-header__title { font-size: var(--text-xl); font-weight: 600; font-family: var(--font-mono); margin-bottom: var(--space-1); }
+        .past-batch-header__meta { font-size: var(--text-sm); color: var(--color-text-secondary); }
+        .past-batch-header__status { display: inline-block; padding: var(--space-1) var(--space-3); border-radius: var(--radius-xl); font-size: var(--text-sm); font-weight: 500; text-transform: capitalize; }
+        .past-batch-header__status--completed { background: var(--color-cmd-dev-story-bg); color: #065f46; }
+        .past-batch-header__status--stopped, .past-batch-header__status--failed { background: #fee2e2; color: #991b1b; }
+        .batch-summary-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: var(--space-4); }
+        .batch-summary-stat { background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); text-align: center; }
+        .batch-summary-stat__value { font-size: var(--text-xl); font-weight: 600; }
+        .batch-summary-stat__label { font-size: var(--text-xs); color: var(--color-text-secondary); text-transform: uppercase; margin-top: var(--space-1); }
+        .past-batch-stories { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); overflow: hidden; }
+        .past-batch-stories__header { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; background: var(--color-bg); }
+        .past-batch-story { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: var(--space-3); }
+        .past-batch-story:last-child { border-bottom: none; }
+        .past-batch-story__key { font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 500; min-width: 80px; }
+        .past-batch-story__epic { font-size: var(--text-xs); color: var(--color-text-muted); min-width: 50px; }
+        .past-batch-story__status { flex: 1; }
+        .past-batch-story__duration { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-secondary); }
+        .past-batch-story__commands { font-size: var(--text-xs); color: var(--color-text-muted); }
+        @media (max-width: 900px) { .batch-sidebar { position: fixed; left: 0; top: var(--header-height); height: calc(100vh - var(--header-height)); max-height: none; border-radius: 0; transform: translateX(-100%); z-index: var(--z-overlay); } .batch-sidebar.open { transform: translateX(0); } .batch-summary-stats { grid-template-columns: repeat(2, 1fr); } }
+
+        /* COMPONENT SYSTEM (Epic 3) - Reusable Components */
+        /* Batch Card Component */
+        .batch-card { padding: var(--space-3) var(--space-4); cursor: pointer; border-left: 3px solid transparent; transition: all var(--duration-fast) var(--easing-default); }
+        .batch-card:hover { background: var(--color-hover-bg); }
+        .batch-card--selected { background: var(--color-selected-bg); border-left-color: var(--color-selected-border); }
+        .batch-card--current { border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); margin-bottom: var(--space-2); }
+        .batch-card__header { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1); }
+        .batch-card__status-icon { width: 10px; height: 10px; border-radius: var(--radius-full); flex-shrink: 0; }
+        .batch-card__status-icon--running { background: var(--color-warning); animation: pulse var(--duration-pulse) var(--easing-smooth) infinite; }
+        .batch-card__status-icon--completed { background: var(--color-success); }
+        .batch-card__status-icon--failed { background: var(--color-error); }
+        .batch-card__status-icon--stopped { background: var(--color-pending); }
+        .batch-card__id { font-family: var(--font-mono); font-size: var(--text-base); font-weight: 600; color: var(--color-text); }
+        .batch-card__label { font-size: var(--text-sm); color: var(--color-text-secondary); margin-bottom: var(--space-1); }
+        .batch-card__stats { font-size: var(--text-xs); color: var(--color-text-muted); }
+        .batch-card__duration { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-secondary); margin-top: var(--space-1); }
+
+        /* Story Card Component (expandable) */
+        .story-card { border-bottom: 1px solid var(--color-border); }
+        .story-card:last-child { border-bottom: none; }
+        .story-card__header { display: flex; align-items: center; padding: var(--space-3) var(--space-4); cursor: pointer; transition: background var(--duration-fast) var(--easing-default); user-select: none; }
+        .story-card__header:hover { background: var(--color-hover-bg); }
+        .story-card__chevron { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--color-text-secondary); font-size: 10px; transition: transform var(--duration-fast) var(--easing-default); flex-shrink: 0; }
+        .story-card--expanded .story-card__chevron { transform: rotate(90deg); }
+        .story-card__key { font-family: var(--font-mono); font-size: var(--text-base); font-weight: 500; color: var(--color-text); margin-right: var(--space-3); flex-shrink: 0; }
+        .story-card__title { flex: 1; font-size: var(--text-base); color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: var(--space-3); }
+        .story-card__duration { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-secondary); flex-shrink: 0; margin-left: auto; padding-left: var(--space-3); }
+        .story-card__content { overflow: hidden; transition: max-height var(--duration-normal) var(--easing-default), opacity var(--duration-normal) var(--easing-default); max-height: 0; opacity: 0; }
+        .story-card--expanded .story-card__content { max-height: 2000px; opacity: 1; }
+        .story-card__commands { padding: 0 var(--space-4) var(--space-3); padding-left: calc(var(--space-4) + 20px); }
+
+        /* Command Group Component (expandable) */
+        .command-group-v2 { border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: var(--space-2); background: var(--color-bg); overflow: hidden; }
+        .command-group-v2:last-child { margin-bottom: 0; }
+        .command-group-v2__header { display: flex; align-items: center; padding: var(--space-2) var(--space-3); cursor: pointer; transition: background var(--duration-fast) var(--easing-default); user-select: none; }
+        .command-group-v2__header:hover { background: var(--color-hover-bg); }
+        .command-group-v2__chevron { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; color: var(--color-text-secondary); font-size: 8px; transition: transform var(--duration-fast) var(--easing-default); flex-shrink: 0; margin-right: var(--space-2); }
+        .command-group-v2--expanded .command-group-v2__chevron { transform: rotate(90deg); }
+        .command-group-v2__duration { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-secondary); margin-left: auto; padding-left: var(--space-3); }
+        .command-group-v2__tasks { border-top: 1px solid var(--color-border); overflow: hidden; transition: max-height var(--duration-normal) var(--easing-default), opacity var(--duration-normal) var(--easing-default); max-height: 0; opacity: 0; }
+        .command-group-v2--expanded .command-group-v2__tasks { max-height: 1000px; opacity: 1; }
+
+        /* Task Row Component */
+        .task-row-v2 { display: flex; align-items: center; padding: var(--space-2) var(--space-3); padding-left: calc(var(--space-3) + 16px); font-size: var(--text-sm); border-bottom: 1px solid var(--color-border); }
+        .task-row-v2:last-child { border-bottom: none; }
+        .task-row-v2:hover { background: var(--color-hover-bg); }
+        .task-row-v2__name { flex: 1; color: var(--color-text); }
+        .task-row-v2__duration { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-secondary); margin-right: var(--space-3); }
+        .task-row-v2__message { font-size: var(--text-xs); color: var(--color-text-muted); font-style: italic; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Status Badge Component */
+        .status-badge-v2 { display: inline-flex; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: var(--text-xs); font-weight: 500; gap: var(--space-1); }
+        .status-badge-v2__icon { width: 8px; height: 8px; border-radius: var(--radius-full); flex-shrink: 0; }
+        .status-badge-v2--running { background: rgba(59, 130, 246, 0.15); color: var(--color-running); }
+        .status-badge-v2--running .status-badge-v2__icon { background: var(--color-running); animation: pulse var(--duration-pulse) var(--easing-smooth) infinite; }
+        .status-badge-v2--success, .status-badge-v2--done, .status-badge-v2--completed { background: rgba(16, 185, 129, 0.15); color: var(--color-success); }
+        .status-badge-v2--success .status-badge-v2__icon, .status-badge-v2--done .status-badge-v2__icon, .status-badge-v2--completed .status-badge-v2__icon { background: var(--color-success); }
+        .status-badge-v2--error, .status-badge-v2--failed { background: rgba(239, 68, 68, 0.15); color: var(--color-error); }
+        .status-badge-v2--error .status-badge-v2__icon, .status-badge-v2--failed .status-badge-v2__icon { background: var(--color-error); }
+        .status-badge-v2--warning, .status-badge-v2--in-progress { background: rgba(245, 158, 11, 0.15); color: #b45309; }
+        .status-badge-v2--warning .status-badge-v2__icon, .status-badge-v2--in-progress .status-badge-v2__icon { background: var(--color-warning); animation: pulse var(--duration-pulse) var(--easing-smooth) infinite; }
+        .status-badge-v2--pending, .status-badge-v2--stopped { background: rgba(156, 163, 175, 0.15); color: var(--color-pending); }
+        .status-badge-v2--pending .status-badge-v2__icon, .status-badge-v2--stopped .status-badge-v2__icon { background: var(--color-pending); }
+
+        /* Command Badge Component */
+        .command-badge { display: inline-flex; align-items: center; padding: 2px var(--space-2); border-radius: var(--radius-sm); font-size: var(--text-xs); font-weight: 500; text-transform: uppercase; letter-spacing: 0.25px; white-space: nowrap; }
+        .command-badge--create-story { background: var(--color-cmd-create-story-bg); color: var(--color-cmd-create-story); }
+        .command-badge--story-review { background: var(--color-cmd-story-review-bg); color: #92400e; }
+        .command-badge--create-tech-spec { background: var(--color-cmd-create-tech-spec-bg); color: var(--color-cmd-create-tech-spec); }
+        .command-badge--tech-spec-review { background: var(--color-cmd-tech-spec-review-bg); color: var(--color-cmd-tech-spec-review); }
+        .command-badge--dev-story { background: var(--color-cmd-dev-story-bg); color: #065f46; }
+        .command-badge--code-review { background: var(--color-cmd-code-review-bg); color: var(--color-cmd-code-review); }
+        .command-badge--commit { background: var(--color-cmd-commit-bg); color: #0f766e; }
+        .command-badge--default { background: var(--color-border); color: var(--color-text-secondary); }
+        .command-badge--solid { color: white; }
+        .command-badge--solid.command-badge--create-story { background: var(--color-cmd-create-story); }
+        .command-badge--solid.command-badge--story-review { background: var(--color-cmd-story-review); color: var(--color-text); }
+        .command-badge--solid.command-badge--create-tech-spec { background: var(--color-cmd-create-tech-spec); }
+        .command-badge--solid.command-badge--tech-spec-review { background: var(--color-cmd-tech-spec-review); }
+        .command-badge--solid.command-badge--dev-story { background: var(--color-cmd-dev-story); }
+        .command-badge--solid.command-badge--code-review { background: var(--color-cmd-code-review); }
+        .command-badge--solid.command-badge--commit { background: var(--color-cmd-commit); }
+
+        /* Progress Bar Component */
+        .progress-bar-v2 { width: 100%; height: 8px; background: var(--color-border); border-radius: var(--radius-full); overflow: hidden; position: relative; }
+        .progress-bar-v2--thin { height: 4px; }
+        .progress-bar-v2--thick { height: 12px; }
+        .progress-bar-v2__fill { height: 100%; border-radius: var(--radius-full); transition: width var(--duration-normal) var(--easing-default); }
+        .progress-bar-v2__fill--success { background: linear-gradient(90deg, var(--color-success) 0%, #34d399 100%); }
+        .progress-bar-v2__fill--running { background: var(--color-running); }
+        .progress-bar-v2__fill--warning { background: var(--color-warning); }
+        .progress-bar-v2__fill--error { background: var(--color-error); }
+        .progress-bar-v2--active .progress-bar-v2__fill { background: linear-gradient(90deg, var(--color-running) 0%, var(--color-in-progress) 50%, var(--color-running) 100%); background-size: 200% 100%; animation: shimmer var(--duration-shimmer) var(--easing-linear) infinite; }
+        .progress-bar-v2--unlimited .progress-bar-v2__fill { width: 30%; animation: progress-pulse 2s var(--easing-smooth) infinite; }
+        @keyframes progress-pulse { 0%, 100% { transform: translateX(0); opacity: 1; } 50% { transform: translateX(230%); opacity: 0.7; } }
+
+        /* Control Button Components */
+        .control-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border: none; border-radius: var(--radius-md); font-size: var(--text-base); font-weight: 600; cursor: pointer; transition: all var(--duration-fast) var(--easing-default); }
+        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .control-btn--start { background: var(--color-success); color: white; }
+        .control-btn--start:hover:not(:disabled) { background: #059669; }
+        .control-btn--start:active:not(:disabled) { background: #047857; }
+        .control-btn--stop { background: var(--color-error); color: white; }
+        .control-btn--stop:hover:not(:disabled) { background: #dc2626; }
+        .control-btn--stop:active:not(:disabled) { background: #b91c1c; }
+        .control-btn--secondary { background: var(--color-border); color: var(--color-text); }
+        .control-btn--secondary:hover:not(:disabled) { background: var(--color-border-hover); }
+        .control-btn__icon { font-size: 14px; line-height: 1; }
+
+        /* Operation Card Component */
+        .operation-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); transition: all var(--duration-fast) var(--easing-default); }
+        .operation-card--running { border-color: rgba(59, 130, 246, 0.5); animation: pulse-glow var(--duration-pulse) var(--easing-smooth) infinite; }
+        .operation-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); }
+        .operation-card__story-key { font-family: var(--font-mono); font-size: var(--text-base); font-weight: 500; color: var(--color-running); cursor: pointer; }
+        .operation-card__story-key:hover { text-decoration: underline; }
+        .operation-card__timer { font-family: var(--font-mono); font-size: var(--text-base); font-weight: 500; color: var(--color-running); }
+        .operation-card__progress { margin-bottom: var(--space-2); }
+        .operation-card__progress-bar { width: 100%; height: 6px; background: var(--color-border); border-radius: var(--radius-full); overflow: hidden; }
+        .operation-card__progress-fill { height: 100%; background: linear-gradient(90deg, var(--color-running) 0%, var(--color-in-progress) 50%, var(--color-running) 100%); background-size: 200% 100%; animation: shimmer var(--duration-shimmer) var(--easing-linear) infinite; }
+        .operation-card__message { font-size: var(--text-sm); color: var(--color-text-secondary); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Connection Indicator Component */
+        .connection-indicator { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); cursor: pointer; transition: background var(--duration-fast) var(--easing-default); }
+        .connection-indicator:hover { background: var(--color-hover-bg); }
+        .connection-indicator__icon { width: 10px; height: 10px; border-radius: var(--radius-full); flex-shrink: 0; }
+        .connection-indicator--connected .connection-indicator__icon { background: var(--color-success); animation: pulse var(--duration-pulse) var(--easing-smooth) infinite; }
+        .connection-indicator--connecting .connection-indicator__icon { background: var(--color-pending); animation: spin 1s var(--easing-linear) infinite; border: 2px solid var(--color-pending); border-top-color: transparent; background: transparent; }
+        .connection-indicator--reconnecting .connection-indicator__icon { background: var(--color-warning); animation: blink 1s step-end infinite; }
+        .connection-indicator--disconnected .connection-indicator__icon { background: var(--color-error); }
+        .connection-indicator__text { font-size: var(--text-xs); color: var(--color-text-secondary); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Animation Classes */
+        .new-item-slide { animation: slide-in var(--duration-normal) var(--easing-default); }
+        @keyframes slide-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
     </style>
 </head>
 <body>
     <!-- Toast Container (fixed position) -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <div class="container">
-        <!-- Story Tooltip -->
-        <div class="story-tooltip" id="storyTooltip"></div>
+    <!-- Story Tooltip (global) -->
+    <div class="story-tooltip" id="storyTooltip"></div>
 
-        <!-- Header -->
-        <header>
-            <h1>Grimoire</h1>
-            <div class="last-updated">
-                <span class="update-dot" id="updateDot"></span>
-                <span id="lastUpdated">Loading...</span>
+    <!-- Split Panel Layout (E2-S2) -->
+    <div class="app-layout" id="appLayout">
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+        <!-- App Header - 56px height -->
+        <header class="app-header">
+            <div class="app-header__left">
+                <!-- Mobile sidebar toggle (visible on mobile) -->
+                <button class="mobile-sidebar-toggle" onclick="toggleMobileSidebar()" aria-label="Toggle sidebar">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <h1 class="app-header__title">Grimoire</h1>
+            </div>
+
+            <div class="app-header__controls">
+                <button class="header-btn header-btn--primary" id="headerStartBtn">
+                    <span>&#9654;</span> Start
+                </button>
+                <button class="header-btn header-btn--danger" id="headerStopBtn" disabled>
+                    <span>&#9632;</span> Stop
+                </button>
+
+                <div class="batch-mode-controls">
+                    <span class="batch-mode-controls__label">Batch:</span>
+                    <input type="number" class="batch-mode-controls__input" id="headerBatchSize" value="2" min="1" max="100">
+                    <label class="batch-mode-controls__checkbox">
+                        <input type="checkbox" id="headerRunAll">
+                        All
+                    </label>
+                </div>
+            </div>
+
+            <div class="app-header__right">
+                <div class="connection-indicator" id="connectionIndicator" title="Connection Status">
+                    <span class="connection-indicator__dot" id="headerConnectionDot"></span>
+                    <span class="connection-indicator__text" id="headerConnectionText">Disconnected</span>
+                </div>
             </div>
         </header>
 
-        <!-- Dashboard Content -->
-        <div class="dashboard-content" id="dashboardContent">
+        <!-- Batch History Sidebar - 240px, collapsible to 48px -->
+        <aside class="batch-sidebar" id="batchSidebar">
+            <div class="batch-sidebar__header">
+                <span class="batch-sidebar__title">Batch Runs</span>
+                <button class="batch-sidebar__toggle" id="batchSidebarToggle" aria-label="Toggle sidebar">
+                    <span class="batch-sidebar__toggle-icon">&laquo;</span>
+                </button>
+            </div>
+
+            <div class="batch-sidebar__list" id="batchSidebarContent">
+                <!-- Batch items will be dynamically populated via JavaScript -->
+                <div class="batch-sidebar__loading">Loading batches...</div>
+            </div>
+
+            <div class="batch-sidebar__footer">
+                <button class="batch-sidebar__load-more" id="loadMoreBatches">Load More...</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="mainContent">
+            <!-- Legacy container wrapper for existing content -->
+            <div class="container">
+                <!-- Dashboard Content -->
+                <div class="dashboard-content" id="dashboardContent">
+                    <!-- Last Updated indicator (moved from old header) -->
+                    <div class="last-updated" style="margin-bottom: var(--space-4); justify-content: flex-end;">
+                        <span class="update-dot" id="updateDot"></span>
+                        <span id="lastUpdated">Loading...</span>
+                    </div>
             <!-- Summary Cards -->
             <div class="summary-cards">
                 <div class="card">
@@ -2245,8 +3529,22 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+                </div><!-- /.dashboard-content -->
+            </div><!-- /.container -->
+        </main><!-- /.main-content -->
+
+        <!-- Footer Status Bar - 32px height -->
+        <footer class="app-footer">
+            <div class="app-footer__left">
+                <div class="app-footer__status">
+                    <span>Sprint Runner Dashboard</span>
+                </div>
+            </div>
+            <div class="app-footer__right">
+                <span class="app-footer__timestamp" id="footerTimestamp">--</span>
+            </div>
+        </footer>
+    </div><!-- /.app-layout -->
 
     <script>
         // State management
@@ -2259,6 +3557,131 @@
             autoLoadWorks: false,
             lastDataHash: null
         };
+
+        // ============================================================
+        // Split Panel Layout - Sidebar Toggle (E2-S2)
+        // ============================================================
+
+        // Sidebar state
+        let sidebarState = {
+            collapsed: false,
+            mobileOpen: false
+        };
+
+        // Toggle sidebar collapsed state (desktop)
+        function toggleSidebar() {
+            const appLayout = document.getElementById('appLayout');
+            sidebarState.collapsed = !sidebarState.collapsed;
+
+            if (sidebarState.collapsed) {
+                appLayout.classList.add('sidebar-collapsed');
+            } else {
+                appLayout.classList.remove('sidebar-collapsed');
+            }
+
+            // Save to localStorage
+            localStorage.setItem('dashboard-sidebar-collapsed', sidebarState.collapsed);
+        }
+
+        // Toggle mobile sidebar (overlay mode)
+        function toggleMobileSidebar() {
+            const appLayout = document.getElementById('appLayout');
+            sidebarState.mobileOpen = !sidebarState.mobileOpen;
+
+            if (sidebarState.mobileOpen) {
+                appLayout.classList.add('sidebar-open');
+            } else {
+                appLayout.classList.remove('sidebar-open');
+            }
+        }
+
+        // Close mobile sidebar
+        function closeMobileSidebar() {
+            const appLayout = document.getElementById('appLayout');
+            sidebarState.mobileOpen = false;
+            appLayout.classList.remove('sidebar-open');
+        }
+
+        // Restore sidebar state on page load
+        function restoreSidebarState() {
+            const savedCollapsed = localStorage.getItem('dashboard-sidebar-collapsed');
+            if (savedCollapsed === 'true') {
+                sidebarState.collapsed = true;
+                const appLayout = document.getElementById('appLayout');
+                if (appLayout) {
+                    appLayout.classList.add('sidebar-collapsed');
+                }
+            }
+        }
+
+        // Initialize sidebar state on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            restoreSidebarState();
+
+            // Update footer timestamp
+            function updateFooterTimestamp() {
+                const footerTimestamp = document.getElementById('footerTimestamp');
+                if (footerTimestamp) {
+                    footerTimestamp.textContent = new Date().toLocaleTimeString();
+                }
+            }
+            updateFooterTimestamp();
+            setInterval(updateFooterTimestamp, 1000);
+
+            // Sync header controls with sprint run tab controls
+            const headerStartBtn = document.getElementById('headerStartBtn');
+            const headerStopBtn = document.getElementById('headerStopBtn');
+            const headerBatchSize = document.getElementById('headerBatchSize');
+            const headerRunAll = document.getElementById('headerRunAll');
+
+            // Connect header buttons to existing sprint controls
+            if (headerStartBtn) {
+                headerStartBtn.addEventListener('click', function() {
+                    const sprintStartBtn = document.getElementById('sprintStartBtn');
+                    if (sprintStartBtn) sprintStartBtn.click();
+                });
+            }
+
+            if (headerStopBtn) {
+                headerStopBtn.addEventListener('click', function() {
+                    const sprintStopBtn = document.getElementById('sprintStopBtn');
+                    if (sprintStopBtn) sprintStopBtn.click();
+                });
+            }
+
+            // Sync batch size input
+            if (headerBatchSize) {
+                const sprintBatchSize = document.getElementById('batchSizeInput');
+                if (sprintBatchSize) {
+                    // Sync initial value
+                    headerBatchSize.value = sprintBatchSize.value;
+
+                    headerBatchSize.addEventListener('change', function() {
+                        sprintBatchSize.value = this.value;
+                    });
+
+                    sprintBatchSize.addEventListener('change', function() {
+                        headerBatchSize.value = this.value;
+                    });
+                }
+            }
+
+            // Sync run all checkbox
+            if (headerRunAll) {
+                const sprintRunAll = document.getElementById('runAllCheckbox');
+                if (sprintRunAll) {
+                    headerRunAll.checked = sprintRunAll.checked;
+
+                    headerRunAll.addEventListener('change', function() {
+                        sprintRunAll.checked = this.checked;
+                    });
+
+                    sprintRunAll.addEventListener('change', function() {
+                        headerRunAll.checked = this.checked;
+                    });
+                }
+            }
+        });
 
         // ============================================================
         // UI State Persistence (Story 5-SR-7)
@@ -4620,7 +6043,15 @@
             activeStories: [],
             currentOperation: null,
             autoScroll: true,
-            userScrolled: false
+            userScrolled: false,
+            // Epic 6: Enhanced real-time state
+            connectionStatus: 'disconnected',  // connected, connecting, reconnecting, disconnected
+            eventQueue: [],                    // Queue events during reconnection
+            activeOperations: new Map(),       // Map of task_id -> operation data
+            runningTimers: new Map(),          // Map of task_id -> timer interval ID
+            lastEventTimestamp: 0,             // For state reconciliation
+            storyExpansionState: new Map(),    // Track expanded stories for auto-expand
+            pendingAnimations: new Set()       // Track elements with pending animations
         };
 
         // Toast Notifications (AC: #6)
@@ -4658,10 +6089,16 @@
             }
         }
 
-        // WebSocket Connection (AC: #5)
+        // ============================================================
+        // WebSocket Connection Management (Epic 6 - Section 7)
+        // ============================================================
+
         function connectSprintWebSocket() {
             const wsUrl = `ws://${window.location.host}/ws`;
-            updateWsConnectionStatus('connecting');
+
+            // Determine status based on reconnect attempts
+            const isReconnecting = sprintRunState.wsReconnectAttempts > 0;
+            updateWsConnectionStatus(isReconnecting ? 'reconnecting' : 'connecting');
 
             try {
                 sprintRunState.ws = new WebSocket(wsUrl);
@@ -4669,28 +6106,53 @@
                 sprintRunState.ws.onopen = () => {
                     console.log('WebSocket connected');
                     updateWsConnectionStatus('connected');
+
+                    const wasReconnecting = sprintRunState.wsReconnectAttempts > 0;
                     sprintRunState.wsReconnectAttempts = 0;
-                    addLogEntry({ type: 'system', message: 'Connected to server' }, 'system');
+
+                    if (wasReconnecting) {
+                        addLogEntry({ type: 'system', message: 'Reconnected to server' }, 'system');
+                        // Request full state for reconciliation
+                        requestStateReconciliation();
+                    } else {
+                        addLogEntry({ type: 'system', message: 'Connected to server' }, 'system');
+                    }
+
+                    // Process any queued events
+                    processEventQueue();
                 };
 
                 sprintRunState.ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
+
+                        // Track last event timestamp for reconciliation
+                        if (data.timestamp) {
+                            sprintRunState.lastEventTimestamp = Math.max(
+                                sprintRunState.lastEventTimestamp,
+                                data.timestamp
+                            );
+                        }
+
                         handleWebSocketEvent(data);
                     } catch (e) {
                         console.error('Failed to parse WebSocket message:', e);
                     }
                 };
 
-                sprintRunState.ws.onclose = () => {
-                    console.log('WebSocket disconnected');
+                sprintRunState.ws.onclose = (event) => {
+                    console.log('WebSocket disconnected', event.code, event.reason);
                     updateWsConnectionStatus('disconnected');
+
+                    // Stop all running timers on disconnect
+                    stopAllTimers();
+
                     scheduleWsReconnect();
                 };
 
                 sprintRunState.ws.onerror = (error) => {
                     console.error('WebSocket error:', error);
-                    updateWsConnectionStatus('disconnected');
+                    // Don't update status here - onclose will fire next
                 };
             } catch (e) {
                 console.error('Failed to create WebSocket:', e);
@@ -4702,8 +6164,13 @@
         function scheduleWsReconnect() {
             if (sprintRunState.wsReconnectTimer) return;
 
-            const delay = Math.min(3000 * Math.pow(2, sprintRunState.wsReconnectAttempts), 30000);
+            // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
+            const baseDelay = 1000;
+            const delay = Math.min(baseDelay * Math.pow(2, sprintRunState.wsReconnectAttempts), 30000);
             sprintRunState.wsReconnectAttempts++;
+
+            console.log(`Scheduling reconnect attempt ${sprintRunState.wsReconnectAttempts} in ${delay}ms`);
+            updateWsConnectionStatus('reconnecting');
 
             sprintRunState.wsReconnectTimer = setTimeout(() => {
                 sprintRunState.wsReconnectTimer = null;
@@ -4712,11 +6179,258 @@
         }
 
         function updateWsConnectionStatus(status) {
+            sprintRunState.connectionStatus = status;
+
             const dot = document.getElementById('wsConnectionDot');
             const text = document.getElementById('wsConnectionText');
+            const statusContainer = document.querySelector('.ws-connection-status');
+
+            if (!dot || !text) return;
 
             dot.className = 'ws-connection-dot ' + status;
-            text.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+
+            // Set appropriate text and tooltip
+            const statusConfig = {
+                connected: {
+                    text: 'Connected',
+                    tooltip: 'Connected to server'
+                },
+                connecting: {
+                    text: 'Connecting...',
+                    tooltip: 'Connecting to server...'
+                },
+                reconnecting: {
+                    text: `Reconnecting (${sprintRunState.wsReconnectAttempts})...`,
+                    tooltip: `Reconnecting to server (attempt ${sprintRunState.wsReconnectAttempts}). Click to retry now.`
+                },
+                disconnected: {
+                    text: 'Disconnected',
+                    tooltip: 'Disconnected from server. Click to retry.'
+                }
+            };
+
+            const config = statusConfig[status] || statusConfig.disconnected;
+            text.textContent = config.text;
+
+            if (statusContainer) {
+                statusContainer.title = config.tooltip;
+                // Make clickable when disconnected or reconnecting
+                statusContainer.style.cursor = (status === 'disconnected' || status === 'reconnecting')
+                    ? 'pointer'
+                    : 'default';
+            }
+        }
+
+        // Click handler for connection status (retry on click)
+        document.querySelector('.ws-connection-status')?.addEventListener('click', function() {
+            const status = sprintRunState.connectionStatus;
+            if (status === 'disconnected' || status === 'reconnecting') {
+                // Cancel any pending reconnect
+                if (sprintRunState.wsReconnectTimer) {
+                    clearTimeout(sprintRunState.wsReconnectTimer);
+                    sprintRunState.wsReconnectTimer = null;
+                }
+                // Reset attempts for immediate retry
+                sprintRunState.wsReconnectAttempts = 0;
+                connectSprintWebSocket();
+            }
+        });
+
+        // Process queued events after reconnection
+        function processEventQueue() {
+            if (sprintRunState.eventQueue.length === 0) return;
+
+            console.log(`Processing ${sprintRunState.eventQueue.length} queued events`);
+            const queue = [...sprintRunState.eventQueue];
+            sprintRunState.eventQueue = [];
+
+            queue.forEach(event => handleWebSocketEvent(event));
+        }
+
+        // Queue event during reconnection
+        function queueEvent(event) {
+            // Only queue if we're reconnecting and have a batch running
+            if (sprintRunState.connectionStatus === 'reconnecting' && sprintRunState.isRunning) {
+                sprintRunState.eventQueue.push(event);
+                // Limit queue size to prevent memory issues
+                if (sprintRunState.eventQueue.length > 100) {
+                    sprintRunState.eventQueue.shift();
+                }
+            }
+        }
+
+        // Request state reconciliation after reconnect
+        function requestStateReconciliation() {
+            if (sprintRunState.ws && sprintRunState.ws.readyState === WebSocket.OPEN) {
+                // Send ping to get fresh state
+                sprintRunState.ws.send(JSON.stringify({
+                    type: 'ping',
+                    last_timestamp: sprintRunState.lastEventTimestamp
+                }));
+            }
+        }
+
+        // ============================================================
+        // Animation System (Epic 4 - UI/UX Spec Section 3)
+        // ============================================================
+
+        /**
+         * Check if user prefers reduced motion
+         * @returns {boolean}
+         */
+        function prefersReducedMotion() {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+
+        /**
+         * Apply a one-shot animation class to an element
+         * Automatically removes the class after animation completes
+         * @param {HTMLElement} element - The element to animate
+         * @param {string} animationClass - The CSS animation class to apply
+         * @param {number} duration - Animation duration in ms (default: 600)
+         */
+        function triggerAnimation(element, animationClass, duration = 600) {
+            if (!element || prefersReducedMotion()) return;
+
+            // Track pending animations to prevent duplicates
+            const animKey = `${element.id || element.className}-${animationClass}`;
+            if (sprintRunState.pendingAnimations.has(animKey)) return;
+
+            sprintRunState.pendingAnimations.add(animKey);
+            element.classList.add(animationClass);
+
+            setTimeout(() => {
+                element.classList.remove(animationClass);
+                sprintRunState.pendingAnimations.delete(animKey);
+            }, duration);
+        }
+
+        /**
+         * Trigger completion flash animation (Section 3.4)
+         * @param {HTMLElement} element - Element that just completed
+         */
+        function triggerCompletionAnimation(element) {
+            triggerAnimation(element, 'just-completed', 600);
+        }
+
+        /**
+         * Trigger error shake animation (Section 3.5)
+         * @param {HTMLElement} element - Element with error
+         */
+        function triggerErrorAnimation(element) {
+            triggerAnimation(element, 'error-shake', 500);
+        }
+
+        /**
+         * Trigger new item slide animation (Section 3.1)
+         * @param {HTMLElement} element - New element entering
+         */
+        function triggerNewItemAnimation(element) {
+            triggerAnimation(element, 'new-item-slide', 300);
+        }
+
+        /**
+         * Trigger status change highlight animation
+         * @param {HTMLElement} element - Element with status change
+         */
+        function triggerStatusChangeAnimation(element) {
+            triggerAnimation(element, 'status-changed', 600);
+        }
+
+        /**
+         * Add running animation class to element (Section 3.2)
+         * @param {HTMLElement} element - Element in running state
+         */
+        function startRunningAnimation(element) {
+            if (!element || prefersReducedMotion()) return;
+            element.classList.add('operation-running');
+        }
+
+        /**
+         * Remove running animation class from element
+         * @param {HTMLElement} element - Element no longer running
+         */
+        function stopRunningAnimation(element) {
+            if (!element) return;
+            element.classList.remove('operation-running');
+        }
+
+        /**
+         * Add shimmer animation to progress bar (Section 3.3)
+         * @param {HTMLElement} progressBar - Progress bar element
+         */
+        function startProgressAnimation(progressBar) {
+            if (!progressBar || prefersReducedMotion()) return;
+            progressBar.classList.add('progress-active');
+        }
+
+        /**
+         * Remove shimmer animation from progress bar
+         * @param {HTMLElement} progressBar - Progress bar element
+         */
+        function stopProgressAnimation(progressBar) {
+            if (!progressBar) return;
+            progressBar.classList.remove('progress-active');
+        }
+
+        /**
+         * Expand/collapse an element with animation (Section 3.6)
+         * @param {HTMLElement} element - Element to expand/collapse
+         * @param {boolean} expand - true to expand, false to collapse
+         */
+        function toggleExpand(element, expand) {
+            if (!element) return;
+
+            if (expand) {
+                element.classList.remove('collapsed');
+                element.classList.add('expanded');
+            } else {
+                element.classList.remove('expanded');
+                element.classList.add('collapsed');
+            }
+
+            // Update chevron if present
+            const chevron = element.querySelector('.expand-chevron');
+            if (chevron) {
+                if (expand) {
+                    chevron.classList.add('rotated');
+                } else {
+                    chevron.classList.remove('rotated');
+                }
+            }
+        }
+
+        /**
+         * Apply new-entry animation to log entry
+         * @param {HTMLElement} entry - Log entry element
+         * @param {string} status - Status type (start, end, error, etc.)
+         */
+        function animateLogEntry(entry, status) {
+            if (!entry || prefersReducedMotion()) return;
+
+            entry.classList.add('new-entry');
+
+            // Remove animation class after completion to allow re-animation
+            setTimeout(() => {
+                entry.classList.remove('new-entry');
+            }, 300);
+        }
+
+        /**
+         * Update story badge with animation
+         * @param {string} storyKey - Story identifier
+         * @param {string} newStatus - New status value
+         */
+        function animateStoryStatusChange(storyKey, newStatus) {
+            // Find all badge elements for this story
+            const escapedKey = CSS.escape(storyKey);
+            const badges = document.querySelectorAll(`[data-story-key="${escapedKey}"] .badge, .badge[data-story="${escapedKey}"]`);
+
+            badges.forEach(badge => {
+                if (!prefersReducedMotion()) {
+                    triggerStatusChangeAnimation(badge);
+                }
+            });
         }
 
         // WebSocket Event Handling (AC: #5)
@@ -4725,12 +6439,17 @@
 
             switch (type) {
                 case 'init':
-                    // Initial state from server
+                    // Initial state hydration from server (Epic 6)
                     if (payload.batch) {
                         handleBatchState(payload.batch);
                     }
                     if (payload.events) {
-                        payload.events.forEach(e => addLogEntry(e, getEventStatus(e)));
+                        // Sort events by timestamp for proper ordering
+                        const sortedEvents = [...payload.events].sort((a, b) =>
+                            (a.timestamp || 0) - (b.timestamp || 0));
+                        sortedEvents.forEach(e => addLogEntry(e, getEventStatus(e)));
+                        // Restore active operations from historical events
+                        restoreActiveOperationsFromEvents(sortedEvents);
                     }
                     break;
 
@@ -4740,21 +6459,45 @@
                     sprintRunState.currentBatchId = payload.batch_id;
                     sprintRunState.maxCycles = payload.max_cycles || 0;
                     sprintRunState.currentCycle = 0;
+                    // Epic 6: Clear stale state from previous batch
+                    sprintRunState.activeOperations.clear();
+                    stopAllTimers();
                     updateSprintUI();
                     showProgressSection(true);
                     addLogEntry({ type, payload, timestamp }, 'start');
                     updateTabIndicator(true);
+                    // Epic 6: Animate progress section entrance
+                    triggerNewItemAnimation(document.getElementById('sprintProgressSection'));
                     break;
 
                 case 'batch:end':
                     sprintRunState.isRunning = false;
                     sprintRunState.isStopping = false;
                     sprintRunState.currentOperation = null;
+                    // Epic 6: Stop all timers and clear active operations
+                    stopAllTimers();
+                    sprintRunState.activeOperations.clear();
+                    renderActiveOperationsDisplay();
                     updateSprintUI();
+                    // Epic 4: Stop progress animation and trigger completion
+                    const progressFill = document.getElementById('sprintProgressFill');
+                    if (progressFill) {
+                        stopProgressAnimation(progressFill);
+                        progressFill.classList.remove('progress-indeterminate');
+                    }
+                    // Trigger completion animation on progress section
+                    const progressSection = document.getElementById('sprintProgressSection');
+                    if (progressSection && payload.status === 'completed') {
+                        triggerCompletionAnimation(progressSection);
+                    }
                     addLogEntry({ type, payload, timestamp }, payload.status === 'completed' ? 'end' : 'system');
                     updateTabIndicator(false);
                     if (payload.status === 'completed') {
                         showToast(`Batch completed: ${payload.cycles_completed} cycles`, 'success', 'Sprint Complete');
+                    } else if (payload.status === 'stopped') {
+                        showToast('Batch stopped by user', 'warning', 'Sprint Stopped');
+                    } else if (payload.status === 'error') {
+                        showToast('Batch ended with errors', 'error', 'Sprint Error');
                     }
                     break;
 
@@ -4774,20 +6517,59 @@
                 case 'command:start':
                     sprintRunState.currentOperation = `${payload.story_key} ${payload.command} (${payload.task_id})`;
                     updateCurrentOperation();
+                    // Epic 6: Track active operations and start timer
+                    sprintRunState.activeOperations.set(payload.task_id, {
+                        storyKey: payload.story_key,
+                        command: payload.command,
+                        taskId: payload.task_id,
+                        message: '',
+                        startTime: timestamp || Date.now()
+                    });
+                    startCommandTimer(payload.task_id, timestamp || Date.now());
+                    renderActiveOperationsDisplay();
+                    autoExpandStoryRow(payload.story_key);
                     addLogEntry({ type, payload, timestamp }, 'start');
                     break;
 
                 case 'command:progress':
+                    // Epic 6: Update active operation message
+                    const progOp = sprintRunState.activeOperations.get(payload.task_id);
+                    if (progOp) {
+                        progOp.message = payload.message || '';
+                        updateActiveOperationMessage(payload.task_id, payload.message);
+                    }
                     addLogEntry({ type, payload, timestamp }, 'progress');
                     break;
 
                 case 'command:end':
+                    // Epic 6: Stop timer and animate completion
+                    stopCommandTimer(payload.task_id);
+                    const opElement = document.querySelector(`[data-operation-task="${CSS.escape(payload.task_id)}"]`);
+                    if (opElement) {
+                        if (payload.status === 'error' || payload.status === 'failed') {
+                            triggerErrorAnimation(opElement);
+                        } else {
+                            triggerCompletionAnimation(opElement);
+                        }
+                        setTimeout(() => {
+                            sprintRunState.activeOperations.delete(payload.task_id);
+                            renderActiveOperationsDisplay();
+                        }, 600);
+                    } else {
+                        sprintRunState.activeOperations.delete(payload.task_id);
+                        renderActiveOperationsDisplay();
+                    }
                     if (sprintRunState.currentOperation &&
                         sprintRunState.currentOperation.includes(payload.story_key)) {
                         sprintRunState.currentOperation = null;
                         updateCurrentOperation();
                     }
-                    addLogEntry({ type, payload, timestamp }, payload.status === 'error' ? 'error' : 'end');
+                    // Trigger error animation if command failed
+                    if (payload.status === 'error' || payload.status === 'failed') {
+                        const opCard = document.getElementById('sprintCurrentOp')?.closest('.card, .active-operation-card');
+                        if (opCard) triggerErrorAnimation(opCard);
+                    }
+                    addLogEntry({ type, payload, timestamp }, (payload.status === 'error' || payload.status === 'failed') ? 'error' : 'end');
                     break;
 
                 case 'story:status':
@@ -4798,12 +6580,25 @@
                 case 'error':
                     addLogEntry({ type, payload, timestamp }, 'error');
                     showToast(payload.message, 'error', 'Error');
+                    // Epic 4: Trigger error animation on error events
+                    const errorCard = document.getElementById('sprintCurrentOp')?.closest('.card, .active-operation-card');
+                    if (errorCard) triggerErrorAnimation(errorCard);
                     break;
 
                 case 'context:create':
                 case 'context:refresh':
                 case 'context:complete':
                     addLogEntry({ type, payload, timestamp }, 'system');
+                    break;
+
+                case 'batch:warning':
+                    // Epic 6: Handle batch warning events
+                    addLogEntry({ type, payload, timestamp }, 'warning');
+                    showToast(payload.message || 'Warning occurred', 'warning', 'Warning');
+                    break;
+
+                case 'pong':
+                    // Server acknowledged ping - no action needed
                     break;
 
                 default:
@@ -4838,6 +6633,136 @@
                 updateSprintUI();
                 showProgressSection(true);
                 updateTabIndicator(true);
+            }
+        }
+
+        // ============================================================
+        // Timer System (Epic 6 - Section 7.3)
+        // ============================================================
+
+        function startCommandTimer(taskId, startTime) {
+            stopCommandTimer(taskId);
+            const startTs = typeof startTime === 'number' ? startTime : Date.now();
+            const updateTimer = () => {
+                const elapsed = Math.floor((Date.now() - startTs) / 1000);
+                updateTimerDisplay(taskId, formatTimerDuration(elapsed));
+            };
+            updateTimer();
+            const intervalId = setInterval(updateTimer, 1000);
+            sprintRunState.runningTimers.set(taskId, intervalId);
+        }
+
+        function stopCommandTimer(taskId) {
+            const intervalId = sprintRunState.runningTimers.get(taskId);
+            if (intervalId) {
+                clearInterval(intervalId);
+                sprintRunState.runningTimers.delete(taskId);
+            }
+        }
+
+        function stopAllTimers() {
+            sprintRunState.runningTimers.forEach(intervalId => clearInterval(intervalId));
+            sprintRunState.runningTimers.clear();
+        }
+
+        function formatTimerDuration(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimerDisplay(taskId, timeText) {
+            const timerEl = document.querySelector(`[data-timer-task="${CSS.escape(taskId)}"]`);
+            if (timerEl) timerEl.textContent = timeText;
+        }
+
+        // ============================================================
+        // Active Operations Display (Epic 6 - Section 2.3)
+        // ============================================================
+
+        function renderActiveOperationsDisplay() {
+            const container = document.getElementById('sprintActiveStories');
+            if (!container) return;
+            if (sprintRunState.activeOperations.size === 0) {
+                container.innerHTML = sprintRunState.activeStories.length > 0
+                    ? sprintRunState.activeStories.map(key =>
+                        `<span class="sprint-story-badge in-progress" data-story="${escapeHtml(key)}">${escapeHtml(key)}</span>`).join('')
+                    : '';
+                return;
+            }
+            let html = '';
+            sprintRunState.activeOperations.forEach((op, taskId) => {
+                const cmdColors = getCommandTypeColors(op.command);
+                html += `<div class="active-operation-card operation-running" data-operation-task="${escapeHtml(taskId)}">
+                    <div class="active-operation-header">
+                        <span class="active-operation-story">${escapeHtml(op.storyKey)}</span>
+                        <span class="active-operation-timer" data-timer-task="${escapeHtml(taskId)}">0:00</span>
+                    </div>
+                    <span class="active-operation-command" style="background: ${cmdColors.bg}; color: ${cmdColors.text};">${escapeHtml(op.command)}</span>
+                    <div class="active-operation-progress"><div class="active-operation-progress-fill progress-active"></div></div>
+                    <div class="active-operation-message">${escapeHtml(op.message || 'Starting...')}</div>
+                </div>`;
+            });
+            container.innerHTML = html;
+            container.querySelectorAll('.active-operation-card').forEach(card => triggerNewItemAnimation(card));
+        }
+
+        function updateActiveOperationMessage(taskId, message) {
+            const msgEl = document.querySelector(`[data-operation-task="${CSS.escape(taskId)}"] .active-operation-message`);
+            if (msgEl) msgEl.textContent = message || '';
+        }
+
+        function getCommandTypeColors(command) {
+            const colors = {
+                'sprint-create-story': { bg: '#dbeafe', text: '#1e40af' },
+                'create-story': { bg: '#dbeafe', text: '#1e40af' },
+                'sprint-story-review': { bg: '#fef3c7', text: '#92400e' },
+                'story-review': { bg: '#fef3c7', text: '#92400e' },
+                'sprint-create-tech-spec': { bg: '#e0e7ff', text: '#3730a3' },
+                'create-tech-spec': { bg: '#e0e7ff', text: '#3730a3' },
+                'sprint-tech-spec-review': { bg: '#ede9fe', text: '#5b21b6' },
+                'tech-spec-review': { bg: '#ede9fe', text: '#5b21b6' },
+                'sprint-dev-story': { bg: '#dcfce7', text: '#166534' },
+                'dev-story': { bg: '#dcfce7', text: '#166534' },
+                'sprint-code-review': { bg: '#f3e8ff', text: '#6b21a8' },
+                'code-review': { bg: '#f3e8ff', text: '#6b21a8' },
+                'sprint-commit': { bg: '#ccfbf1', text: '#115e59' },
+                'commit': { bg: '#ccfbf1', text: '#115e59' }
+            };
+            return colors[command] || { bg: '#e8e7e5', text: '#787774' };
+        }
+
+        // ============================================================
+        // State Restoration (Epic 6 - Section 7.4)
+        // ============================================================
+
+        function restoreActiveOperationsFromEvents(events) {
+            const activeOps = new Map();
+            events.forEach(event => {
+                const type = event.type;
+                const payload = event.payload || event;
+                if (type === 'command:start') {
+                    activeOps.set(payload.task_id, {
+                        storyKey: payload.story_key, command: payload.command,
+                        taskId: payload.task_id, message: '', startTime: event.timestamp || Date.now()
+                    });
+                } else if (type === 'command:end') {
+                    activeOps.delete(payload.task_id);
+                } else if (type === 'command:progress' && activeOps.has(payload.task_id)) {
+                    activeOps.get(payload.task_id).message = payload.message || '';
+                }
+            });
+            sprintRunState.activeOperations = activeOps;
+            activeOps.forEach((op, taskId) => startCommandTimer(taskId, op.startTime));
+            renderActiveOperationsDisplay();
+        }
+
+        function autoExpandStoryRow(storyKey) {
+            sprintRunState.storyExpansionState.set(storyKey, true);
+            const storyRow = document.querySelector(`[data-story-id="${CSS.escape(storyKey)}"]`);
+            if (storyRow && !storyRow.classList.contains('expanded')) {
+                const expandIcon = storyRow.querySelector('.timeline-row-expand');
+                if (expandIcon) expandIcon.click();
             }
         }
 
@@ -4889,6 +6814,9 @@
 
             // Insert at top (newest first)
             entries.insertBefore(entry, entries.firstChild);
+
+            // Trigger animation for new log entry (Epic 4 - Section 3.1)
+            animateLogEntry(entry, status);
 
             // Auto-scroll handling
             if (sprintRunState.autoScroll && !sprintRunState.userScrolled) {
@@ -4959,7 +6887,20 @@
 
         function updateCurrentOperation() {
             const opDisplay = document.getElementById('sprintCurrentOp');
+            const opCard = opDisplay?.closest('.card, .active-operation-card');
+
             opDisplay.textContent = sprintRunState.currentOperation || '-';
+
+            // Epic 4: Trigger running animation when operation is active
+            if (opCard) {
+                if (sprintRunState.currentOperation) {
+                    startRunningAnimation(opCard);
+                } else {
+                    stopRunningAnimation(opCard);
+                    // Trigger completion animation when operation ends
+                    triggerCompletionAnimation(opCard);
+                }
+            }
         }
 
         function showProgressSection(show) {
@@ -4971,11 +6912,29 @@
             const fill = document.getElementById('sprintProgressFill');
             const stats = document.getElementById('sprintProgressStats');
 
-            const progress = sprintRunState.maxCycles > 0
-                ? (sprintRunState.currentCycle / sprintRunState.maxCycles) * 100
-                : 0;
+            // Epic 4: Handle unlimited mode with indeterminate progress
+            const isUnlimited = sprintRunState.maxCycles <= 0;
 
-            fill.style.width = `${Math.min(progress, 100)}%`;
+            if (isUnlimited) {
+                // Use indeterminate progress animation for unlimited mode
+                fill.style.width = '100%';
+                if (!fill.classList.contains('progress-indeterminate')) {
+                    fill.classList.remove('progress-active');
+                    fill.classList.add('progress-indeterminate');
+                }
+            } else {
+                const progress = (sprintRunState.currentCycle / sprintRunState.maxCycles) * 100;
+                fill.style.width = `${Math.min(progress, 100)}%`;
+                fill.classList.remove('progress-indeterminate');
+
+                // Add shimmer animation when running
+                if (sprintRunState.isRunning && !fill.classList.contains('progress-active')) {
+                    startProgressAnimation(fill);
+                } else if (!sprintRunState.isRunning) {
+                    stopProgressAnimation(fill);
+                }
+            }
+
             stats.textContent = sprintRunState.maxCycles > 0
                 ? `${sprintRunState.currentCycle}/${sprintRunState.maxCycles} cycles`
                 : `${sprintRunState.currentCycle} cycles`;
@@ -4989,9 +6948,13 @@
         }
 
         function updateStoryBadge(storyKey, status) {
-            const badge = document.querySelector(`.sprint-story-badge[data-story="${storyKey}"]`);
+            // Use CSS.escape for safe selector (Epic 6 - Fix 1.3)
+            const escapedKey = CSS.escape(storyKey);
+            const badge = document.querySelector(`.sprint-story-badge[data-story="${escapedKey}"]`);
             if (badge) {
                 badge.className = `sprint-story-badge ${status === 'done' ? 'done' : 'in-progress'}`;
+                // Trigger status change animation (Epic 4 - Status transitions)
+                triggerStatusChangeAnimation(badge);
             }
         }
 
@@ -5110,6 +7073,473 @@
 
         // Initialize when DOM is ready
         initSprintRunTab();
+
+        // ============================================================
+        // COMPONENT SYSTEM (Epic 3)
+        // Reusable UI component factory functions
+        // ============================================================
+
+        /** Create a Batch Card for history sidebar */
+        function createBatchCard(batch, isSelected = false, isCurrent = false) {
+            const statusClass = batch.status || 'completed';
+            const duration = batch.duration_seconds ? formatDuration(batch.duration_seconds) : (batch.status === 'running' ? 'running...' : '-');
+            let classes = 'batch-card';
+            if (isCurrent) classes += ' batch-card--current';
+            if (isSelected) classes += ' batch-card--selected';
+            return `<div class="${classes}" data-batch-id="${batch.id}"><div class="batch-card__header"><span class="batch-card__status-icon batch-card__status-icon--${statusClass}"></span><span class="batch-card__id">Batch #${escapeHtml(batch.id)}</span></div><div class="batch-card__label">${escapeHtml(batch.status)}</div><div class="batch-card__stats">${batch.cycles_completed || 0}/${batch.max_cycles || 0} cycles</div><div class="batch-card__duration">${escapeHtml(duration)}</div></div>`;
+        }
+
+        /** Create a Story Card (expandable) */
+        function createStoryCard(story, isExpanded = false) {
+            const storyKey = story.storyId || story.id || '';
+            const duration = story.duration || story.totalDuration || '';
+            const commands = story.commands || story.steps || [];
+            const expandedClass = isExpanded ? 'story-card--expanded' : '';
+            const commandsHtml = commands.map(cmd => createCommandGroup(cmd)).join('');
+            return `<div class="story-card ${expandedClass}" data-story-key="${escapeHtml(storyKey)}"><div class="story-card__header" onclick="toggleStoryCard('${escapeJsString(storyKey)}')"><span class="story-card__chevron">&#9654;</span><span class="story-card__key">${escapeHtml(storyKey)}</span><span class="story-card__title">${escapeHtml(story.name || '')}</span>${createStatusBadge(story.status || 'pending')}<span class="story-card__duration">${escapeHtml(duration)}</span></div><div class="story-card__content"><div class="story-card__commands">${commandsHtml}</div></div></div>`;
+        }
+
+        /** Toggle story card expansion */
+        function toggleStoryCard(storyKey) {
+            const card = document.querySelector(`.story-card[data-story-key="${CSS.escape(storyKey)}"]`);
+            if (card) { card.classList.toggle('story-card--expanded'); saveUIState(); }
+        }
+
+        /** Create a Command Group (expandable with tasks) */
+        function createCommandGroup(cmd, isExpanded = true) {
+            const command = cmd.command || cmd.stepName || '';
+            const duration = cmd.totalDuration || cmd.duration || '';
+            const tasks = cmd.tasks || [];
+            const expandedClass = isExpanded ? 'command-group-v2--expanded' : '';
+            const tasksHtml = tasks.map(task => createTaskRow(task)).join('');
+            if (tasks.length <= 1) {
+                return `<div class="command-group-v2 ${expandedClass}"><div class="command-group-v2__header">${createCommandBadge(command)}<span class="command-group-v2__duration">${escapeHtml(duration)}</span></div></div>`;
+            }
+            return `<div class="command-group-v2 ${expandedClass}" data-command="${escapeHtml(command)}"><div class="command-group-v2__header" onclick="toggleCommandGroup(this)"><span class="command-group-v2__chevron">&#9654;</span>${createCommandBadge(command)}<span class="command-group-v2__duration">${escapeHtml(duration)}</span></div><div class="command-group-v2__tasks">${tasksHtml}</div></div>`;
+        }
+
+        /** Toggle command group expansion */
+        function toggleCommandGroup(headerEl) {
+            const group = headerEl.closest('.command-group-v2');
+            if (group) group.classList.toggle('command-group-v2--expanded');
+        }
+
+        /** Create a Task Row */
+        function createTaskRow(task) {
+            const taskId = task.taskId || task.id || '';
+            const duration = task.duration || '';
+            const message = task.message || '';
+            const status = task.status || 'pending';
+            return `<div class="task-row-v2" data-task-id="${escapeHtml(taskId)}"><span class="task-row-v2__name">${escapeHtml(taskId)}</span>${createStatusBadge(status)}<span class="task-row-v2__duration">${escapeHtml(duration)}</span>${message ? `<span class="task-row-v2__message" title="${escapeHtml(message)}">${escapeHtml(message)}</span>` : ''}</div>`;
+        }
+
+        /** Create a Status Badge */
+        function createStatusBadge(status) {
+            const normalizedStatus = normalizeStatusForClass(status);
+            const displayStatus = status.replace(/-/g, ' ');
+            return `<span class="status-badge-v2 status-badge-v2--${normalizedStatus}"><span class="status-badge-v2__icon"></span>${escapeHtml(displayStatus)}</span>`;
+        }
+
+        /** Create a Command Badge */
+        function createCommandBadge(command, solid = false) {
+            const commandType = getCommandType(command);
+            const solidClass = solid ? 'command-badge--solid' : '';
+            return `<span class="command-badge command-badge--${commandType} ${solidClass}">${escapeHtml(command)}</span>`;
+        }
+
+        /** Get command type for styling */
+        function getCommandType(command) {
+            if (!command) return 'default';
+            const baseCommand = command.split(' ')[0].split('#')[0].trim().toLowerCase();
+            const knownCommands = ['create-story', 'story-review', 'create-tech-spec', 'tech-spec-review', 'dev-story', 'code-review', 'commit'];
+            return knownCommands.includes(baseCommand) ? baseCommand : 'default';
+        }
+
+        /** Create a Progress Bar */
+        function createProgressBar(progress, options = {}) {
+            const { variant = 'success', size = 'normal', active = false, unlimited = false } = options;
+            let containerClasses = 'progress-bar-v2';
+            if (size === 'thin') containerClasses += ' progress-bar-v2--thin';
+            if (size === 'thick') containerClasses += ' progress-bar-v2--thick';
+            if (active) containerClasses += ' progress-bar-v2--active';
+            if (unlimited) containerClasses += ' progress-bar-v2--unlimited';
+            const fillClass = `progress-bar-v2__fill progress-bar-v2__fill--${variant}`;
+            const width = unlimited ? 30 : Math.min(100, Math.max(0, progress));
+            return `<div class="${containerClasses}"><div class="${fillClass}" style="width: ${width}%"></div></div>`;
+        }
+
+        /** Create a Control Button */
+        function createControlButton(type, label, options = {}) {
+            const { disabled = false, icon = '', onclick = '' } = options;
+            const iconHtml = icon ? `<span class="control-btn__icon">${icon}</span>` : '';
+            const disabledAttr = disabled ? 'disabled' : '';
+            const onclickAttr = onclick ? `onclick="${escapeHtml(onclick)}"` : '';
+            return `<button class="control-btn control-btn--${type}" ${disabledAttr} ${onclickAttr}>${iconHtml}${escapeHtml(label)}</button>`;
+        }
+
+        /** Create an Operation Card */
+        function createOperationCard(operation) {
+            const storyKey = operation.storyKey || operation.storyId || '';
+            const command = operation.command || '';
+            const message = operation.message || '';
+            const elapsedSeconds = operation.elapsedSeconds || 0;
+            const elapsedStr = formatDuration(elapsedSeconds);
+            return `<div class="operation-card operation-card--running" data-story-key="${escapeHtml(storyKey)}"><div class="operation-card__header"><span class="operation-card__story-key">${escapeHtml(storyKey)}</span>${createCommandBadge(command, true)}<span class="operation-card__timer">${escapeHtml(elapsedStr)}</span></div><div class="operation-card__progress"><div class="operation-card__progress-bar"><div class="operation-card__progress-fill"></div></div></div>${message ? `<div class="operation-card__message">${escapeHtml(message)}</div>` : ''}</div>`;
+        }
+
+        /** Create a Connection Indicator */
+        function createConnectionIndicator(status, text) {
+            return `<div class="connection-indicator connection-indicator--${status}"><span class="connection-indicator__icon"></span><span class="connection-indicator__text">${escapeHtml(text)}</span></div>`;
+        }
+
+        /** Update connection indicator in the UI */
+        function updateConnectionIndicator(status, text) {
+            const indicator = document.getElementById('connectionIndicator');
+            if (indicator) {
+                indicator.className = `connection-indicator connection-indicator--${status}`;
+                const textEl = indicator.querySelector('.connection-indicator__text');
+                if (textEl) textEl.textContent = text;
+            }
+        }
+
+        /** Animation helpers */
+        function animateElement(element, animationClass, duration = 500) {
+            const el = typeof element === 'string' ? document.querySelector(element) : element;
+            if (!el) return;
+            el.classList.add(animationClass);
+            setTimeout(() => el.classList.remove(animationClass), duration);
+        }
+        function flashSuccess(element) { animateElement(element, 'just-completed', 800); }
+        function shakeError(element) { animateElement(element, 'error-shake', 500); }
+        function slideInNew(element) { animateElement(element, 'new-item-slide', 300); }
+
+        // ============================================================
+        // BATCH HISTORY SIDEBAR (Epic 5)
+        // ============================================================
+
+        const batchHistoryState = {
+            batches: [],
+            selectedBatchId: null,
+            currentBatchId: null,
+            isLoading: false,
+            hasMore: true,
+            offset: 0,
+            limit: 20,
+            sidebarCollapsed: false,
+            viewingPastBatch: false
+        };
+
+        // Format batch time
+        function formatBatchTime(timestamp) {
+            if (!timestamp) return '-';
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Format batch duration
+        function formatBatchDuration(seconds) {
+            if (!seconds || seconds <= 0) return '-';
+            if (seconds < 60) return `${Math.round(seconds)}s`;
+            if (seconds < 3600) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.round(seconds % 60);
+                return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+            }
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+        }
+
+        // Toggle sidebar collapse
+        function toggleBatchSidebar() {
+            const sidebar = document.getElementById('batchSidebar');
+            if (!sidebar) return;
+            batchHistoryState.sidebarCollapsed = !batchHistoryState.sidebarCollapsed;
+            sidebar.classList.toggle('collapsed', batchHistoryState.sidebarCollapsed);
+            localStorage.setItem('batch-sidebar-collapsed', batchHistoryState.sidebarCollapsed);
+        }
+
+        // Render batch list
+        function renderBatchList() {
+            const container = document.getElementById('batchSidebarContent');
+            if (!container) return;
+
+            if (batchHistoryState.isLoading && batchHistoryState.batches.length === 0) {
+                container.innerHTML = '<div class="batch-sidebar__loading">Loading batches...</div>';
+                return;
+            }
+
+            if (batchHistoryState.batches.length === 0) {
+                container.innerHTML = '<div class="batch-sidebar__empty">No batch runs yet</div>';
+                return;
+            }
+
+            let html = '';
+            batchHistoryState.batches.forEach((batch, idx) => {
+                const isCurrent = batch.status === 'running';
+                const isSelected = batch.id === batchHistoryState.selectedBatchId;
+                const statusClass = batch.status || 'completed';
+
+                let classes = 'batch-sidebar__item';
+                if (isCurrent) classes += ' batch-sidebar__item--current';
+                if (isSelected) classes += ' batch-sidebar__item--selected';
+
+                const duration = batch.duration_seconds
+                    ? formatBatchDuration(batch.duration_seconds)
+                    : (isCurrent ? 'running...' : '-');
+
+                html += `
+                    <div class="${classes}" data-batch-id="${batch.id}" onclick="selectBatch(${batch.id})">
+                        <div class="batch-sidebar__item-header">
+                            <span class="batch-sidebar__status-dot batch-sidebar__status-dot--${statusClass}"></span>
+                            <span class="batch-sidebar__batch-id">Batch #${batch.id}</span>
+                            <span class="batch-sidebar__status-label">${batch.status}</span>
+                        </div>
+                        <div class="batch-sidebar__stats">
+                            ${batch.cycles_completed}/${batch.max_cycles} cycles, ${batch.story_count || 0} stories
+                        </div>
+                        <div class="batch-sidebar__duration">${duration}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Update load more button
+            const loadMoreBtn = document.getElementById('loadMoreBatches');
+            if (loadMoreBtn) {
+                loadMoreBtn.disabled = !batchHistoryState.hasMore || batchHistoryState.isLoading;
+                loadMoreBtn.textContent = batchHistoryState.isLoading ? 'Loading...' : 'Load More...';
+            }
+        }
+
+        // Fetch batch list from API
+        async function fetchBatches(append = false) {
+            if (batchHistoryState.isLoading) return;
+
+            batchHistoryState.isLoading = true;
+            if (!append) {
+                batchHistoryState.offset = 0;
+                renderBatchList();
+            }
+
+            try {
+                const url = `/api/batches?limit=${batchHistoryState.limit}&offset=${batchHistoryState.offset}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to fetch batches');
+
+                const data = await response.json();
+
+                if (append) {
+                    batchHistoryState.batches = [...batchHistoryState.batches, ...data.batches];
+                } else {
+                    batchHistoryState.batches = data.batches;
+                }
+
+                batchHistoryState.hasMore = batchHistoryState.batches.length < data.total;
+                batchHistoryState.offset = batchHistoryState.batches.length;
+
+                // Track current running batch
+                const runningBatch = batchHistoryState.batches.find(b => b.status === 'running');
+                if (runningBatch) {
+                    batchHistoryState.currentBatchId = runningBatch.id;
+                }
+
+                renderBatchList();
+            } catch (e) {
+                console.error('Failed to fetch batches:', e);
+                if (!append) {
+                    const container = document.getElementById('batchSidebarContent');
+                    if (container) {
+                        container.innerHTML = '<div class="batch-sidebar__empty">Failed to load batches</div>';
+                    }
+                }
+            } finally {
+                batchHistoryState.isLoading = false;
+            }
+        }
+
+        // Load more batches
+        function loadMoreBatches() {
+            if (batchHistoryState.hasMore && !batchHistoryState.isLoading) {
+                fetchBatches(true);
+            }
+        }
+
+        // Select a batch to view
+        async function selectBatch(batchId) {
+            // If selecting current running batch, show live view
+            if (batchId === batchHistoryState.currentBatchId) {
+                returnToLiveView();
+                return;
+            }
+
+            batchHistoryState.selectedBatchId = batchId;
+            batchHistoryState.viewingPastBatch = true;
+
+            // Update sidebar selection
+            document.querySelectorAll('.batch-sidebar__item').forEach(el => {
+                el.classList.toggle('batch-sidebar__item--selected',
+                    parseInt(el.dataset.batchId) === batchId);
+            });
+
+            // Fetch and display batch details
+            try {
+                const response = await fetch(`/api/batches/${batchId}`);
+                if (!response.ok) throw new Error('Failed to fetch batch');
+
+                const data = await response.json();
+                renderPastBatchView(data);
+            } catch (e) {
+                console.error('Failed to fetch batch details:', e);
+                showToast('Failed to load batch details', 'error');
+            }
+        }
+
+        // Render past batch view
+        function renderPastBatchView(data) {
+            const { batch, stories, stats } = data;
+
+            // Create past batch view content
+            const pastBatchHtml = `
+                <div class="past-batch-header">
+                    <button class="past-batch-header__back" onclick="returnToLiveView()">
+                        &larr; Back to Live
+                    </button>
+                    <div class="past-batch-header__info">
+                        <div class="past-batch-header__title">Batch #${batch.id}</div>
+                        <div class="past-batch-header__meta">
+                            ${formatBatchTime(batch.started_at)} -
+                            ${batch.ended_at ? formatBatchTime(batch.ended_at) : 'In Progress'}
+                        </div>
+                    </div>
+                    <span class="past-batch-header__status past-batch-header__status--${batch.status}">
+                        ${batch.status}
+                    </span>
+                </div>
+
+                <div class="batch-summary-stats">
+                    <div class="batch-summary-stat">
+                        <div class="batch-summary-stat__value">${stats.story_count}</div>
+                        <div class="batch-summary-stat__label">Stories</div>
+                    </div>
+                    <div class="batch-summary-stat">
+                        <div class="batch-summary-stat__value">${stats.cycles_completed}/${stats.max_cycles}</div>
+                        <div class="batch-summary-stat__label">Cycles</div>
+                    </div>
+                    <div class="batch-summary-stat">
+                        <div class="batch-summary-stat__value">${stats.stories_done}/${stats.story_count}</div>
+                        <div class="batch-summary-stat__label">Completed</div>
+                    </div>
+                    <div class="batch-summary-stat">
+                        <div class="batch-summary-stat__value">${stats.duration_seconds ? formatBatchDuration(stats.duration_seconds) : '-'}</div>
+                        <div class="batch-summary-stat__label">Duration</div>
+                    </div>
+                </div>
+
+                <div class="past-batch-stories">
+                    <div class="past-batch-stories__header">Stories in this Batch</div>
+                    ${stories.map(story => `
+                        <div class="past-batch-story">
+                            <span class="past-batch-story__key">${escapeHtml(story.story_key)}</span>
+                            <span class="past-batch-story__epic">${escapeHtml(story.epic_id)}</span>
+                            <span class="past-batch-story__status">
+                                <span class="status-badge status-${story.status}">${story.status}</span>
+                            </span>
+                            <span class="past-batch-story__duration">
+                                ${story.duration_seconds ? formatBatchDuration(story.duration_seconds) : '-'}
+                            </span>
+                            <span class="past-batch-story__commands">${story.command_count} commands</span>
+                        </div>
+                    `).join('')}
+                    ${stories.length === 0 ? '<div class="past-batch-story">No stories in this batch</div>' : ''}
+                </div>
+            `;
+
+            // Insert past batch view, hide normal dashboard content
+            const dashboardContent = document.getElementById('dashboardContent');
+            if (!dashboardContent) return;
+
+            // Store original content if not already stored
+            if (!dashboardContent.dataset.originalHtml) {
+                dashboardContent.dataset.originalHtml = dashboardContent.innerHTML;
+            }
+
+            dashboardContent.innerHTML = pastBatchHtml;
+        }
+
+        // Return to live view
+        function returnToLiveView() {
+            batchHistoryState.selectedBatchId = null;
+            batchHistoryState.viewingPastBatch = false;
+
+            // Update sidebar selection
+            document.querySelectorAll('.batch-sidebar__item').forEach(el => {
+                el.classList.remove('batch-sidebar__item--selected');
+            });
+
+            // Restore original dashboard content
+            const dashboardContent = document.getElementById('dashboardContent');
+            if (dashboardContent && dashboardContent.dataset.originalHtml) {
+                dashboardContent.innerHTML = dashboardContent.dataset.originalHtml;
+                delete dashboardContent.dataset.originalHtml;
+
+                // Re-render current data
+                if (state.sprintData) {
+                    renderSummaryCards(state.sprintData);
+                    renderEpicBoard(state.sprintData);
+                    renderStoryTable(state.sprintData,
+                        document.getElementById('epicFilter')?.value || 'all',
+                        document.getElementById('statusFilter')?.value || 'all');
+                    restoreExpandedEpics();
+                }
+                if (state.orchestratorData) {
+                    renderActivityLog(state.orchestratorData);
+                    restoreExpandedActivities();
+                }
+                updateTabCounts(state.sprintData, state.orchestratorData);
+            }
+        }
+
+        // Initialize batch history
+        function initBatchHistory() {
+            // Restore sidebar collapsed state
+            const savedCollapsed = localStorage.getItem('batch-sidebar-collapsed');
+            if (savedCollapsed === 'true') {
+                batchHistoryState.sidebarCollapsed = true;
+                const sidebar = document.getElementById('batchSidebar');
+                if (sidebar) sidebar.classList.add('collapsed');
+            }
+
+            // Attach event listeners
+            const loadMoreBtn = document.getElementById('loadMoreBatches');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', loadMoreBatches);
+            }
+
+            const toggleBtn = document.querySelector('.batch-sidebar__toggle');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleBatchSidebar);
+            }
+
+            // Fetch initial batch list
+            fetchBatches();
+
+            // Refresh batch list periodically
+            setInterval(() => {
+                if (!batchHistoryState.viewingPastBatch) {
+                    fetchBatches();
+                }
+            }, 30000); // Every 30 seconds
+        }
+
+        // Initialize batch history
+        initBatchHistory();
     </script>
 </body>
 </html>

@@ -33,7 +33,7 @@
 
   <step n="1" goal="Initialize from injected context">
     <action>Log start of setup phase</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"setup","status":"start","message":"Loading implementation context for {{story_key}}"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"setup","status":"start","message":"Loading implementation context for {{story_key}}"}'</bash>
 
     <action>Parse injected story file content from file_injections</action>
     <action>Extract from injected story content:</action>
@@ -65,7 +65,7 @@
     </check>
 
     <action>Count total tasks and files referenced in injected content</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"setup","status":"end","message":"Context loaded (files:N)"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"setup","status":"end","message":"Context loaded (files:N)"}'</bash>
   </step>
 
   <step n="2" goal="Implement tasks using red-green-refactor cycle">
@@ -73,7 +73,7 @@
     <critical>Execute continuously without pausing until all tasks/subtasks are complete</critical>
 
     <action>Log start of implementation phase</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"implement","status":"start","message":"Implementing story code"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"implement","status":"start","message":"Implementing story code"}'</bash>
 
     <foreach task="in story Tasks/Subtasks">
       <action>Review the current task/subtask from the injected story file - this is your authoritative implementation guide</action>
@@ -104,12 +104,12 @@
     </halt_conditions>
 
     <action>Count files created/modified and lines of code</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"implement","status":"end","message":"Implementation complete (files:N, lines:N)"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"implement","status":"end","message":"Implementation complete (files:N, lines:N)"}'</bash>
   </step>
 
   <step n="3" goal="Author and run tests">
     <action>Log start of testing phase</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"tests","status":"start","message":"Writing and running tests"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"tests","status":"start","message":"Writing and running tests"}'</bash>
 
     <action>Create unit tests for business logic and core functionality</action>
     <action>Add integration tests for component interactions</action>
@@ -129,12 +129,12 @@
     </check>
 
     <action>Count passing tests</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"tests","status":"end","message":"Tests complete (tests:N passed)"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"tests","status":"end","message":"Tests complete (tests:N passed)"}'</bash>
   </step>
 
   <step n="4" goal="Run linting and code quality checks">
     <action>Log start of lint phase</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"lint","status":"start","message":"Running lint and format"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"lint","status":"start","message":"Running lint and format"}'</bash>
 
     <action>Run linting checks if configured in project</action>
     <action>Run code formatting if configured in project</action>
@@ -145,12 +145,12 @@
       <action>Document any manual fixes needed in Dev Agent Record</action>
     </check>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"lint","status":"end","message":"Lint passed"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"lint","status":"end","message":"Lint passed"}'</bash>
   </step>
 
   <step n="5" goal="Final validation and completion">
     <action>Log start of validation phase</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"validate","status":"start","message":"Running final validation"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"validate","status":"start","message":"Running final validation"}'</bash>
 
     <action>Verify ALL tasks and subtasks are marked [x]</action>
     <action>Run full regression suite one final time</action>
@@ -173,19 +173,19 @@
       <action>Update story Status to: "review"</action>
       <action>Save the story file to disk at {{story_file}}</action>
       <action>Add completion notes to Dev Agent Record</action>
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"validate","status":"end","message":"Validation passed"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"validate","status":"end","message":"Validation passed"}'</bash>
       <output>[DEV-STORY-COMPLETE: YES]</output>
     </check>
 
     <check if="validation fails">
       <action>Document failures in Dev Agent Record</action>
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"validate","status":"end","message":"Validation failed - see Dev Agent Record"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"validate","status":"end","message":"Validation failed - see Dev Agent Record"}'</bash>
       <output>[DEV-STORY-COMPLETE: NO]</output>
     </check>
 
     <check if="blocked by external dependency">
       <action>Document blocker in Dev Agent Record with details</action>
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"validate","status":"end","message":"Blocked - {{blocker_reason}}"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"validate","status":"end","message":"Blocked - {{blocker_reason}}"}'</bash>
       <output>[DEV-STORY-BLOCKED: YES]</output>
     </check>
   </step>
@@ -221,7 +221,7 @@
     <command_name>dev-story</command_name>
     <task_ids>setup, implement, tests, lint, validate</task_ids>
     <format>
-      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
+      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-dev-story","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
     </format>
     <message_conventions>
       <start>Describe what the task is about to do</start>

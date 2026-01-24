@@ -31,6 +31,16 @@ STORY_FIELDS = {'batch_id', 'story_key', 'epic_id', 'status', 'started_at', 'end
 COMMAND_FIELDS = {'command', 'task_id', 'started_at', 'ended_at', 'status', 'output_summary'}
 BACKGROUND_TASK_FIELDS = {'task_type', 'spawned_at', 'completed_at', 'status'}
 
+# Valid story statuses for validation (E1-S1: status validation)
+VALID_STORY_STATUSES = {
+    'pending',      # Story created but not started
+    'in-progress',  # Story currently being worked on
+    'done',         # Story completed successfully
+    'failed',       # Story failed after max retries
+    'blocked',      # Story blocked by external issue
+    'skipped',      # Story skipped (e.g., dependencies not met)
+}
+
 
 @contextmanager
 def get_connection() -> Generator[sqlite3.Connection, None, None]:
@@ -100,19 +110,21 @@ CREATE TABLE IF NOT EXISTS commands (
     FOREIGN KEY (story_id) REFERENCES stories(id)
 );
 
--- Events log
+-- Events log (E1-S1: added event_type column, FK on batch_id)
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY,
     batch_id INTEGER NOT NULL,
     story_id INTEGER,
     command_id INTEGER,
     timestamp INTEGER NOT NULL,
+    event_type TEXT NOT NULL,
     epic_id TEXT NOT NULL,
     story_key TEXT NOT NULL,
     command TEXT NOT NULL,
     task_id TEXT NOT NULL,
     status TEXT NOT NULL,
     message TEXT,
+    FOREIGN KEY (batch_id) REFERENCES batches(id),
     FOREIGN KEY (story_id) REFERENCES stories(id),
     FOREIGN KEY (command_id) REFERENCES commands(id)
 );
@@ -173,7 +185,7 @@ def create_batch(max_cycles: int) -> int:
             INSERT INTO batches (started_at, max_cycles, status)
             VALUES (?, ?, 'running')
             """,
-            (int(time.time()), max_cycles)
+            (int(time.time() * 1000), max_cycles)  # E1-S1: millisecond timestamps
         )
         return cursor.lastrowid  # type: ignore
 
@@ -264,7 +276,7 @@ def create_story(batch_id: int, story_key: str, epic_id: str) -> int:
             INSERT INTO stories (batch_id, story_key, epic_id, started_at)
             VALUES (?, ?, ?, ?)
             """,
-            (batch_id, story_key, epic_id, int(time.time()))
+            (batch_id, story_key, epic_id, int(time.time() * 1000))  # E1-S1: millisecond timestamps
         )
         return cursor.lastrowid  # type: ignore
 
@@ -281,7 +293,7 @@ def update_story(story_id: int, **kwargs: Any) -> int:
         Number of rows affected
 
     Raises:
-        ValueError: If invalid fields are provided
+        ValueError: If invalid fields are provided or invalid status value
     """
     if not kwargs:
         return 0
@@ -289,6 +301,13 @@ def update_story(story_id: int, **kwargs: Any) -> int:
     invalid = set(kwargs.keys()) - STORY_FIELDS
     if invalid:
         raise ValueError(f"Invalid fields for story: {invalid}")
+
+    # E1-S1: Validate status value if provided
+    if 'status' in kwargs and kwargs['status'] not in VALID_STORY_STATUSES:
+        raise ValueError(
+            f"Invalid story status: '{kwargs['status']}'. "
+            f"Valid statuses: {sorted(VALID_STORY_STATUSES)}"
+        )
 
     fields = ', '.join(f"{k} = ?" for k in kwargs.keys())
     values = list(kwargs.values()) + [story_id]
@@ -375,7 +394,7 @@ def create_command(story_id: int, command: str, task_id: str) -> int:
             INSERT INTO commands (story_id, command, task_id, started_at)
             VALUES (?, ?, ?, ?)
             """,
-            (story_id, command, task_id, int(time.time()))
+            (story_id, command, task_id, int(time.time() * 1000))  # E1-S1: millisecond timestamps
         )
         return cursor.lastrowid  # type: ignore
 
@@ -436,6 +455,7 @@ def create_event(
     batch_id: int,
     story_id: Optional[int],
     command_id: Optional[int],
+    event_type: str,
     epic_id: str,
     story_key: str,
     command: str,
@@ -450,6 +470,7 @@ def create_event(
         batch_id: Parent batch ID
         story_id: Associated story ID (optional)
         command_id: Associated command ID (optional)
+        event_type: Type of event (e.g., 'command:start', 'command:end', 'command:progress')
         epic_id: Epic identifier
         story_key: Story identifier
         command: Command name
@@ -464,10 +485,10 @@ def create_event(
         cursor = conn.execute(
             """
             INSERT INTO events
-            (batch_id, story_id, command_id, timestamp, epic_id, story_key, command, task_id, status, message)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (batch_id, story_id, command_id, timestamp, event_type, epic_id, story_key, command, task_id, status, message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (batch_id, story_id, command_id, int(time.time()), epic_id, story_key, command, task_id, status, message)
+            (batch_id, story_id, command_id, int(time.time() * 1000), event_type, epic_id, story_key, command, task_id, status, message)  # E1-S1: millisecond timestamps + event_type
         )
         return cursor.lastrowid  # type: ignore
 
@@ -537,7 +558,7 @@ def create_background_task(batch_id: int, story_key: str, task_type: str) -> int
             INSERT INTO background_tasks (batch_id, story_key, task_type, spawned_at)
             VALUES (?, ?, ?, ?)
             """,
-            (batch_id, story_key, task_type, int(time.time()))
+            (batch_id, story_key, task_type, int(time.time() * 1000))  # E1-S1: millisecond timestamps
         )
         return cursor.lastrowid  # type: ignore
 

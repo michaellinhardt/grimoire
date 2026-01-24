@@ -32,7 +32,7 @@
       <task_id>write</task_id>
     </task_ids>
     <example><![CDATA[
-_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"2a","story_id":"2a-1","command":"story-discovery","task_id":"setup","status":"start","message":"Loading discovery context for 2a-1"}'
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"2a","story_id":"2a-1","command":"sprint-create-story-discovery","task_id":"setup","status":"start","message":"Loading discovery context for 2a-1"}'
     ]]></example>
   </logging>
 
@@ -43,7 +43,7 @@ _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic
   <step n="1" goal="Setup and identify target stories">
     <action>Log setup start</action>
     <bash><![CDATA[
-_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"setup","status":"start","message":"Initializing discovery for {{story_keys}}"}'
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-create-story-discovery","task_id":"setup","status":"start","message":"Initializing discovery for {{story_keys}}"}'
     ]]></bash>
 
     <action>Parse story_keys variable to identify all stories to process</action>
@@ -57,14 +57,14 @@ _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic
 
     <action>Log setup complete</action>
     <bash><![CDATA[
-_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"setup","status":"end","message":"Context loaded from injections"}'
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-create-story-discovery","task_id":"setup","status":"end","message":"Context loaded from injections"}'
     ]]></bash>
   </step>
 
   <step n="2" goal="Explore codebase for each story">
     <action>Log explore start</action>
     <bash><![CDATA[
-_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"explore","status":"start","message":"Exploring codebase patterns"}'
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-create-story-discovery","task_id":"explore","status":"start","message":"Exploring codebase patterns"}'
     ]]></bash>
 
     <for_each item="story_key" in="story_keys">
@@ -137,14 +137,14 @@ _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic
 
     <action>Log explore complete with files discovered count</action>
     <bash><![CDATA[
-_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"explore","status":"end","message":"Patterns identified (files:N)"}'
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-create-story-discovery","task_id":"explore","status":"end","message":"Patterns identified (files:N)"}'
     ]]></bash>
   </step>
 
   <step n="3" goal="Write discovery files">
     <action>Log write start</action>
     <bash><![CDATA[
-_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"write","status":"start","message":"Writing discovery files"}'
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-create-story-discovery","task_id":"write","status":"start","message":"Writing discovery files"}'
     ]]></bash>
 
     <for_each item="story_key" in="story_keys">
@@ -257,7 +257,7 @@ _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic
 
     <action>Log write complete with line count</action>
     <bash><![CDATA[
-_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"write","status":"end","message":"Discovery files written (files:N, lines:N)"}'
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-create-story-discovery","task_id":"write","status":"end","message":"Discovery files written (files:N, lines:N)"}'
     ]]></bash>
   </step>
 

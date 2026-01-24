@@ -503,6 +503,7 @@ class Orchestrator:
             batch_id=self.current_batch_id,
             story_id=None,
             command_id=None,
+            event_type="context:create",
             epic_id="system",
             story_key="context",
             command="generate-project-context",
@@ -535,6 +536,7 @@ class Orchestrator:
             batch_id=self.current_batch_id,
             story_id=None,
             command_id=None,
+            event_type="context:refresh",
             epic_id="system",
             story_key="context",
             command="generate-project-context",
@@ -884,11 +886,13 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
         task_info = self._extract_task_event(event)
 
         if task_info:
-            # Log to database
+            # Log to database - derive event_type from status
+            event_type = "command:start" if task_info["status"] == "start" else "command:end"
             create_event(
                 batch_id=self.current_batch_id,
                 story_id=None,  # Would need DB lookup for story record ID
                 command_id=None,
+                event_type=event_type,
                 epic_id=task_info["epic_id"],
                 story_key=task_info["story_id"],
                 command=task_info["command"],

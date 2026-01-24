@@ -90,6 +90,7 @@ class EventType(str, Enum):
     # Batch events
     BATCH_START = "batch:start"
     BATCH_END = "batch:end"
+    BATCH_WARNING = "batch:warning"
 
     # Cycle events
     CYCLE_START = "cycle:start"
@@ -111,18 +112,33 @@ class EventType(str, Enum):
     CONTEXT_REFRESH = "context:refresh"
     CONTEXT_COMPLETE = "context:complete"
 
+    # Ping/Pong for connection health
+    PONG = "pong"
+
 
 # Payload schemas for validation
 EVENT_PAYLOAD_SCHEMAS: dict[str, set[str]] = {
+    # Batch events
     EventType.BATCH_START: {"batch_id", "max_cycles"},
     EventType.BATCH_END: {"batch_id", "cycles_completed", "status"},
+    EventType.BATCH_WARNING: {"batch_id", "message", "warning_type"},
+    # Cycle events
     EventType.CYCLE_START: {"cycle_number", "story_keys"},
     EventType.CYCLE_END: {"cycle_number", "completed_stories"},
+    # Command events
     EventType.COMMAND_START: {"story_key", "command", "task_id"},
     EventType.COMMAND_PROGRESS: {"story_key", "command", "task_id", "message"},
     EventType.COMMAND_END: {"story_key", "command", "task_id", "status"},
+    # Story events
     EventType.STORY_STATUS: {"story_key", "old_status", "new_status"},
+    # Error events
     EventType.ERROR: {"type", "message"},
+    # Context events
+    EventType.CONTEXT_CREATE: {"story_key", "context_type"},
+    EventType.CONTEXT_REFRESH: {"story_key", "context_type"},
+    EventType.CONTEXT_COMPLETE: {"story_key", "context_type", "status"},
+    # Pong (no required fields - just acknowledgement)
+    EventType.PONG: set(),
 }
 
 
@@ -239,18 +255,88 @@ def emit_event(event_type: str | EventType, payload: dict[str, Any]) -> None:
 # =============================================================================
 
 
+def normalize_db_event_to_ws(event: dict[str, Any]) -> dict[str, Any]:
+    """
+    Normalize a database event record to WebSocket event format.
+
+    DB events have flat structure with fields like:
+    - id, batch_id, story_id, command_id, timestamp, event_type,
+    - epic_id, story_key, command, task_id, status, message
+
+    WebSocket events have structure:
+    - type: event type string
+    - timestamp: milliseconds since epoch
+    - payload: dict with event-specific fields
+
+    Args:
+        event: Database event record as dict
+
+    Returns:
+        WebSocket-formatted event dict
+    """
+    event_type = event.get("event_type", "")
+
+    # Build payload from DB fields based on event type
+    payload: dict[str, Any] = {}
+
+    # Common fields for command events
+    if event_type.startswith("command:"):
+        payload["story_key"] = event.get("story_key", "")
+        payload["command"] = event.get("command", "")
+        payload["task_id"] = event.get("task_id", "")
+        if event_type == "command:progress":
+            payload["message"] = event.get("message", "")
+        elif event_type == "command:end":
+            payload["status"] = event.get("status", "")
+    elif event_type.startswith("batch:"):
+        payload["batch_id"] = event.get("batch_id")
+        if event_type == "batch:end":
+            payload["cycles_completed"] = event.get("cycles_completed", 0)
+            payload["status"] = event.get("status", "")
+    elif event_type.startswith("cycle:"):
+        payload["cycle_number"] = event.get("cycle_number", 0)
+    elif event_type.startswith("story:"):
+        payload["story_key"] = event.get("story_key", "")
+    elif event_type.startswith("context:"):
+        payload["story_key"] = event.get("story_key", "")
+        payload["context_type"] = event.get("context_type", "")
+
+    # Include any message if present
+    if "message" in event and event["message"]:
+        payload["message"] = event["message"]
+
+    return {
+        "type": event_type,
+        "timestamp": event.get("timestamp", 0),
+        "payload": payload,
+    }
+
+
 async def get_initial_state() -> dict[str, Any]:
     """
     Get current batch status and recent events for new connections.
 
     Returns:
         Dict with 'batch' (current batch or None) and 'events' (recent events)
+
+    Events are filtered to the current batch if one exists, and normalized
+    to WebSocket event format for frontend consistency.
     """
     try:
-        from db import get_active_batch, get_events
+        from db import get_active_batch, get_events_by_batch
 
         batch = get_active_batch()
-        events = get_events(limit=50)
+
+        # Filter events by current batch for relevant initial state
+        if batch:
+            db_events = get_events_by_batch(batch["id"])
+            # Limit to last 50 events, most recent first for display
+            db_events = list(reversed(db_events[-50:]))
+        else:
+            db_events = []
+
+        # Normalize DB events to WebSocket format
+        events = [normalize_db_event_to_ws(e) for e in db_events]
 
         return {"batch": batch, "events": events}
     except ImportError:
@@ -586,6 +672,169 @@ async def orchestrator_status_handler(request: web.Request) -> web.Response:
 
 
 # =============================================================================
+# Batch History API Handlers (Epic 5)
+# =============================================================================
+
+
+async def batches_list_handler(request: web.Request) -> web.Response:
+    """
+    List batches with pagination.
+
+    GET /api/batches
+    Query: ?limit=20&offset=0
+
+    Response: {
+        batches: [...],
+        total: number
+    }
+    """
+    try:
+        limit = int(request.query.get("limit", "20"))
+        offset = int(request.query.get("offset", "0"))
+        limit = min(max(limit, 1), 100)  # Clamp between 1 and 100
+        offset = max(offset, 0)
+    except ValueError:
+        limit = 20
+        offset = 0
+
+    try:
+        from db import get_connection
+
+        with get_connection() as conn:
+            # Get total count
+            cursor = conn.execute("SELECT COUNT(*) FROM batches")
+            total = cursor.fetchone()[0]
+
+            # Get batches with pagination (newest first)
+            cursor = conn.execute(
+                """
+                SELECT
+                    b.id,
+                    b.started_at,
+                    b.ended_at,
+                    b.max_cycles,
+                    b.cycles_completed,
+                    b.status,
+                    (SELECT COUNT(*) FROM stories WHERE batch_id = b.id) as story_count
+                FROM batches b
+                ORDER BY b.id DESC
+                LIMIT ? OFFSET ?
+                """,
+                (limit, offset)
+            )
+            rows = cursor.fetchall()
+
+            batches = []
+            for row in rows:
+                batch = dict(row)
+                # Calculate duration if ended
+                if batch["ended_at"] and batch["started_at"]:
+                    duration_ms = batch["ended_at"] - batch["started_at"]
+                    batch["duration_seconds"] = duration_ms / 1000
+                else:
+                    batch["duration_seconds"] = None
+                batches.append(batch)
+
+        return web.json_response(
+            {"batches": batches, "total": total},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except ImportError:
+        return web.json_response(
+            {"batches": [], "total": 0, "error": "Database module not available"},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except Exception as e:
+        return web.Response(status=500, text=f"Database error: {e}")
+
+
+async def batch_detail_handler(request: web.Request) -> web.Response:
+    """
+    Get single batch details with stories and stats.
+
+    GET /api/batches/:id
+
+    Response: {
+        batch: {...},
+        stories: [...],
+        stats: {...}
+    }
+    """
+    try:
+        batch_id = int(request.match_info["batch_id"])
+    except ValueError:
+        return web.Response(status=400, text="Invalid batch ID")
+
+    try:
+        from db import get_batch, get_stories_by_batch, get_commands_by_story, get_events_by_batch
+
+        batch = get_batch(batch_id)
+        if not batch:
+            return web.Response(status=404, text="Batch not found")
+
+        # Get stories for this batch
+        stories_raw = get_stories_by_batch(batch_id)
+        stories = []
+        total_commands = 0
+
+        for story in stories_raw:
+            commands = get_commands_by_story(story["id"])
+            total_commands += len(commands)
+
+            # Calculate story duration
+            duration_seconds = None
+            if story.get("ended_at") and story.get("started_at"):
+                duration_seconds = (story["ended_at"] - story["started_at"]) / 1000
+
+            stories.append({
+                "id": story["id"],
+                "story_key": story["story_key"],
+                "epic_id": story["epic_id"],
+                "status": story["status"],
+                "started_at": story["started_at"],
+                "ended_at": story["ended_at"],
+                "duration_seconds": duration_seconds,
+                "command_count": len(commands),
+                "commands": [
+                    {
+                        "id": cmd["id"],
+                        "command": cmd["command"],
+                        "task_id": cmd["task_id"],
+                        "status": cmd["status"],
+                        "started_at": cmd["started_at"],
+                        "ended_at": cmd["ended_at"],
+                    }
+                    for cmd in commands
+                ]
+            })
+
+        # Calculate batch stats
+        duration_seconds = None
+        if batch.get("ended_at") and batch.get("started_at"):
+            duration_seconds = (batch["ended_at"] - batch["started_at"]) / 1000
+
+        stats = {
+            "story_count": len(stories),
+            "command_count": total_commands,
+            "cycles_completed": batch.get("cycles_completed", 0),
+            "max_cycles": batch.get("max_cycles", 0),
+            "duration_seconds": duration_seconds,
+            "stories_done": sum(1 for s in stories if s["status"] == "done"),
+            "stories_failed": sum(1 for s in stories if s["status"] == "failed"),
+            "stories_in_progress": sum(1 for s in stories if s["status"] == "in-progress"),
+        }
+
+        return web.json_response(
+            {"batch": batch, "stories": stories, "stats": stats},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except ImportError:
+        return web.Response(status=500, text="Database module not available")
+    except Exception as e:
+        return web.Response(status=500, text=f"Database error: {e}")
+
+
+# =============================================================================
 # Static File Serving
 # =============================================================================
 
@@ -599,6 +848,7 @@ async def serve_file_handler(request: web.Request) -> web.Response:
         "orchestrator.md",
         "orchestrator.csv",
         "orchestrator-sample.md",
+        "sprint-runner.csv",
     }
 
     if filename in ALLOWED_DATA_FILES:
@@ -728,6 +978,12 @@ def create_app() -> web.Application:
     app.router.add_get("/api/orchestrator/status", orchestrator_status_handler)
     app.router.add_options("/api/orchestrator/start", cors_preflight_handler)
     app.router.add_options("/api/orchestrator/stop", cors_preflight_handler)
+
+    # Batch History API (Epic 5)
+    app.router.add_get("/api/batches", batches_list_handler)
+    app.router.add_get("/api/batches/{batch_id}", batch_detail_handler)
+    app.router.add_options("/api/batches", cors_preflight_handler)
+    app.router.add_options("/api/batches/{batch_id}", cors_preflight_handler)
 
     # Static file handler (must be last due to wildcard pattern)
     app.router.add_get("/{filename}", serve_file_handler)

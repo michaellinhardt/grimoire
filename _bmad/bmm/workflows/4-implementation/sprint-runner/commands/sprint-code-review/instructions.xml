@@ -28,7 +28,7 @@
 
   <step n="1" goal="Setup and load review context">
     <action>Log start of setup phase</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"setup","status":"start","message":"Loading code for review ({{story_key}})"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"setup","status":"start","message":"Loading code for review ({{story_key}})"}'</bash>
 
     <action>Parse injected story file content</action>
     <action>Extract from story file:</action>
@@ -43,7 +43,7 @@
 
     <check if="File List is empty or missing">
       <output>ERROR: No File List found in story - cannot perform code review</output>
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"setup","status":"end","message":"ERROR: No File List in story"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"setup","status":"end","message":"ERROR: No File List in story"}'</bash>
       <action>Output: HIGHEST SEVERITY: CRITICAL</action>
       <action>Output: Issues: 1 CRITICAL, 0 HIGH, 0 MEDIUM, 0 LOW</action>
       <action>HALT</action>
@@ -51,11 +51,11 @@
 
     <action>Load project context for coding standards (if available in injection)</action>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"setup","status":"end","message":"Code loaded (files:{{file_count}})"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"setup","status":"end","message":"Code loaded (files:{{file_count}})"}'</bash>
   </step>
 
   <step n="2" goal="Analyze code for issues">
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"analyze","status":"start","message":"Analyzing code quality"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"analyze","status":"start","message":"Analyzing code quality"}'</bash>
 
     <action>Initialize issue counters:</action>
     <counters>
@@ -137,11 +137,11 @@
 
     <action>Set {{total_issues}} = sum of all issue counts</action>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"analyze","status":"end","message":"Analysis complete (issues:{{total_issues}} found)"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"analyze","status":"end","message":"Analysis complete (issues:{{total_issues}} found)"}'</bash>
   </step>
 
   <step n="3" goal="Auto-fix all issues">
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"fix","status":"start","message":"Applying code fixes"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"fix","status":"start","message":"Applying code fixes"}'</bash>
 
     <check if="total_issues gt 0">
       <action>Fix issues in priority order:</action>
@@ -168,11 +168,11 @@
       <action>No fixes needed</action>
     </check>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"fix","status":"end","message":"Fixes applied (issues:{{fixed_count}} fixed)"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"fix","status":"end","message":"Fixes applied (issues:{{fixed_count}} fixed)"}'</bash>
   </step>
 
   <step n="4" goal="Re-run tests after fixes">
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"test","status":"start","message":"Re-running tests"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"test","status":"start","message":"Re-running tests"}'</bash>
 
     <check if="fixes were applied">
       <action>Identify test files from project structure</action>
@@ -192,11 +192,11 @@
       <action>Tests not needed - no changes made</action>
     </check>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"test","status":"end","message":"Tests passed (tests:{{test_count}})"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"test","status":"end","message":"Tests passed (tests:{{test_count}})"}'</bash>
   </step>
 
   <step n="5" goal="Validate and update status">
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"validate","status":"start","message":"Validating code review fixes"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"validate","status":"start","message":"Validating code review fixes"}'</bash>
 
     <action>Determine highest severity found:</action>
     <severity_determination>
@@ -219,7 +219,7 @@
       </rule>
     </status_rules>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
   </step>
 
   <output_requirement>
@@ -265,7 +265,7 @@
     <command_name>code-review-{{review_attempt}}</command_name>
     <task_ids>setup, analyze, fix, test, validate</task_ids>
     <format>
-      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
+      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-code-review","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
     </format>
   </logging_reference>
 

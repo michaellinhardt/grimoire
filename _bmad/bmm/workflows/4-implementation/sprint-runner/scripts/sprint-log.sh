@@ -6,7 +6,11 @@
 # Required JSON fields: epic_id, story_id, command, task_id, status
 # Optional JSON fields: message, metrics, attempt
 #
-# Log format: [timestamp] [epic_id/story_id] [command:task_id] [status] message
+# Outputs:
+#   stdout: CSV format for orchestrator parsing
+#           Format: timestamp,epicID,storyID,command,task-id,status,"message"
+#   Log file: Human-readable format
+#           Format: [timestamp] [epic_id/story_id] [command:task_id] [status] message
 
 # Validate JSON argument
 JSON="$1"
@@ -30,6 +34,7 @@ fi
 
 # Parse all JSON fields in a single jq call for efficiency and safety
 # Using here-string to avoid echo command injection risks
+# For the log file, we sanitize newlines to spaces
 PARSED=$(jq -r '[
     .epic_id // "",
     .story_id // "",
@@ -58,7 +63,7 @@ fi
 # Generate timestamp
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
-# Format log entry: [timestamp] [epic_id/story_id] [command:task_id] [status] message
+# Format human-readable log entry: [timestamp] [epic_id/story_id] [command:task_id] [status] message
 LOG_ENTRY="[$TIMESTAMP] [$EPIC_ID/$STORY_ID] [$COMMAND:$TASK_ID] [$STATUS] $MESSAGE"
 
 # Resolve paths relative to script location
@@ -69,5 +74,29 @@ LOG_FILE="$LOG_DIR/sprint.log"
 # Ensure log directory exists
 mkdir -p "$LOG_DIR"
 
-# Append log entry (atomic operation for single-line writes)
+# Append human-readable log entry to file (atomic operation for single-line writes)
 echo "$LOG_ENTRY" >> "$LOG_FILE"
+
+# Output CSV to stdout for orchestrator parsing
+# Format: timestamp,epicID,storyID,command,task-id,status,"message"
+#
+# CSV escaping rules:
+# 1. The message field is always quoted
+# 2. Double quotes within the message are escaped by doubling them ("")
+# 3. Newlines are replaced with \n literal for CSV compatibility
+# 4. Other fields are output as-is (they should not contain special chars)
+
+# Get the raw message with proper escaping for CSV using jq
+# - Replace newlines with literal \n
+# - Escape double quotes by doubling them
+# - Wrap the result in double quotes
+CSV_MESSAGE=$(jq -r '
+    (.message // "")
+    | gsub("\r\n"; "\\n")
+    | gsub("\n"; "\\n")
+    | gsub("\r"; "\\n")
+    | gsub("\""; "\"\"")
+' <<< "$JSON")
+
+# Output CSV line to stdout
+echo "${TIMESTAMP},${EPIC_ID},${STORY_ID},${COMMAND},${TASK_ID},${STATUS},\"${CSV_MESSAGE}\""

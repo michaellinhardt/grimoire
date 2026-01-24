@@ -34,7 +34,7 @@
     <action>Extract story ID components for logging</action>
 
     <!-- Log start -->
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"setup","status":"start","message":"Initializing tech-spec creation for {{story_key}}"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"setup","status":"start","message":"Initializing tech-spec creation for {{story_key}}"}'</action>
 
     <!-- Extract context from injected files -->
     <action>From &lt;file_injections&gt;, locate the story file matching {{story_key}}</action>
@@ -43,11 +43,11 @@
     <action>From &lt;file_injections&gt;, extract project context patterns and standards</action>
     <action>From &lt;file_injections&gt;, extract architecture constraints (if provided)</action>
 
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"setup","status":"end","message":"Context loaded from injections"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"setup","status":"end","message":"Context loaded from injections"}'</action>
   </step>
 
   <step n="2" goal="Discover - Inline technical discovery (only as needed)">
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"discover","status":"start","message":"Discovering technical requirements for {{story_key}}"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"discover","status":"start","message":"Discovering technical requirements for {{story_key}}"}'</action>
 
     <!-- INLINE discovery - only for gaps not covered by injected context -->
     <action>Review story requirements and identify technical gaps not covered by injected discovery</action>
@@ -65,11 +65,11 @@
       - {{test_patterns}}: How tests are structured
     </action>
 
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"discover","status":"end","message":"Discovery complete (files:{{files_count}})"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"discover","status":"end","message":"Discovery complete (files:{{files_count}})"}'</action>
   </step>
 
   <step n="3" goal="Generate - Create tech-spec content">
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"generate","status":"start","message":"Generating tech-spec content"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"generate","status":"start","message":"Generating tech-spec content"}'</action>
 
     <!-- Generate Overview Section -->
     <action>Extract from story:
@@ -118,11 +118,11 @@
       - Notes: High-risk items, known limitations, future considerations
     </action>
 
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"generate","status":"end","message":"Tech-spec generated (sections:{{section_count}})"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"generate","status":"end","message":"Tech-spec generated (sections:{{section_count}})"}'</action>
   </step>
 
   <step n="4" goal="Write - Save tech-spec file">
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"write","status":"start","message":"Writing tech-spec file"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"write","status":"start","message":"Writing tech-spec file"}'</action>
 
     <!-- Compose final document using template structure -->
     <action>Set {{output_file}} = "_bmad-output/implementation-artifacts/sprint-tech-spec-{{story_key}}.md"</action>
@@ -138,11 +138,11 @@
 
     <action>Save file to {{output_file}}</action>
 
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"write","status":"end","message":"Tech-spec written (lines:{{line_count}})"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"write","status":"end","message":"Tech-spec written (lines:{{line_count}})"}'</action>
   </step>
 
   <step n="5" goal="Validate - Verify tech-spec completeness">
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"validate","status":"start","message":"Validating tech-spec completeness"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"validate","status":"start","message":"Validating tech-spec completeness"}'</action>
 
     <!-- READY FOR DEVELOPMENT STANDARD -->
     <action>Verify against checklist:
@@ -177,7 +177,7 @@
     <output>CHECKLIST COMPLETED: YES</output>
     <output>TECH SPEC CREATED: {{output_file}}</output>
 
-    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"validate","status":"end","message":"Validation passed"}'</action>
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-tech-spec","task_id":"validate","status":"end","message":"Validation passed"}'</action>
   </step>
 
   <!-- ============================================================
