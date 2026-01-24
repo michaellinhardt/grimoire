@@ -4812,6 +4812,16 @@
         }
 
         function getEventStatus(event) {
+            // Handle database event format (has 'status' field)
+            if (event.status) {
+                const s = event.status.toLowerCase();
+                if (s === 'start') return 'start';
+                if (s === 'end' || s === 'complete' || s === 'completed') return 'end';
+                if (s === 'progress') return 'progress';
+                if (s === 'error' || s === 'failed') return 'error';
+                return 'system';
+            }
+            // Handle WebSocket event format (has 'type' field)
             if (event.type?.includes('start')) return 'start';
             if (event.type?.includes('end') || event.type?.includes('complete')) return 'end';
             if (event.type?.includes('progress')) return 'progress';
@@ -4842,22 +4852,38 @@
             const entry = document.createElement('div');
             entry.className = `log-entry ${status}`;
 
-            const timestamp = event.timestamp ? formatLogTime(event.timestamp) : formatLogTime(Date.now());
+            // Handle timestamp - database events use seconds, WebSocket uses milliseconds
+            let timestamp;
+            if (event.timestamp) {
+                // Database timestamps are in seconds, WebSocket in milliseconds
+                const ts = event.timestamp < 10000000000 ? event.timestamp * 1000 : event.timestamp;
+                timestamp = formatLogTime(ts);
+            } else {
+                timestamp = formatLogTime(Date.now());
+            }
+
+            // Handle both WebSocket format (payload object) and database format (flat fields)
+            // Database events have: story_key, command, task_id, status, message directly on event
+            // WebSocket events have: type, payload: { story_key, command, task_id, message }
             const payload = event.payload || {};
+            const storyKey = payload.story_key || event.story_key || '-';
+            const command = payload.command || event.command || event.type?.split(':')[0] || '-';
+            const taskId = payload.task_id || event.task_id || '-';
+            const message = payload.message || event.message || '';
 
             if (event.type === 'system' || status === 'system') {
                 entry.innerHTML = `
                     <span class="log-timestamp">${timestamp}</span>
-                    <span class="log-message">${payload.message || event.message || event.type}</span>
+                    <span class="log-message">${message || event.type || 'System event'}</span>
                 `;
             } else {
                 entry.innerHTML = `
                     <span class="log-timestamp">${timestamp}</span>
-                    <span class="log-story-key">${payload.story_key || '-'}</span>
-                    <span class="log-command">${payload.command || event.type?.split(':')[0] || '-'}</span>
-                    <span class="log-task-id">${payload.task_id || '-'}</span>
+                    <span class="log-story-key">${storyKey}</span>
+                    <span class="log-command">${command}</span>
+                    <span class="log-task-id">${taskId}</span>
                     <span class="log-status ${status}">${status}</span>
-                    <span class="log-message">${payload.message || ''}</span>
+                    <span class="log-message">${message}</span>
                 `;
             }
 

@@ -517,10 +517,31 @@ async def orchestrator_stop_handler(request: web.Request) -> web.Response:
     Stop the orchestrator gracefully.
 
     POST /api/orchestrator/stop
+
+    If orchestrator is not running but database has an active batch,
+    clean it up and return success with "cleaned" status.
     """
     global _orchestrator_instance
 
     if not _orchestrator_instance or _orchestrator_instance.state.value == "idle":
+        # Check if database has a stale active batch that needs cleanup
+        try:
+            from db import get_active_batch, update_batch
+            batch = get_active_batch()
+            if batch:
+                update_batch(
+                    batch_id=batch['id'],
+                    status='stopped',
+                    ended_at=int(time.time())
+                )
+                print(f"Cleaned up stale batch {batch['id']} via stop handler")
+                return web.json_response(
+                    {"status": "cleaned", "batch_id": batch['id']},
+                    headers={"Access-Control-Allow-Origin": "*"},
+                )
+        except Exception as e:
+            print(f"Warning: Could not clean up stale batch: {e}")
+
         return web.Response(status=409, text="Orchestrator is not running")
 
     try:
@@ -632,8 +653,27 @@ async def serve_file_handler(request: web.Request) -> web.Response:
 # =============================================================================
 
 
+def cleanup_stale_batches() -> None:
+    """Mark any 'running' batches as 'stopped' on server start."""
+    try:
+        from db import get_active_batch, update_batch
+        batch = get_active_batch()
+        if batch:
+            update_batch(
+                batch_id=batch['id'],
+                status='stopped',
+                ended_at=int(time.time())
+            )
+            print(f"Cleaned up stale batch {batch['id']}")
+    except Exception as e:
+        print(f"Warning: Could not clean up stale batches: {e}")
+
+
 async def on_startup(app: web.Application) -> None:
     """Called on application startup."""
+    # Clean up stale batches from previous server sessions
+    cleanup_stale_batches()
+
     # Start heartbeat task
     app["heartbeat_task"] = asyncio.create_task(heartbeat_task())
     print("Started heartbeat task")
