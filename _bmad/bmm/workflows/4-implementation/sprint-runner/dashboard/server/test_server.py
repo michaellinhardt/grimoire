@@ -367,9 +367,12 @@ class TestEmitEvent:
 class TestInitialState:
     @pytest.mark.asyncio
     async def test_get_initial_state_no_db(self):
-        """get_initial_state should handle missing db module."""
-        with patch.dict("sys.modules", {"db": None}):
+        """get_initial_state should handle db exceptions gracefully."""
+        # Simulate database error by raising exception from get_active_batch
+        # The function imports .db internally, so we patch the db module functions
+        with patch('server.db.get_active_batch', side_effect=Exception("DB error")):
             state = await server.get_initial_state()
+            # When exception occurs, should return safe defaults
             assert state["batch"] is None
             assert state["events"] == []
 

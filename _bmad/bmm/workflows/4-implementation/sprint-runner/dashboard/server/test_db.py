@@ -143,7 +143,7 @@ class TestBatchOperations:
             sample_batch,
             cycles_completed=2,
             status='completed',
-            ended_at=int(time.time())
+            ended_at=int(time.time() * 1000)
         )
 
         assert rows == 1
@@ -225,7 +225,7 @@ class TestStoryOperations:
         rows = temp_db.update_story(
             sample_story,
             status='done',
-            ended_at=int(time.time())
+            ended_at=int(time.time() * 1000)
         )
 
         assert rows == 1
@@ -331,7 +331,7 @@ class TestCommandOperations:
         rows = temp_db.update_command(
             cmd_id,
             status='completed',
-            ended_at=int(time.time()),
+            ended_at=int(time.time() * 1000),
             output_summary='(issues:0)'
         )
 
@@ -584,7 +584,7 @@ class TestBackgroundTaskOperations:
         rows = temp_db.update_background_task(
             task_id,
             status='completed',
-            completed_at=int(time.time())
+            completed_at=int(time.time() * 1000)
         )
 
         assert rows == 1

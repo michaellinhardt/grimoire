@@ -13,6 +13,7 @@ Usage:
 """
 
 from __future__ import annotations
+import json
 import sqlite3
 import time
 from contextlib import contextmanager
@@ -110,6 +111,7 @@ CREATE TABLE IF NOT EXISTS commands (
 );
 
 -- Events log (E1-S1: added event_type column, FK on batch_id)
+-- E1-S2: added payload_json for complete event reconstruction
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY,
     batch_id INTEGER NOT NULL,
@@ -123,6 +125,7 @@ CREATE TABLE IF NOT EXISTS events (
     task_id TEXT NOT NULL,
     status TEXT NOT NULL,
     message TEXT,
+    payload_json TEXT,
     FOREIGN KEY (batch_id) REFERENCES batches(id),
     FOREIGN KEY (story_id) REFERENCES stories(id),
     FOREIGN KEY (command_id) REFERENCES commands(id)
@@ -161,6 +164,20 @@ def init_db() -> None:
     """
     with get_connection() as conn:
         conn.executescript(SCHEMA)
+
+    # Run migrations for existing databases
+    migrate_db()
+
+
+def migrate_db() -> None:
+    """Apply schema migrations for existing databases."""
+    with get_connection() as conn:
+        # Check if payload_json column exists in events table
+        cursor = conn.execute("PRAGMA table_info(events)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if 'payload_json' not in columns:
+            conn.execute("ALTER TABLE events ADD COLUMN payload_json TEXT")
+            print("Migrated events table: added payload_json column")
 
 
 # =============================================================================
@@ -460,7 +477,8 @@ def create_event(
     command: str,
     task_id: str,
     status: str,
-    message: str
+    message: str,
+    payload: Optional[dict] = None
 ) -> int:
     """
     Log an event with timestamp=now.
@@ -476,18 +494,21 @@ def create_event(
         task_id: Task phase
         status: Event status (start, end, progress)
         message: Event message
+        payload: Full event payload for reconstruction (optional)
 
     Returns:
         The new event ID
     """
+    payload_json = json.dumps(payload) if payload else None
+
     with get_connection() as conn:
         cursor = conn.execute(
             """
             INSERT INTO events
-            (batch_id, story_id, command_id, timestamp, event_type, epic_id, story_key, command, task_id, status, message)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (batch_id, story_id, command_id, timestamp, event_type, epic_id, story_key, command, task_id, status, message, payload_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (batch_id, story_id, command_id, int(time.time() * 1000), event_type, epic_id, story_key, command, task_id, status, message)  # E1-S1: millisecond timestamps + event_type
+            (batch_id, story_id, command_id, int(time.time() * 1000), event_type, epic_id, story_key, command, task_id, status, message, payload_json)
         )
         return cursor.lastrowid  # type: ignore
 

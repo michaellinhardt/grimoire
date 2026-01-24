@@ -102,20 +102,20 @@ development_status:
 @pytest.fixture
 def orchestrator(temp_project_root):
     """Create an orchestrator instance with mocked dependencies."""
-    with patch("orchestrator.init_db"), patch(
-        "orchestrator.create_batch", return_value=1
-    ), patch("orchestrator.create_story", return_value=1), patch(
-        "orchestrator.update_story"
+    with patch("server.orchestrator.init_db"), patch(
+        "server.orchestrator.create_batch", return_value=1
+    ), patch("server.orchestrator.create_story", return_value=1), patch(
+        "server.orchestrator.update_story"
     ), patch(
-        "orchestrator.create_event"
+        "server.orchestrator.create_event"
     ), patch(
-        "orchestrator.update_batch"
+        "server.orchestrator.update_batch"
     ), patch(
-        "orchestrator.get_story_by_key", return_value=None
+        "server.orchestrator.get_story_by_key", return_value=None
     ), patch(
-        "orchestrator.create_background_task", return_value=1
+        "server.orchestrator.create_background_task", return_value=1
     ), patch(
-        "orchestrator.update_background_task"
+        "server.orchestrator.update_background_task"
     ):
         orch = Orchestrator(
             batch_mode="fixed", max_cycles=2, project_root=temp_project_root
@@ -160,7 +160,7 @@ class TestWorkflowSequence:
             with patch.object(
                 orchestrator, "run_cycle", new_callable=AsyncMock, return_value=False
             ):
-                with patch("orchestrator.update_batch"):
+                with patch("server.orchestrator.update_batch"):
                     await orchestrator.start()
 
         assert context_checked, "Context check should be called at start"

@@ -391,8 +391,15 @@ function handleWebSocketEvent(event) {
 
         case 'batch:warning':
             // Handle batch warning events
+            // Support both 'message' (schema) and 'warning' (legacy) keys
+            const warningMessage = payload.message || payload.warning || 'Warning occurred';
+            const warningType = payload.warning_type || 'general';
+
             addLogEntry({ type, payload, timestamp }, 'warning');
-            showToast(payload.message || 'Warning occurred', 'warning', 'Warning');
+
+            // Adjust toast type based on warning_type
+            const toastType = warningType === 'context_unavailable' ? 'info' : 'warning';
+            showToast(warningMessage, toastType, `Warning: ${warningType}`);
             break;
 
         case 'pong':

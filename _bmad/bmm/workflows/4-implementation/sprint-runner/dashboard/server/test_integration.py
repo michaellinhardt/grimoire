@@ -275,7 +275,7 @@ class TestOrchestratorControlEndpoints:
 
     @pytest.mark.asyncio
     async def test_stop_endpoint_when_not_running(self, aiohttp_client):
-        """Stop endpoint should return 409 when orchestrator not running."""
+        """Stop endpoint should return 200 when orchestrator not running (idempotent)."""
         # Reset global orchestrator
         server._orchestrator_instance = None
         server._orchestrator_task = None
@@ -284,7 +284,11 @@ class TestOrchestratorControlEndpoints:
         client = await aiohttp_client(app)
 
         resp = await client.post("/api/orchestrator/stop")
-        assert resp.status == 409
+        # Server returns 200 for idempotent stop - either "cleaned" stale batch or "stopped"
+        assert resp.status == 200
+        data = await resp.json()
+        # Should be either "cleaned" (if stale batch exists) or indicate already stopped
+        assert data.get("status") in ("cleaned", "stopped", "not_running")
 
 
 # =============================================================================
@@ -356,14 +360,14 @@ class TestSprintStatusUpdates:
     @pytest.mark.asyncio
     async def test_orchestrator_updates_sprint_status(self, temp_project_root):
         """Orchestrator should update sprint-status.yaml correctly."""
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
-        ), patch("orchestrator.create_story", return_value=1), patch(
-            "orchestrator.update_story"
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
+        ), patch("server.orchestrator.create_story", return_value=1), patch(
+            "server.orchestrator.update_story"
         ), patch(
-            "orchestrator.create_event"
+            "server.orchestrator.create_event"
         ), patch(
-            "orchestrator.get_story_by_key", return_value=None
+            "server.orchestrator.get_story_by_key", return_value=None
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=1, project_root=temp_project_root
@@ -422,6 +426,7 @@ class TestDatabaseRecords:
             batch_id=batch_id,
             story_id=None,
             command_id=None,
+            event_type="command:start",
             epic_id="2a",
             story_key="2a-1",
             command="create-story",
@@ -445,8 +450,8 @@ class TestGracefulStop:
     @pytest.mark.asyncio
     async def test_stop_sets_flag_and_cancels_tasks(self, temp_project_root):
         """Stop should set flag and cancel background tasks."""
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=2, project_root=temp_project_root
@@ -469,8 +474,8 @@ class TestGracefulStop:
     @pytest.mark.asyncio
     async def test_stop_emits_batch_end_event(self, temp_project_root):
         """Stop should emit batch:end event."""
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=2, project_root=temp_project_root
@@ -499,8 +504,8 @@ class TestResumeAfterStop:
 
     def test_orchestrator_reads_current_status(self, temp_project_root):
         """Orchestrator should read current status from sprint-status.yaml."""
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=2, project_root=temp_project_root
@@ -529,8 +534,8 @@ class TestResumeAfterStop:
         with open(status_path, "w") as f:
             yaml.dump(status, f, default_flow_style=False)
 
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=2, project_root=temp_project_root
@@ -554,20 +559,20 @@ class TestFullIntegrationWorkflow:
     @pytest.mark.asyncio
     async def test_complete_workflow_with_mocked_subprocess(self, temp_project_root):
         """Test complete workflow from start to story completion."""
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
-        ), patch("orchestrator.create_story", return_value=1), patch(
-            "orchestrator.update_story"
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
+        ), patch("server.orchestrator.create_story", return_value=1), patch(
+            "server.orchestrator.update_story"
         ), patch(
-            "orchestrator.create_event"
+            "server.orchestrator.create_event"
         ), patch(
-            "orchestrator.update_batch"
+            "server.orchestrator.update_batch"
         ), patch(
-            "orchestrator.get_story_by_key", return_value={"id": 1}
+            "server.orchestrator.get_story_by_key", return_value={"id": 1}
         ), patch(
-            "orchestrator.create_background_task", return_value=1
+            "server.orchestrator.create_background_task", return_value=1
         ), patch(
-            "orchestrator.update_background_task"
+            "server.orchestrator.update_background_task"
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=1, project_root=temp_project_root
@@ -602,8 +607,8 @@ class TestOrchestratorStateMachine:
 
     def test_initial_state_is_idle(self, temp_project_root):
         """Orchestrator should start in IDLE state."""
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=2, project_root=temp_project_root
@@ -613,12 +618,12 @@ class TestOrchestratorStateMachine:
     @pytest.mark.asyncio
     async def test_state_transitions_during_execution(self, temp_project_root):
         """Orchestrator should transition through states during execution."""
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
-        ), patch("orchestrator.create_story"), patch(
-            "orchestrator.update_batch"
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
+        ), patch("server.orchestrator.create_story"), patch(
+            "server.orchestrator.update_batch"
         ), patch(
-            "orchestrator.create_event"
+            "server.orchestrator.create_event"
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=1, project_root=temp_project_root
@@ -657,8 +662,8 @@ class TestErrorHandling:
         )
         status_path.unlink()
 
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=2, project_root=temp_project_root
@@ -674,8 +679,8 @@ class TestErrorHandling:
         v3 Note: load_prompt() was removed in v3. Context is now injected via
         build_prompt_system_append() which returns XML content for --prompt-system-append.
         """
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=2, project_root=temp_project_root

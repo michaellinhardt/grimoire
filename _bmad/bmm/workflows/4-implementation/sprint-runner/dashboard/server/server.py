@@ -33,6 +33,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
+import yaml
 from aiohttp import web, WSMsgType
 
 from .shared import PROJECT_ROOT, ARTIFACTS_DIR, FRONTEND_DIR
@@ -229,9 +230,9 @@ def emit_event(event_type: str | EventType, payload: dict[str, Any]) -> None:
 
     try:
         asyncio.create_task(broadcast(event))
-    except RuntimeError:
-        # No event loop running - ignore
-        pass
+    except RuntimeError as e:
+        # No event loop running - log for debugging
+        print(f"Warning: Event '{event_type}' not sent (no event loop): {e}", file=sys.stderr)
 
 
 # =============================================================================
@@ -245,7 +246,7 @@ def normalize_db_event_to_ws(event: dict[str, Any]) -> dict[str, Any]:
 
     DB events have flat structure with fields like:
     - id, batch_id, story_id, command_id, timestamp, event_type,
-    - epic_id, story_key, command, task_id, status, message
+    - epic_id, story_key, command, task_id, status, message, payload_json
 
     WebSocket events have structure:
     - type: event type string
@@ -260,7 +261,19 @@ def normalize_db_event_to_ws(event: dict[str, Any]) -> dict[str, Any]:
     """
     event_type = event.get("event_type", "")
 
-    # Build payload from DB fields based on event type
+    # Prefer stored payload_json if available (complete reconstruction)
+    if event.get("payload_json"):
+        try:
+            payload = json.loads(event["payload_json"])
+            return {
+                "type": event_type,
+                "timestamp": event.get("timestamp", 0),
+                "payload": payload,
+            }
+        except json.JSONDecodeError:
+            pass  # Fall through to manual extraction
+
+    # Build payload from DB fields based on event type (legacy fallback)
     payload: dict[str, Any] = {}
 
     # Common fields for command events
@@ -277,10 +290,16 @@ def normalize_db_event_to_ws(event: dict[str, Any]) -> dict[str, Any]:
         if event_type == "batch:end":
             payload["cycles_completed"] = event.get("cycles_completed", 0)
             payload["status"] = event.get("status", "")
+        elif event_type == "batch:warning":
+            payload["message"] = event.get("message", "")
+            payload["warning_type"] = "unknown"
     elif event_type.startswith("cycle:"):
         payload["cycle_number"] = event.get("cycle_number", 0)
+        # Note: story_keys and completed_stories not available in legacy events
     elif event_type.startswith("story:"):
         payload["story_key"] = event.get("story_key", "")
+        payload["old_status"] = event.get("old_status", "")
+        payload["new_status"] = event.get("new_status", "")
     elif event_type.startswith("context:"):
         payload["story_key"] = event.get("story_key", "")
         payload["context_type"] = event.get("context_type", "")
@@ -603,7 +622,7 @@ async def orchestrator_stop_handler(request: web.Request) -> web.Response:
                 update_batch(
                     batch_id=batch['id'],
                     status='stopped',
-                    ended_at=int(time.time())
+                    ended_at=int(time.time() * 1000)
                 )
                 print(f"Cleaned up stale batch {batch['id']} via stop handler")
                 return web.json_response(
@@ -654,6 +673,68 @@ async def orchestrator_status_handler(request: web.Request) -> web.Response:
         },
         headers={"Access-Control-Allow-Origin": "*"},
     )
+
+
+async def sprint_status_handler(request: web.Request) -> web.Response:
+    """
+    Get sprint status from sprint-status.yaml.
+
+    GET /api/sprint-status
+
+    Returns the parsed YAML content as JSON.
+    """
+    try:
+        status_path = ARTIFACTS_DIR / "sprint-status.yaml"
+        if not status_path.exists():
+            return web.json_response(
+                {"error": "sprint-status.yaml not found"},
+                status=404,
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+
+        with open(status_path, "r") as f:
+            data = yaml.safe_load(f)
+
+        return web.json_response(
+            data,
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except Exception as e:
+        return web.Response(status=500, text=f"Failed to read sprint status: {e}")
+
+
+async def orchestrator_activity_handler(request: web.Request) -> web.Response:
+    """
+    Get orchestrator activity log.
+
+    GET /api/orchestrator-status
+
+    Returns parsed orchestrator.md activity log as JSON.
+    """
+    try:
+        activity_path = ARTIFACTS_DIR / "orchestrator.md"
+        if not activity_path.exists():
+            return web.json_response(
+                {"activities": [], "raw": ""},
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+
+        content = activity_path.read_text(encoding="utf-8")
+
+        # Parse basic structure - extract log entries
+        # Format: each line is a log entry after the header
+        lines = content.strip().split('\n')
+        activities = []
+        for line in lines:
+            if line.strip() and not line.startswith('#'):
+                activities.append(line.strip())
+
+        return web.json_response(
+            {"activities": activities, "raw": content},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except Exception as e:
+        return web.Response(status=500, text=f"Failed to read orchestrator status: {e}")
 
 
 # =============================================================================
@@ -915,7 +996,7 @@ def cleanup_stale_batches() -> None:
             update_batch(
                 batch_id=batch['id'],
                 status='stopped',
-                ended_at=int(time.time())
+                ended_at=int(time.time() * 1000)
             )
             print(f"Cleaned up stale batch {batch['id']}")
     except Exception as e:
@@ -1020,6 +1101,14 @@ def create_app() -> web.Application:
     app.router.add_get("/api/orchestrator/status", orchestrator_status_handler)
     app.router.add_options("/api/orchestrator/start", cors_preflight_handler)
     app.router.add_options("/api/orchestrator/stop", cors_preflight_handler)
+
+    # Sprint status API
+    app.router.add_get("/api/sprint-status", sprint_status_handler)
+    app.router.add_options("/api/sprint-status", cors_preflight_handler)
+
+    # Orchestrator activity API
+    app.router.add_get("/api/orchestrator-status", orchestrator_activity_handler)
+    app.router.add_options("/api/orchestrator-status", cors_preflight_handler)
 
     # Batch History API (Epic 5)
     app.router.add_get("/api/batches", batches_list_handler)

@@ -25,7 +25,7 @@
 
   <step n="1" goal="Setup and validate injected context">
     <action>Log start of setup phase</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"setup","status":"start","message":"Initializing tech-spec review"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"setup","status":"start","message":"Initializing tech-spec review"}'</bash>
 
     <action>Parse story_keys variable to identify tech-specs to review</action>
     <action>For comma-separated keys (e.g., "B-4,B-5"), process each sequentially</action>
@@ -39,19 +39,19 @@
 
     <check if="required tech-spec files missing from injection">
       <output>ERROR: Tech-spec file not found in injected context</output>
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"setup","status":"end","message":"ERROR: Missing tech-spec file in injection"}'</bash>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"setup","status":"end","message":"ERROR: Missing tech-spec file in injection"}'</bash>
       <action>Output: [CRITICAL-ISSUES-FOUND: YES]</action>
       <action>HALT</action>
     </check>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"setup","status":"end","message":"Setup complete - files validated"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"setup","status":"end","message":"Setup complete - files validated"}'</bash>
   </step>
 
   <step n="2" goal="Analyze tech-spec files for issues">
     <action>For each story in story_keys, perform analysis:</action>
 
     <foreach story_key="in story_keys">
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-tech-spec-review","task_id":"analyze","status":"start","message":"Analyzing tech-spec for {{story_key}}"}'</bash>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-tech-spec-review","task_id":"analyze","status":"start","message":"Analyzing tech-spec for {{story_key}}"}'</bash>
 
       <analyze_criteria>
         <category name="Structure Completeness">
@@ -101,7 +101,7 @@
       <action>Count issues by severity: CRITICAL, HIGH, MEDIUM, LOW</action>
       <action>Document each issue with specific location and description</action>
 
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-tech-spec-review","task_id":"analyze","status":"end","message":"Analysis complete (issues:N)"}'</bash>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-tech-spec-review","task_id":"analyze","status":"end","message":"Analysis complete (issues:N)"}'</bash>
     </foreach>
   </step>
 
@@ -109,7 +109,7 @@
     <check if="issues found">
       <foreach story_key="in story_keys">
         <check if="tech-spec has issues">
-          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-tech-spec-review","task_id":"fix","status":"start","message":"Fixing issues in tech-spec {{story_key}}"}'</bash>
+          <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-tech-spec-review","task_id":"fix","status":"start","message":"Fixing issues in tech-spec {{story_key}}"}'</bash>
 
           <fix_priority_order>
             <priority level="1">CRITICAL issues - missing required sections, no implementation tasks</priority>
@@ -123,19 +123,19 @@
           <action>Preserve existing valid content - only modify problem areas</action>
           <action>Save updated tech-spec file</action>
 
-          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-tech-spec-review","task_id":"fix","status":"end","message":"Fixes applied (issues:N)"}'</bash>
+          <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-tech-spec-review","task_id":"fix","status":"end","message":"Fixes applied (issues:N)"}'</bash>
         </check>
       </foreach>
     </check>
 
     <check if="no issues found">
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"fix","status":"start","message":"No issues to fix"}'</bash>
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"fix","status":"end","message":"Skipped - no issues"}'</bash>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"fix","status":"start","message":"No issues to fix"}'</bash>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"fix","status":"end","message":"Skipped - no issues"}'</bash>
     </check>
   </step>
 
   <step n="4" goal="Validate fixes and output result">
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"validate","status":"start","message":"Validating fixes"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"validate","status":"start","message":"Validating fixes"}'</bash>
 
     <check if="fixes were applied">
       <action>Re-read fixed tech-spec files</action>
@@ -156,7 +156,7 @@
       - Tech-Spec [key]: [summary of findings and fixes]
     </summary_format>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-tech-spec-review","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
   </step>
 
   <output_requirement>
@@ -171,8 +171,8 @@
   </output_requirement>
 
   <logging_reference>
-    <script>{{log_script}}</script>
-    <command_name>tech-spec-review</command_name>
+    <script>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh</script>
+    <command_name>sprint-tech-spec-review</command_name>
     <task_ids>setup, analyze, fix, validate</task_ids>
     <format>
       sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-tech-spec-review","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'

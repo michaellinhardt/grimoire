@@ -214,7 +214,8 @@ class Orchestrator:
                 "batch:warning",
                 {
                     "batch_id": self.current_batch_id,
-                    "warning": "Project context not available - proceeding without context",
+                    "message": "Project context not available - proceeding without context",
+                    "warning_type": "context_unavailable",
                 },
             )
             # Continue anyway - agents can function without project context
@@ -243,7 +244,7 @@ class Orchestrator:
         # Finalize batch
         update_batch(
             batch_id=self.current_batch_id,
-            ended_at=int(time.time()),
+            ended_at=int(time.time() * 1000),
             cycles_completed=self.cycles_completed,
             status="stopped" if self.stop_requested else "completed",
         )
@@ -587,7 +588,7 @@ class Orchestrator:
             update_background_task(
                 task_id,
                 status="completed",
-                completed_at=int(time.time()),
+                completed_at=int(time.time() * 1000),
             )
 
             # Emit completion event
@@ -601,7 +602,7 @@ class Orchestrator:
             update_background_task(
                 task_id,
                 status="error",
-                completed_at=int(time.time()),
+                completed_at=int(time.time() * 1000),
             )
             # Log error but don't crash - this is background work
             self.emit_event(
@@ -625,7 +626,7 @@ class Orchestrator:
             update_background_task(
                 task_id,
                 status="completed",
-                completed_at=int(time.time()),
+                completed_at=int(time.time() * 1000),
             )
 
             self.emit_event(
@@ -905,6 +906,17 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
         if task_info:
             # Log to database - derive event_type from status
             event_type = "command:start" if task_info["status"] == "start" else "command:end"
+
+            # Build WebSocket payload for storage and emission
+            ws_payload = {
+                "story_key": task_info["story_id"],
+                "command": task_info["command"],
+                "task_id": task_info["task_id"],
+                "message": task_info["message"],
+            }
+            if event_type == "command:end":
+                ws_payload["status"] = task_info["status"]
+
             create_event(
                 batch_id=self.current_batch_id,
                 story_id=None,  # Would need DB lookup for story record ID
@@ -916,19 +928,12 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
                 task_id=task_info["task_id"],
                 status=task_info["status"],
                 message=task_info["message"],
+                payload=ws_payload,
             )
 
             # Emit WebSocket event
             ws_type = "command:start" if task_info["status"] == "start" else "command:end"
-            self.emit_event(
-                ws_type,
-                {
-                    "story_key": task_info["story_id"],
-                    "command": task_info["command"],
-                    "task_id": task_info["task_id"],
-                    "message": task_info["message"],
-                },
-            )
+            self.emit_event(ws_type, ws_payload)
 
     # =========================================================================
     # WebSocket Event Emission (AC: #3, #4)
@@ -939,7 +944,7 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
         event = {
             "type": event_type,
             "payload": payload,
-            "timestamp": int(datetime.now().timestamp() * 1000),
+            "timestamp": int(time.time() * 1000),
         }
 
         try:
@@ -981,7 +986,7 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
         )
 
         # Update database
-        ended_at = int(time.time()) if new_status in ("done", "blocked") else None
+        ended_at = int(time.time() * 1000) if new_status in ("done", "blocked") else None
         story_record = get_story_by_key(story_key=story_key, batch_id=self.current_batch_id)
         if story_record:
             update_story(story_id=story_record["id"], status=new_status, ended_at=ended_at)

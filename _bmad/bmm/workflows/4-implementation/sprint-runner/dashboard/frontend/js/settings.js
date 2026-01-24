@@ -16,14 +16,14 @@ const SETTINGS_CONFIG = {
         id: 'settingServerPort',
         type: 'number',
         defaultValue: 8080,
-        min: 1024,
+        min: 1,
         max: 65535,
         label: 'Server Port',
-        hint: 'HTTP server port (requires restart)',
+        hint: 'HTTP server port (requires restart). Ports 1-1023 require root privileges.',
         validate: (value) => {
             const num = parseInt(value, 10);
-            if (isNaN(num) || num < 1024 || num > 65535) {
-                return 'Port must be between 1024 and 65535';
+            if (isNaN(num) || num < 1 || num > 65535) {
+                return 'Port must be between 1 and 65535';
             }
             return null;
         }

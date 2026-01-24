@@ -1,183 +1,266 @@
-# Implementation Plan: Dashboard and Data Flow Fixes
-
-> **IMPORTANT**: This plan has been reconciled with PLAN-PROMPTS-SCRIPTS.md.
-> See **PLAN-UNIFIED-ORDER.md** for the correct execution sequence.
->
-> **Key Integration Points**:
-> - Fix 4.3 (event_type column) changes `create_event()` signature - PROMPTS-SCRIPTS Fix 1.1 depends on this
-> - Fix 2.2 (timestamp standardization) affects orchestrator.py which PROMPTS-SCRIPTS also modifies
-> - All schema changes (Fix 2.1, 2.2, 4.3) must be applied atomically before any other changes
+# Implementation Plan: Dashboard & Data Flow Fixes
 
 ## Overview
 
-This plan addresses 19 issues identified in the dashboard and data flow review, organized into 4 phases:
-1. **Phase 1**: Critical fixes (high impact, low effort) - 4 issues
-2. **Phase 2**: Data coherence fixes (data integrity) - 4 issues
-3. **Phase 3**: WebSocket protocol fixes (event system) - 4 issues
-4. **Phase 4**: Frontend-backend alignment (UI consistency) - 4 issues
+This plan addresses 9 errors identified in the Sprint Runner dashboard review. The fixes are organized into 4 phases covering: API endpoint additions, WebSocket schema alignment, timestamp consistency, database schema extension, and frontend state management improvements.
 
-Remaining 3 issues are addressed in a "Long-term Architectural" section for future sprints.
-
----
-
-## Phase 1: Critical Fixes (High Impact, Low Effort)
-
-### Fix 1.1: Port Mismatch in Documentation (Issue #2)
-
-- **Issue**: README.md states port 8765 but server.py uses 8080
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/README.md`
-- **Changes**: Update all references from `8765` to `8080` on the following lines:
-  - Line 51: `http://localhost:8765` -> `http://localhost:8080`
-  - Line 55: `http://localhost:8765` -> `http://localhost:8080`
-  - Line 75: `ws://localhost:8765/ws` -> `ws://localhost:8080/ws`
-  - Line 130: `http://localhost:8765/api/orchestrator/start` -> `http://localhost:8080/api/orchestrator/start`
-  - Line 138: `http://localhost:8765/api/orchestrator/stop` -> `http://localhost:8080/api/orchestrator/stop`
-  - Line 206: port 8765 reference in troubleshooting section
-- **Code**:
-```markdown
-# Before
-The server starts on `http://localhost:8765` by default.
-
-# After
-The server starts on `http://localhost:8080` by default.
-```
-- **Test**:
-  1. Start server with `python server.py`
-  2. Verify it announces port 8080
-  3. Verify README instructions match
-
-### Fix 1.2: Add `sprint-runner.csv` to Allowed Files (Issue #11)
-
-- **Issue**: Dashboard fetches `sprint-runner.csv` but server only allows `orchestrator.csv`
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py`
-- **Changes**: Add `"sprint-runner.csv"` to `ALLOWED_DATA_FILES` set (actual location: lines 597-602)
-- **Code**:
-```python
-# Before (lines 597-602 in serve_file_handler function)
-    ALLOWED_DATA_FILES = {
-        "sprint-status.yaml",
-        "orchestrator.md",
-        "orchestrator.csv",
-        "orchestrator-sample.md",
-    }
-
-# After
-    ALLOWED_DATA_FILES = {
-        "sprint-status.yaml",
-        "orchestrator.md",
-        "orchestrator.csv",
-        "sprint-runner.csv",  # Dashboard activity log
-        "orchestrator-sample.md",
-    }
-```
-- **Test**:
-  1. Start server
-  2. Run `curl http://localhost:8080/sprint-runner.csv`
-  3. Verify returns file content (or 404 if file doesn't exist) instead of 403
-
-### Fix 1.3: Sanitize Story Badge Selector (Issue #17)
-
-- **Issue**: `updateStoryBadge()` uses unsanitized `storyKey` in CSS selector
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/dashboard.html`
-- **Changes**: Use `CSS.escape()` for the story key in the selector (lines 4991-4992)
-- **Code**:
-```javascript
-// Before (lines 4991-4992)
-        function updateStoryBadge(storyKey, status) {
-            const badge = document.querySelector(`.sprint-story-badge[data-story="${storyKey}"]`);
-
-// After
-        function updateStoryBadge(storyKey, status) {
-            const badge = document.querySelector(`.sprint-story-badge[data-story="${CSS.escape(storyKey)}"]`);
-```
-- **Note**: Also fix `updateActiveStories()` at line 4986-4988 where `data-story="${key}"` should escape `key`
-- **Additional Code Fix**:
-```javascript
-// Before (line 4987)
-                `<span class="sprint-story-badge in-progress" data-story="${key}">${key}</span>`
-
-// After - escape both attribute and display text
-                `<span class="sprint-story-badge in-progress" data-story="${key.replace(/"/g, '&quot;')}">${key.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`
-```
-- **Test**:
-  1. Create a story with special characters in key (e.g., `test"story`)
-  2. Verify badge updates without console errors
-  3. Verify no XSS vulnerabilities from story keys
-
-### Fix 1.4: Remove Dead Heartbeat Task (Issue #14)
-
-- **Issue**: `heartbeat_task()` does nothing - aiohttp handles heartbeats automatically via `heartbeat=30.0` in `WebSocketResponse()` (line 278)
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py`
-- **Changes** (corrected line numbers from actual file):
-  1. Remove `heartbeat_task()` function (lines 323-361)
-  2. Remove heartbeat task startup in `on_startup()` (lines 677-679)
-  3. Remove heartbeat task cleanup in `on_cleanup()` (lines 684-691)
-- **Code**:
-```python
-# Remove entire heartbeat_task function (lines 323-361):
-async def heartbeat_task() -> None:
-    """..."""
-    while True:
-        await asyncio.sleep(30)
-        # ... (entire function body)
-
-# In on_startup (lines 677-679), remove these 2 lines:
-    app["heartbeat_task"] = asyncio.create_task(heartbeat_task())
-    print("Started heartbeat task")
-
-# In on_cleanup (lines 685-691), remove:
-    if "heartbeat_task" in app:
-        app["heartbeat_task"].cancel()
-        try:
-            await app["heartbeat_task"]
-        except asyncio.CancelledError:
-            pass
-        print("Stopped heartbeat task")
-```
-- **Rationale**: The `heartbeat_task()` function body does nothing useful (the `try` block at line 349-352 has only a `pass` statement). The actual heartbeat is already handled by aiohttp's built-in mechanism via `heartbeat=30.0` on line 278.
-- **Test**:
-  1. Start server
-  2. Verify no "Started heartbeat task" message
-  3. Verify WebSocket connections still work (aiohttp's built-in heartbeat handles it)
-  4. Verify long-running connections are maintained
+**Issues addressed:**
+- Error 1: Missing API endpoints `/api/sprint-status` and `/api/orchestrator-status`
+- Error 2: WebSocket `batch:warning` schema mismatch (`warning` vs `message`)
+- Error 3: Timestamp unit inconsistency (`seconds` vs `milliseconds`)
+- Error 4: Missing fields in `normalize_db_event_to_ws()`
+- Error 5: Database events table missing columns for full event reconstruction
+- Error 6: Race condition in `emit_event()`
+- Error 7: Frontend missing `warning_type` handling in `batch:warning`
+- Error 8: Stale state after returning from past batch view
+- Error 9: Settings validation mismatch (frontend vs backend `server_port`)
 
 ---
 
-## Phase 2: Data Coherence Fixes
+## Prerequisites
 
-### Fix 2.1: Add Foreign Key Constraint for `batch_id` in Events Table (Issue #1)
+1. **Backup database** before schema migration (Phase 2)
+2. **Test environment** ready for validation
+3. **No active sprint runs** during database migration
 
-- **Issue**: `events` table has no foreign key constraint on `batch_id`
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/db.py`
-- **Changes**: Add `FOREIGN KEY (batch_id) REFERENCES batches(id)` to events table schema (lines 103-118 in the SCHEMA string)
-- **Code**:
+---
+
+## Phase 1: API Endpoint & Schema Alignment
+
+### Step 1.1: Add Missing `/api/sprint-status` Endpoint
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/server.py`
+- **Change**: Add new handler function and route
+- **Location**: After `orchestrator_status_handler` (around line 656)
+
+**Add this handler function:**
+
 ```python
-# Before (lines 103-118 within SCHEMA string)
--- Events log
+async def sprint_status_handler(request: web.Request) -> web.Response:
+    """
+    Get sprint status from sprint-status.yaml.
+
+    GET /api/sprint-status
+
+    Returns the parsed YAML content as JSON.
+    """
+    try:
+        status_path = ARTIFACTS_DIR / "sprint-status.yaml"
+        if not status_path.exists():
+            return web.json_response(
+                {"error": "sprint-status.yaml not found"},
+                status=404,
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+
+        import yaml
+        with open(status_path, "r") as f:
+            data = yaml.safe_load(f)
+
+        return web.json_response(
+            data,
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except Exception as e:
+        return web.Response(status=500, text=f"Failed to read sprint status: {e}")
+```
+
+**Add route in `create_app()` (around line 1019):**
+
+```python
+    # Sprint status API
+    app.router.add_get("/api/sprint-status", sprint_status_handler)
+    app.router.add_options("/api/sprint-status", cors_preflight_handler)
+```
+
+**Add import at top of file (if not present):**
+
+```python
+import yaml
+```
+
+### Step 1.2: Add Missing `/api/orchestrator-status` Endpoint
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/server.py`
+- **Change**: Add new handler function and route
+- **Location**: After `sprint_status_handler`
+
+**Add this handler function:**
+
+```python
+async def orchestrator_activity_handler(request: web.Request) -> web.Response:
+    """
+    Get orchestrator activity log.
+
+    GET /api/orchestrator-status
+
+    Returns parsed orchestrator.md activity log as JSON.
+    """
+    try:
+        activity_path = ARTIFACTS_DIR / "orchestrator.md"
+        if not activity_path.exists():
+            return web.json_response(
+                {"activities": [], "raw": ""},
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+
+        content = activity_path.read_text(encoding="utf-8")
+
+        # Parse basic structure - extract log entries
+        # Format: each line is a log entry after the header
+        lines = content.strip().split('\n')
+        activities = []
+        for line in lines:
+            if line.strip() and not line.startswith('#'):
+                activities.append(line.strip())
+
+        return web.json_response(
+            {"activities": activities, "raw": content},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except Exception as e:
+        return web.Response(status=500, text=f"Failed to read orchestrator status: {e}")
+```
+
+**Add route in `create_app()` (after sprint-status route):**
+
+```python
+    app.router.add_get("/api/orchestrator-status", orchestrator_activity_handler)
+    app.router.add_options("/api/orchestrator-status", cors_preflight_handler)
+```
+
+### Step 1.3: Fix `batch:warning` Schema Mismatch in Orchestrator
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/orchestrator.py`
+- **Change**: Rename `warning` key to `message` and add `warning_type`
+- **Location**: Lines 213-220
+
+**Before:**
+
+```python
+            self.emit_event(
+                "batch:warning",
+                {
+                    "batch_id": self.current_batch_id,
+                    "warning": "Project context not available - proceeding without context",
+                },
+            )
+```
+
+**After:**
+
+```python
+            self.emit_event(
+                "batch:warning",
+                {
+                    "batch_id": self.current_batch_id,
+                    "message": "Project context not available - proceeding without context",
+                    "warning_type": "context_unavailable",
+                },
+            )
+```
+
+### Step 1.4: Fix Timestamp Unit in `orchestrator.py` batch end
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/orchestrator.py`
+- **Change**: Convert `time.time()` to milliseconds
+- **Location**: Line 246
+
+**Before:**
+
+```python
+        update_batch(
+            batch_id=self.current_batch_id,
+            ended_at=int(time.time()),
+            cycles_completed=self.cycles_completed,
+            status="stopped" if self.stop_requested else "completed",
+        )
+```
+
+**After:**
+
+```python
+        update_batch(
+            batch_id=self.current_batch_id,
+            ended_at=int(time.time() * 1000),
+            cycles_completed=self.cycles_completed,
+            status="stopped" if self.stop_requested else "completed",
+        )
+```
+
+### Step 1.5: Fix Timestamp Unit in `server.py` stop handler
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/server.py`
+- **Change**: Convert `time.time()` to milliseconds
+- **Location**: Lines 603-607 (orchestrator_stop_handler)
+
+**Before:**
+
+```python
+                update_batch(
+                    batch_id=batch['id'],
+                    status='stopped',
+                    ended_at=int(time.time())
+                )
+```
+
+**After:**
+
+```python
+                update_batch(
+                    batch_id=batch['id'],
+                    status='stopped',
+                    ended_at=int(time.time() * 1000)
+                )
+```
+
+### Step 1.6: Fix Timestamp Unit in `server.py` cleanup_stale_batches
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/server.py`
+- **Change**: Convert `time.time()` to milliseconds
+- **Location**: Lines 915-920 (cleanup_stale_batches)
+
+**Before:**
+
+```python
+            update_batch(
+                batch_id=batch['id'],
+                status='stopped',
+                ended_at=int(time.time())
+            )
+```
+
+**After:**
+
+```python
+            update_batch(
+                batch_id=batch['id'],
+                status='stopped',
+                ended_at=int(time.time() * 1000)
+            )
+```
+
+---
+
+## Phase 2: Database Schema Enhancement
+
+### Step 2.1: Add `payload_json` Column to Events Table
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/db.py`
+- **Change**: Add `payload_json` TEXT column to store complete event payloads
+- **Location**: Lines 112-129 (events table schema)
+
+**Before:**
+
+```python
+-- Events log (E1-S1: added event_type column, FK on batch_id)
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY,
     batch_id INTEGER NOT NULL,
     story_id INTEGER,
     command_id INTEGER,
     timestamp INTEGER NOT NULL,
-    epic_id TEXT NOT NULL,
-    story_key TEXT NOT NULL,
-    command TEXT NOT NULL,
-    task_id TEXT NOT NULL,
-    status TEXT NOT NULL,
-    message TEXT,
-    FOREIGN KEY (story_id) REFERENCES stories(id),
-    FOREIGN KEY (command_id) REFERENCES commands(id)
-);
-
-# After - add FOREIGN KEY constraint for batch_id (insert before story_id FK)
--- Events log
-CREATE TABLE IF NOT EXISTS events (
-    id INTEGER PRIMARY KEY,
-    batch_id INTEGER NOT NULL,
-    story_id INTEGER,
-    command_id INTEGER,
-    timestamp INTEGER NOT NULL,
+    event_type TEXT NOT NULL,
     epic_id TEXT NOT NULL,
     story_key TEXT NOT NULL,
     command TEXT NOT NULL,
@@ -189,414 +272,70 @@ CREATE TABLE IF NOT EXISTS events (
     FOREIGN KEY (command_id) REFERENCES commands(id)
 );
 ```
-- **Dependencies**: Requires deleting existing `sprint-runner.db` to apply schema change
-- **WARNING**: Database migration is destructive - backup existing data if needed
-- **Test**:
-  1. Delete `sprint-runner.db`
-  2. Start server (auto-creates DB via `init_db()`)
-  3. Verify constraint: `sqlite3 sprint-runner.db "PRAGMA foreign_key_list(events);"`
-  4. Expected output should include `batch_id` with `batches` table reference
 
-### Fix 2.2: Standardize Timestamps to Milliseconds (Issue #8)
+**After:**
 
-- **Issue**: `db.py` uses seconds, `orchestrator.py` uses milliseconds, frontend has to detect both
-- **File(s)**:
-  - `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/db.py`
-  - `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py`
-- **Changes**:
-  1. Update all `int(time.time())` calls in `db.py` to `int(time.time() * 1000)`
-  2. Ensure `server.py` uses consistent milliseconds (already does in most places)
-- **Code** (corrected line numbers from actual db.py):
 ```python
-# db.py - Update these lines to use milliseconds:
-
-# Line 176 in create_batch() - the tuple parameter
-(int(time.time() * 1000), max_cycles)
-
-# Line 267 in create_story() - the tuple parameter
-(batch_id, story_key, epic_id, int(time.time() * 1000))
-
-# Line 378 in create_command() - the tuple parameter
-(story_id, command, task_id, int(time.time() * 1000))
-
-# Line 470 in create_event() - the tuple parameter
-(batch_id, story_id, command_id, int(time.time() * 1000), epic_id, story_key, command, task_id, status, message)
-
-# Line 540 in create_background_task() - the tuple parameter
-(batch_id, story_key, task_type, int(time.time() * 1000))
-```
-- **ALSO UPDATE in server.py** (missed in original plan):
-```python
-# Line 535 and 665 in orchestrator_stop_handler and cleanup_stale_batches:
-ended_at=int(time.time() * 1000)  # Was: int(time.time())
-```
-- **Dependencies**: Fix 2.1 (delete DB first anyway)
-- **Test**:
-  1. Create a batch
-  2. Query: `sqlite3 sprint-runner.db "SELECT started_at FROM batches LIMIT 1;"`
-  3. Verify timestamp is ~13 digits (milliseconds) not ~10 digits (seconds)
-  4. Query: `sqlite3 sprint-runner.db "SELECT timestamp FROM events LIMIT 1;"`
-  5. Verify event timestamp is also ~13 digits
-
-### Fix 2.3: Define Shared Story Status Constants (Issue #9)
-
-- **Issue**: Story status values are inconsistent across components
-- **File(s)**:
-  - `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/db.py` (add constants)
-  - `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/orchestrator.py` (import and use)
-  - `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py` (import for validation)
-- **Changes**: Create a shared `VALID_STORY_STATUSES` constant
-- **Code**:
-```python
-# Add to db.py after line 32 (BACKGROUND_TASK_FIELDS definition)
-
-# Valid story status values (shared across all components)
-VALID_STORY_STATUSES = {
-    'backlog',           # Not yet started
-    'ready-for-dev',     # Story created, ready for development
-    'in-progress',       # Currently being developed
-    'review',            # In code review
-    'done',              # Completed successfully
-    'blocked',           # Blocked, needs intervention
-    'optional',          # Optional story (low priority)
-}
-```
-- **Additional Step** (MISSING FROM ORIGINAL PLAN): Export in __all__ or ensure module-level visibility
-```python
-# At top of db.py (if __all__ exists, add to it; otherwise this is auto-exported)
-# No change needed if no __all__ defined - Python exports all module-level names by default
-```
-- **Test**:
-  1. Verify import works: `python -c "from db import VALID_STORY_STATUSES; print(VALID_STORY_STATUSES)"`
-  2. Verify set contains all expected statuses
-  3. Verify orchestrator.py can import: `from db import VALID_STORY_STATUSES`
-
-### Fix 2.4: Add Status Validation to `update_story()` (Issue #10)
-
-- **Issue**: `update_story()` accepts any string for status without validation
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/db.py`
-- **Changes**: Add validation in `update_story()` function (lines 272-301)
-- **Code**:
-```python
-# In update_story() function, after line 291 (invalid fields check), add:
-
-def update_story(story_id: int, **kwargs: Any) -> int:
-    if not kwargs:
-        return 0
-
-    invalid = set(kwargs.keys()) - STORY_FIELDS
-    if invalid:
-        raise ValueError(f"Invalid fields for story: {invalid}")
-
-    # Validate status if provided
-    if 'status' in kwargs:
-        status_value = kwargs['status']
-        if status_value not in VALID_STORY_STATUSES:
-            raise ValueError(f"Invalid story status '{status_value}'. Valid values: {VALID_STORY_STATUSES}")
-
-    # ... rest of function unchanged
-```
-- **Dependencies**: Fix 2.3 (needs VALID_STORY_STATUSES)
-- **Test**:
-  1. Try `update_story(1, status='invalid-status')`
-  2. Verify raises `ValueError`
-  3. Try `update_story(1, status='done')`
-  4. Verify succeeds
-
----
-
-## Phase 3: WebSocket Protocol Fixes
-
-### Fix 3.1: Filter Events by Batch in Initial State (Issue #3)
-
-- **Issue**: `get_events(limit=50)` returns events from all batches, mixing old data
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py`
-- **Changes**: Update `get_initial_state()` to filter by active batch (lines 242-261)
-- **Code**:
-```python
-# Before (lines 249-255 - verified in actual file)
-async def get_initial_state() -> dict[str, Any]:
-    try:
-        from db import get_active_batch, get_events
-
-        batch = get_active_batch()
-        events = get_events(limit=50)
-
-        return {"batch": batch, "events": events}
-
-# After - add get_events_by_batch import and filter logic
-async def get_initial_state() -> dict[str, Any]:
-    try:
-        from db import get_active_batch, get_events, get_events_by_batch
-
-        batch = get_active_batch()
-
-        # Filter events by active batch to avoid mixing historical data
-        if batch:
-            events = get_events_by_batch(batch['id'])[-50:]  # Last 50 events for this batch
-        else:
-            events = get_events(limit=50)  # Fallback to global events if no active batch
-
-        return {"batch": batch, "events": events}
-```
-- **Note**: `get_events_by_batch()` already exists in db.py at line 498 - verified
-- **Test**:
-  1. Create batch 1, add events, complete it
-  2. Create batch 2 with different events
-  3. Connect WebSocket
-  4. Verify `init` event only contains batch 2 events
-
-### Fix 3.2: Add Validation Schemas for Context Events (Issue #4)
-
-- **Issue**: `CONTEXT_CREATE`, `CONTEXT_REFRESH`, `CONTEXT_COMPLETE` have no payload validation
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py`
-- **Changes**: Add schemas to `EVENT_PAYLOAD_SCHEMAS` (currently ends at line 126)
-- **Code**:
-```python
-# Current EVENT_PAYLOAD_SCHEMAS (lines 116-126) ends with ERROR
-# Add these entries before the closing brace:
-EVENT_PAYLOAD_SCHEMAS: dict[str, set[str]] = {
-    EventType.BATCH_START: {"batch_id", "max_cycles"},
-    EventType.BATCH_END: {"batch_id", "cycles_completed", "status"},
-    EventType.CYCLE_START: {"cycle_number", "story_keys"},
-    EventType.CYCLE_END: {"cycle_number", "completed_stories"},
-    EventType.COMMAND_START: {"story_key", "command", "task_id"},
-    EventType.COMMAND_PROGRESS: {"story_key", "command", "task_id", "message"},
-    EventType.COMMAND_END: {"story_key", "command", "task_id", "status"},
-    EventType.STORY_STATUS: {"story_key", "old_status", "new_status"},
-    EventType.ERROR: {"type", "message"},
-    # Context events (Story 5-SR-4) - ADDED
-    EventType.CONTEXT_CREATE: {"status"},
-    EventType.CONTEXT_REFRESH: {"task_id", "status"},
-    EventType.CONTEXT_COMPLETE: {"task_id", "status"},
-}
-```
-- **Note**: Context event types already exist in EventType enum (lines 109-112), just missing from schema dict
-- **Test**:
-  1. Call `validate_payload("context:create", {"status": "starting"})`
-  2. Verify returns `True`
-  3. Call `validate_payload("context:create", {})`
-  4. Verify returns `False`
-
-### Fix 3.3: Add Missing Event Types to Enum (Issues #12, #13)
-
-- **Issue**: `pong` and `batch:warning` events are emitted but not defined in `EventType`
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py`
-- **Changes**: Add missing event types to `EventType` enum (lines 87-112)
-- **Code**:
-```python
-class EventType(str, Enum):
-    """WebSocket event types for real-time updates."""
-
-    # Batch events
-    BATCH_START = "batch:start"
-    BATCH_END = "batch:end"
-    BATCH_WARNING = "batch:warning"  # Added: warning during batch execution
-
-    # Cycle events
-    CYCLE_START = "cycle:start"
-    CYCLE_END = "cycle:end"
-
-    # Command events
-    COMMAND_START = "command:start"
-    COMMAND_PROGRESS = "command:progress"
-    COMMAND_END = "command:end"
-
-    # Story events
-    STORY_STATUS = "story:status"
-
-    # Error events
-    ERROR = "error"
-
-    # Context events (from Story 5-SR-4)
-    CONTEXT_CREATE = "context:create"
-    CONTEXT_REFRESH = "context:refresh"
-    CONTEXT_COMPLETE = "context:complete"
-
-    # Connection events
-    PONG = "pong"  # Added: response to client ping
-```
-- **Test**:
-  1. Import `EventType`
-  2. Verify `EventType.PONG.value == "pong"`
-  3. Verify `EventType.BATCH_WARNING.value == "batch:warning"`
-
-### Fix 3.4: Add `batch:warning` Payload Schema (Issue #13 continued)
-
-- **Issue**: `batch:warning` needs validation schema
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py`
-- **Changes**: Add schema to `EVENT_PAYLOAD_SCHEMAS`
-- **Code**:
-```python
-# Add to EVENT_PAYLOAD_SCHEMAS
-EventType.BATCH_WARNING: {"batch_id", "warning"},
-```
-- **Dependencies**: Fix 3.3 (needs EventType.BATCH_WARNING)
-- **Test**:
-  1. Call `validate_payload("batch:warning", {"batch_id": 1, "warning": "test"})`
-  2. Verify returns `True`
-
----
-
-## Phase 4: Frontend-Backend Alignment
-
-### Fix 4.1: Normalize Database Events to WebSocket Format (Issue #16)
-
-- **Issue**: Database events have flat structure, WebSocket events have `{type, payload}` structure
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server.py`
-- **Changes**: Transform database events in `get_initial_state()` to match WebSocket format
-- **Code**:
-```python
-# In get_initial_state() after retrieving events, normalize format:
-
-async def get_initial_state() -> dict[str, Any]:
-    try:
-        from db import get_active_batch, get_events, get_events_by_batch
-
-        batch = get_active_batch()
-
-        if batch:
-            raw_events = get_events_by_batch(batch['id'])[-50:]
-        else:
-            raw_events = get_events(limit=50)
-
-        # Normalize database events to WebSocket format
-        events = []
-        for e in raw_events:
-            # Derive event type from status field
-            status = e.get('status', '')
-            if status == 'start':
-                event_type = 'command:start'
-            elif status in ('end', 'complete', 'done'):
-                event_type = 'command:end'
-            elif status == 'progress':
-                event_type = 'command:progress'
-            else:
-                event_type = 'command:progress'  # Default
-
-            events.append({
-                'type': event_type,
-                'timestamp': e.get('timestamp', 0),
-                'payload': {
-                    'story_key': e.get('story_key'),
-                    'command': e.get('command'),
-                    'task_id': e.get('task_id'),
-                    'status': status,
-                    'message': e.get('message'),
-                    'epic_id': e.get('epic_id'),
-                }
-            })
-
-        return {"batch": batch, "events": events}
-```
-- **Dependencies**: Fix 3.1 (builds on batch filtering)
-- **Test**:
-  1. Connect WebSocket
-  2. Check `init` event payload
-  3. Verify each event in `events` array has `type` and `payload` keys
-
-### Fix 4.2: Handle Unlimited Mode in Progress Bar (Issue #19)
-
-- **Issue**: Progress bar shows 0% forever when `maxCycles` is 0 (unlimited mode)
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/dashboard.html`
-- **Changes**: Update `updateProgress()` to handle unlimited mode (lines 4970-4982)
-- **Code**:
-```javascript
-// Before (actual code from lines 4970-4982)
-        function updateProgress() {
-            const fill = document.getElementById('sprintProgressFill');
-            const stats = document.getElementById('sprintProgressStats');
-
-            const progress = sprintRunState.maxCycles > 0
-                ? (sprintRunState.currentCycle / sprintRunState.maxCycles) * 100
-                : 0;
-
-            fill.style.width = `${Math.min(progress, 100)}%`;
-            stats.textContent = sprintRunState.maxCycles > 0
-                ? `${sprintRunState.currentCycle}/${sprintRunState.maxCycles} cycles`
-                : `${sprintRunState.currentCycle} cycles`;
-        }
-
-// After - handle unlimited mode (maxCycles >= 999)
-        function updateProgress() {
-            const fill = document.getElementById('sprintProgressFill');
-            const stats = document.getElementById('sprintProgressStats');
-
-            if (sprintRunState.maxCycles > 0 && sprintRunState.maxCycles < 999) {
-                // Fixed mode: show percentage progress
-                const progress = (sprintRunState.currentCycle / sprintRunState.maxCycles) * 100;
-                fill.style.width = `${Math.min(100, progress)}%`;
-                fill.classList.remove('progress-indeterminate');
-                stats.textContent = `${sprintRunState.currentCycle}/${sprintRunState.maxCycles} cycles`;
-            } else {
-                // Unlimited mode: show indeterminate progress animation
-                fill.style.width = '100%';
-                fill.classList.add('progress-indeterminate');
-                stats.textContent = `${sprintRunState.currentCycle} cycles (unlimited)`;
-            }
-        }
-```
-- **Additional CSS**: Add indeterminate animation style (find existing `.sprint-progress-fill` styles and add nearby)
-```css
-.progress-indeterminate {
-    background: linear-gradient(90deg, var(--primary-color), var(--primary-color-dark), var(--primary-color));
-    background-size: 200% 100%;
-    animation: progress-pulse 1.5s ease-in-out infinite;
-}
-@keyframes progress-pulse {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-```
-- **Note**: Need to verify `--primary-color` and `--primary-color-dark` CSS variables exist or use fallback colors
-- **Test**:
-  1. Start orchestrator with `batch_size: "all"` (sets maxCycles=999)
-  2. Verify progress bar shows pulsing animation
-  3. Verify stats show "N cycles (unlimited)"
-  4. Switch to fixed mode, verify animation stops and progress shows normally
-
-### Fix 4.3: Add `event_type` Column to Events Table (Issue #18)
-
-- **Issue**: Events table doesn't store the WebSocket event type
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/db.py`
-- **Changes**:
-  1. Add `event_type` column to schema
-  2. Update `create_event()` function signature
-- **Code**:
-```python
-# Update schema (lines 103-118 within SCHEMA string) - combine with Fix 2.1 FK addition
--- Events log
+-- Events log (E1-S1: added event_type column, FK on batch_id)
+-- E1-S2: added payload_json for complete event reconstruction
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY,
     batch_id INTEGER NOT NULL,
     story_id INTEGER,
     command_id INTEGER,
     timestamp INTEGER NOT NULL,
-    event_type TEXT NOT NULL,  -- ADDED: WebSocket event type (e.g., 'command:start')
+    event_type TEXT NOT NULL,
     epic_id TEXT NOT NULL,
     story_key TEXT NOT NULL,
     command TEXT NOT NULL,
     task_id TEXT NOT NULL,
     status TEXT NOT NULL,
     message TEXT,
-    FOREIGN KEY (batch_id) REFERENCES batches(id),  -- From Fix 2.1
+    payload_json TEXT,
+    FOREIGN KEY (batch_id) REFERENCES batches(id),
     FOREIGN KEY (story_id) REFERENCES stories(id),
     FOREIGN KEY (command_id) REFERENCES commands(id)
 );
+```
 
-# Update create_event function signature (lines 435-472)
-# IMPORTANT: Insert event_type after command_id, before epic_id to match schema column order
+### Step 2.2: Update `create_event` Function to Accept Payload
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/db.py`
+- **Change**: Add optional `payload` parameter and store as JSON
+- **Location**: Lines 453-492
+
+**Before:**
+
+```python
 def create_event(
     batch_id: int,
     story_id: Optional[int],
     command_id: Optional[int],
-    event_type: str,  # ADDED parameter
+    event_type: str,
     epic_id: str,
     story_key: str,
     command: str,
     task_id: str,
     status: str,
     message: str
+) -> int:
+```
+
+**After:**
+
+```python
+def create_event(
+    batch_id: int,
+    story_id: Optional[int],
+    command_id: Optional[int],
+    event_type: str,
+    epic_id: str,
+    story_key: str,
+    command: str,
+    task_id: str,
+    status: str,
+    message: str,
+    payload: Optional[dict] = None
 ) -> int:
     """
     Log an event with timestamp=now.
@@ -605,271 +344,659 @@ def create_event(
         batch_id: Parent batch ID
         story_id: Associated story ID (optional)
         command_id: Associated command ID (optional)
-        event_type: WebSocket event type (e.g., 'command:start', 'command:end')
+        event_type: Type of event (e.g., 'command:start', 'command:end', 'command:progress')
         epic_id: Epic identifier
         story_key: Story identifier
         command: Command name
         task_id: Task phase
         status: Event status (start, end, progress)
         message: Event message
+        payload: Full event payload for reconstruction (optional)
 
     Returns:
         The new event ID
     """
+    payload_json = json.dumps(payload) if payload else None
+
     with get_connection() as conn:
         cursor = conn.execute(
             """
             INSERT INTO events
-            (batch_id, story_id, command_id, timestamp, event_type, epic_id, story_key, command, task_id, status, message)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (batch_id, story_id, command_id, timestamp, event_type, epic_id, story_key, command, task_id, status, message, payload_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (batch_id, story_id, command_id, int(time.time() * 1000), event_type, epic_id, story_key, command, task_id, status, message)
+            (batch_id, story_id, command_id, int(time.time() * 1000), event_type, epic_id, story_key, command, task_id, status, message, payload_json)
         )
-        return cursor.lastrowid
+        return cursor.lastrowid  # type: ignore
 ```
-- **Dependencies**: Fix 2.1, Fix 2.2 (schema changes should be combined - delete DB once before all schema changes)
-- **BREAKING CHANGE**: All callers of `create_event()` must be updated to pass `event_type` parameter
-- **Test**:
-  1. Delete DB, restart server
-  2. Create an event
-  3. Query: `sqlite3 sprint-runner.db "SELECT event_type FROM events LIMIT 1;"`
-  4. Verify column exists and has value
 
-### Fix 4.4: Update Orchestrator to Pass Event Type (Issue #18 continued)
+**Add import at top of file:**
 
-- **Issue**: `orchestrator.py` needs to pass event_type when calling `create_event()`
-- **File(s)**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/orchestrator.py`
-- **Changes**: Update all `create_event()` calls to include `event_type` parameter
-- **Affected Locations** (verified from actual file):
-  1. Line 502-512: `create_project_context()` - event_type should be `"context:create"`
-  2. Line 534-544: `refresh_project_context_background()` - event_type should be `"context:refresh"`
-  3. Line 888-898: `_handle_stream_event()` - derive from status field
-
-- **Code for each location**:
 ```python
-# Location 1: create_project_context (lines 502-512)
-create_event(
-    batch_id=self.current_batch_id,
-    story_id=None,
-    command_id=None,
-    event_type="context:create",  # ADDED
-    epic_id="system",
-    story_key="context",
-    command="generate-project-context",
-    task_id="context",
-    status="create",
-    message="Creating project context (blocking)",
-)
-
-# Location 2: refresh_project_context_background (lines 534-544)
-create_event(
-    batch_id=self.current_batch_id,
-    story_id=None,
-    command_id=None,
-    event_type="context:refresh",  # ADDED
-    epic_id="system",
-    story_key="context",
-    command="generate-project-context",
-    task_id="context",
-    status="refresh",
-    message="Starting background context refresh",
-)
-
-# Location 3: _handle_stream_event (lines 888-898)
-ws_type = "command:start" if task_info["status"] == "start" else "command:end"
-create_event(
-    batch_id=self.current_batch_id,
-    story_id=None,
-    command_id=None,
-    event_type=ws_type,  # ADDED - derive from status
-    epic_id=task_info["epic_id"],
-    story_key=task_info["story_id"],
-    command=task_info["command"],
-    task_id=task_info["task_id"],
-    status=task_info["status"],
-    message=task_info["message"],
-)
-```
-- **Dependencies**: Fix 4.3 (needs updated schema and function signature)
-- **Test**:
-  1. Run orchestrator
-  2. Query events table: `sqlite3 sprint-runner.db "SELECT event_type, status FROM events LIMIT 10;"`
-  3. Verify `event_type` column is populated with correct values (e.g., "command:start", "context:create")
-
----
-
-## Long-term Architectural Improvements (Future Sprint)
-
-These issues require more significant refactoring and should be planned for a dedicated sprint:
-
-### Issue #6: Database Error Handling in Orchestrator
-
-- **Issue**: `create_event()` calls in orchestrator have no try/except
-- **Recommendation**: Wrap all database calls in try/except with logging
-- **Scope**: ~15 call sites in orchestrator.py
-
-### Issue #7: Race Condition in Batch Cleanup
-
-- **Issue**: `cleanup_stale_batches` and `orchestrator_stop_handler` can conflict
-- **Recommendation**: Add database transaction or mutex lock
-- **Scope**: Requires careful testing of concurrent scenarios
-
-### Issue #15: WebSocket Reconnection State Recovery
-
-- **Issue**: Reconnection doesn't restore missed events
-- **Recommendation**: Implement `last_event_id` parameter for event catchup
-- **Scope**: Requires new API endpoint and protocol change
-
----
-
-## Dependencies Graph
-
-```
-Phase 1 (Independent - can run in parallel):
-  Fix 1.1 (README port) - standalone
-  Fix 1.2 (CSV whitelist) - standalone
-  Fix 1.3 (CSS.escape) - standalone
-  Fix 1.4 (heartbeat) - standalone
-
-Phase 2 (Sequential - schema changes):
-  Fix 2.1 (FK constraint) -> Fix 2.2 (timestamps) -> Fix 2.3 (status enum) -> Fix 2.4 (validation)
-  NOTE: Delete sprint-runner.db once before starting Phase 2
-
-Phase 3 (Mostly independent):
-  Fix 3.1 (batch filter) - standalone
-  Fix 3.2 (context schemas) - standalone
-  Fix 3.3 (event types) -> Fix 3.4 (warning schema)
-
-Phase 4 (Dependencies):
-  Fix 4.1 (normalize events) - depends on Fix 3.1
-  Fix 4.2 (progress bar) - standalone
-  Fix 4.3 (event_type column) - depends on Phase 2 schema changes
-  Fix 4.4 (orchestrator) - depends on Fix 4.3
+import json
 ```
 
----
+### Step 2.3: Update `normalize_db_event_to_ws` to Use `payload_json`
 
-## Testing Strategy
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/server.py`
+- **Change**: Prefer `payload_json` if available, fall back to field extraction
+- **Location**: Lines 242-296
 
-### Unit Tests
+**Before:**
 
-For each fix, add or update tests in the corresponding test file:
+```python
+def normalize_db_event_to_ws(event: dict[str, Any]) -> dict[str, Any]:
+    """..."""
+    event_type = event.get("event_type", "")
 
-| Fix | Test File | Test Cases |
-|-----|-----------|------------|
-| 1.2 | `test_server.py` | Test `sprint-runner.csv` in ALLOWED_DATA_FILES |
-| 2.1-2.4 | `test_db.py` | Test FK constraint, timestamp format, status validation |
-| 3.1-3.4 | `test_server.py` | Test payload validation, event types |
-| 4.1 | `test_server.py` | Test event normalization |
-| 4.3-4.4 | `test_db.py`, `test_orchestrator.py` | Test event_type storage |
+    # Build payload from DB fields based on event type
+    payload: dict[str, Any] = {}
 
-### Integration Tests
+    # Common fields for command events
+    if event_type.startswith("command:"):
+        # ... existing extraction logic
+```
 
-Add to `test_integration.py`:
+**After:**
 
-1. **WebSocket flow test**: Connect, receive init, verify event format
-2. **Full cycle test**: Start batch, verify events have correct types
-3. **Reconnection test**: Disconnect, reconnect, verify state sync
+```python
+def normalize_db_event_to_ws(event: dict[str, Any]) -> dict[str, Any]:
+    """
+    Normalize a database event record to WebSocket event format.
 
-### Manual Testing Checklist
+    DB events have flat structure with fields like:
+    - id, batch_id, story_id, command_id, timestamp, event_type,
+    - epic_id, story_key, command, task_id, status, message, payload_json
 
-- [ ] Start server, verify port 8080
-- [ ] Open dashboard, verify WebSocket connects
-- [ ] Start orchestrator, verify progress bar works
-- [ ] Check unlimited mode shows indeterminate progress
-- [ ] Query database, verify timestamps are milliseconds
-- [ ] Query database, verify event_type column populated
-- [ ] Test story badge update with special characters
+    WebSocket events have structure:
+    - type: event type string
+    - timestamp: milliseconds since epoch
+    - payload: dict with event-specific fields
 
-### Regression Tests
+    Args:
+        event: Database event record as dict
 
-Run existing test suite after each fix:
+    Returns:
+        WebSocket-formatted event dict
+    """
+    event_type = event.get("event_type", "")
 
-```bash
-cd /Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard
-python -m pytest test_*.py -v
+    # Prefer stored payload_json if available (complete reconstruction)
+    if event.get("payload_json"):
+        try:
+            payload = json.loads(event["payload_json"])
+            return {
+                "type": event_type,
+                "timestamp": event.get("timestamp", 0),
+                "payload": payload,
+            }
+        except json.JSONDecodeError:
+            pass  # Fall through to manual extraction
+
+    # Build payload from DB fields based on event type (legacy fallback)
+    payload: dict[str, Any] = {}
+
+    # Common fields for command events
+    if event_type.startswith("command:"):
+        payload["story_key"] = event.get("story_key", "")
+        payload["command"] = event.get("command", "")
+        payload["task_id"] = event.get("task_id", "")
+        if event_type == "command:progress":
+            payload["message"] = event.get("message", "")
+        elif event_type == "command:end":
+            payload["status"] = event.get("status", "")
+    elif event_type.startswith("batch:"):
+        payload["batch_id"] = event.get("batch_id")
+        if event_type == "batch:end":
+            payload["cycles_completed"] = event.get("cycles_completed", 0)
+            payload["status"] = event.get("status", "")
+        elif event_type == "batch:warning":
+            payload["message"] = event.get("message", "")
+            payload["warning_type"] = "unknown"
+    elif event_type.startswith("cycle:"):
+        payload["cycle_number"] = event.get("cycle_number", 0)
+        # Note: story_keys and completed_stories not available in legacy events
+    elif event_type.startswith("story:"):
+        payload["story_key"] = event.get("story_key", "")
+        payload["old_status"] = event.get("old_status", "")
+        payload["new_status"] = event.get("new_status", "")
+    elif event_type.startswith("context:"):
+        payload["story_key"] = event.get("story_key", "")
+        payload["context_type"] = event.get("context_type", "")
+
+    # Include any message if present
+    if "message" in event and event["message"]:
+        payload["message"] = event["message"]
+
+    return {
+        "type": event_type,
+        "timestamp": event.get("timestamp", 0),
+        "payload": payload,
+    }
 ```
 
 ---
 
-## Execution Order Summary
+## Phase 3: Emit Event Robustness & Orchestrator Updates
 
-1. **Phase 1** (15 min): All 4 fixes in parallel - minimal risk
-2. **Phase 2** (30 min): Delete DB, apply all schema fixes together
-3. **Phase 3** (20 min): Apply event type fixes
-4. **Phase 4** (45 min): Apply frontend-backend alignment fixes
-5. **Testing** (30 min): Run full test suite, manual verification
+### Step 3.1: Add Logging to `emit_event` for Dropped Events
 
-**Total estimated time**: 2-3 hours
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/server.py`
+- **Change**: Log when events cannot be sent
+- **Location**: Lines 230-234
+
+**Before:**
+
+```python
+    try:
+        asyncio.create_task(broadcast(event))
+    except RuntimeError:
+        # No event loop running - ignore
+        pass
+```
+
+**After:**
+
+```python
+    try:
+        asyncio.create_task(broadcast(event))
+    except RuntimeError as e:
+        # No event loop running - log for debugging
+        print(f"Warning: Event '{event_type}' not sent (no event loop): {e}", file=sys.stderr)
+```
+
+### Step 3.2: Update Orchestrator `emit_event` Calls to Store Payload
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/server/orchestrator.py`
+- **Change**: Update `create_event` calls to include full payload
+- **Location**: Multiple locations in orchestrator.py
+
+**Example change in `_handle_stream_event` (lines 901-931):**
+
+**Before:**
+
+```python
+            create_event(
+                batch_id=self.current_batch_id,
+                story_id=None,
+                command_id=None,
+                event_type=event_type,
+                epic_id=task_info["epic_id"],
+                story_key=task_info["story_id"],
+                command=task_info["command"],
+                task_id=task_info["task_id"],
+                status=task_info["status"],
+                message=task_info["message"],
+            )
+```
+
+**After:**
+
+```python
+            ws_payload = {
+                "story_key": task_info["story_id"],
+                "command": task_info["command"],
+                "task_id": task_info["task_id"],
+                "message": task_info["message"],
+            }
+            if event_type == "command:end":
+                ws_payload["status"] = task_info["status"]
+
+            create_event(
+                batch_id=self.current_batch_id,
+                story_id=None,
+                command_id=None,
+                event_type=event_type,
+                epic_id=task_info["epic_id"],
+                story_key=task_info["story_id"],
+                command=task_info["command"],
+                task_id=task_info["task_id"],
+                status=task_info["status"],
+                message=task_info["message"],
+                payload=ws_payload,
+            )
+```
 
 ---
 
-## Review Notes
+## Phase 4: Frontend Fixes
 
-### Review Date
-2026-01-24
+### Step 4.1: Update `batch:warning` Handler for `warning_type`
 
-### What Was Reviewed
-- All 19 fixes across 4 phases were reviewed against actual source files
-- File paths and line numbers verified against `server.py`, `db.py`, `orchestrator.py`, `dashboard.html`, and `README.md`
-- Code snippets compared with actual implementation
-- Dependencies and execution order validated
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/frontend/js/websocket.js`
+- **Change**: Handle both `message` and `warning` keys, use `warning_type` for styling
+- **Location**: Lines 392-396
 
-### Issues Found and Fixed
+**Before:**
 
-#### 1. **Line Number Corrections**
-- Fix 1.1: Corrected README.md line references (130, 138 instead of 131, 133)
-- Fix 1.2: Clarified actual location is within `serve_file_handler` function
-- Fix 1.4: Updated to reflect actual heartbeat_task location (323-361) and cleanup lines
-- Fix 4.2: Corrected actual code structure (stats text format differs from plan)
-- Fix 4.4: Added specific line numbers for all 3 `create_event()` call sites in orchestrator.py
-
-#### 2. **Missing Code Changes**
-- Fix 1.3: Added missing XSS fix for `updateActiveStories()` function at line 4987
-- Fix 2.2: Added missing `server.py` timestamp fixes at lines 535 and 665
-- Fix 4.3: Added complete docstring for updated `create_event()` function
-
-#### 3. **Missing Verification Steps**
-- Fix 2.1: Added "backup data" warning for destructive database migration
-- Fix 2.3: Added verification command for module import
-- Fix 3.1: Added note confirming `get_events_by_batch()` exists at line 498
-- Fix 3.2: Added note that EventType entries already exist
-- Fix 4.2: Added note to verify CSS variables exist or use fallbacks
-- Fix 4.3: Added "BREAKING CHANGE" warning about function signature change
-
-#### 4. **Clarifications Added**
-- Fix 1.4: Added rationale explaining why the function does nothing useful
-- Fix 4.3: Clarified column order in schema matches parameter order in function
-
-### What Was Added
-1. More precise line number references for all fixes
-2. Complete verification commands for testing
-3. Breaking change warnings where applicable
-4. Additional test cases for edge conditions
-5. XSS security fix for story badge rendering
-
-### Potential Issues Not Addressed
-1. **Test file updates**: The plan mentions updating test files but doesn't include specific test code to add
-2. **CSS variable availability**: Fix 4.2 assumes `--primary-color` variables exist
-3. **Error handling**: Fix 4.4 doesn't handle the case where `task_info["status"]` is neither "start" nor "end"
-
-### Recommendations
-1. Run existing tests before starting: `python -m pytest test_*.py -v`
-2. Create a database backup before Phase 2: `cp sprint-runner.db sprint-runner.db.backup`
-3. Apply all Phase 2 schema changes together before deleting DB
-4. Consider adding a migration script instead of destructive DB delete
-
-### Confidence Level
-**HIGH (85%)**
-
-The plan is implementable with the corrections made. The main risks are:
-- CSS variable availability (minor - fallback colors easy to add)
-- Test coverage for new edge cases (moderate - tests exist but may need updates)
-- Orchestrator create_event calls being complete (verified 3 locations, but grep for others recommended)
-
-### Verification Command
-Before implementation, verify no other `create_event` calls exist:
-```bash
-grep -n "create_event(" orchestrator.py | wc -l
-# Should show 3 locations
+```javascript
+        case 'batch:warning':
+            // Handle batch warning events
+            addLogEntry({ type, payload, timestamp }, 'warning');
+            showToast(payload.message || 'Warning occurred', 'warning', 'Warning');
+            break;
 ```
+
+**After:**
+
+```javascript
+        case 'batch:warning':
+            // Handle batch warning events
+            // Support both 'message' (schema) and 'warning' (legacy) keys
+            const warningMessage = payload.message || payload.warning || 'Warning occurred';
+            const warningType = payload.warning_type || 'general';
+
+            addLogEntry({ type, payload, timestamp }, 'warning');
+
+            // Adjust toast type based on warning_type
+            const toastType = warningType === 'context_unavailable' ? 'info' : 'warning';
+            showToast(warningMessage, toastType, `Warning: ${warningType}`);
+            break;
+```
+
+### Step 4.2: Fix Stale State After Returning From Past Batch View
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/frontend/js/sidebar.js`
+- **Change**: Restore active operations and timers after returning to live view
+- **Location**: Lines 305-335
+
+**Before:**
+
+```javascript
+function returnToLiveView() {
+    batchHistoryState.selectedBatchId = null;
+    batchHistoryState.viewingPastBatch = false;
+
+    // Update sidebar selection
+    document.querySelectorAll('.batch-sidebar__item').forEach(el => {
+        el.classList.remove('batch-sidebar__item--selected');
+    });
+
+    // Restore original dashboard content
+    const dashboardContent = document.getElementById('dashboardContent');
+    if (dashboardContent && dashboardContent.dataset.originalHtml) {
+        dashboardContent.innerHTML = dashboardContent.dataset.originalHtml;
+        delete dashboardContent.dataset.originalHtml;
+
+        // Re-render current data
+        if (state.sprintData) {
+            renderSummaryCards(state.sprintData);
+            renderEpicBoard(state.sprintData);
+            renderStoryTable(state.sprintData,
+                document.getElementById('epicFilter')?.value || 'all',
+                document.getElementById('statusFilter')?.value || 'all');
+            restoreExpandedEpics();
+        }
+        if (state.orchestratorData) {
+            renderActivityLog(state.orchestratorData);
+            restoreExpandedActivities();
+        }
+        updateTabCounts(state.sprintData, state.orchestratorData);
+    }
+}
+```
+
+**After:**
+
+```javascript
+function returnToLiveView() {
+    batchHistoryState.selectedBatchId = null;
+    batchHistoryState.viewingPastBatch = false;
+
+    // Update sidebar selection
+    document.querySelectorAll('.batch-sidebar__item').forEach(el => {
+        el.classList.remove('batch-sidebar__item--selected');
+    });
+
+    // Restore original dashboard content
+    const dashboardContent = document.getElementById('dashboardContent');
+    if (dashboardContent && dashboardContent.dataset.originalHtml) {
+        dashboardContent.innerHTML = dashboardContent.dataset.originalHtml;
+        delete dashboardContent.dataset.originalHtml;
+
+        // Re-render current data
+        if (state.sprintData) {
+            renderSummaryCards(state.sprintData);
+            renderEpicBoard(state.sprintData);
+            renderStoryTable(state.sprintData,
+                document.getElementById('epicFilter')?.value || 'all',
+                document.getElementById('statusFilter')?.value || 'all');
+            restoreExpandedEpics();
+        }
+        if (state.orchestratorData) {
+            renderActivityLog(state.orchestratorData);
+            restoreExpandedActivities();
+        }
+        updateTabCounts(state.sprintData, state.orchestratorData);
+
+        // Restore active operations and timers from current WebSocket state
+        if (sprintRunState.isRunning) {
+            // Re-render active operations display
+            renderActiveOperationsDisplay();
+
+            // Restart timers for any active operations
+            sprintRunState.activeOperations.forEach((operation, taskId) => {
+                // Only restart timer if not already running
+                if (!sprintRunState.runningTimers.has(taskId)) {
+                    startCommandTimer(taskId, operation.startTime);
+                }
+            });
+
+            // Update sprint UI to reflect running state
+            updateSprintUI();
+            showProgressSection(true);
+        }
+    }
+}
+```
+
+### Step 4.3: Align Settings Validation (Frontend)
+
+- **File**: `/Users/teazyou/dev/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/frontend/js/settings.js`
+- **Change**: Update `server_port` validation to match backend (1-65535)
+- **Location**: Lines 15-30
+
+**Before:**
+
+```javascript
+    server_port: {
+        id: 'settingServerPort',
+        type: 'number',
+        defaultValue: 8080,
+        min: 1024,
+        max: 65535,
+        label: 'Server Port',
+        hint: 'HTTP server port (requires restart)',
+        validate: (value) => {
+            const num = parseInt(value, 10);
+            if (isNaN(num) || num < 1024 || num > 65535) {
+                return 'Port must be between 1024 and 65535';
+            }
+            return null;
+        }
+    },
+```
+
+**After:**
+
+```javascript
+    server_port: {
+        id: 'settingServerPort',
+        type: 'number',
+        defaultValue: 8080,
+        min: 1,
+        max: 65535,
+        label: 'Server Port',
+        hint: 'HTTP server port (requires restart). Ports 1-1023 require root privileges.',
+        validate: (value) => {
+            const num = parseInt(value, 10);
+            if (isNaN(num) || num < 1 || num > 65535) {
+                return 'Port must be between 1 and 65535';
+            }
+            return null;
+        }
+    },
+```
+
+---
+
+## Testing Plan
+
+### Phase 1 Tests
+
+1. **API Endpoints**
+   - `curl http://localhost:8080/api/sprint-status` - Should return JSON with sprint data or 404
+   - `curl http://localhost:8080/api/orchestrator-status` - Should return JSON with activities
+
+2. **WebSocket Schema**
+   - Start a batch without project context
+   - Verify `batch:warning` event has `message` and `warning_type` fields
+   - Check browser console for no validation warnings
+
+3. **Timestamp Consistency**
+   - Create a batch, let it complete
+   - Query database: `SELECT started_at, ended_at FROM batches ORDER BY id DESC LIMIT 1`
+   - Verify both are in milliseconds (13+ digits)
+   - Verify `ended_at - started_at` gives reasonable duration in ms
+
+### Phase 2 Tests
+
+1. **Database Migration**
+   - After migration, verify column exists: `PRAGMA table_info(events)`
+   - Create test event with payload
+   - Query: `SELECT payload_json FROM events WHERE id = ?`
+
+2. **Event Reconstruction**
+   - Start batch, run cycle, stop batch
+   - Disconnect WebSocket, reconnect
+   - Verify `init` event contains complete payloads with `story_keys`, `completed_stories`
+
+### Phase 3 Tests
+
+1. **Emit Event Logging**
+   - Force event loop closure during event emission
+   - Check stderr for warning message
+
+### Phase 4 Tests
+
+1. **batch:warning Handler**
+   - Trigger context unavailable warning
+   - Verify toast shows correct type (`info` not `warning`)
+   - Verify title includes `warning_type`
+
+2. **Live View State Restoration**
+   - Start a batch
+   - While running, click on a past batch
+   - Click "Back to Live"
+   - Verify active operations display is visible
+   - Verify timers are running
+
+3. **Settings Validation**
+   - Set port to 80 via frontend form
+   - Should now be accepted (was rejected before)
+   - Verify hint mentions root privileges
+
+---
+
+## Risk Assessment
+
+### Low Risk
+- **Phase 1 API endpoints**: Additive change, no existing code modified
+- **Phase 4 frontend fixes**: UI-only changes, easily reversible
+
+### Medium Risk
+- **Phase 1 timestamp fixes**: Could affect duration calculations if partially applied. **Mitigation**: Apply all timestamp fixes together
+- **Phase 3 emit_event logging**: Minor, only adds logging
+
+### Higher Risk
+- **Phase 2 database schema**: Schema change on live database. **Mitigation**:
+  1. SQLite `ALTER TABLE ADD COLUMN` is safe (no data loss)
+  2. New column is nullable, backward compatible
+  3. Test on copy of production DB first
+  4. Keep backup before migration
+
+### Rollback Strategy
+
+1. **API endpoints**: Remove routes from `create_app()`, delete handler functions
+2. **Database**: Column cannot be easily removed in SQLite; however, it's nullable and ignored by old code
+3. **Frontend**: Revert JS file changes via git
+
+---
+
+## Implementation Order
+
+1. **Phase 1** - Can be done incrementally, low interdependency
+2. **Phase 2** - Do after Phase 1 timestamp fixes are in place
+3. **Phase 3** - Do after Phase 2 (depends on `create_event` signature change)
+4. **Phase 4** - Can be done in parallel with backend phases
+
+**Estimated effort**: 2-3 hours for implementation, 1 hour for testing
+
+---
+
+## Review Amendments
+
+**Reviewed**: 2026-01-24 by Technical Lead
+
+### Line Number Corrections
+
+The following line numbers have been verified and corrected where needed:
+
+1. **Step 1.1**: `orchestrator_status_handler` is at line 628-656, not "around line 656". Route additions should go in `create_app()` at line 1008+, not 1019.
+
+2. **Step 1.3**: The `batch:warning` emission is at lines 213-219 (verified correct).
+
+3. **Step 1.4**: The `update_batch` call for batch end is at lines 244-249 (verified correct).
+
+4. **Step 1.5**: Lines 603-607 verified correct for `orchestrator_stop_handler`.
+
+5. **Step 1.6**: `cleanup_stale_batches` is at lines 909-922, with `update_batch` at lines 915-919. The plan reference of 915-920 is acceptable.
+
+6. **Step 2.2**: `create_event` function at lines 453-492 verified.
+
+7. **Step 2.3**: `normalize_db_event_to_ws` at lines 242-296 verified.
+
+### Code Snippet Corrections
+
+**Step 3.2** - The "Before" code snippet in the plan does not match actual code. The actual `_handle_stream_event` in orchestrator.py (lines 901-931) already emits status in the ws_payload only for `command:end`, but the plan's proposed payload structure differs from current implementation.
+
+**Current actual code (lines 921-931):**
+```python
+            # Emit WebSocket event
+            ws_type = "command:start" if task_info["status"] == "start" else "command:end"
+            self.emit_event(
+                ws_type,
+                {
+                    "story_key": task_info["story_id"],
+                    "command": task_info["command"],
+                    "task_id": task_info["task_id"],
+                    "message": task_info["message"],
+                },
+            )
+```
+
+The plan's fix should update the `create_event` call (lines 908-919) to include the `payload` parameter, passing the same payload dict used for WebSocket emission.
+
+### Missing Import Verifications
+
+- **yaml import**: Confirmed NOT present in server.py - must be added as stated
+- **json import**: Confirmed NOT present in db.py - must be added as stated
+- **json import for server.py Step 2.3**: Already present (line 27) - no addition needed
+
+### Gap Analysis: Error 4 Coverage
+
+The plan addresses Error 4 (missing fields in `normalize_db_event_to_ws`) by storing `payload_json`. However, for **legacy events** without `payload_json`, the fallback logic in Step 2.3 still lacks:
+
+- `story_keys` extraction for `cycle:start` events
+- `completed_stories` extraction for `cycle:end` events
+- `old_status` / `new_status` extraction for `story:status` events
+
+**Recommendation**: Add a note that legacy events (before this fix) will have incomplete payloads on reconnection. This is acceptable since:
+1. Legacy events are historical only
+2. New events will have complete payloads via `payload_json`
+3. Full schema migration is not worth the complexity for this edge case
+
+### Frontend Function Availability (Step 4.2)
+
+Verified that all referenced functions exist and are accessible:
+- `renderActiveOperationsDisplay()` - operations.js:67
+- `startCommandTimer()` - operations.js:16
+- `updateSprintUI()` - controls.js:79
+- `showProgressSection()` - controls.js:156
+- `sprintRunState.activeOperations` - main.js (global state)
+- `sprintRunState.runningTimers` - main.js (global state)
+- `sprintRunState.isRunning` - main.js (global state)
+
+All functions are in the global scope and accessible from sidebar.js.
+
+### Additional Recommendations
+
+1. **Database Migration Script**: Consider adding a standalone migration script in case users have existing databases. The schema change via `ALTER TABLE ADD COLUMN` is safe, but `init_db()` only runs `CREATE TABLE IF NOT EXISTS`, which won't add the column to existing tables.
+
+   Add migration check:
+   ```python
+   def migrate_db() -> None:
+       """Apply schema migrations for existing databases."""
+       with get_connection() as conn:
+           # Check if payload_json column exists
+           cursor = conn.execute("PRAGMA table_info(events)")
+           columns = [row[1] for row in cursor.fetchall()]
+           if 'payload_json' not in columns:
+               conn.execute("ALTER TABLE events ADD COLUMN payload_json TEXT")
+               print("Migrated events table: added payload_json column")
+   ```
+
+2. **Testing Enhancement**: Add a test case for verifying millisecond timestamps across the entire flow (batch create -> batch end -> query -> verify 13-digit values).
+
+---
+
+## Review Status: APPROVED WITH AMENDMENTS
+
+The implementation plan adequately addresses all 9 CRITICAL and HIGH priority issues from the review findings. The amendments above clarify line number discrepancies and add important context for implementation. The plan is approved for execution with the noted corrections.
+
+---
+
+## Coherence Review
+
+**Reviewed Against**: `PLAN-PROMPTS-SCRIPTS.md`
+**Review Date**: 2026-01-24
+**Reviewer**: Technical Lead (Claude Opus 4.5)
+
+### Conflicts Found: NONE
+
+The two plans operate on completely different layers of the Sprint Runner system:
+- **PROMPTS-SCRIPTS**: XML instruction files, YAML taxonomy, shell script paths
+- **This plan (DASHBOARD-DATA)**: Python server code, JavaScript frontend, SQLite database
+
+No code changes overlap between the two plans.
+
+### Data Mismatches Found: NONE
+
+The logging system interaction is compatible:
+- PROMPTS-SCRIPTS fixes the log script PATH (`{{log_script}}` -> hardcoded path to `sprint-log.sh`)
+- This plan addresses how dashboard events are stored/transmitted (database schema, WebSocket)
+
+The shell log script writes to `sprint-runner.csv`, which is independent of the dashboard's database-driven event system. These are parallel logging mechanisms with no interdependency.
+
+### Ordering Dependencies
+
+**Recommended Order**: Execute PLAN-PROMPTS-SCRIPTS first, then this plan
+
+**Rationale**: PROMPTS-SCRIPTS fixes the ability for subagent commands to log properly via the shell script. Having that working first ensures complete observability during testing of the dashboard fixes in this plan.
+
+**Strict Dependency**: NO - Both plans can be executed independently without breaking each other. The recommended order is for operational convenience, not technical necessity.
+
+### Shared File Modifications: NONE
+
+Files modified by PROMPTS-SCRIPTS:
+- `commands/sprint-dev-story/instructions.xml`
+- `commands/sprint-story-review/instructions.xml`
+- `commands/sprint-tech-spec-review/instructions.xml`
+- `commands/sprint-code-review/instructions.xml`
+- `commands/sprint-commit/instructions.xml`
+- `task-taxonomy.yaml`
+
+Files modified by this plan:
+- `dashboard/server/server.py`
+- `dashboard/server/orchestrator.py`
+- `dashboard/server/db.py`
+- `dashboard/frontend/js/websocket.js`
+- `dashboard/frontend/js/sidebar.js`
+- `dashboard/frontend/js/settings.js`
+
+No overlap detected.
+
+### Integration Points
+
+| Integration Point | PROMPTS-SCRIPTS | This Plan | Status |
+|-------------------|-----------------|-----------|--------|
+| Log script invocation | Fixes path resolution | N/A | Independent |
+| CSV log output | Output target | N/A | Independent |
+| Orchestrator events | N/A | Fixes schema/storage | Independent |
+| WebSocket events | N/A | Fixes payload format | Independent |
+
+### Conclusion
+
+**Both plans can be executed together safely.** There are no conflicts, no data mismatches, and no shared file modifications. The plans address orthogonal concerns within the Sprint Runner system.
+
+**Execution Strategy**: Either sequential (PROMPTS-SCRIPTS first recommended) or parallel implementation by different developers is acceptable.

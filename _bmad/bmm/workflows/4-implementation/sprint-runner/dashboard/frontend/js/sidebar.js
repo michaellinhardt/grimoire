@@ -331,6 +331,24 @@ function returnToLiveView() {
             restoreExpandedActivities();
         }
         updateTabCounts(state.sprintData, state.orchestratorData);
+
+        // Restore active operations and timers from current WebSocket state
+        if (sprintRunState.isRunning) {
+            // Re-render active operations display
+            renderActiveOperationsDisplay();
+
+            // Restart timers for any active operations
+            sprintRunState.activeOperations.forEach((operation, taskId) => {
+                // Only restart timer if not already running
+                if (!sprintRunState.runningTimers.has(taskId)) {
+                    startCommandTimer(taskId, operation.startTime);
+                }
+            });
+
+            // Update sprint UI to reflect running state
+            updateSprintUI();
+            showProgressSection(true);
+        }
     }
 }
 

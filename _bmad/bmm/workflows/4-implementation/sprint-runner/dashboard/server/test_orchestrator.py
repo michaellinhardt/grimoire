@@ -73,16 +73,16 @@ development_status:
 @pytest.fixture
 def orchestrator(project_root):
     """Create an orchestrator instance with mocked dependencies."""
-    with patch("orchestrator.init_db"), patch(
-        "orchestrator.create_batch", return_value=1
-    ), patch("orchestrator.create_story", return_value=1), patch(
-        "orchestrator.update_story"
+    with patch("server.orchestrator.init_db"), patch(
+        "server.orchestrator.create_batch", return_value=1
+    ), patch("server.orchestrator.create_story", return_value=1), patch(
+        "server.orchestrator.update_story"
     ), patch(
-        "orchestrator.create_event"
+        "server.orchestrator.create_event"
     ), patch(
-        "orchestrator.update_batch"
+        "server.orchestrator.update_batch"
     ), patch(
-        "orchestrator.get_story_by_key", return_value=None
+        "server.orchestrator.get_story_by_key", return_value=None
     ):
         orch = Orchestrator(
             batch_mode="fixed", max_cycles=2, project_root=project_root
@@ -493,8 +493,8 @@ class TestBatchControl:
 
     def test_fixed_batch_mode_initialization(self, project_root):
         """Should initialize with fixed batch mode."""
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
         ):
             orch = Orchestrator(
                 batch_mode="fixed", max_cycles=3, project_root=project_root
@@ -504,8 +504,8 @@ class TestBatchControl:
 
     def test_all_batch_mode_initialization(self, project_root):
         """Should initialize with 'all' batch mode."""
-        with patch("orchestrator.init_db"), patch(
-            "orchestrator.create_batch", return_value=1
+        with patch("server.orchestrator.init_db"), patch(
+            "server.orchestrator.create_batch", return_value=1
         ):
             orch = Orchestrator(
                 batch_mode="all", max_cycles=999, project_root=project_root
@@ -538,7 +538,7 @@ class TestWebSocketEmission:
 
     def test_emit_event_handles_broadcast_failure(self, orchestrator):
         """Should handle broadcast failures gracefully."""
-        with patch("orchestrator.asyncio.create_task", side_effect=RuntimeError("No event loop")):
+        with patch("server.orchestrator.asyncio.create_task", side_effect=RuntimeError("No event loop")):
             # Should not raise - failures are caught silently
             orchestrator.emit_event("test:event", {"data": "value"})
 
@@ -601,10 +601,11 @@ class TestIntegration:
         ) as mock_spawn:
             mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
 
-            await orchestrator.check_project_context()
+            with patch("server.orchestrator.create_event"):
+                await orchestrator.check_project_context()
 
-            mock_spawn.assert_called_once()
-            assert "generate-project-context" in str(mock_spawn.call_args)
+                mock_spawn.assert_called_once()
+                assert "generate-project-context" in str(mock_spawn.call_args)
 
     @pytest.mark.asyncio
     async def test_project_context_check_skips_when_fresh(
@@ -713,16 +714,17 @@ class TestBlockingContextCreation:
 
             mock_spawn.side_effect = delayed_response
 
-            start_time = time.time()
-            await orchestrator.create_project_context()
-            elapsed = time.time() - start_time
+            with patch("server.orchestrator.create_event"):
+                start_time = time.time()
+                await orchestrator.create_project_context()
+                elapsed = time.time() - start_time
 
-            # Should have blocked for at least 100ms
-            assert elapsed >= 0.1
-            mock_spawn.assert_called_once()
-            # Verify wait=True was passed
-            call_kwargs = mock_spawn.call_args.kwargs
-            assert call_kwargs.get("wait", True) is True
+                # Should have blocked for at least 100ms
+                assert elapsed >= 0.1
+                mock_spawn.assert_called_once()
+                # Verify wait=True was passed
+                call_kwargs = mock_spawn.call_args.kwargs
+                assert call_kwargs.get("wait", True) is True
 
     @pytest.mark.asyncio
     async def test_create_logs_context_create_event(self, orchestrator, project_root):
@@ -732,7 +734,7 @@ class TestBlockingContextCreation:
         ) as mock_spawn:
             mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
 
-            with patch("orchestrator.create_event") as mock_event:
+            with patch("server.orchestrator.create_event") as mock_event:
                 await orchestrator.create_project_context()
 
                 # Should have called create_event with context:create
@@ -764,13 +766,14 @@ class TestBackgroundContextRefresh:
 
             mock_refresh.side_effect = slow_task
 
-            with patch("orchestrator.create_background_task", return_value=1):
-                start_time = time.time()
-                await orchestrator.refresh_project_context_background()
-                elapsed = time.time() - start_time
+            with patch("server.orchestrator.create_background_task", return_value=1):
+                with patch("server.orchestrator.create_event"):
+                    start_time = time.time()
+                    await orchestrator.refresh_project_context_background()
+                    elapsed = time.time() - start_time
 
-                # Should return in less than 100ms (not waiting for the 500ms task)
-                assert elapsed < 0.2
+                    # Should return in less than 100ms (not waiting for the 500ms task)
+                    assert elapsed < 0.2
 
     @pytest.mark.asyncio
     async def test_refresh_creates_background_task_record(
@@ -781,14 +784,15 @@ class TestBackgroundContextRefresh:
             orchestrator, "_run_background_context_refresh", new_callable=AsyncMock
         ):
             with patch(
-                "orchestrator.create_background_task", return_value=42
+                "server.orchestrator.create_background_task", return_value=42
             ) as mock_create:
-                await orchestrator.refresh_project_context_background()
+                with patch("server.orchestrator.create_event"):
+                    await orchestrator.refresh_project_context_background()
 
-                mock_create.assert_called_once()
-                call_kwargs = mock_create.call_args.kwargs
-                assert call_kwargs.get("task_type") == "project-context-refresh"
-                assert call_kwargs.get("batch_id") == orchestrator.current_batch_id
+                    mock_create.assert_called_once()
+                    call_kwargs = mock_create.call_args.kwargs
+                    assert call_kwargs.get("task_type") == "project-context-refresh"
+                    assert call_kwargs.get("batch_id") == orchestrator.current_batch_id
 
     @pytest.mark.asyncio
     async def test_refresh_logs_context_refresh_event(
@@ -798,8 +802,8 @@ class TestBackgroundContextRefresh:
         with patch.object(
             orchestrator, "_run_background_context_refresh", new_callable=AsyncMock
         ):
-            with patch("orchestrator.create_background_task", return_value=1):
-                with patch("orchestrator.create_event") as mock_event:
+            with patch("server.orchestrator.create_background_task", return_value=1):
+                with patch("server.orchestrator.create_event") as mock_event:
                     await orchestrator.refresh_project_context_background()
 
                     mock_event.assert_called()
@@ -818,9 +822,9 @@ class TestBackgroundContextRefresh:
             mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
 
             with patch(
-                "orchestrator.update_background_task"
+                "server.orchestrator.update_background_task"
             ) as mock_update:
-                with patch("orchestrator.create_background_task", return_value=99):
+                with patch("server.orchestrator.create_background_task", return_value=99):
                     # Run the actual background refresh function
                     await orchestrator._run_background_context_refresh(99)
 
@@ -839,7 +843,7 @@ class TestBackgroundContextRefresh:
         ) as mock_spawn:
             mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
 
-            with patch("orchestrator.update_background_task"):
+            with patch("server.orchestrator.update_background_task"):
                 with patch.object(
                     orchestrator, "emit_event"
                 ) as mock_emit:
@@ -1013,8 +1017,8 @@ class TestReviewStatusHandler:
                 with patch.object(
                     orchestrator, "_execute_batch_commit", new_callable=AsyncMock
                 ):
-                    with patch("orchestrator.create_story", return_value=1):
-                        with patch("orchestrator.update_batch"):
+                    with patch("server.orchestrator.create_story", return_value=1):
+                        with patch("server.orchestrator.update_batch"):
                             with patch.object(
                                 orchestrator, "read_sprint_status", return_value=status
                             ):
@@ -1708,7 +1712,7 @@ class TestCopyProjectContextIntegration:
                 ) as mock_cycle:
                     mock_cycle.return_value = False  # End loop immediately
 
-                    with patch("orchestrator.update_batch"):
+                    with patch("server.orchestrator.update_batch"):
                         await orchestrator.start()
 
                         # Verify order: check_project_context before copy_project_context
@@ -1730,7 +1734,7 @@ class TestCopyProjectContextIntegration:
             ) as mock_cycle:
                 mock_cycle.return_value = False  # End loop immediately
 
-                with patch("orchestrator.update_batch"):
+                with patch("server.orchestrator.update_batch"):
                     # Should not raise - should continue despite copy failure
                     await orchestrator.start()
 
@@ -1753,7 +1757,7 @@ class TestCopyProjectContextIntegration:
             ) as mock_cycle:
                 mock_cycle.return_value = False
 
-                with patch("orchestrator.update_batch"):
+                with patch("server.orchestrator.update_batch"):
                     with patch.object(orchestrator, "emit_event") as mock_emit:
                         await orchestrator.start()
 
@@ -1764,8 +1768,8 @@ class TestCopyProjectContextIntegration:
                         ]
                         assert len(warning_calls) >= 1
                         payload = warning_calls[0].args[1]
-                        assert "warning" in payload
-                        assert "Project context not available" in payload["warning"]
+                        assert "message" in payload
+                        assert "Project context not available" in payload["message"]
 
 
 # =============================================================================

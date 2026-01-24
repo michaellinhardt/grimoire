@@ -41,9 +41,9 @@ message_format:
 commands:
 
   # ----------------------------------------------------------
-  # CREATE-STORY: Creates story file from epic requirements
+  # SPRINT-CREATE-STORY: Creates story file from epic requirements
   # ----------------------------------------------------------
-  create-story:
+  sprint-create-story:
     description: Creates story file from epic requirements
     phases:
       - id: setup
@@ -72,9 +72,9 @@ commands:
         typical_end: "Validation passed (sections:N)"
 
   # ----------------------------------------------------------
-  # STORY-DISCOVERY: Parallel discovery for story context
+  # SPRINT-CREATE-STORY-DISCOVERY: Parallel discovery for story context
   # ----------------------------------------------------------
-  story-discovery:
+  sprint-create-story-discovery:
     description: Parallel discovery for story context (runs alongside create-story)
     phases:
       - id: setup
@@ -93,9 +93,9 @@ commands:
         typical_end: "Discovery file written (lines:N)"
 
   # ----------------------------------------------------------
-  # STORY-REVIEW: Review story quality and completeness
+  # SPRINT-STORY-REVIEW: Review story quality and completeness
   # ----------------------------------------------------------
-  story-review:
+  sprint-story-review:
     description: Review story quality and completeness
     phases:
       - id: setup
@@ -119,9 +119,9 @@ commands:
         typical_end: "Validation passed"
 
   # ----------------------------------------------------------
-  # CREATE-TECH-SPEC: Creates technical specification for story
+  # SPRINT-CREATE-TECH-SPEC: Creates technical specification for story
   # ----------------------------------------------------------
-  create-tech-spec:
+  sprint-create-tech-spec:
     description: Creates technical specification for story
     phases:
       - id: setup
@@ -150,9 +150,9 @@ commands:
         typical_end: "Validation passed"
 
   # ----------------------------------------------------------
-  # TECH-SPEC-DISCOVERY: Discovery phase for tech-spec (if separate)
+  # SPRINT-TECH-SPEC-DISCOVERY: Discovery phase for tech-spec (if separate)
   # ----------------------------------------------------------
-  tech-spec-discovery:
+  sprint-tech-spec-discovery:
     description: Discovery phase for tech-spec (when run separately)
     phases:
       - id: setup
@@ -171,9 +171,9 @@ commands:
         typical_end: "Discovery written (lines:N)"
 
   # ----------------------------------------------------------
-  # TECH-SPEC-REVIEW: Review tech-spec quality
+  # SPRINT-TECH-SPEC-REVIEW: Review tech-spec quality
   # ----------------------------------------------------------
-  tech-spec-review:
+  sprint-tech-spec-review:
     description: Review tech-spec quality and completeness
     phases:
       - id: setup
@@ -197,9 +197,9 @@ commands:
         typical_end: "Validation passed"
 
   # ----------------------------------------------------------
-  # DEV-STORY: Implement story code
+  # SPRINT-DEV-STORY: Implement story code
   # ----------------------------------------------------------
-  dev-story:
+  sprint-dev-story:
     description: Implement story code based on story and tech-spec
     phases:
       - id: setup
@@ -228,9 +228,9 @@ commands:
         typical_end: "Validation passed"
 
   # ----------------------------------------------------------
-  # CODE-REVIEW: Review implemented code
+  # SPRINT-CODE-REVIEW: Review implemented code
   # ----------------------------------------------------------
-  code-review:
+  sprint-code-review:
     description: Review implemented code for issues
     phases:
       - id: setup

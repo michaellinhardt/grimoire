@@ -25,7 +25,7 @@
 
   <step n="1" goal="Setup and parse story file lists">
     <action>Log start of setup phase</action>
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"setup","status":"start","message":"Initializing smart commit for batch"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"setup","status":"start","message":"Initializing smart commit for batch"}'</bash>
 
     <action>Parse story_keys variable to identify stories in this batch</action>
     <action>For comma-separated keys (e.g., "2a-1,2a-2"), collect all story IDs</action>
@@ -45,11 +45,11 @@
       <action>Log warning but continue - will try to match by other means</action>
     </check>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"setup","status":"end","message":"Parsed {{file_count}} expected files from story File Lists"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"setup","status":"end","message":"Parsed {{file_count}} expected files from story File Lists"}'</bash>
   </step>
 
   <step n="2" goal="Analyze git status and match files to stories">
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"start","message":"Analyzing git status for file matching"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"start","message":"Analyzing git status for file matching"}'</bash>
 
     <action>Analyze the git_status section injected in your system prompt to understand the current state of the working directory and what files need to be committed. This status was captured immediately before this agent was spawned to ensure consistency. Do NOT run git status yourself - use the pre-captured output.</action>
 
@@ -80,7 +80,7 @@
     <output_variable name="files_to_ignore">List of files NOT related to batch stories</output_variable>
 
     <check if="no files to stage">
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"end","message":"No matching files found to commit"}'</bash>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"end","message":"No matching files found to commit"}'</bash>
       <output>[NO-CHANGES-TO-COMMIT]</output>
       <action>HALT - nothing to commit</action>
     </check>
@@ -88,11 +88,11 @@
     <action>Stage only the matched files</action>
     <bash>git add {{files_to_stage}}</bash>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"end","message":"Staged {{staged_count}} files (ignored {{ignored_count}} unrelated)"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"end","message":"Staged {{staged_count}} files (ignored {{ignored_count}} unrelated)"}'</bash>
   </step>
 
   <step n="3" goal="Create commit with proper message format">
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"commit","status":"start","message":"Creating commit for batch stories"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"commit","status":"start","message":"Creating commit for batch stories"}'</bash>
 
     <action>Format commit message following convention:</action>
     <commit_format>
@@ -110,7 +110,7 @@
     <bash>git commit -m "feat({{epic_id}}): implement stories {{story_ids_formatted}}"</bash>
 
     <check if="commit failed">
-      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"commit","status":"end","message":"Commit failed: {{error_reason}}"}'</bash>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"commit","status":"end","message":"Commit failed: {{error_reason}}"}'</bash>
       <output>[COMMIT-FAILED: {{error_reason}}]</output>
       <action>HALT - commit failed</action>
     </check>
@@ -119,11 +119,11 @@
     <bash>git rev-parse --short HEAD</bash>
     <output_variable name="commit_hash">Short hash of new commit</output_variable>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"commit","status":"end","message":"Commit created: {{commit_hash}}"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"commit","status":"end","message":"Commit created: {{commit_hash}}"}'</bash>
   </step>
 
   <step n="4" goal="Validate commit and report results">
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"validate","status":"start","message":"Validating commit"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"validate","status":"start","message":"Validating commit"}'</bash>
 
     <action>Verify commit was created successfully</action>
     <bash>git log -1 --oneline</bash>
@@ -134,7 +134,7 @@
 
     <note>Remaining files should be the unrelated ones we intentionally left unstaged</note>
 
-    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"validate","status":"end","message":"Validation complete ({{files_committed}} files committed)"}'</bash>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"validate","status":"end","message":"Validation complete ({{files_committed}} files committed)"}'</bash>
   </step>
 
   <output_requirement>
@@ -170,7 +170,7 @@
   </final_summary>
 
   <logging_reference>
-    <script>{{log_script}}</script>
+    <script>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh</script>
     <command_name>sprint-commit</command_name>
     <task_ids>setup, stage, commit, validate</task_ids>
     <format>
