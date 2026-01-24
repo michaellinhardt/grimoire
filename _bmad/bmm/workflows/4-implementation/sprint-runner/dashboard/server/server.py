@@ -695,8 +695,15 @@ async def sprint_status_handler(request: web.Request) -> web.Response:
         with open(status_path, "r") as f:
             data = yaml.safe_load(f)
 
-        return web.json_response(
-            data,
+        # Custom JSON encoder to handle YAML date objects
+        def json_serial(obj):
+            if hasattr(obj, "isoformat"):
+                return obj.isoformat()
+            raise TypeError(f"Type {type(obj)} not serializable")
+
+        return web.Response(
+            text=json.dumps(data, default=json_serial),
+            content_type="application/json",
             headers={"Access-Control-Allow-Origin": "*"},
         )
     except Exception as e:
