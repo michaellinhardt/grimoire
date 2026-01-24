@@ -1,0 +1,285 @@
+<workflow>
+  <workflow_mode>DISCOVERY ONLY</workflow_mode>
+
+  <objective>Generate discovery files for stories without creating story files</objective>
+
+  <critical_rules>
+    <rule priority="1">DO NOT create story files - another agent is doing that in parallel</rule>
+    <rule priority="2">DO NOT update sprint-status.yaml - orchestrator handles this</rule>
+    <rule priority="3">ONLY create discovery files</rule>
+    <rule priority="4">Use INJECTED context from file_injections - DO NOT read those files from disk</rule>
+  </critical_rules>
+
+  <context_injection>
+    <note>Project context and epic requirements have been pre-injected via prompt-system-append</note>
+    <note>Check the file_injections section above for sprint-project-context.md and epic files</note>
+    <note>DO NOT attempt to read injected files from disk - use the provided content</note>
+  </context_injection>
+
+  <output_files>
+    <file pattern="sprint-{story_key}-discovery-story.md">
+      <location>{implementation_artifacts}/sprint-{story_key}-discovery-story.md</location>
+      <description>Discovery file containing story context, architecture relevance, git patterns, and learnings</description>
+    </file>
+  </output_files>
+
+  <logging>
+    <script>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh</script>
+    <format>JSON argument with required fields</format>
+    <task_ids>
+      <task_id>setup</task_id>
+      <task_id>explore</task_id>
+      <task_id>write</task_id>
+    </task_ids>
+    <example><![CDATA[
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"2a","story_id":"2a-1","command":"story-discovery","task_id":"setup","status":"start","message":"Loading discovery context for 2a-1"}'
+    ]]></example>
+  </logging>
+
+  <!-- ============================================================ -->
+  <!-- WORKFLOW STEPS -->
+  <!-- ============================================================ -->
+
+  <step n="1" goal="Setup and identify target stories">
+    <action>Log setup start</action>
+    <bash><![CDATA[
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"setup","status":"start","message":"Initializing discovery for {{story_keys}}"}'
+    ]]></bash>
+
+    <action>Parse story_keys variable to identify all stories to process</action>
+    <note>story_keys may be comma-separated (e.g., "2a-1,2a-2") - process each sequentially</note>
+
+    <action>Extract from injected file_injections:</action>
+    <extract>
+      <item>sprint-project-context.md content - project patterns, conventions, critical rules</item>
+      <item>Epic file content - story requirements, acceptance criteria, technical scope</item>
+    </extract>
+
+    <action>Log setup complete</action>
+    <bash><![CDATA[
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"setup","status":"end","message":"Context loaded from injections"}'
+    ]]></bash>
+  </step>
+
+  <step n="2" goal="Explore codebase for each story">
+    <action>Log explore start</action>
+    <bash><![CDATA[
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"explore","status":"start","message":"Exploring codebase patterns"}'
+    ]]></bash>
+
+    <for_each item="story_key" in="story_keys">
+      <action>For story {{story_key}}, explore and collect:</action>
+
+      <!-- Story Requirements from Epic -->
+      <discover type="story_requirements">
+        <source>Injected epic file content</source>
+        <extract>
+          <item>User story statement (As a... I want... So that...)</item>
+          <item>Acceptance criteria (all BDD scenarios)</item>
+          <item>Technical requirements specific to this story</item>
+          <item>Dependencies on other stories</item>
+          <item>Business context and value</item>
+        </extract>
+      </discover>
+
+      <!-- Previous Story Learnings -->
+      <discover type="previous_learnings">
+        <action>Check for previous story files in implementation-artifacts</action>
+        <action>Look for patterns: sprint-{epic_id}-{previous_story_num}.md</action>
+        <extract if="previous_story_exists">
+          <item>Files created by previous stories</item>
+          <item>Code patterns established</item>
+          <item>Dev notes and learnings</item>
+          <item>Testing approaches used</item>
+          <item>Problems encountered and solutions</item>
+        </extract>
+      </discover>
+
+      <!-- Architecture Relevance -->
+      <discover type="architecture_relevance">
+        <source>Injected project context and architecture sections in epic</source>
+        <extract>
+          <item>Applicable architectural patterns for this story</item>
+          <item>Technical constraints that apply</item>
+          <item>Required libraries/frameworks with versions</item>
+          <item>Folder structure requirements</item>
+          <item>API patterns to follow</item>
+          <item>Security requirements</item>
+          <item>Testing standards</item>
+        </extract>
+      </discover>
+
+      <!-- Git Context -->
+      <discover type="git_context">
+        <action>Run git log to find recent relevant commits</action>
+        <bash>git log --oneline -10</bash>
+        <action>Analyze commits for patterns relevant to this story</action>
+        <extract>
+          <item>Recent files modified in related areas</item>
+          <item>Code conventions from recent commits</item>
+          <item>Commit message patterns</item>
+        </extract>
+      </discover>
+
+      <!-- Codebase Exploration -->
+      <discover type="codebase_patterns">
+        <action>Explore existing codebase for patterns relevant to story</action>
+        <action>Identify existing implementations that should be reused or referenced</action>
+        <action>Find related test files and testing patterns</action>
+        <extract>
+          <item>Existing similar implementations</item>
+          <item>Utility functions to reuse</item>
+          <item>Test file patterns</item>
+          <item>Configuration patterns</item>
+        </extract>
+      </discover>
+    </for_each>
+
+    <action>Log explore complete with files discovered count</action>
+    <bash><![CDATA[
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"explore","status":"end","message":"Patterns identified (files:N)"}'
+    ]]></bash>
+  </step>
+
+  <step n="3" goal="Write discovery files">
+    <action>Log write start</action>
+    <bash><![CDATA[
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"write","status":"start","message":"Writing discovery files"}'
+    ]]></bash>
+
+    <for_each item="story_key" in="story_keys">
+      <action>Create discovery file: {implementation_artifacts}/sprint-{{story_key}}-discovery-story.md</action>
+
+      <file_content><![CDATA[
+# Discovery: {{story_key}}
+
+**Generated:** {{date}}
+**Epic:** {{epic_id}}
+**Story:** {{story_key}}
+
+---
+
+## Story Requirements
+
+### User Story
+[User story statement from epic - As a... I want... So that...]
+
+### Acceptance Criteria
+[All BDD scenarios from epic]
+
+### Technical Requirements
+[Technical requirements specific to this story]
+
+### Dependencies
+[Any dependencies on other stories or external systems]
+
+---
+
+## Previous Story Learnings
+
+### Files Created
+[List of files created by previous stories in this epic]
+
+### Established Patterns
+[Code patterns and conventions established]
+
+### Dev Notes
+[Important learnings from previous implementations]
+
+### Problems & Solutions
+[Issues encountered and how they were resolved]
+
+---
+
+## Architecture Relevance
+
+### Applicable Patterns
+[Architectural patterns that apply to this story]
+
+### Technical Constraints
+[Constraints the developer must follow]
+
+### Required Stack
+[Libraries, frameworks, versions required]
+
+### Folder Structure
+[Where files should be created]
+
+### API Patterns
+[API patterns to follow if applicable]
+
+### Security Requirements
+[Security considerations for this story]
+
+### Testing Standards
+[Testing requirements and patterns]
+
+---
+
+## Git Context
+
+### Recent Relevant Commits
+[Recent commits relevant to this story area]
+
+### Code Conventions Observed
+[Conventions from recent commits]
+
+---
+
+## Codebase Patterns
+
+### Existing Implementations to Reference
+[Similar implementations that should be referenced]
+
+### Reusable Utilities
+[Existing utilities to use]
+
+### Test Patterns
+[Existing test patterns to follow]
+
+---
+
+## Discovery Summary
+
+### Key Files for Developer Reference
+[Most important files the developer should study]
+
+### Critical Constraints
+[Non-negotiable requirements]
+
+### Implementation Hints
+[Suggestions for implementation approach]
+      ]]></file_content>
+
+      <critical>Use SHORT NUMERIC IDs only (e.g., sprint-2a-1-discovery-story.md)</critical>
+      <critical>NEVER use full story titles in filenames</critical>
+    </for_each>
+
+    <action>Log write complete with line count</action>
+    <bash><![CDATA[
+_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-discovery","task_id":"write","status":"end","message":"Discovery files written (files:N, lines:N)"}'
+    ]]></bash>
+  </step>
+
+  <step n="4" goal="Validate and complete">
+    <validation>
+      <check>Each story in story_keys has a discovery file created</check>
+      <check>Discovery files follow naming pattern: sprint-{story_key}-discovery-story.md</check>
+      <check>All sections are populated with actual discovered content</check>
+      <check>No story files were created (only discovery files)</check>
+      <check>sprint-status.yaml was NOT modified</check>
+    </validation>
+
+    <output>
+      **Discovery Complete**
+
+      Created discovery files for: {{story_keys}}
+
+      Files created:
+      - {implementation_artifacts}/sprint-{{story_key}}-discovery-story.md (for each story)
+
+      These discovery files will be injected into subsequent phases (story review, tech-spec, dev-story).
+    </output>
+  </step>
+
+</workflow>

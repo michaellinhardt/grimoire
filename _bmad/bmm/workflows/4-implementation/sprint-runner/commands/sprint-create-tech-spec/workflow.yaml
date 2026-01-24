@@ -1,0 +1,53 @@
+# Sprint Create Tech-Spec Command
+# Location: _bmad/bmm/workflows/4-implementation/sprint-runner/commands/sprint-create-tech-spec/
+#
+# Purpose: Create technical specifications for stories with pre-injected context.
+# Context Injection: Project context, story files, and discovery files are injected
+#                    via --prompt-system-append. No file discovery needed.
+
+name: sprint-create-tech-spec
+description: 'Create technical specifications for stories using pre-injected context. All discovery, project context, and story files are injected via prompt-system-append.'
+author: 'BMad'
+
+# Workflow components (relative to this command folder)
+installed_path: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/commands/sprint-create-tech-spec'
+instructions: '{installed_path}/instructions.xml'
+template: '{installed_path}/template.md'
+validation: '{installed_path}/checklist.md'
+
+# Variables provided by orchestrator
+variables:
+  story_keys:
+    description: 'Comma-separated story key(s) to create tech specs for (e.g., "B-4" or "B-4,B-5")'
+    required: true
+  epic_id:
+    description: 'Epic identifier for logging (e.g., "B")'
+    required: true
+  implementation_artifacts:
+    description: 'Path to implementation artifacts folder'
+    default: '_bmad-output/implementation-artifacts'
+
+# Output file naming convention
+output_pattern: 'sprint-tech-spec-{story_key}.md'
+
+# Logging configuration
+logging:
+  script: '_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh'
+  command: 'create-tech-spec'
+  task_ids:
+    - setup
+    - discover
+    - generate
+    - write
+    - validate
+
+# This is a sprint-optimized command
+# Context is injected - do NOT read files from disk during initialization
+sprint_optimized: true
+context_injection:
+  project_context: true
+  discovery_files: true
+  story_files: true
+  architecture: true
+
+standalone: true

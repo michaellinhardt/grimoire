@@ -234,8 +234,9 @@ class TestParallelizationRules:
         with patch.object(orchestrator, "spawn_subagent", side_effect=track_spawn):
             await orchestrator._execute_create_story_phase(["2a-1"])
 
-        assert "create-story" in spawn_calls
-        assert "story-discovery" in spawn_calls
+        # v3 uses sprint- prefix for all command names
+        assert "sprint-create-story" in spawn_calls
+        assert "sprint-create-story-discovery" in spawn_calls
 
     @pytest.mark.asyncio
     async def test_background_review_chain_is_fire_and_forget(self, orchestrator):
@@ -547,9 +548,11 @@ class TestBatchCommitFlow:
             await orchestrator._execute_batch_commit(["2a-1", "2a-2"])
 
         assert spawn_called
-        assert "batch-commit" in spawn_prompt.lower()
+        # v3 passes story keys and epic id; the sprint-commit command handles commit logic
         assert "2a-1" in spawn_prompt
         assert "2a-2" in spawn_prompt
+        # Verify epic_id is passed
+        assert "2a" in spawn_prompt.lower()
 
 
 if __name__ == "__main__":

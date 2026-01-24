@@ -1,0 +1,184 @@
+<workflow>
+  <workflow_mode>AUTONOMOUS COMMIT</workflow_mode>
+
+  <objective>Smart git commit that stages and commits only files related to current batch stories</objective>
+
+  <critical_rules>
+    <rule priority="1">ONLY stage files that are related to stories in the batch</rule>
+    <rule priority="2">IGNORE unrelated modified files - leave them unstaged</rule>
+    <rule priority="3">Use story File List sections as primary file matching source</rule>
+    <rule priority="4">Work AUTONOMOUSLY - no human available for questions</rule>
+  </critical_rules>
+
+  <injected_context>
+    <rule>Story files are pre-injected in file_injections section</rule>
+    <rule>Each story contains a "### File List" section with created/modified/deleted files</rule>
+    <rule>DO NOT read story files from disk - use injected content</rule>
+  </injected_context>
+
+  <autonomous_mode>
+    <rule>AUTONOMOUS MODE - No human available to answer questions</rule>
+    <rule>Make all decisions yourself based on context</rule>
+    <rule>Do NOT ask for confirmation - execute the commit workflow</rule>
+    <rule>If uncertain about file relation, briefly check file contents</rule>
+  </autonomous_mode>
+
+  <step n="1" goal="Setup and parse story file lists">
+    <action>Log start of setup phase</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"setup","status":"start","message":"Initializing smart commit for batch"}'</bash>
+
+    <action>Parse story_keys variable to identify stories in this batch</action>
+    <action>For comma-separated keys (e.g., "2a-1,2a-2"), collect all story IDs</action>
+
+    <action>Extract File List from each injected story file:</action>
+    <parse_rules>
+      <rule>Look for "### File List" or "## File List" section</rule>
+      <rule>Extract files under "Created:", "Modified:", "Deleted:" subsections</rule>
+      <rule>Normalize paths (remove leading/trailing whitespace, handle relative vs absolute)</rule>
+      <rule>Build master list of all expected files across all batch stories</rule>
+    </parse_rules>
+
+    <output_variable name="expected_files">List of files from all story File List sections</output_variable>
+    <output_variable name="story_file_map">Map of each file to its source story ID</output_variable>
+
+    <check if="no File List found in any story">
+      <action>Log warning but continue - will try to match by other means</action>
+    </check>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"setup","status":"end","message":"Parsed {{file_count}} expected files from story File Lists"}'</bash>
+  </step>
+
+  <step n="2" goal="Analyze git status and match files to stories">
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"start","message":"Analyzing git status for file matching"}'</bash>
+
+    <action>Run git status to get all modified/staged/untracked files</action>
+    <bash>git status --porcelain</bash>
+
+    <action>Parse git status output to categorize files:</action>
+    <file_categories>
+      <category name="staged">Files already staged (prefix: A, M, D, R in first column)</category>
+      <category name="modified">Modified but unstaged (prefix: M in second column)</category>
+      <category name="untracked">Untracked files (prefix: ??)</category>
+      <category name="deleted">Deleted files (prefix: D)</category>
+    </file_categories>
+
+    <action>Match each git-tracked file against expected_files list:</action>
+    <matching_rules>
+      <rule priority="1">Exact path match against File List entries</rule>
+      <rule priority="2">Basename match if directory structure differs</rule>
+      <rule priority="3">Pattern match for generated files (e.g., story-*.md in impl artifacts)</rule>
+    </matching_rules>
+
+    <action>For files not in expected_files, investigate if related:</action>
+    <investigation_rules>
+      <rule>If file path contains story ID pattern (e.g., "5-sr-1"), consider related</rule>
+      <rule>If file is in same directory as expected files, briefly check contents</rule>
+      <rule>If file references story ID in contents, consider related</rule>
+      <rule>If uncertain, default to NOT related (leave unstaged)</rule>
+    </investigation_rules>
+
+    <output_variable name="files_to_stage">List of files confirmed related to batch stories</output_variable>
+    <output_variable name="files_to_ignore">List of files NOT related to batch stories</output_variable>
+
+    <check if="no files to stage">
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"end","message":"No matching files found to commit"}'</bash>
+      <output>[NO-CHANGES-TO-COMMIT]</output>
+      <action>HALT - nothing to commit</action>
+    </check>
+
+    <action>Stage only the matched files</action>
+    <bash>git add {{files_to_stage}}</bash>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"end","message":"Staged {{staged_count}} files (ignored {{ignored_count}} unrelated)"}'</bash>
+  </step>
+
+  <step n="3" goal="Create commit with proper message format">
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"commit","status":"start","message":"Creating commit for batch stories"}'</bash>
+
+    <action>Format commit message following convention:</action>
+    <commit_format>
+      <pattern>feat({{epic_id}}): implement stories {{story_ids}}</pattern>
+      <example>feat(5-sr): implement stories 5-sr-1, 5-sr-2, 5-sr-3</example>
+      <notes>
+        - Use "feat" for new features/stories
+        - Use "fix" if the stories are bug fixes
+        - Epic ID in parentheses for scope
+        - List all story IDs from the batch
+      </notes>
+    </commit_format>
+
+    <action>Execute git commit</action>
+    <bash>git commit -m "feat({{epic_id}}): implement stories {{story_ids_formatted}}"</bash>
+
+    <check if="commit failed">
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"commit","status":"end","message":"Commit failed: {{error_reason}}"}'</bash>
+      <output>[COMMIT-FAILED: {{error_reason}}]</output>
+      <action>HALT - commit failed</action>
+    </check>
+
+    <action>Capture commit hash from output</action>
+    <bash>git rev-parse --short HEAD</bash>
+    <output_variable name="commit_hash">Short hash of new commit</output_variable>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"commit","status":"end","message":"Commit created: {{commit_hash}}"}'</bash>
+  </step>
+
+  <step n="4" goal="Validate commit and report results">
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"validate","status":"start","message":"Validating commit"}'</bash>
+
+    <action>Verify commit was created successfully</action>
+    <bash>git log -1 --oneline</bash>
+
+    <action>Count files in commit</action>
+    <bash>git diff-tree --no-commit-id --name-only -r HEAD | wc -l</bash>
+    <output_variable name="files_committed">Count of files in commit</output_variable>
+
+    <action>Verify working tree status</action>
+    <bash>git status --porcelain</bash>
+    <note>Remaining files should be the unrelated ones we intentionally left unstaged</note>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"validate","status":"end","message":"Validation complete ({{files_committed}} files committed)"}'</bash>
+  </step>
+
+  <output_requirement>
+    <critical>MUST output one of these markers at the very end:</critical>
+    <marker condition="Commit successful">
+      [COMMIT-SUCCESS: {{commit_hash}}]
+    </marker>
+    <marker condition="No files matched stories">
+      [NO-CHANGES-TO-COMMIT]
+    </marker>
+    <marker condition="Commit failed">
+      [COMMIT-FAILED: {{error_reason}}]
+    </marker>
+  </output_requirement>
+
+  <final_summary>
+    **Sprint Commit Summary**
+
+    **Stories in Batch:** {{story_keys}}
+    **Epic ID:** {{epic_id}}
+
+    **Files Staged:** {{staged_count}}
+    **Files Ignored (unrelated):** {{ignored_count}}
+
+    **Commit Hash:** {{commit_hash}}
+    **Commit Message:** feat({{epic_id}}): implement stories {{story_ids_formatted}}
+
+    **Files Committed:**
+    {{list of committed files}}
+
+    **Remaining Unstaged Files:**
+    {{list of ignored files, if any}}
+  </final_summary>
+
+  <logging_reference>
+    <script>{{log_script}}</script>
+    <command_name>sprint-commit</command_name>
+    <task_ids>setup, stage, commit, validate</task_ids>
+    <format>
+      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-commit","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
+    </format>
+  </logging_reference>
+
+</workflow>

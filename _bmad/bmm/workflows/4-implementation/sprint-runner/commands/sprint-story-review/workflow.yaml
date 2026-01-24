@@ -1,0 +1,32 @@
+name: sprint-story-review
+description: 'Review existing story files for quality and completeness using injected context'
+author: 'BMad'
+
+# Sprint Runner v3 optimized command
+# Receives context via --prompt-system-append injection
+# DO NOT read story/discovery files from disk - content is pre-injected
+
+# Variables received from orchestrator injection
+variables:
+  story_keys: '' # Comma-separated story IDs (e.g., "2a-1,2a-2")
+  epic_id: '' # Epic identifier (e.g., "2a")
+  review_attempt: '1' # Current review attempt number
+
+# Workflow components
+installed_path: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/commands/sprint-story-review'
+instructions: '{installed_path}/instructions.xml'
+
+# Logging configuration
+log_script: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh'
+task_ids:
+  - setup
+  - analyze
+  - fix
+  - validate
+
+# Output markers
+output_markers:
+  critical_issues: '[CRITICAL-ISSUES-FOUND: YES]' # Triggers background review chain
+  no_issues: '[CRITICAL-ISSUES-FOUND: NO]' # No additional review needed
+
+standalone: true

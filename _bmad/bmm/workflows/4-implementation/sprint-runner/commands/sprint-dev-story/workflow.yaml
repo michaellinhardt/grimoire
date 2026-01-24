@@ -1,0 +1,42 @@
+name: sprint-dev-story
+description: 'Implement story code using injected context via sprint-runner orchestrator'
+author: 'BMad'
+
+# Sprint Runner v3 optimized command
+# ALL CONTEXT IS PRE-INJECTED via --prompt-system-append by the orchestrator
+# DO NOT read story file, tech-spec, project context, or discovery file from disk
+# Use ONLY the injected content in file_injections section
+
+# Variables received from orchestrator injection
+variables:
+  story_key: '' # Story identifier (e.g., "2a-1") - PROVIDED BY ORCHESTRATOR
+  epic_id: '' # Epic identifier (e.g., "2a") - PROVIDED BY ORCHESTRATOR
+
+# Workflow components
+installed_path: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/commands/sprint-dev-story'
+instructions: '{installed_path}/instructions.xml'
+
+# Logging configuration
+log_script: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh'
+task_ids:
+  - setup
+  - implement
+  - tests
+  - lint
+  - validate
+
+# Critical variables from config (for output paths only)
+config_source: '{project-root}/_bmad/bmm/config.yaml'
+implementation_artifacts: '{config_source}:implementation_artifacts'
+story_dir: '{implementation_artifacts}'
+
+# Story file location (for saving updates only - content is injected)
+story_file: '{story_dir}/sprint-{{story_key}}.md'
+
+# Output markers for orchestrator
+output_markers:
+  success: '[DEV-STORY-COMPLETE: YES]'
+  failure: '[DEV-STORY-COMPLETE: NO]'
+  blocked: '[DEV-STORY-BLOCKED: YES]'
+
+standalone: true

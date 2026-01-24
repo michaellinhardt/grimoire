@@ -664,8 +664,12 @@ class TestErrorHandling:
             with pytest.raises(FileNotFoundError):
                 orch.read_sprint_status()
 
-    def test_missing_prompt_file_raises_error(self, temp_project_root):
-        """Orchestrator should raise error if prompt file missing."""
+    def test_build_prompt_system_append_returns_valid_xml(self, temp_project_root):
+        """Orchestrator should return valid XML structure from build_prompt_system_append.
+
+        v3 Note: load_prompt() was removed in v3. Context is now injected via
+        build_prompt_system_append() which returns XML content for --prompt-system-append.
+        """
         with patch("orchestrator.init_db"), patch(
             "orchestrator.create_batch", return_value=1
         ):
@@ -674,8 +678,14 @@ class TestErrorHandling:
             )
             orch.current_batch_id = 1
 
-            with pytest.raises(FileNotFoundError):
-                orch.load_prompt("nonexistent-prompt.md")
+            # build_prompt_system_append should return valid XML even with no matching files
+            result = orch.build_prompt_system_append(
+                command_name="test-command",
+                story_keys=["nonexistent-story"],
+                include_project_context=False,
+            )
+            assert "<file_injections" in result
+            assert "</file_injections>" in result
 
 
 if __name__ == "__main__":

@@ -1,0 +1,182 @@
+<workflow>
+  <workflow_mode>REVIEW ONLY</workflow_mode>
+
+  <objective>Review tech-spec files for quality and completeness, fix issues found</objective>
+
+  <critical_rules>
+    <rule priority="1">DO NOT create new tech-spec files - only review existing ones</rule>
+    <rule priority="2">FIX any issues found in existing tech-spec files</rule>
+    <rule priority="3">DO NOT update sprint-status.yaml - orchestrator handles this</rule>
+    <rule priority="4">Work AUTONOMOUSLY - no human available for questions</rule>
+  </critical_rules>
+
+  <injected_context>
+    <rule>Tech-spec and story files are pre-injected in file_injections section</rule>
+    <rule>DO NOT read these files from disk - use injected content</rule>
+    <rule>Project context is included in file_injections if available</rule>
+  </injected_context>
+
+  <autonomous_mode>
+    <rule>AUTONOMOUS MODE - No human available to answer questions</rule>
+    <rule>Make all decisions yourself based on context</rule>
+    <rule>Do NOT ask for confirmation - fix everything you find</rule>
+    <rule>If workflow asks for approval - proceed without approval</rule>
+  </autonomous_mode>
+
+  <step n="1" goal="Setup and validate injected context">
+    <action>Log start of setup phase</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"tech-spec-review","task_id":"setup","status":"start","message":"Initializing tech-spec review"}'</bash>
+
+    <action>Parse story_keys variable to identify tech-specs to review</action>
+    <action>For comma-separated keys (e.g., "B-4,B-5"), process each sequentially</action>
+
+    <action>Verify injected file_injections contains:</action>
+    <check_list>
+      <item>Tech-spec file(s) matching story_keys (sprint-tech-spec-{story_key}.md)</item>
+      <item>Story file(s) for each story key</item>
+      <item>Optional: project context for reference</item>
+    </check_list>
+
+    <check if="required tech-spec files missing from injection">
+      <output>ERROR: Tech-spec file not found in injected context</output>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"tech-spec-review","task_id":"setup","status":"end","message":"ERROR: Missing tech-spec file in injection"}'</bash>
+      <action>Output: [CRITICAL-ISSUES-FOUND: YES]</action>
+      <action>HALT</action>
+    </check>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"tech-spec-review","task_id":"setup","status":"end","message":"Setup complete - files validated"}'</bash>
+  </step>
+
+  <step n="2" goal="Analyze tech-spec files for issues">
+    <action>For each story in story_keys, perform analysis:</action>
+
+    <foreach story_key="in story_keys">
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"tech-spec-review","task_id":"analyze","status":"start","message":"Analyzing tech-spec for {{story_key}}"}'</bash>
+
+      <analyze_criteria>
+        <category name="Structure Completeness">
+          <criterion>Frontmatter with story_id and status present</criterion>
+          <criterion>Overview section with Problem, Solution, Scope</criterion>
+          <criterion>Context for Development section present</criterion>
+          <criterion>Implementation Plan section present</criterion>
+          <criterion>Acceptance Criteria section present</criterion>
+          <criterion>Additional Context section present</criterion>
+        </category>
+
+        <category name="Actionability">
+          <criterion>Every task has clear file path AND specific action</criterion>
+          <criterion>No placeholders (TBD, TODO, ???)</criterion>
+          <criterion>No vague instructions (research, figure out, investigate)</criterion>
+          <criterion>Tasks are discrete and completable units</criterion>
+        </category>
+
+        <category name="Implementation Plan Quality">
+          <criterion>Tasks numbered and sequenced logically</criterion>
+          <criterion>Dependencies ordered correctly (lowest level first)</criterion>
+          <criterion>File paths are specific and valid</criterion>
+          <criterion>Actions are explicit (what to change, not just what to touch)</criterion>
+        </category>
+
+        <category name="Acceptance Criteria Quality">
+          <criterion>All criteria in Given/When/Then format</criterion>
+          <criterion>Covers happy path functionality</criterion>
+          <criterion>Includes error handling scenarios</criterion>
+          <criterion>Addresses edge cases</criterion>
+        </category>
+
+        <category name="Story Alignment">
+          <criterion>Tech-spec addresses all story requirements</criterion>
+          <criterion>Implementation tasks map to story acceptance criteria</criterion>
+          <criterion>Scope matches story scope (not over/under-scoped)</criterion>
+        </category>
+
+        <category name="Self-Containment">
+          <criterion>A fresh agent can implement without external context</criterion>
+          <criterion>All technical decisions are documented</criterion>
+          <criterion>Testing strategy is specified</criterion>
+          <criterion>Dependencies are listed</criterion>
+        </category>
+      </analyze_criteria>
+
+      <action>Count issues by severity: CRITICAL, HIGH, MEDIUM, LOW</action>
+      <action>Document each issue with specific location and description</action>
+
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"tech-spec-review","task_id":"analyze","status":"end","message":"Analysis complete (issues:N)"}'</bash>
+    </foreach>
+  </step>
+
+  <step n="3" goal="Fix identified issues">
+    <check if="issues found">
+      <foreach story_key="in story_keys">
+        <check if="tech-spec has issues">
+          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"tech-spec-review","task_id":"fix","status":"start","message":"Fixing issues in tech-spec {{story_key}}"}'</bash>
+
+          <fix_priority_order>
+            <priority level="1">CRITICAL issues - missing required sections, no implementation tasks</priority>
+            <priority level="2">HIGH issues - vague tasks, missing file paths, incomplete ACs</priority>
+            <priority level="3">MEDIUM issues - task ordering, missing edge cases</priority>
+            <priority level="4">LOW issues - formatting, minor documentation gaps</priority>
+          </fix_priority_order>
+
+          <action>Load the actual tech-spec file from disk for editing</action>
+          <action>Apply all fixes to the tech-spec file</action>
+          <action>Preserve existing valid content - only modify problem areas</action>
+          <action>Save updated tech-spec file</action>
+
+          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"tech-spec-review","task_id":"fix","status":"end","message":"Fixes applied (issues:N)"}'</bash>
+        </check>
+      </foreach>
+    </check>
+
+    <check if="no issues found">
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"tech-spec-review","task_id":"fix","status":"start","message":"No issues to fix"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"tech-spec-review","task_id":"fix","status":"end","message":"Skipped - no issues"}'</bash>
+    </check>
+  </step>
+
+  <step n="4" goal="Validate fixes and output result">
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"tech-spec-review","task_id":"validate","status":"start","message":"Validating fixes"}'</bash>
+
+    <check if="fixes were applied">
+      <action>Re-read fixed tech-spec files</action>
+      <action>Verify all CRITICAL and HIGH issues resolved</action>
+      <action>Confirm tech-spec file is valid and complete</action>
+    </check>
+
+    <action>Compile final review summary:</action>
+    <summary_format>
+      **Tech-Spec Review Summary for {{story_keys}}**
+
+      **Tech-Specs Reviewed:** [count]
+      **Issues Found:** [count] (CRITICAL: X, HIGH: X, MEDIUM: X, LOW: X)
+      **Issues Fixed:** [count]
+      **Remaining Issues:** [count]
+
+      **Per-Tech-Spec Details:**
+      - Tech-Spec [key]: [summary of findings and fixes]
+    </summary_format>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"tech-spec-review","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
+  </step>
+
+  <output_requirement>
+    <critical>MUST output one of these markers at the very end:</critical>
+    <marker condition="CRITICAL or HIGH issues were found (even if fixed)">
+      [CRITICAL-ISSUES-FOUND: YES]
+    </marker>
+    <marker condition="No CRITICAL or HIGH issues found">
+      [CRITICAL-ISSUES-FOUND: NO]
+    </marker>
+    <note>This marker determines if orchestrator spawns background review chain</note>
+  </output_requirement>
+
+  <logging_reference>
+    <script>{{log_script}}</script>
+    <command_name>tech-spec-review</command_name>
+    <task_ids>setup, analyze, fix, validate</task_ids>
+    <format>
+      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"tech-spec-review","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
+    </format>
+  </logging_reference>
+
+</workflow>

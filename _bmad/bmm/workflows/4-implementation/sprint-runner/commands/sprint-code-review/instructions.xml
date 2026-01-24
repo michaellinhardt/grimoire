@@ -1,0 +1,272 @@
+<workflow>
+  <workflow_mode>ADVERSARIAL CODE REVIEW</workflow_mode>
+
+  <objective>Find issues in implementation code and AUTO-FIX them</objective>
+
+  <critical_rules>
+    <rule priority="1">YOU ARE AN ADVERSARIAL REVIEWER - Find what is wrong or missing</rule>
+    <rule priority="2">Challenge everything: Are tasks marked [x] actually done? Are ACs really implemented?</rule>
+    <rule priority="3">Find issues - no lazy "looks good" reviews</rule>
+    <rule priority="4">AUTO-FIX all issues found - do not create action items</rule>
+    <rule priority="5">Read EVERY file in the File List - verify implementation against story requirements</rule>
+    <rule priority="6">Work AUTONOMOUSLY - no human available for questions</rule>
+  </critical_rules>
+
+  <injected_context>
+    <rule>Story file is pre-injected in file_injections section</rule>
+    <rule>Story file contains File List with all implementation files to review</rule>
+    <rule>Project context is included in file_injections if available</rule>
+    <rule>Use File List from story to identify files for code review</rule>
+  </injected_context>
+
+  <autonomous_mode>
+    <rule>AUTONOMOUS MODE - No human available to answer questions</rule>
+    <rule>Make all decisions yourself based on context</rule>
+    <rule>Do NOT ask for confirmation - fix everything you find</rule>
+    <rule>If workflow asks for approval - proceed without approval, you have full authority</rule>
+  </autonomous_mode>
+
+  <step n="1" goal="Setup and load review context">
+    <action>Log start of setup phase</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"setup","status":"start","message":"Loading code for review ({{story_key}})"}'</bash>
+
+    <action>Parse injected story file content</action>
+    <action>Extract from story file:</action>
+    <extract_list>
+      <item>Acceptance Criteria - what must be implemented</item>
+      <item>Tasks/Subtasks with completion status ([x] vs [ ])</item>
+      <item>Dev Agent Record - File List with all implementation files</item>
+      <item>Change Log if present</item>
+    </extract_list>
+
+    <action>Set {{file_count}} = count of files in File List</action>
+
+    <check if="File List is empty or missing">
+      <output>ERROR: No File List found in story - cannot perform code review</output>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"setup","status":"end","message":"ERROR: No File List in story"}'</bash>
+      <action>Output: HIGHEST SEVERITY: CRITICAL</action>
+      <action>Output: Issues: 1 CRITICAL, 0 HIGH, 0 MEDIUM, 0 LOW</action>
+      <action>HALT</action>
+    </check>
+
+    <action>Load project context for coding standards (if available in injection)</action>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"setup","status":"end","message":"Code loaded (files:{{file_count}})"}'</bash>
+  </step>
+
+  <step n="2" goal="Analyze code for issues">
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"analyze","status":"start","message":"Analyzing code quality"}'</bash>
+
+    <action>Initialize issue counters:</action>
+    <counters>
+      <counter name="critical_count">0</counter>
+      <counter name="high_count">0</counter>
+      <counter name="medium_count">0</counter>
+      <counter name="low_count">0</counter>
+    </counters>
+
+    <action>Build review attack plan:</action>
+    <attack_plan>
+      <phase name="AC Validation">Verify each Acceptance Criterion is actually implemented</phase>
+      <phase name="Task Audit">Verify each [x] task is really done</phase>
+      <phase name="Code Quality">Security, performance, maintainability</phase>
+      <phase name="Test Quality">Real tests vs placeholder assertions</phase>
+    </attack_plan>
+
+    <action>Read EACH file from File List and analyze:</action>
+
+    <analysis_criteria>
+      <category name="Acceptance Criteria Validation" severity_if_missing="HIGH">
+        <criterion>For EACH AC: search implementation for evidence</criterion>
+        <criterion>Mark as: IMPLEMENTED, PARTIAL, or MISSING</criterion>
+        <criterion>MISSING or PARTIAL AC = HIGH severity finding</criterion>
+      </category>
+
+      <category name="Task Completion Audit" severity_if_false="CRITICAL">
+        <criterion>For EACH task marked [x]: verify it was actually done</criterion>
+        <criterion>Search files for evidence of completion</criterion>
+        <criterion>Task marked [x] but NOT DONE = CRITICAL finding</criterion>
+      </category>
+
+      <category name="Security" severity="HIGH">
+        <criterion>SQL injection risks</criterion>
+        <criterion>Missing input validation</criterion>
+        <criterion>Authentication/authorization issues</criterion>
+        <criterion>Hardcoded secrets or credentials</criterion>
+        <criterion>XSS vulnerabilities</criterion>
+      </category>
+
+      <category name="Performance" severity="MEDIUM">
+        <criterion>N+1 query patterns</criterion>
+        <criterion>Inefficient loops or algorithms</criterion>
+        <criterion>Missing caching opportunities</criterion>
+        <criterion>Unnecessary database calls</criterion>
+      </category>
+
+      <category name="Error Handling" severity="MEDIUM">
+        <criterion>Missing try/catch blocks</criterion>
+        <criterion>Poor error messages</criterion>
+        <criterion>Unhandled edge cases</criterion>
+        <criterion>Missing null/undefined checks</criterion>
+      </category>
+
+      <category name="Code Quality" severity="LOW">
+        <criterion>Complex functions (high cyclomatic complexity)</criterion>
+        <criterion>Magic numbers without constants</criterion>
+        <criterion>Poor naming conventions</criterion>
+        <criterion>Missing documentation for complex logic</criterion>
+        <criterion>Dead code or unused imports</criterion>
+      </category>
+
+      <category name="Test Quality" severity="MEDIUM">
+        <criterion>Are tests real assertions or placeholders?</criterion>
+        <criterion>Test coverage for critical paths</criterion>
+        <criterion>Edge cases tested</criterion>
+        <criterion>Error scenarios tested</criterion>
+      </category>
+    </analysis_criteria>
+
+    <action>Document each issue with:</action>
+    <issue_format>
+      <field>Severity (CRITICAL, HIGH, MEDIUM, LOW)</field>
+      <field>Category</field>
+      <field>Description</field>
+      <field>File and line number</field>
+      <field>Suggested fix</field>
+    </issue_format>
+
+    <action>Set {{total_issues}} = sum of all issue counts</action>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"analyze","status":"end","message":"Analysis complete (issues:{{total_issues}} found)"}'</bash>
+  </step>
+
+  <step n="3" goal="Auto-fix all issues">
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"fix","status":"start","message":"Applying code fixes"}'</bash>
+
+    <check if="total_issues gt 0">
+      <action>Fix issues in priority order:</action>
+      <fix_priority>
+        <priority level="1">CRITICAL - Tasks marked done but not implemented, security vulnerabilities</priority>
+        <priority level="2">HIGH - Missing AC implementations, data integrity issues</priority>
+        <priority level="3">MEDIUM - Performance issues, error handling, test quality</priority>
+        <priority level="4">LOW - Code style, naming, documentation</priority>
+      </fix_priority>
+
+      <action>For EACH issue:</action>
+      <fix_process>
+        <step>Load the file containing the issue</step>
+        <step>Apply the fix</step>
+        <step>Save the file</step>
+        <step>Increment {{fixed_count}}</step>
+      </fix_process>
+
+      <action>Update story File List if new files created during fix</action>
+    </check>
+
+    <check if="total_issues eq 0">
+      <action>Set {{fixed_count}} = 0</action>
+      <action>No fixes needed</action>
+    </check>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"fix","status":"end","message":"Fixes applied (issues:{{fixed_count}} fixed)"}'</bash>
+  </step>
+
+  <step n="4" goal="Re-run tests after fixes">
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"test","status":"start","message":"Re-running tests"}'</bash>
+
+    <check if="fixes were applied">
+      <action>Identify test files from project structure</action>
+      <action>Run relevant test suite</action>
+      <action>Set {{test_count}} = number of tests run</action>
+      <action>Set {{test_passed}} = true/false</action>
+
+      <check if="tests fail">
+        <action>Analyze test failures</action>
+        <action>Fix test failures caused by code changes</action>
+        <action>Re-run tests to verify</action>
+      </check>
+    </check>
+
+    <check if="no fixes applied">
+      <action>Set {{test_count}} = 0</action>
+      <action>Tests not needed - no changes made</action>
+    </check>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"test","status":"end","message":"Tests passed (tests:{{test_count}})"}'</bash>
+  </step>
+
+  <step n="5" goal="Validate and update status">
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"validate","status":"start","message":"Validating code review fixes"}'</bash>
+
+    <action>Determine highest severity found:</action>
+    <severity_determination>
+      <check if="critical_count gt 0">{{highest_severity}} = CRITICAL</check>
+      <check if="critical_count eq 0 AND high_count gt 0">{{highest_severity}} = HIGH</check>
+      <check if="critical_count eq 0 AND high_count eq 0 AND medium_count gt 0">{{highest_severity}} = MEDIUM</check>
+      <check if="critical_count eq 0 AND high_count eq 0 AND medium_count eq 0 AND low_count gt 0">{{highest_severity}} = LOW</check>
+      <check if="total_issues eq 0">{{highest_severity}} = ZERO ISSUES</check>
+    </severity_determination>
+
+    <action>Update story status based on outcome:</action>
+    <status_rules>
+      <rule condition="total_issues eq 0">
+        <action>Update story file Status field to "done"</action>
+        <action>DO NOT update sprint-status.yaml - orchestrator handles all status updates</action>
+      </rule>
+      <rule condition="total_issues gt 0">
+        <action>Keep story Status as "review" for another pass</action>
+        <action>DO NOT update sprint-status.yaml - orchestrator handles all status updates</action>
+      </rule>
+    </status_rules>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
+  </step>
+
+  <output_requirement>
+    <critical>MUST output these EXACT markers at the very end:</critical>
+
+    <output_format>
+      **Code Review Summary for {{story_key}}**
+
+      **Review Attempt:** {{review_attempt}}
+      **Files Reviewed:** {{file_count}}
+      **Issues Found:** {{total_issues}}
+      **Issues Fixed:** {{fixed_count}}
+      **Tests Run:** {{test_count}}
+
+      **Issue Breakdown:**
+      - CRITICAL: {{critical_count}}
+      - HIGH: {{high_count}}
+      - MEDIUM: {{medium_count}}
+      - LOW: {{low_count}}
+
+      **Outcome:** [Story marked done / Staying in review for another pass]
+    </output_format>
+
+    <mandatory_markers>
+      <marker>HIGHEST SEVERITY: {{highest_severity}}</marker>
+      <marker>Issues: {{critical_count}} CRITICAL, {{high_count}} HIGH, {{medium_count}} MEDIUM, {{low_count}} LOW</marker>
+    </mandatory_markers>
+
+    <examples>
+      <example condition="Issues found">
+        HIGHEST SEVERITY: HIGH
+        Issues: 0 CRITICAL, 2 HIGH, 3 MEDIUM, 1 LOW
+      </example>
+      <example condition="No issues">
+        HIGHEST SEVERITY: ZERO ISSUES
+        Issues: 0 CRITICAL, 0 HIGH, 0 MEDIUM, 0 LOW
+      </example>
+    </examples>
+  </output_requirement>
+
+  <logging_reference>
+    <script>{{log_script}}</script>
+    <command_name>code-review-{{review_attempt}}</command_name>
+    <task_ids>setup, analyze, fix, test, validate</task_ids>
+    <format>
+      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"code-review-{{review_attempt}}","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
+    </format>
+  </logging_reference>
+
+</workflow>

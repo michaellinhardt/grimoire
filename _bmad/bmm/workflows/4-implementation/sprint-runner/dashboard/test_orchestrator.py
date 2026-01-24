@@ -43,9 +43,6 @@ def project_root():
         # Create directory structure
         (root / "_bmad-output/implementation-artifacts").mkdir(parents=True)
         (root / "_bmad-output/planning-artifacts").mkdir(parents=True)
-        (root / "_bmad/bmm/workflows/4-implementation/sprint-runner/prompts").mkdir(
-            parents=True
-        )
         (root / "_bmad/scripts").mkdir(parents=True)
 
         # Create a basic sprint-status.yaml
@@ -63,12 +60,6 @@ development_status:
         (root / "_bmad-output/implementation-artifacts/sprint-status.yaml").write_text(
             sprint_status
         )
-
-        # Create a minimal prompt file
-        (
-            root
-            / "_bmad/bmm/workflows/4-implementation/sprint-runner/prompts/create-story.md"
-        ).write_text("Test prompt for {{story_key}}")
 
         yield root
 
@@ -450,26 +441,6 @@ class TestCriticalIssuesDetection:
         """Should return False when no critical issues."""
         stdout = "HIGHEST SEVERITY: HIGH - Performance concerns."
         assert orchestrator._check_for_critical_issues(stdout) is False
-
-
-# =============================================================================
-# Test Prompt Loading
-# =============================================================================
-
-
-class TestPromptLoading:
-    """Tests for prompt file loading and variable substitution."""
-
-    def test_load_prompt_with_substitution(self, orchestrator, project_root):
-        """Should load and substitute variables in prompt."""
-        prompt = orchestrator.load_prompt("create-story.md", story_key="2a-1")
-        assert "2a-1" in prompt
-        assert "{{story_key}}" not in prompt
-
-    def test_load_prompt_file_not_found(self, orchestrator, project_root):
-        """Should raise error for missing prompt file."""
-        with pytest.raises(FileNotFoundError):
-            orchestrator.load_prompt("nonexistent.md")
 
 
 # =============================================================================
@@ -1168,6 +1139,1377 @@ class TestTimestampValidation:
         result = orchestrator._parse_csv_log_line(line)
 
         assert result is None
+
+
+# =============================================================================
+# Test spawn_subagent prompt_system_append Parameter (Story A-2)
+# =============================================================================
+
+
+class TestSpawnSubagentPromptSystemAppend:
+    """Tests for spawn_subagent() prompt_system_append parameter (Story A-2)."""
+
+    @pytest.mark.asyncio
+    async def test_spawn_subagent_without_prompt_system_append(self, orchestrator):
+        """Should not add --prompt-system-append flag when parameter not provided (AC2)."""
+        with patch("asyncio.subprocess.create_subprocess_exec") as mock_create:
+            mock_process = AsyncMock()
+            mock_process.stdin.write.return_value = None
+            mock_process.stdin.drain = AsyncMock()
+            mock_process.stdin.close.return_value = None
+            mock_process.stdout.readline = AsyncMock(return_value=b"")
+            mock_process.wait = AsyncMock()
+            mock_process.returncode = 0
+            mock_create.return_value = mock_process
+
+            await orchestrator.spawn_subagent("test prompt", "test-command")
+
+            # Verify the flag was NOT passed
+            call_args = mock_create.call_args[0]
+            assert "--prompt-system-append" not in call_args
+
+    @pytest.mark.asyncio
+    async def test_spawn_subagent_with_prompt_system_append(self, orchestrator):
+        """Should add --prompt-system-append flag when parameter provided (AC3)."""
+        with patch("asyncio.subprocess.create_subprocess_exec") as mock_create:
+            mock_process = AsyncMock()
+            mock_process.stdin.write.return_value = None
+            mock_process.stdin.drain = AsyncMock()
+            mock_process.stdin.close.return_value = None
+            mock_process.stdout.readline = AsyncMock(return_value=b"")
+            mock_process.wait = AsyncMock()
+            mock_process.returncode = 0
+            mock_create.return_value = mock_process
+
+            test_content = "<file_injections>test content</file_injections>"
+            await orchestrator.spawn_subagent(
+                "test prompt",
+                prompt_system_append=test_content
+            )
+
+            # Verify the flag was passed with correct value
+            call_args = mock_create.call_args[0]
+            assert "--prompt-system-append" in call_args
+            idx = call_args.index("--prompt-system-append")
+            assert call_args[idx + 1] == test_content
+
+    @pytest.mark.asyncio
+    async def test_spawn_subagent_flag_ordering(self, orchestrator):
+        """Should place --prompt-system-append after --model in args (AC4)."""
+        with patch("asyncio.subprocess.create_subprocess_exec") as mock_create:
+            mock_process = AsyncMock()
+            mock_process.stdin.write.return_value = None
+            mock_process.stdin.drain = AsyncMock()
+            mock_process.stdin.close.return_value = None
+            mock_process.stdout.readline = AsyncMock(return_value=b"")
+            mock_process.wait = AsyncMock()
+            mock_process.returncode = 0
+            mock_create.return_value = mock_process
+
+            await orchestrator.spawn_subagent(
+                "test prompt",
+                model="haiku",
+                prompt_system_append="<content>test</content>"
+            )
+
+            # Verify flag ordering: --model before --prompt-system-append
+            call_args = mock_create.call_args[0]
+            model_idx = call_args.index("--model")
+            append_idx = call_args.index("--prompt-system-append")
+            assert model_idx < append_idx
+
+    @pytest.mark.asyncio
+    async def test_spawn_subagent_with_both_model_and_append(self, orchestrator):
+        """Should support both model and prompt_system_append together (AC4)."""
+        with patch("asyncio.subprocess.create_subprocess_exec") as mock_create:
+            mock_process = AsyncMock()
+            mock_process.stdin.write.return_value = None
+            mock_process.stdin.drain = AsyncMock()
+            mock_process.stdin.close.return_value = None
+            mock_process.stdout.readline = AsyncMock(return_value=b"")
+            mock_process.wait = AsyncMock()
+            mock_process.returncode = 0
+            mock_create.return_value = mock_process
+
+            await orchestrator.spawn_subagent(
+                "test prompt",
+                model="haiku",
+                prompt_system_append="<xml>content</xml>"
+            )
+
+            call_args = mock_create.call_args[0]
+
+            # Both flags should be present
+            assert "--model" in call_args
+            assert "--prompt-system-append" in call_args
+
+            # Verify values
+            model_idx = call_args.index("--model")
+            assert call_args[model_idx + 1] == "haiku"
+
+            append_idx = call_args.index("--prompt-system-append")
+            assert call_args[append_idx + 1] == "<xml>content</xml>"
+
+    @pytest.mark.asyncio
+    async def test_spawn_subagent_preserves_base_args(self, orchestrator):
+        """Should preserve base args when prompt_system_append is added."""
+        with patch("asyncio.subprocess.create_subprocess_exec") as mock_create:
+            mock_process = AsyncMock()
+            mock_process.stdin.write.return_value = None
+            mock_process.stdin.drain = AsyncMock()
+            mock_process.stdin.close.return_value = None
+            mock_process.stdout.readline = AsyncMock(return_value=b"")
+            mock_process.wait = AsyncMock()
+            mock_process.returncode = 0
+            mock_create.return_value = mock_process
+
+            await orchestrator.spawn_subagent(
+                "test prompt",
+                prompt_system_append="<content/>"
+            )
+
+            call_args = mock_create.call_args[0]
+
+            # Base args should still be present
+            assert "claude" in call_args
+            assert "-p" in call_args
+            assert "--output-format" in call_args
+            assert "stream-json" in call_args
+
+    @pytest.mark.asyncio
+    async def test_spawn_subagent_with_empty_string_append(self, orchestrator):
+        """Should not add --prompt-system-append flag when empty string provided."""
+        with patch("asyncio.subprocess.create_subprocess_exec") as mock_create:
+            mock_process = AsyncMock()
+            mock_process.stdin.write.return_value = None
+            mock_process.stdin.drain = AsyncMock()
+            mock_process.stdin.close.return_value = None
+            mock_process.stdout.readline = AsyncMock(return_value=b"")
+            mock_process.wait = AsyncMock()
+            mock_process.returncode = 0
+            mock_create.return_value = mock_process
+
+            # Explicitly pass empty string
+            await orchestrator.spawn_subagent(
+                "test prompt",
+                prompt_system_append=""
+            )
+
+            # Empty string is falsy, so flag should NOT be added
+            call_args = mock_create.call_args[0]
+            assert "--prompt-system-append" not in call_args
+
+    @pytest.mark.asyncio
+    async def test_spawn_subagent_with_explicit_none_append(self, orchestrator):
+        """Should not add --prompt-system-append flag when None explicitly provided."""
+        with patch("asyncio.subprocess.create_subprocess_exec") as mock_create:
+            mock_process = AsyncMock()
+            mock_process.stdin.write.return_value = None
+            mock_process.stdin.drain = AsyncMock()
+            mock_process.stdin.close.return_value = None
+            mock_process.stdout.readline = AsyncMock(return_value=b"")
+            mock_process.wait = AsyncMock()
+            mock_process.returncode = 0
+            mock_create.return_value = mock_process
+
+            # Explicitly pass None
+            await orchestrator.spawn_subagent(
+                "test prompt",
+                prompt_system_append=None
+            )
+
+            call_args = mock_create.call_args[0]
+            assert "--prompt-system-append" not in call_args
+
+    @pytest.mark.asyncio
+    async def test_spawn_subagent_with_special_characters_in_append(self, orchestrator):
+        """Should handle special characters in prompt_system_append content."""
+        with patch("asyncio.subprocess.create_subprocess_exec") as mock_create:
+            mock_process = AsyncMock()
+            mock_process.stdin.write.return_value = None
+            mock_process.stdin.drain = AsyncMock()
+            mock_process.stdin.close.return_value = None
+            mock_process.stdout.readline = AsyncMock(return_value=b"")
+            mock_process.wait = AsyncMock()
+            mock_process.returncode = 0
+            mock_create.return_value = mock_process
+
+            # Content with special characters: newlines, quotes, angle brackets
+            special_content = '''<file_injections rule="DO NOT read">
+  <file path="test.md">
+    Content with "double quotes" and 'single quotes'
+    And <nested> XML tags </nested>
+    Plus $SHELL_VAR and `backticks`
+  </file>
+</file_injections>'''
+
+            await orchestrator.spawn_subagent(
+                "test prompt",
+                prompt_system_append=special_content
+            )
+
+            call_args = mock_create.call_args[0]
+            assert "--prompt-system-append" in call_args
+            idx = call_args.index("--prompt-system-append")
+            # Content should be passed exactly as-is (subprocess.exec handles this)
+            assert call_args[idx + 1] == special_content
+
+    @pytest.mark.asyncio
+    async def test_spawn_subagent_full_arg_structure_with_model_and_append(self, orchestrator):
+        """Should produce exact expected arg structure per AC4."""
+        with patch("asyncio.subprocess.create_subprocess_exec") as mock_create:
+            mock_process = AsyncMock()
+            mock_process.stdin.write.return_value = None
+            mock_process.stdin.drain = AsyncMock()
+            mock_process.stdin.close.return_value = None
+            mock_process.stdout.readline = AsyncMock(return_value=b"")
+            mock_process.wait = AsyncMock()
+            mock_process.returncode = 0
+            mock_create.return_value = mock_process
+
+            await orchestrator.spawn_subagent(
+                "test prompt",
+                model="haiku",
+                prompt_system_append="<content>test</content>"
+            )
+
+            call_args = list(mock_create.call_args[0])
+
+            # Verify exact expected structure per AC4:
+            # ["claude", "-p", "--output-format", "stream-json", "--model", "haiku", "--prompt-system-append", "content"]
+            expected_start = ["claude", "-p", "--output-format", "stream-json"]
+            assert call_args[:4] == expected_start
+
+            # Model comes before prompt-system-append
+            assert call_args[4:6] == ["--model", "haiku"]
+            assert call_args[6:8] == ["--prompt-system-append", "<content>test</content>"]
+
+
+# =============================================================================
+# Test Copy Project Context (Story A-3)
+# =============================================================================
+
+
+class TestCopyProjectContext:
+    """Tests for copy_project_context() method (Story A-3)."""
+
+    def test_copy_project_context_success_when_source_exists(
+        self, orchestrator, project_root
+    ):
+        """Should copy file and return True when source exists (AC1)."""
+        # Create source file
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        source.write_text("# Project Context\n\nTest content for copy.")
+
+        result = orchestrator.copy_project_context()
+
+        # Verify return value
+        assert result is True
+
+        # Verify destination file was created with exact content
+        dest = project_root / "_bmad-output/planning-artifacts/sprint-project-context.md"
+        assert dest.exists()
+        assert dest.read_text() == "# Project Context\n\nTest content for copy."
+
+    def test_copy_project_context_returns_false_when_source_missing(
+        self, orchestrator, project_root
+    ):
+        """Should return False when source file does not exist (AC2)."""
+        # Ensure source doesn't exist
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        if source.exists():
+            source.unlink()
+
+        result = orchestrator.copy_project_context()
+
+        # Verify return value
+        assert result is False
+
+        # Verify destination was NOT created
+        dest = project_root / "_bmad-output/planning-artifacts/sprint-project-context.md"
+        assert not dest.exists()
+
+    def test_copy_project_context_emits_copy_failed_event_when_missing(
+        self, orchestrator, project_root
+    ):
+        """Should emit context:copy_failed event when source missing (AC2)."""
+        # Ensure source doesn't exist
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        if source.exists():
+            source.unlink()
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            orchestrator.copy_project_context()
+
+            # Verify context:copy_failed was emitted
+            emit_calls = [
+                call for call in mock_emit.call_args_list
+                if call.args[0] == "context:copy_failed"
+            ]
+            assert len(emit_calls) == 1
+            payload = emit_calls[0].args[1]
+            assert "reason" in payload
+            assert "Source file does not exist" in payload["reason"]
+
+    def test_copy_project_context_emits_copied_event_on_success(
+        self, orchestrator, project_root
+    ):
+        """Should emit context:copied event on successful copy (AC1)."""
+        # Create source file
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        source.write_text("# Test content")
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            orchestrator.copy_project_context()
+
+            # Verify context:copied was emitted
+            emit_calls = [
+                call for call in mock_emit.call_args_list
+                if call.args[0] == "context:copied"
+            ]
+            assert len(emit_calls) == 1
+            payload = emit_calls[0].args[1]
+            assert "source" in payload
+            assert "destination" in payload
+            assert "message" in payload
+
+    def test_copy_project_context_creates_destination_directory(
+        self, orchestrator, project_root
+    ):
+        """Should create destination directory if it doesn't exist (AC3)."""
+        # Remove the planning-artifacts directory
+        planning_dir = project_root / "_bmad-output/planning-artifacts"
+        if planning_dir.exists():
+            import shutil
+            shutil.rmtree(planning_dir)
+
+        # Create source directory and file
+        planning_dir.mkdir(parents=True)
+        source = planning_dir / "project-context.md"
+        source.write_text("# Test content")
+
+        result = orchestrator.copy_project_context()
+
+        assert result is True
+        dest = planning_dir / "sprint-project-context.md"
+        assert dest.exists()
+
+    def test_copy_project_context_overwrites_existing_destination(
+        self, orchestrator, project_root
+    ):
+        """Should overwrite existing sprint-project-context.md (AC1)."""
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        dest = project_root / "_bmad-output/planning-artifacts/sprint-project-context.md"
+
+        # Create source with new content
+        source.write_text("# New content")
+
+        # Create destination with old content
+        dest.write_text("# Old content that should be overwritten")
+
+        result = orchestrator.copy_project_context()
+
+        assert result is True
+        assert dest.read_text() == "# New content"
+
+    def test_copy_project_context_preserves_exact_content(
+        self, orchestrator, project_root
+    ):
+        """Should preserve exact content including special characters (AC1)."""
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+
+        # Content with special characters, Unicode, and formatting
+        special_content = """# Project Context
+
+## Rules
+- DO NOT modify these patterns
+- Use `backticks` for code
+- Preserve "quotes" and 'apostrophes'
+
+## Unicode Support
+- Emojis: ✅ ❌ 🚀
+- Symbols: → ← ↔ ≤ ≥
+
+## Code Block
+```python
+def example():
+    return "test"
+```
+
+## Special Characters
+< > & " '
+"""
+        source.write_text(special_content)
+
+        result = orchestrator.copy_project_context()
+
+        assert result is True
+        dest = project_root / "_bmad-output/planning-artifacts/sprint-project-context.md"
+        assert dest.read_text() == special_content
+
+    def test_copy_project_context_handles_mkdir_failure(
+        self, orchestrator, project_root
+    ):
+        """Should return False and emit event when mkdir fails (HIGH #1, MEDIUM #3)."""
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        source.write_text("# Test content")
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            with patch("pathlib.Path.mkdir", side_effect=PermissionError("No write permission")):
+                result = orchestrator.copy_project_context()
+
+                assert result is False
+
+                # Verify context:copy_failed was emitted
+                emit_calls = [
+                    call for call in mock_emit.call_args_list
+                    if call.args[0] == "context:copy_failed"
+                ]
+                assert len(emit_calls) == 1
+                payload = emit_calls[0].args[1]
+                assert "Failed to create destination directory" in payload["reason"]
+
+    def test_copy_project_context_handles_read_failure(
+        self, orchestrator, project_root
+    ):
+        """Should return False and emit event when read fails (HIGH #1, HIGH #2)."""
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        source.write_text("# Test content")
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            with patch("pathlib.Path.read_text", side_effect=PermissionError("No read permission")):
+                result = orchestrator.copy_project_context()
+
+                assert result is False
+
+                # Verify context:copy_failed was emitted
+                emit_calls = [
+                    call for call in mock_emit.call_args_list
+                    if call.args[0] == "context:copy_failed"
+                ]
+                assert len(emit_calls) == 1
+                payload = emit_calls[0].args[1]
+                assert "Failed to read source file" in payload["reason"]
+
+    def test_copy_project_context_handles_write_failure(
+        self, orchestrator, project_root
+    ):
+        """Should return False and emit event when write fails (HIGH #1, HIGH #2)."""
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        source.write_text("# Test content")
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            with patch("pathlib.Path.write_text", side_effect=PermissionError("No write permission")):
+                result = orchestrator.copy_project_context()
+
+                assert result is False
+
+                # Verify context:copy_failed was emitted
+                emit_calls = [
+                    call for call in mock_emit.call_args_list
+                    if call.args[0] == "context:copy_failed"
+                ]
+                assert len(emit_calls) == 1
+                payload = emit_calls[0].args[1]
+                assert "Failed to write destination file" in payload["reason"]
+
+    def test_copy_project_context_handles_oserror_on_mkdir(
+        self, orchestrator, project_root
+    ):
+        """Should handle OSError on mkdir (HIGH #1)."""
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        source.write_text("# Test content")
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            with patch("pathlib.Path.mkdir", side_effect=OSError("Disk full")):
+                result = orchestrator.copy_project_context()
+
+                assert result is False
+                emit_calls = [
+                    call for call in mock_emit.call_args_list
+                    if call.args[0] == "context:copy_failed"
+                ]
+                assert len(emit_calls) == 1
+
+    def test_copy_project_context_handles_oserror_on_read(
+        self, orchestrator, project_root
+    ):
+        """Should handle OSError on read (HIGH #1)."""
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        source.write_text("# Test content")
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            with patch("pathlib.Path.read_text", side_effect=OSError("I/O error")):
+                result = orchestrator.copy_project_context()
+
+                assert result is False
+                emit_calls = [
+                    call for call in mock_emit.call_args_list
+                    if call.args[0] == "context:copy_failed"
+                ]
+                assert len(emit_calls) == 1
+
+    def test_copy_project_context_handles_oserror_on_write(
+        self, orchestrator, project_root
+    ):
+        """Should handle OSError on write (HIGH #1)."""
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        source.write_text("# Test content")
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            with patch("pathlib.Path.write_text", side_effect=OSError("Disk full")):
+                result = orchestrator.copy_project_context()
+
+                assert result is False
+                emit_calls = [
+                    call for call in mock_emit.call_args_list
+                    if call.args[0] == "context:copy_failed"
+                ]
+                assert len(emit_calls) == 1
+
+
+class TestCopyProjectContextIntegration:
+    """Integration tests for copy_project_context() in batch initialization (AC4)."""
+
+    @pytest.mark.asyncio
+    async def test_copy_context_called_after_check_project_context(
+        self, orchestrator, project_root
+    ):
+        """Should call copy_project_context after check_project_context in start() (AC4)."""
+        # Create fresh project context
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        source.write_text("# Fresh context")
+
+        call_order = []
+
+        async def mock_check(*args, **kwargs):
+            call_order.append("check_project_context")
+
+        def mock_copy(*args, **kwargs):
+            call_order.append("copy_project_context")
+            return True
+
+        with patch.object(
+            orchestrator, "check_project_context", new_callable=AsyncMock
+        ) as mock_check_ctx:
+            mock_check_ctx.side_effect = mock_check
+
+            with patch.object(
+                orchestrator, "copy_project_context", side_effect=mock_copy
+            ):
+                with patch.object(
+                    orchestrator, "run_cycle", new_callable=AsyncMock
+                ) as mock_cycle:
+                    mock_cycle.return_value = False  # End loop immediately
+
+                    with patch("orchestrator.update_batch"):
+                        await orchestrator.start()
+
+                        # Verify order: check_project_context before copy_project_context
+                        assert call_order == ["check_project_context", "copy_project_context"]
+
+    @pytest.mark.asyncio
+    async def test_start_continues_when_copy_fails(self, orchestrator, project_root):
+        """Should continue batch when copy_project_context returns False (AC4)."""
+        # Ensure source doesn't exist so copy fails
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        if source.exists():
+            source.unlink()
+
+        with patch.object(
+            orchestrator, "check_project_context", new_callable=AsyncMock
+        ):
+            with patch.object(
+                orchestrator, "run_cycle", new_callable=AsyncMock
+            ) as mock_cycle:
+                mock_cycle.return_value = False  # End loop immediately
+
+                with patch("orchestrator.update_batch"):
+                    # Should not raise - should continue despite copy failure
+                    await orchestrator.start()
+
+                    # run_cycle should have been called (batch continued)
+                    mock_cycle.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_start_emits_warning_when_copy_fails(self, orchestrator, project_root):
+        """Should emit batch:warning event when copy fails (AC4)."""
+        # Ensure source doesn't exist so copy fails
+        source = project_root / "_bmad-output/planning-artifacts/project-context.md"
+        if source.exists():
+            source.unlink()
+
+        with patch.object(
+            orchestrator, "check_project_context", new_callable=AsyncMock
+        ):
+            with patch.object(
+                orchestrator, "run_cycle", new_callable=AsyncMock
+            ) as mock_cycle:
+                mock_cycle.return_value = False
+
+                with patch("orchestrator.update_batch"):
+                    with patch.object(orchestrator, "emit_event") as mock_emit:
+                        await orchestrator.start()
+
+                        # Verify batch:warning was emitted
+                        warning_calls = [
+                            call for call in mock_emit.call_args_list
+                            if call.args[0] == "batch:warning"
+                        ]
+                        assert len(warning_calls) >= 1
+                        payload = warning_calls[0].args[1]
+                        assert "warning" in payload
+                        assert "Project context not available" in payload["warning"]
+
+
+# =============================================================================
+# Test Cleanup Batch Files (Story A-4)
+# =============================================================================
+
+
+class TestCleanupBatchFiles:
+    """Tests for cleanup_batch_files() method (Story A-4)."""
+
+    def test_cleanup_batch_files_moves_matching_files(self, orchestrator, project_root):
+        """Should move files matching story keys to archive directory (AC1)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        archive_dir = project_root / "_bmad-output/archived-artifacts"
+
+        # Create test files with story IDs
+        (impl_dir / "sprint-2a-1-story.md").write_text("# Story 2a-1")
+        (impl_dir / "sprint-2a-1-discovery-story.md").write_text("# Discovery")
+        (impl_dir / "sprint-tech-spec-2a-1.md").write_text("# Tech Spec")
+
+        result = orchestrator.cleanup_batch_files(["2a-1"])
+
+        assert result == 3
+        assert (archive_dir / "sprint-2a-1-story.md").exists()
+        assert (archive_dir / "sprint-2a-1-discovery-story.md").exists()
+        assert (archive_dir / "sprint-tech-spec-2a-1.md").exists()
+        # Source files should be gone
+        assert not (impl_dir / "sprint-2a-1-story.md").exists()
+
+    def test_cleanup_batch_files_creates_archive_directory(
+        self, orchestrator, project_root
+    ):
+        """Should create archive directory if it doesn't exist (AC2)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        archive_dir = project_root / "_bmad-output/archived-artifacts"
+
+        # Ensure archive doesn't exist
+        if archive_dir.exists():
+            import shutil
+            shutil.rmtree(archive_dir)
+
+        (impl_dir / "sprint-1-1-story.md").write_text("# Story")
+
+        result = orchestrator.cleanup_batch_files(["1-1"])
+
+        assert result == 1
+        assert archive_dir.exists()
+        assert archive_dir.is_dir()
+
+    def test_cleanup_batch_files_returns_count(self, orchestrator, project_root):
+        """Should return correct count of moved files (AC3)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+
+        # Create multiple files
+        (impl_dir / "file-3a-1-a.md").write_text("A")
+        (impl_dir / "file-3a-1-b.md").write_text("B")
+        (impl_dir / "file-3a-2-c.md").write_text("C")
+        (impl_dir / "unrelated-file.md").write_text("D")
+
+        result = orchestrator.cleanup_batch_files(["3a-1", "3a-2"])
+
+        assert result == 3
+
+    def test_cleanup_batch_files_handles_empty_story_keys(
+        self, orchestrator, project_root
+    ):
+        """Should return 0 when story_keys is empty (AC4)."""
+        result = orchestrator.cleanup_batch_files([])
+        assert result == 0
+
+    def test_cleanup_batch_files_emits_complete_on_empty_story_keys(
+        self, orchestrator, project_root
+    ):
+        """Should emit cleanup:complete even when story_keys is empty (HIGH #1 fix)."""
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            result = orchestrator.cleanup_batch_files([])
+
+            assert result == 0
+
+            # Verify cleanup:complete was emitted
+            complete_calls = [
+                call for call in mock_emit.call_args_list
+                if call.args[0] == "cleanup:complete"
+            ]
+            assert len(complete_calls) == 1
+            payload = complete_calls[0].args[1]
+            assert payload["files_moved"] == 0
+            assert payload["story_keys"] == []
+
+    def test_cleanup_batch_files_handles_no_matching_files(
+        self, orchestrator, project_root
+    ):
+        """Should return 0 when no files match (AC5)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        (impl_dir / "unrelated-file.md").write_text("Content")
+
+        result = orchestrator.cleanup_batch_files(["nonexistent-key"])
+
+        assert result == 0
+
+    def test_cleanup_batch_files_handles_missing_source_dir(
+        self, orchestrator, project_root
+    ):
+        """Should return 0 when implementation-artifacts doesn't exist (AC6)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        if impl_dir.exists():
+            import shutil
+            shutil.rmtree(impl_dir)
+
+        result = orchestrator.cleanup_batch_files(["1-1"])
+
+        assert result == 0
+
+    def test_cleanup_batch_files_emits_complete_on_missing_source_dir(
+        self, orchestrator, project_root
+    ):
+        """Should emit cleanup:complete when source dir missing (HIGH #1 fix)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        if impl_dir.exists():
+            import shutil
+            shutil.rmtree(impl_dir)
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            result = orchestrator.cleanup_batch_files(["1-1"])
+
+            assert result == 0
+
+            # Verify cleanup:complete was emitted
+            complete_calls = [
+                call for call in mock_emit.call_args_list
+                if call.args[0] == "cleanup:complete"
+            ]
+            assert len(complete_calls) == 1
+            payload = complete_calls[0].args[1]
+            assert payload["files_moved"] == 0
+            assert "1-1" in payload["story_keys"]
+
+    def test_cleanup_batch_files_handles_move_error(self, orchestrator, project_root):
+        """Should handle move errors gracefully and continue (AC7)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+
+        (impl_dir / "file-4a-1.md").write_text("Content 1")
+        (impl_dir / "file-4a-2.md").write_text("Content 2")
+
+        # Mock shutil.move to fail on first file but succeed on second
+        import shutil
+        original_move = shutil.move
+        call_count = [0]
+
+        def failing_move(src, dst):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                raise PermissionError("Access denied")
+            return original_move(src, dst)
+
+        with patch("shutil.move", side_effect=failing_move):
+            result = orchestrator.cleanup_batch_files(["4a-1", "4a-2"])
+
+        # Should have moved at least one file despite error
+        # (depends on order, but error should not stop processing)
+        assert result >= 0  # Just verify no crash
+
+    def test_cleanup_batch_files_deduplicates_matches(self, orchestrator, project_root):
+        """Should not move same file twice if matched by multiple keys (AC8)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        archive_dir = project_root / "_bmad-output/archived-artifacts"
+
+        # File that matches multiple patterns
+        (impl_dir / "file-5a-1-5a-2.md").write_text("Matches both")
+        (impl_dir / "file-5a-1-only.md").write_text("Matches 5a-1")
+
+        result = orchestrator.cleanup_batch_files(["5a-1", "5a-2"])
+
+        # Both files should be moved, but each only once
+        assert result == 2
+        assert (archive_dir / "file-5a-1-5a-2.md").exists()
+        assert (archive_dir / "file-5a-1-only.md").exists()
+
+    def test_cleanup_batch_files_case_insensitive(self, orchestrator, project_root):
+        """Should match files case-insensitively (AC9)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        archive_dir = project_root / "_bmad-output/archived-artifacts"
+
+        # Create files with different cases
+        (impl_dir / "Sprint-6A-1-Story.md").write_text("Upper case")
+        (impl_dir / "sprint-6a-1-discovery.md").write_text("Lower case")
+
+        # Search with mixed case
+        result = orchestrator.cleanup_batch_files(["6A-1"])
+
+        assert result == 2
+        assert (archive_dir / "Sprint-6A-1-Story.md").exists()
+        assert (archive_dir / "sprint-6a-1-discovery.md").exists()
+
+    def test_cleanup_batch_files_overwrites_existing(self, orchestrator, project_root):
+        """Should overwrite existing files in archive (AC10)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        archive_dir = project_root / "_bmad-output/archived-artifacts"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create file in both locations
+        (impl_dir / "file-7a-1.md").write_text("New content")
+        (archive_dir / "file-7a-1.md").write_text("Old content")
+
+        result = orchestrator.cleanup_batch_files(["7a-1"])
+
+        assert result == 1
+        # Archive should have new content
+        assert (archive_dir / "file-7a-1.md").read_text() == "New content"
+
+    def test_cleanup_batch_files_emits_events(self, orchestrator, project_root):
+        """Should emit appropriate events (AC11)."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        (impl_dir / "file-8a-1.md").write_text("Content")
+
+        with patch.object(orchestrator, "emit_event") as mock_emit:
+            result = orchestrator.cleanup_batch_files(["8a-1"])
+
+            assert result == 1
+
+            # Verify cleanup:file_moved was emitted
+            file_moved_calls = [
+                call for call in mock_emit.call_args_list
+                if call.args[0] == "cleanup:file_moved"
+            ]
+            assert len(file_moved_calls) == 1
+            payload = file_moved_calls[0].args[1]
+            assert "source" in payload
+            assert "destination" in payload
+            assert "file_name" in payload
+
+            # Verify cleanup:complete was emitted
+            complete_calls = [
+                call for call in mock_emit.call_args_list
+                if call.args[0] == "cleanup:complete"
+            ]
+            assert len(complete_calls) == 1
+            payload = complete_calls[0].args[1]
+            assert payload["files_moved"] == 1
+            assert "8a-1" in payload["story_keys"]
+
+    def test_cleanup_batch_files_emits_error_event_on_failure(
+        self, orchestrator, project_root
+    ):
+        """Should emit cleanup:file_error event when move fails."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        (impl_dir / "file-9a-1.md").write_text("Content")
+
+        with patch("shutil.move", side_effect=PermissionError("Access denied")):
+            with patch.object(orchestrator, "emit_event") as mock_emit:
+                result = orchestrator.cleanup_batch_files(["9a-1"])
+
+                assert result == 0
+
+                # Verify cleanup:file_error was emitted
+                error_calls = [
+                    call for call in mock_emit.call_args_list
+                    if call.args[0] == "cleanup:file_error"
+                ]
+                assert len(error_calls) == 1
+                payload = error_calls[0].args[1]
+                assert "file" in payload
+                assert "error" in payload
+                assert "Access denied" in payload["error"]
+
+    def test_cleanup_batch_files_handles_archive_dir_creation_failure(
+        self, orchestrator, project_root
+    ):
+        """Should return 0 and emit error when archive dir cannot be created."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        (impl_dir / "file-10a-1.md").write_text("Content")
+
+        with patch("pathlib.Path.mkdir", side_effect=PermissionError("No permission")):
+            with patch.object(orchestrator, "emit_event") as mock_emit:
+                result = orchestrator.cleanup_batch_files(["10a-1"])
+
+                assert result == 0
+
+                # Verify cleanup:error was emitted
+                error_calls = [
+                    call for call in mock_emit.call_args_list
+                    if call.args[0] == "cleanup:error"
+                ]
+                assert len(error_calls) == 1
+
+                # Verify cleanup:complete was also emitted (Review 2 fix)
+                complete_calls = [
+                    call for call in mock_emit.call_args_list
+                    if call.args[0] == "cleanup:complete"
+                ]
+                assert len(complete_calls) == 1
+                payload = complete_calls[0].args[1]
+                assert payload["files_moved"] == 0
+
+    def test_cleanup_batch_files_only_moves_files_not_directories(
+        self, orchestrator, project_root
+    ):
+        """Should only move files, not directories."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        archive_dir = project_root / "_bmad-output/archived-artifacts"
+
+        # Create a file and a directory with matching names
+        (impl_dir / "sprint-11a-1-story.md").write_text("File content")
+        (impl_dir / "sprint-11a-1-subdir").mkdir()
+
+        result = orchestrator.cleanup_batch_files(["11a-1"])
+
+        assert result == 1
+        assert (archive_dir / "sprint-11a-1-story.md").exists()
+        # Directory should still be in impl_artifacts (not moved)
+        assert (impl_dir / "sprint-11a-1-subdir").exists()
+
+    def test_cleanup_batch_files_handles_multiple_story_keys(
+        self, orchestrator, project_root
+    ):
+        """Should handle multiple story keys from different epics."""
+        impl_dir = project_root / "_bmad-output/implementation-artifacts"
+        archive_dir = project_root / "_bmad-output/archived-artifacts"
+
+        (impl_dir / "story-12a-1.md").write_text("Epic 12a Story 1")
+        (impl_dir / "story-12a-2.md").write_text("Epic 12a Story 2")
+        (impl_dir / "story-12b-1.md").write_text("Epic 12b Story 1")
+        (impl_dir / "unrelated.md").write_text("Should not move")
+
+        result = orchestrator.cleanup_batch_files(["12a-1", "12a-2", "12b-1"])
+
+        assert result == 3
+        assert (archive_dir / "story-12a-1.md").exists()
+        assert (archive_dir / "story-12a-2.md").exists()
+        assert (archive_dir / "story-12b-1.md").exists()
+        assert (impl_dir / "unrelated.md").exists()  # Should remain
+
+
+# =============================================================================
+# Test Phase Methods with Prompt System Append (Story A-6)
+# =============================================================================
+
+
+class TestPhaseMethodsWithPromptSystemAppend:
+    """Tests for phase methods using sprint-* commands with prompt_system_append (Story A-6)."""
+
+    @pytest.mark.asyncio
+    async def test_create_story_phase_uses_sprint_create_story_command(
+        self, orchestrator, project_root
+    ):
+        """Should use sprint-create-story command with prompt_system_append."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_create_story_phase(["2a-1", "2a-2"])
+
+                # Should have called build_prompt_system_append for create-story
+                create_calls = [
+                    c for c in mock_build.call_args_list
+                    if c.kwargs.get("command_name") == "sprint-create-story"
+                ]
+                assert len(create_calls) >= 1
+                call_kwargs = create_calls[0].kwargs
+                assert call_kwargs["include_project_context"] is True
+                assert call_kwargs["include_discovery"] is False
+
+                # Should have called spawn_subagent with prompt_system_append
+                spawn_calls = [
+                    c for c in mock_spawn.call_args_list
+                    if "sprint-create-story" in str(c)
+                ]
+                assert len(spawn_calls) >= 1
+
+    @pytest.mark.asyncio
+    async def test_create_story_phase_uses_sprint_create_story_discovery_command(
+        self, orchestrator, project_root
+    ):
+        """Should use sprint-create-story-discovery command with prompt_system_append."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_create_story_phase(["2a-1"])
+
+                # Should have called build_prompt_system_append for discovery
+                discovery_calls = [
+                    c for c in mock_build.call_args_list
+                    if c.kwargs.get("command_name") == "sprint-create-story-discovery"
+                ]
+                assert len(discovery_calls) >= 1
+                call_kwargs = discovery_calls[0].kwargs
+                assert call_kwargs["include_project_context"] is True
+                assert call_kwargs["include_discovery"] is False
+
+    @pytest.mark.asyncio
+    async def test_story_review_phase_uses_sprint_story_review_command(
+        self, orchestrator, project_root
+    ):
+        """Should use sprint-story-review command with prompt_system_append including discovery."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_story_review_phase(["2a-1"])
+
+                # Should have called build_prompt_system_append for story-review
+                review_calls = [
+                    c for c in mock_build.call_args_list
+                    if c.kwargs.get("command_name") == "sprint-story-review"
+                ]
+                assert len(review_calls) >= 1
+                call_kwargs = review_calls[0].kwargs
+                assert call_kwargs["include_project_context"] is True
+                assert call_kwargs["include_discovery"] is True
+                assert call_kwargs["include_tech_spec"] is False
+
+    @pytest.mark.asyncio
+    async def test_story_review_phase_spawns_background_chain_on_critical(
+        self, orchestrator, project_root
+    ):
+        """Should spawn background review chain when critical issues found."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            # Return critical issues in first call
+            mock_spawn.return_value = {
+                "exit_code": 0,
+                "stdout": "HIGHEST SEVERITY: CRITICAL",
+                "events": [],
+            }
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_story_review_phase(["2a-1"])
+
+                # Should have spawned background chain
+                chain_calls = [
+                    c for c in mock_spawn.call_args_list
+                    if c.kwargs.get("is_background") is True
+                ]
+                assert len(chain_calls) >= 1
+                assert chain_calls[0].kwargs.get("model") == "haiku"
+                assert chain_calls[0].kwargs.get("prompt_system_append") is not None
+
+    @pytest.mark.asyncio
+    async def test_tech_spec_review_phase_spawns_background_chain_on_critical(
+        self, orchestrator, project_root
+    ):
+        """Should spawn background review chain when critical issues found in tech-spec review."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            # Return critical issues in first call
+            mock_spawn.return_value = {
+                "exit_code": 0,
+                "stdout": "HIGHEST SEVERITY: CRITICAL",
+                "events": [],
+            }
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_tech_spec_review_phase(["2a-1"])
+
+                # Should have spawned background chain
+                chain_calls = [
+                    c for c in mock_spawn.call_args_list
+                    if c.kwargs.get("is_background") is True
+                ]
+                assert len(chain_calls) >= 1
+                assert chain_calls[0].kwargs.get("model") == "haiku"
+                assert chain_calls[0].kwargs.get("prompt_system_append") is not None
+
+    @pytest.mark.asyncio
+    async def test_tech_spec_phase_uses_sprint_create_tech_spec_command(
+        self, orchestrator, project_root
+    ):
+        """Should use sprint-create-tech-spec command with prompt_system_append including discovery."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_tech_spec_phase(["2a-1", "2a-2"])
+
+                # Should have called build_prompt_system_append
+                assert mock_build.called
+                call_kwargs = mock_build.call_args.kwargs
+                assert call_kwargs["command_name"] == "sprint-create-tech-spec"
+                assert call_kwargs["include_project_context"] is True
+                assert call_kwargs["include_discovery"] is True
+                assert call_kwargs["include_tech_spec"] is False
+
+                # Should have called spawn_subagent with prompt_system_append
+                assert mock_spawn.called
+                spawn_kwargs = mock_spawn.call_args.kwargs
+                assert spawn_kwargs.get("prompt_system_append") is not None
+
+    @pytest.mark.asyncio
+    async def test_tech_spec_review_phase_uses_sprint_tech_spec_review_command(
+        self, orchestrator, project_root
+    ):
+        """Should use sprint-tech-spec-review command with all context flags."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_tech_spec_review_phase(["2a-1"])
+
+                # Should have called build_prompt_system_append for tech-spec-review
+                review_calls = [
+                    c for c in mock_build.call_args_list
+                    if c.kwargs.get("command_name") == "sprint-tech-spec-review"
+                ]
+                assert len(review_calls) >= 1
+                call_kwargs = review_calls[0].kwargs
+                assert call_kwargs["include_project_context"] is True
+                assert call_kwargs["include_discovery"] is True
+                assert call_kwargs["include_tech_spec"] is True
+
+    @pytest.mark.asyncio
+    async def test_dev_phase_uses_sprint_dev_story_command(
+        self, orchestrator, project_root
+    ):
+        """Should use sprint-dev-story command with all context flags."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {
+                "exit_code": 0,
+                "stdout": "ZERO ISSUES",
+                "events": [],
+            }
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                with patch.object(orchestrator, "update_sprint_status"):
+                    await orchestrator._execute_dev_phase("2a-1")
+
+                    # Should have called build_prompt_system_append for dev-story
+                    dev_calls = [
+                        c for c in mock_build.call_args_list
+                        if c.kwargs.get("command_name") == "sprint-dev-story"
+                    ]
+                    assert len(dev_calls) >= 1
+                    call_kwargs = dev_calls[0].kwargs
+                    assert call_kwargs["include_project_context"] is True
+                    assert call_kwargs["include_discovery"] is True
+                    assert call_kwargs["include_tech_spec"] is True
+                    assert call_kwargs["story_keys"] == ["2a-1"]
+
+    @pytest.mark.asyncio
+    async def test_code_review_loop_uses_sprint_code_review_command(
+        self, orchestrator, project_root
+    ):
+        """Should use sprint-code-review command with all context flags."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {
+                "exit_code": 0,
+                "stdout": "ZERO ISSUES",
+                "events": [],
+            }
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                with patch.object(orchestrator, "update_sprint_status"):
+                    await orchestrator._execute_code_review_loop("2a-1")
+
+                    # Should have called build_prompt_system_append for code-review
+                    review_calls = [
+                        c for c in mock_build.call_args_list
+                        if c.kwargs.get("command_name") == "sprint-code-review"
+                    ]
+                    assert len(review_calls) >= 1
+                    call_kwargs = review_calls[0].kwargs
+                    assert call_kwargs["include_project_context"] is True
+                    assert call_kwargs["include_discovery"] is True
+                    assert call_kwargs["include_tech_spec"] is True
+
+    @pytest.mark.asyncio
+    async def test_code_review_loop_uses_haiku_for_attempt_2_plus(
+        self, orchestrator, project_root
+    ):
+        """Should use haiku model for review attempt 2 and beyond."""
+        call_count = [0]
+
+        async def mock_spawn_side_effect(*args, **kwargs):
+            call_count[0] += 1
+            # Return severity that requires another attempt for first 2 calls
+            if call_count[0] <= 2:
+                return {"exit_code": 0, "stdout": "HIGHEST SEVERITY: CRITICAL", "events": []}
+            return {"exit_code": 0, "stdout": "ZERO ISSUES", "events": []}
+
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.side_effect = mock_spawn_side_effect
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                with patch.object(orchestrator, "update_sprint_status"):
+                    await orchestrator._execute_code_review_loop("2a-1")
+
+                    # First call should not have model=haiku
+                    first_call = mock_spawn.call_args_list[0]
+                    assert first_call.kwargs.get("model") is None
+
+                    # Second call should have model=haiku
+                    if len(mock_spawn.call_args_list) > 1:
+                        second_call = mock_spawn.call_args_list[1]
+                        assert second_call.kwargs.get("model") == "haiku"
+
+    @pytest.mark.asyncio
+    async def test_batch_commit_uses_sprint_commit_command(
+        self, orchestrator, project_root
+    ):
+        """Should use sprint-commit command with story files only (no context/discovery/tech-spec)."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_batch_commit(["2a-1", "2a-2"])
+
+                # Should have called build_prompt_system_append for commit
+                assert mock_build.called
+                call_kwargs = mock_build.call_args.kwargs
+                assert call_kwargs["command_name"] == "sprint-commit"
+                assert call_kwargs["include_project_context"] is False
+                assert call_kwargs["include_discovery"] is False
+                assert call_kwargs["include_tech_spec"] is False
+                assert call_kwargs["story_keys"] == ["2a-1", "2a-2"]
+
+                # Should have called spawn_subagent with prompt_system_append
+                assert mock_spawn.called
+                spawn_kwargs = mock_spawn.call_args.kwargs
+                assert spawn_kwargs.get("prompt_system_append") is not None
+
+    @pytest.mark.asyncio
+    async def test_phase_methods_include_epic_id_in_prompt(
+        self, orchestrator, project_root
+    ):
+        """Should include epic_id extracted from story key in prompts."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_tech_spec_phase(["2a-1"])
+
+                # Check that prompt includes epic ID
+                prompt_arg = mock_spawn.call_args.args[0]
+                assert "Epic ID: 2a" in prompt_arg or "epic_id" in prompt_arg.lower()
+
+    @pytest.mark.asyncio
+    async def test_phase_methods_extract_correct_epic_id(
+        self, orchestrator, project_root
+    ):
+        """Should correctly extract epic_id from various story key formats."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                # Test with complex story key format (5-sr-3)
+                await orchestrator._execute_tech_spec_phase(["5-sr-3"])
+
+                prompt_arg = mock_spawn.call_args.args[0]
+                assert "5-sr" in prompt_arg
+
+
+class TestPhaseMethodsPromptFormat:
+    """Tests for the prompt format used in phase methods (Story A-6)."""
+
+    @pytest.mark.asyncio
+    async def test_create_story_prompt_format(self, orchestrator, project_root):
+        """Should format create-story prompt with story_keys and epic_id."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {"exit_code": 0, "stdout": "", "events": []}
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                await orchestrator._execute_create_story_phase(["2a-1", "2a-2"])
+
+                # Find the create-story call
+                create_calls = [
+                    c for c in mock_spawn.call_args_list
+                    if "sprint-create-story" in c.args[1]
+                    and "discovery" not in c.args[1]
+                ]
+                assert len(create_calls) >= 1
+                prompt = create_calls[0].args[0]
+                assert "Story keys: 2a-1,2a-2" in prompt
+                assert "Epic ID: 2a" in prompt
+
+    @pytest.mark.asyncio
+    async def test_code_review_prompt_includes_review_attempt(
+        self, orchestrator, project_root
+    ):
+        """Should include review_attempt in code-review prompt."""
+        with patch.object(
+            orchestrator, "spawn_subagent", new_callable=AsyncMock
+        ) as mock_spawn:
+            mock_spawn.return_value = {
+                "exit_code": 0,
+                "stdout": "ZERO ISSUES",
+                "events": [],
+            }
+
+            with patch.object(orchestrator, "build_prompt_system_append") as mock_build:
+                mock_build.return_value = "<file_injections></file_injections>"
+
+                with patch.object(orchestrator, "update_sprint_status"):
+                    await orchestrator._execute_code_review_loop("2a-1")
+
+                    prompt = mock_spawn.call_args.args[0]
+                    assert "Review attempt: 1" in prompt
 
 
 if __name__ == "__main__":

@@ -1,0 +1,173 @@
+<workflow>
+  <workflow_mode>REVIEW ONLY</workflow_mode>
+
+  <objective>Review story files for completeness, fix issues found</objective>
+
+  <critical_rules>
+    <rule priority="1">DO NOT create new story files - only review existing ones</rule>
+    <rule priority="2">FIX any issues found in existing story files</rule>
+    <rule priority="3">DO NOT update sprint-status.yaml - orchestrator handles this</rule>
+    <rule priority="4">Work AUTONOMOUSLY - no human available for questions</rule>
+  </critical_rules>
+
+  <injected_context>
+    <rule>Story and discovery files are pre-injected in file_injections section</rule>
+    <rule>DO NOT read these files from disk - use injected content</rule>
+    <rule>Project context is included in file_injections if available</rule>
+  </injected_context>
+
+  <autonomous_mode>
+    <rule>AUTONOMOUS MODE - No human available to answer questions</rule>
+    <rule>Make all decisions yourself based on context</rule>
+    <rule>Do NOT ask for confirmation - fix everything you find</rule>
+    <rule>If workflow asks for approval - proceed without approval</rule>
+  </autonomous_mode>
+
+  <step n="1" goal="Setup and validate injected context">
+    <action>Log start of setup phase</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"setup","status":"start","message":"Initializing story review"}'</bash>
+
+    <action>Parse story_keys variable to identify stories to review</action>
+    <action>For comma-separated keys (e.g., "2a-1,2a-2"), process each sequentially</action>
+
+    <action>Verify injected file_injections contains:</action>
+    <check_list>
+      <item>Story file(s) matching story_keys</item>
+      <item>Discovery file(s) for each story</item>
+      <item>Optional: project context for reference</item>
+    </check_list>
+
+    <check if="required story files missing from injection">
+      <output>ERROR: Story file not found in injected context</output>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"setup","status":"end","message":"ERROR: Missing story file in injection"}'</bash>
+      <action>Output: [CRITICAL-ISSUES-FOUND: YES]</action>
+      <action>HALT</action>
+    </check>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"setup","status":"end","message":"Setup complete - files validated"}'</bash>
+  </step>
+
+  <step n="2" goal="Analyze story files for issues">
+    <action>For each story in story_keys, perform analysis:</action>
+
+    <foreach story_key="in story_keys">
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"analyze","status":"start","message":"Analyzing story {{story_key}}"}'</bash>
+
+      <analyze_criteria>
+        <category name="Structure Completeness">
+          <criterion>Title and story ID present and correct</criterion>
+          <criterion>User story statement complete (As a, I want, So that)</criterion>
+          <criterion>Status field present and valid</criterion>
+          <criterion>All required sections present</criterion>
+        </category>
+
+        <category name="Acceptance Criteria Quality">
+          <criterion>All acceptance criteria in Given/When/Then format</criterion>
+          <criterion>Criteria are specific and testable</criterion>
+          <criterion>Edge cases and error scenarios covered</criterion>
+          <criterion>No ambiguous language (avoid: "should", "might", "can")</criterion>
+        </category>
+
+        <category name="Technical Requirements">
+          <criterion>File List section present with expected files</criterion>
+          <criterion>Implementation notes are actionable</criterion>
+          <criterion>Dependencies clearly identified</criterion>
+          <criterion>Architecture constraints documented</criterion>
+        </category>
+
+        <category name="Dev Notes Quality">
+          <criterion>Dev Notes section present</criterion>
+          <criterion>Critical warnings or gotchas documented</criterion>
+          <criterion>Library/framework versions specified where relevant</criterion>
+          <criterion>Testing approach outlined</criterion>
+        </category>
+
+        <category name="Discovery Alignment">
+          <criterion>Story aligns with discovery file findings</criterion>
+          <criterion>Relevant code patterns from discovery incorporated</criterion>
+          <criterion>Existing files and conventions referenced correctly</criterion>
+        </category>
+      </analyze_criteria>
+
+      <action>Count issues by severity: CRITICAL, HIGH, MEDIUM, LOW</action>
+      <action>Document each issue with specific location and description</action>
+
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"analyze","status":"end","message":"Analysis complete (issues:N)"}'</bash>
+    </foreach>
+  </step>
+
+  <step n="3" goal="Fix identified issues">
+    <check if="issues found">
+      <foreach story_key="in story_keys">
+        <check if="story has issues">
+          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"fix","status":"start","message":"Fixing issues in story {{story_key}}"}'</bash>
+
+          <fix_priority_order>
+            <priority level="1">CRITICAL issues - missing required sections, invalid format</priority>
+            <priority level="2">HIGH issues - incomplete acceptance criteria, missing technical reqs</priority>
+            <priority level="3">MEDIUM issues - clarity improvements, missing edge cases</priority>
+            <priority level="4">LOW issues - formatting, minor documentation gaps</priority>
+          </fix_priority_order>
+
+          <action>Load the actual story file from disk for editing</action>
+          <action>Apply all fixes to the story file</action>
+          <action>Preserve existing valid content - only modify problem areas</action>
+          <action>Save updated story file</action>
+
+          <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"fix","status":"end","message":"Fixes applied (issues:N)"}'</bash>
+        </check>
+      </foreach>
+    </check>
+
+    <check if="no issues found">
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"fix","status":"start","message":"No issues to fix"}'</bash>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"fix","status":"end","message":"Skipped - no issues"}'</bash>
+    </check>
+  </step>
+
+  <step n="4" goal="Validate fixes and output result">
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"validate","status":"start","message":"Validating fixes"}'</bash>
+
+    <check if="fixes were applied">
+      <action>Re-read fixed story files</action>
+      <action>Verify all CRITICAL and HIGH issues resolved</action>
+      <action>Confirm story file is valid and complete</action>
+    </check>
+
+    <action>Compile final review summary:</action>
+    <summary_format>
+      **Story Review Summary for {{story_keys}}**
+
+      **Stories Reviewed:** [count]
+      **Issues Found:** [count] (CRITICAL: X, HIGH: X, MEDIUM: X, LOW: X)
+      **Issues Fixed:** [count]
+      **Remaining Issues:** [count]
+
+      **Per-Story Details:**
+      - Story [key]: [summary of findings and fixes]
+    </summary_format>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"story-review","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
+  </step>
+
+  <output_requirement>
+    <critical>MUST output one of these markers at the very end:</critical>
+    <marker condition="CRITICAL or HIGH issues were found (even if fixed)">
+      [CRITICAL-ISSUES-FOUND: YES]
+    </marker>
+    <marker condition="No CRITICAL or HIGH issues found">
+      [CRITICAL-ISSUES-FOUND: NO]
+    </marker>
+    <note>This marker determines if orchestrator spawns background review chain (haiku model)</note>
+  </output_requirement>
+
+  <logging_reference>
+    <script>{{log_script}}</script>
+    <command_name>story-review</command_name>
+    <task_ids>setup, analyze, fix, validate</task_ids>
+    <format>
+      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"story-review","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
+    </format>
+  </logging_reference>
+
+</workflow>

@@ -5,26 +5,26 @@
 
 ---
 
-## Prompt Files Location
+## Custom Commands Location (v3)
 
-Subagent prompts are stored in: `_bmad/bmm/workflows/4-implementation/sprint-runner/prompts/`
+Subagent commands are stored in: `_bmad/bmm/workflows/4-implementation/sprint-runner/commands/`
 
-Available prompts:
-- `create-story.md` - CREATE MODE (includes tech-spec decision)
-- `create-story-discovery.md` - DISCOVERY MODE (parallel)
-- `story-review.md` - REVIEW MODE
-- `create-tech-spec.md` - CREATE MODE (includes inline discovery)
-- `tech-spec-review.md` - REVIEW MODE
-- `dev-story.md`
-- `code-review.md`
-- `background-review-chain.md` - Background review-2/3 chain (runs in parallel with next step)
+Available commands:
+- `sprint-create-story` - CREATE MODE (includes tech-spec decision)
+- `sprint-create-story-discovery` - DISCOVERY MODE (parallel)
+- `sprint-story-review` - REVIEW MODE
+- `sprint-create-tech-spec` - CREATE MODE (includes inline discovery)
+- `sprint-tech-spec-review` - REVIEW MODE
+- `sprint-dev-story` - Development execution
+- `sprint-code-review` - Code review and fixes
+- `sprint-commit` - Batch commit workflow
 
-Note: create-tech-spec-discovery.md has been removed. Tech-spec discovery is now inline.
+Note: Tech-spec discovery is now inline within sprint-create-tech-spec.
 
-To use a prompt:
-1. Read the prompt file
-2. Substitute variables: `{{story_key}}`, `{{implementation_artifacts}}`, `{{review_attempt}}`, `{{epic_id}}`, `{{story_id}}`, `{{command}}`
-3. Pass the substituted prompt to Task tool
+To invoke a command:
+1. Build context using `build_prompt_system_append()` method
+2. Invoke via Claude CLI: `claude --command sprint-{command-name} --prompt-system-append "..."`
+3. Context is injected via `--prompt-system-append` flag
 
 **Logging Variables:**
 - `{{epic_id}}` - Short numeric ID extracted from story_key (e.g., "2a" from "2a-1")
@@ -67,7 +67,7 @@ timestamp,epicID,storyID,command,task-id,status,"message"
 
 **Script usage:**
 ```bash
-_bmad/scripts/orchestrator.sh <epic_id> <story_id> <command> <task_id> <status> "<message>"
+sprint-log.sh '{"epic_id":"<epic_id>","story_id":"<story_id>","command":"<command>","task_id":"<task_id>","status":"<status>","message":"<message>"}'
 ```
 
 **IMPORTANT:** The orchestrator does NOT log. Only subagents log using the script.
@@ -278,13 +278,13 @@ development_status:
     <!-- Make TWO Task tool calls in a SINGLE message for concurrent execution -->
     <parallel-execution>
       <task-call id="1">
-        <action>Load prompt from prompts/create-story.md, substitute variables</action>
+        <action>Invoke command sprint-create-story with injected context via --prompt-system-append</action>
         <action>Spawn subagent with Task tool (default model)</action>
         <goal>Create story file(s)</goal>
       </task-call>
 
       <task-call id="2">
-        <action>Load prompt from prompts/create-story-discovery.md, substitute variables</action>
+        <action>Invoke command sprint-create-story-discovery with injected context via --prompt-system-append</action>
         <action>Spawn subagent with Task tool (default model)</action>
         <goal>Generate discovery file(s)</goal>
       </task-call>
@@ -340,9 +340,9 @@ development_status:
 
 <step n="2b" goal="STORY-REVIEW PHASE (PARALLEL AFTER REVIEW-1)">
   <!-- REVIEW-1: Always runs first, blocks until complete -->
-  <action>Load prompt from prompts/story-review.md</action>
-  <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
-  <action>Substitute {{review_attempt}} = 1</action>
+  <action>Invoke command sprint-story-review with injected context via --prompt-system-append</action>
+  <action>Pass {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
+  <action>Pass {{review_attempt}} = 1</action>
   <action>Spawn ONE subagent with Task tool (default model)</action>
   <action>Wait for completion</action>
   <comment>Subagent processes each story sequentially, logging start/end for each</comment>
@@ -352,10 +352,9 @@ development_status:
   <!-- FORK: Spawn background review chain if critical issues found -->
   <check if="has_critical_issues == true">
     <action>Log: "Critical issues found, spawning background review chain (story-review-2/3)"</action>
-    <action>Load prompt from prompts/background-review-chain.md</action>
-    <action>Substitute {{review_type}} = "story-review"</action>
-    <action>Substitute {{story_keys}} with comma-separated story_keys</action>
-    <action>Substitute {{prompt_file}} = "prompts/story-review.md"</action>
+    <action>Invoke command sprint-story-review for background review chain</action>
+    <action>Pass {{review_type}} = "story-review"</action>
+    <action>Pass {{story_keys}} with comma-separated story_keys</action>
     <action>Spawn subagent with Task tool using run_in_background: true, model: "haiku"</action>
     <comment>Background chain runs review-2 → review-3 (if needed), does NOT block main flow</comment>
     <comment>Background chain does NOT update sprint-status</comment>
@@ -382,8 +381,8 @@ development_status:
 
   <action>Log: "Starting CREATE-TECH-SPEC phase for [story_key(s)]"</action>
 
-  <action>Load prompt from prompts/create-tech-spec.md</action>
-  <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
+  <action>Invoke command sprint-create-tech-spec with injected context via --prompt-system-append</action>
+  <action>Pass {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
   <action>Spawn ONE subagent with Task tool (default model)</action>
   <goal>Create tech specs for all stories (processes sequentially, logs each)</goal>
   <action>Wait for completion</action>
@@ -397,9 +396,9 @@ development_status:
 
 <step n="3b" goal="TECH-SPEC-REVIEW PHASE (PARALLEL AFTER REVIEW-1)">
   <!-- REVIEW-1: Always runs first, blocks until complete -->
-  <action>Load prompt from prompts/tech-spec-review.md</action>
-  <action>Substitute {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
-  <action>Substitute {{review_attempt}} = 1</action>
+  <action>Invoke command sprint-tech-spec-review with injected context via --prompt-system-append</action>
+  <action>Pass {{story_key}} with comma-separated story_keys (e.g., "3a-1,3a-2")</action>
+  <action>Pass {{review_attempt}} = 1</action>
   <action>Spawn ONE subagent with Task tool (default model)</action>
   <action>Wait for completion</action>
   <comment>Subagent processes each story sequentially, logging start/end for each</comment>
@@ -409,10 +408,9 @@ development_status:
   <!-- FORK: Spawn background review chain if critical issues found -->
   <check if="has_critical_issues == true">
     <action>Log: "Critical issues found, spawning background review chain (tech-spec-review-2/3)"</action>
-    <action>Load prompt from prompts/background-review-chain.md</action>
-    <action>Substitute {{review_type}} = "tech-spec-review"</action>
-    <action>Substitute {{story_keys}} with comma-separated story_keys</action>
-    <action>Substitute {{prompt_file}} = "prompts/tech-spec-review.md"</action>
+    <action>Invoke command sprint-tech-spec-review for background review chain</action>
+    <action>Pass {{review_type}} = "tech-spec-review"</action>
+    <action>Pass {{story_keys}} with comma-separated story_keys</action>
     <action>Spawn subagent with Task tool using run_in_background: true, model: "haiku"</action>
     <comment>Background chain runs review-2 → review-3 (if needed), does NOT block main flow</comment>
     <comment>Background chain does NOT update sprint-status</comment>
@@ -431,7 +429,7 @@ development_status:
     <action>Log: "Starting DEV phase for [story]"</action>
 
     <!-- DEV-STORY -->
-    <action>Load prompt from prompts/dev-story.md, substitute variables for [story]</action>
+    <action>Invoke command sprint-dev-story with injected context via --prompt-system-append for [story]</action>
     <action>Spawn subagent with Task tool (default model)</action>
     <action>Wait for completion</action>
     <!-- Subagent logs milestones and "end" before terminating -->
@@ -442,7 +440,7 @@ development_status:
     <action>Initialize error_history = []</action>
 
     <loop max="10">
-      <action>Load prompt from prompts/code-review.md, substitute variables for [story]</action>
+      <action>Invoke command sprint-code-review with injected context via --prompt-system-append for [story]</action>
       <check if="review_attempt >= 2">
         <!-- LOW-1 Resolution: Use model: "haiku" parameter -->
         <action>Spawn subagent with Task tool using model: "haiku"</action>
@@ -721,7 +719,7 @@ SUBAGENT RULES:
 LOG FORMAT:
   - CSV: timestamp,epicID,storyID,command,task-id,status
   - status = "start" or "end" (duration calculated by dashboard)
-  - Subagents log via: _bmad/scripts/orchestrator.sh <epicID> <storyID> <command> <task-id> <status>
+  - Subagents log via: sprint-log.sh (JSON format)
   - Use SHORT NUMERIC IDs only (e.g., "2a", "2a-1"), never full titles
   - Orchestrator does NOT log
 

@@ -1,0 +1,207 @@
+<workflow>
+  <!-- ============================================================
+       SPRINT-CREATE-TECH-SPEC COMMAND
+
+       Purpose: Create technical specifications for stories.
+       Context: All files pre-injected via prompt-system-append.
+       ============================================================ -->
+
+  <critical>AUTONOMOUS MODE - No human available. Make all decisions yourself.</critical>
+  <critical>All context has been PRE-INJECTED via file_injections. DO NOT read these files from disk.</critical>
+  <critical>See the &lt;file_injections&gt; section in your system prompt for: project context, story files, discovery files, architecture.</critical>
+  <critical>Perform INLINE discovery only as needed for technical details not covered by injected context.</critical>
+
+  <!-- ============================================================
+       MULTI-STORY PROCESSING
+       ============================================================ -->
+
+  <step n="0" goal="Parse story keys and prepare for sequential processing">
+    <action>Extract {{story_keys}} from input (comma-separated list, e.g., "B-4" or "B-4,B-5")</action>
+    <action>Extract {{epic_id}} from input for logging</action>
+    <action>Parse into list: {{story_list}} = split({{story_keys}}, ",")</action>
+    <action>Set {{story_count}} = length of {{story_list}}</action>
+    <action>Set {{current_index}} = 0</action>
+
+    <output>Processing {{story_count}} tech spec(s): {{story_keys}}</output>
+  </step>
+
+  <!-- ============================================================
+       MAIN PROCESSING LOOP - Execute for each story sequentially
+       ============================================================ -->
+
+  <step n="1" goal="Setup - Initialize context for current story">
+    <action>Set {{story_key}} = {{story_list}}[{{current_index}}]</action>
+    <action>Extract story ID components for logging</action>
+
+    <!-- Log start -->
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"setup","status":"start","message":"Initializing tech-spec creation for {{story_key}}"}'</action>
+
+    <!-- Extract context from injected files -->
+    <action>From &lt;file_injections&gt;, locate the story file matching {{story_key}}</action>
+    <action>Parse story file sections: Story, Acceptance Criteria, Tasks/Subtasks</action>
+    <action>From &lt;file_injections&gt;, locate discovery file for {{story_key}} (if exists)</action>
+    <action>From &lt;file_injections&gt;, extract project context patterns and standards</action>
+    <action>From &lt;file_injections&gt;, extract architecture constraints (if provided)</action>
+
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"setup","status":"end","message":"Context loaded from injections"}'</action>
+  </step>
+
+  <step n="2" goal="Discover - Inline technical discovery (only as needed)">
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"discover","status":"start","message":"Discovering technical requirements for {{story_key}}"}'</action>
+
+    <!-- INLINE discovery - only for gaps not covered by injected context -->
+    <action>Review story requirements and identify technical gaps not covered by injected discovery</action>
+    <action>If implementation patterns needed, explore codebase for:
+      - Existing patterns matching the story requirements
+      - Similar implementations to reference
+      - Test patterns to follow
+      - Dependency considerations
+    </action>
+
+    <action>Capture:
+      - {{tech_stack}}: Languages, frameworks, libraries
+      - {{code_patterns}}: Architecture patterns, naming conventions
+      - {{files_to_modify}}: Specific files that need changes
+      - {{test_patterns}}: How tests are structured
+    </action>
+
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"discover","status":"end","message":"Discovery complete (files:{{files_count}})"}'</action>
+  </step>
+
+  <step n="3" goal="Generate - Create tech-spec content">
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"generate","status":"start","message":"Generating tech-spec content"}'</action>
+
+    <!-- Generate Overview Section -->
+    <action>Extract from story:
+      - {{problem_statement}}: What problem does this story solve?
+      - {{solution}}: High-level approach (1-2 sentences)
+      - {{in_scope}}: What's included
+      - {{out_of_scope}}: What's explicitly NOT included
+    </action>
+
+    <!-- Generate Context for Development -->
+    <action>Document:
+      - Codebase patterns from discovery and injected context
+      - Files to reference table with actual paths
+      - Technical decisions required for implementation
+    </action>
+
+    <!-- Generate Implementation Plan -->
+    <action>Create specific implementation tasks:
+      - Each task is a discrete, completable unit of work
+      - Tasks ordered logically (dependencies first)
+      - Include specific files to modify in each task
+      - Be explicit about what changes to make
+    </action>
+
+    <action>Format tasks as:
+      ```markdown
+      - [ ] Task N: Clear action description
+        - File: `path/to/file.ext`
+        - Action: Specific change to make
+        - Notes: Any implementation details
+      ```
+    </action>
+
+    <!-- Generate Acceptance Criteria -->
+    <action>Create testable acceptance criteria in Given/When/Then format:
+      - Cover happy path functionality
+      - Include error handling
+      - Address edge cases
+      - Note integration points
+    </action>
+
+    <!-- Generate Additional Context -->
+    <action>Document:
+      - Dependencies: External libraries, services, other features
+      - Testing Strategy: Unit tests, integration tests, manual testing
+      - Notes: High-risk items, known limitations, future considerations
+    </action>
+
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"generate","status":"end","message":"Tech-spec generated (sections:{{section_count}})"}'</action>
+  </step>
+
+  <step n="4" goal="Write - Save tech-spec file">
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"write","status":"start","message":"Writing tech-spec file"}'</action>
+
+    <!-- Compose final document using template structure -->
+    <action>Set {{output_file}} = "_bmad-output/implementation-artifacts/sprint-tech-spec-{{story_key}}.md"</action>
+
+    <action>Write tech-spec with all sections:
+      - Frontmatter with metadata
+      - Overview (Problem, Solution, Scope)
+      - Context for Development (Patterns, Files, Decisions)
+      - Implementation Plan (Tasks with files)
+      - Acceptance Criteria (Given/When/Then)
+      - Additional Context (Dependencies, Testing, Notes)
+    </action>
+
+    <action>Save file to {{output_file}}</action>
+
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"write","status":"end","message":"Tech-spec written (lines:{{line_count}})"}'</action>
+  </step>
+
+  <step n="5" goal="Validate - Verify tech-spec completeness">
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"validate","status":"start","message":"Validating tech-spec completeness"}'</action>
+
+    <!-- READY FOR DEVELOPMENT STANDARD -->
+    <action>Verify against checklist:
+      - ACTIONABLE: Every task has clear file path AND specific action
+      - LOGICAL: Tasks ordered by dependency (lowest level first)
+      - TESTABLE: All ACs use Given/When/Then format
+      - COMPLETE: No placeholders, no "TBD", no "TODO"
+      - SELF-CONTAINED: A fresh agent can implement without reading conversation history
+    </action>
+
+    <!-- SPECIFIC CHECKS -->
+    <action>Verify:
+      - Files to Reference table is populated with real paths
+      - Codebase Patterns section matches actual project patterns
+      - Implementation tasks are numbered and sequenced
+      - Dependencies section lists any required prior work
+      - Testing Strategy specifies test types and locations
+    </action>
+
+    <!-- DISASTER PREVENTION -->
+    <action>Ensure:
+      - No task requires "figure out" or "research" - all decided upfront
+      - No ambiguous instructions that could be interpreted multiple ways
+      - Scope boundaries are explicit (what NOT to do)
+    </action>
+
+    <check if="any validation fails">
+      <action>Fix the issue before proceeding</action>
+      <action>Re-validate after fix</action>
+    </check>
+
+    <output>CHECKLIST COMPLETED: YES</output>
+    <output>TECH SPEC CREATED: {{output_file}}</output>
+
+    <action>Execute: _bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"create-tech-spec","task_id":"validate","status":"end","message":"Validation passed"}'</action>
+  </step>
+
+  <!-- ============================================================
+       LOOP CONTINUATION
+       ============================================================ -->
+
+  <step n="6" goal="Process next story or complete">
+    <action>Increment {{current_index}}</action>
+
+    <check if="{{current_index}} lt {{story_count}}">
+      <action>Return to Step 1 for next story</action>
+    </check>
+
+    <check if="{{current_index}} gte {{story_count}}">
+      <output>
+        **TECH-SPEC CREATION COMPLETE**
+
+        Stories Processed: {{story_count}}
+        Tech Specs Created:
+        {{#each story_list}}
+        - sprint-tech-spec-{{this}}.md
+        {{/each}}
+      </output>
+    </check>
+  </step>
+
+</workflow>

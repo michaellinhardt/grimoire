@@ -1,0 +1,51 @@
+# Sprint Tech-Spec Review Command
+# Location: _bmad/bmm/workflows/4-implementation/sprint-runner/commands/sprint-tech-spec-review/
+#
+# Purpose: Review tech-spec files for quality. Does NOT create tech-specs.
+# Context: Tech-spec and story files are pre-injected via --prompt-system-append.
+
+name: sprint-tech-spec-review
+description: 'Review tech-spec files for quality and completeness using injected context. REVIEW ONLY - does not create tech-specs.'
+author: 'BMad'
+
+# Sprint Runner v3 optimized command
+# Receives context via --prompt-system-append injection
+# DO NOT read tech-spec/story files from disk - content is pre-injected
+
+# Variables received from orchestrator injection
+variables:
+  story_keys:
+    description: 'Comma-separated story key(s) to review tech specs for (e.g., "B-4" or "B-4,B-5")'
+    required: true
+  epic_id:
+    description: 'Epic identifier for logging (e.g., "B")'
+    required: true
+  review_attempt:
+    description: 'Current review attempt number'
+    default: '1'
+
+# Workflow components
+installed_path: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/commands/sprint-tech-spec-review'
+instructions: '{installed_path}/instructions.xml'
+
+# Logging configuration
+log_script: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh'
+task_ids:
+  - setup
+  - analyze
+  - fix
+  - validate
+
+# Output markers
+output_markers:
+  critical_issues: '[CRITICAL-ISSUES-FOUND: YES]'  # Triggers background review chain
+  no_issues: '[CRITICAL-ISSUES-FOUND: NO]'  # No additional review needed
+
+# Sprint-optimized command configuration
+sprint_optimized: true
+context_injection:
+  tech_spec_files: true
+  story_files: true
+  project_context: true
+
+standalone: true

@@ -1,11 +1,11 @@
 # Task Taxonomy for Sprint Runner Logging
-# Version: 1.0
+# Version: 3.0
 # Location: _bmad/bmm/workflows/4-implementation/sprint-runner/task-taxonomy.yaml
 #
 # This file defines valid task IDs for sprint-runner logging.
-# Subagents MUST use these task IDs when calling orchestrator.sh.
+# Subagents MUST use these task IDs when calling sprint-log.sh.
 
-version: "1.0"
+version: "3.0"
 
 description: |
   Defines the canonical task phases for each sprint-runner command.
@@ -257,3 +257,71 @@ commands:
         description: Validate all fixes
         typical_start: "Validating code review fixes"
         typical_end: "Validation passed"
+
+  # ----------------------------------------------------------
+  # SPRINT-COMMIT: Stage and commit story changes
+  # ----------------------------------------------------------
+  sprint-commit:
+    description: Stage and commit story implementation changes
+    phases:
+      - id: setup
+        description: Load story context and identify changes
+        typical_start: "Loading commit context for {story_id}"
+        typical_end: "Context loaded (files:N)"
+
+      - id: stage
+        description: Stage files for commit
+        typical_start: "Staging story files"
+        typical_end: "Files staged (files:N)"
+
+      - id: commit
+        description: Create git commit with message
+        typical_start: "Creating commit"
+        typical_end: "Commit created"
+
+      - id: validate
+        description: Validate commit was successful
+        typical_start: "Validating commit"
+        typical_end: "Commit validated"
+
+# ============================================================
+# TASK ID REFERENCE
+# ============================================================
+# All valid task IDs used across commands:
+#   setup     - Initialize context and load files
+#   analyze   - Analyze content for issues or requirements
+#   generate  - Generate new content
+#   write     - Write files to disk
+#   validate  - Validate results
+#   explore   - Explore codebase for patterns
+#   fix       - Fix identified issues
+#   implement - Write implementation code
+#   tests     - Write and run tests
+#   lint      - Run linting and formatting
+#   test      - Re-run tests (after fixes)
+#   discover  - Inline discovery for technical details
+#   stage     - Stage files for git commit (v3)
+#   commit    - Create git commit (v3)
+
+# ============================================================
+# COMMAND TO TASK ID MAPPINGS
+# ============================================================
+# Quick reference for which task IDs each command uses:
+
+command_mappings:
+  sprint-create-story:
+    task_ids: [setup, analyze, generate, write, validate]
+  sprint-create-story-discovery:
+    task_ids: [setup, explore, write]
+  sprint-story-review:
+    task_ids: [setup, analyze, fix, validate]
+  sprint-create-tech-spec:
+    task_ids: [setup, discover, generate, write, validate]
+  sprint-tech-spec-review:
+    task_ids: [setup, analyze, fix, validate]
+  sprint-dev-story:
+    task_ids: [setup, implement, tests, lint, validate]
+  sprint-code-review:
+    task_ids: [setup, analyze, fix, test, validate]
+  sprint-commit:
+    task_ids: [setup, stage, commit, validate]

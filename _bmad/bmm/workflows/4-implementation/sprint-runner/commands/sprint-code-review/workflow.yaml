@@ -1,0 +1,38 @@
+name: sprint-code-review
+description: 'Adversarial code review with automatic fixes. Context pre-injected via story file with File List.'
+author: 'BMad'
+
+# Sprint Runner v3 optimized command
+# Receives context via --prompt-system-append injection
+# Story file contains File List with all implementation files
+
+# Variables received from orchestrator injection
+variables:
+  story_key: '' # Story identifier (e.g., "2a-1")
+  epic_id: '' # Epic identifier (e.g., "2a")
+  review_attempt: '1' # Current review attempt number
+  implementation_artifacts: '' # Path to implementation artifacts folder
+
+# Workflow components
+installed_path: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/commands/sprint-code-review'
+instructions: '{installed_path}/instructions.xml'
+
+# Logging configuration
+log_script: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh'
+task_ids:
+  - setup
+  - analyze
+  - fix
+  - test
+  - validate
+
+# Output markers - severity-based
+output_markers:
+  severity_critical: 'HIGHEST SEVERITY: CRITICAL'
+  severity_high: 'HIGHEST SEVERITY: HIGH'
+  severity_medium: 'HIGHEST SEVERITY: MEDIUM'
+  severity_low: 'HIGHEST SEVERITY: LOW'
+  zero_issues: 'HIGHEST SEVERITY: ZERO ISSUES'
+  issue_counts: 'Issues: X CRITICAL, X HIGH, X MEDIUM, X LOW'
+
+standalone: true

@@ -1,0 +1,196 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and generate all documents in {document_output_language}</critical>
+
+  <!-- SPRINT-RUNNER INJECTION CONTEXT -->
+  <injected_context critical="true">
+    <rule>Files have been pre-injected into your context via file_injections tag</rule>
+    <rule>DO NOT read these files from disk - use the injected content</rule>
+    <rule>If a file you need was NOT injected, you may read it from disk</rule>
+    <rule>Injected files include: project-context, epic files, discovery files, previous story (if applicable)</rule>
+  </injected_context>
+
+  <critical>CRITICAL MISSION: You are creating the ULTIMATE story context engine that prevents LLM developer mistakes, omissions or
+    disasters!</critical>
+  <critical>Your purpose is NOT to copy from epics - it's to create a comprehensive, optimized story file that gives the DEV agent
+    EVERYTHING needed for flawless implementation</critical>
+  <critical>COMMON LLM MISTAKES TO PREVENT: reinventing wheels, wrong libraries, wrong file locations, breaking regressions, ignoring UX,
+    vague implementations, lying about completion, not learning from past work</critical>
+  <critical>EXHAUSTIVE ANALYSIS REQUIRED: You must thoroughly analyze ALL injected artifacts to extract critical context - do NOT be lazy or skim!
+    This is the most important function in the entire development process!</critical>
+  <critical>SAVE QUESTIONS: If you think of questions or clarifications during analysis, save them for the end after the complete story is
+    written</critical>
+  <critical>ZERO USER INTERVENTION: Process should be fully automated - use injected context for all decisions</critical>
+
+  <step n="1" goal="Initialize and parse story keys">
+    <action>Log task start via sprint-log.sh</action>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-create-story","task_id":"setup","status":"start","message":"Initializing story creation from injected context"}'</bash>
+
+    <action>Parse {{story_keys}} - may be single key or comma-separated batch</action>
+    <action>Split story_keys by comma to get array of individual stories to process</action>
+    <action>Store total story count for progress tracking</action>
+
+    <check if="story_keys is empty or not provided">
+      <output>ERROR: No story_keys provided by orchestrator</output>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"unknown","command":"sprint-create-story","task_id":"setup","status":"error","message":"No story_keys provided"}'</bash>
+      <action>HALT - Cannot proceed without story_keys</action>
+    </check>
+
+    <action>For multi-story batches, process each story SEQUENTIALLY</action>
+    <action>Log setup complete</action>
+    <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-create-story","task_id":"setup","status":"end","message":"Setup complete, processing {{story_count}} stories"}'</bash>
+  </step>
+
+  <step n="2" goal="Analyze injected context for each story">
+    <critical>EXHAUSTIVE ARTIFACT ANALYSIS - This is where you prevent future developer fuckups!</critical>
+    <critical>All context has been PRE-INJECTED via file_injections - DO NOT read these files from disk</critical>
+
+    <for-each item="story_key" in="story_keys_array">
+      <action>Log story analysis start</action>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-story","task_id":"analyze","status":"start","message":"Analyzing injected context for story"}'</bash>
+
+      <action>Extract story components from story_key (e.g., "2a-1" -> epic_num="2a", story_num="1")</action>
+
+      <!-- Use INJECTED epics content - do NOT read from disk -->
+      <action>From INJECTED epics content, extract Epic {{epic_num}} complete context:</action>
+      <note>EPIC ANALYSIS from injected content:
+        - Epic objectives and business value
+        - ALL stories in this epic for cross-story context
+        - Our specific story's requirements, user story statement, acceptance criteria
+        - Technical requirements and constraints
+        - Dependencies on other stories/epics
+        - Source hints pointing to original documents
+      </note>
+
+      <!-- Extract specific story requirements from injected content -->
+      <action>Extract story ({{story_key}}) details from INJECTED content:</action>
+      <note>STORY FOUNDATION from injected content:
+        - User story statement (As a, I want, so that)
+        - Detailed acceptance criteria (already BDD formatted)
+        - Technical requirements specific to this story
+        - Business context and value
+        - Success criteria
+      </note>
+
+      <!-- Previous story analysis from INJECTED content -->
+      <check if="story_num > 1 AND previous story content is in file_injections">
+        <note>PREVIOUS STORY INTELLIGENCE from injected content:
+          - Dev notes and learnings from previous story
+          - Review feedback and corrections needed
+          - Files that were created/modified and their patterns
+          - Testing approaches that worked/didn't work
+          - Problems encountered and solutions found
+          - Code patterns established
+        </note>
+        <action>Extract all learnings that could impact current story implementation</action>
+      </check>
+
+      <!-- Project context from INJECTED content -->
+      <action>From INJECTED sprint-project-context.md, extract:</action>
+      <note>PROJECT CONTEXT from injected content:
+        - Technical stack and version requirements
+        - Coding conventions and patterns
+        - File structure and naming conventions
+        - Testing standards
+        - Security requirements
+      </note>
+
+      <action>Log story analysis complete</action>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-story","task_id":"analyze","status":"end","message":"Context analysis complete"}'</bash>
+    </for-each>
+  </step>
+
+  <step n="3" goal="Generate story file for each story">
+    <for-each item="story_key" in="story_keys_array">
+      <action>Log story generation start</action>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-story","task_id":"generate","status":"start","message":"Generating comprehensive story file"}'</bash>
+
+      <action>Initialize from template.md for story: sprint-{{story_key}}.md</action>
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">story_header</template-output>
+
+      <!-- Story foundation from injected epics analysis -->
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">story_requirements</template-output>
+
+      <!-- Developer context section - MOST IMPORTANT PART -->
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">developer_context_section</template-output>
+
+      <note>DEV AGENT GUARDRAILS:</note>
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">technical_requirements</template-output>
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">architecture_compliance</template-output>
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">library_framework_requirements</template-output>
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">file_structure_requirements</template-output>
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">testing_requirements</template-output>
+
+      <!-- Previous story intelligence -->
+      <check if="previous story learnings available from injected content">
+        <template-output file="{story_dir}/sprint-{{story_key}}.md">previous_story_intelligence</template-output>
+      </check>
+
+      <!-- Project context reference -->
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">project_context_reference</template-output>
+
+      <!-- Final status update -->
+      <template-output file="{story_dir}/sprint-{{story_key}}.md">story_completion_status</template-output>
+
+      <!-- CRITICAL: Set status to ready-for-dev -->
+      <action>Set story Status to: "ready-for-dev"</action>
+      <action>Add completion note: "Sprint-runner context engine analysis completed - comprehensive developer guide created"</action>
+
+      <action>Log story generation complete</action>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-story","task_id":"generate","status":"end","message":"Story file generated"}'</bash>
+    </for-each>
+  </step>
+
+  <step n="4" goal="Write story files and determine tech-spec need">
+    <for-each item="story_key" in="story_keys_array">
+      <action>Log write start</action>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-story","task_id":"write","status":"start","message":"Writing story file to disk"}'</bash>
+
+      <action>Save story document to {story_dir}/sprint-{{story_key}}.md</action>
+
+      <!-- Determine tech-spec requirement -->
+      <action>Analyze story complexity to determine if tech-spec is required:</action>
+      <check if="story involves ANY of: new architecture patterns, complex integrations, database schema changes, API design, security-critical features, performance-critical features, multi-component coordination">
+        <action>Set tech_spec_decision = "REQUIRED"</action>
+      </check>
+      <check if="story is straightforward implementation with clear patterns from previous work">
+        <action>Set tech_spec_decision = "SKIP"</action>
+      </check>
+
+      <action>Log write complete</action>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-story","task_id":"write","status":"end","message":"Story file written"}'</bash>
+    </for-each>
+  </step>
+
+  <step n="5" goal="Validate and finalize">
+    <for-each item="story_key" in="story_keys_array">
+      <action>Log validation start</action>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-story","task_id":"validate","status":"start","message":"Validating story file"}'</bash>
+
+      <invoke-task>Validate against checklist at {installed_path}/checklist.md using _bmad/core/tasks/validate-workflow.xml</invoke-task>
+
+      <action>Log validation complete</action>
+      <bash>_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"sprint-create-story","task_id":"validate","status":"end","message":"Validation complete"}'</bash>
+    </for-each>
+
+    <!-- CRITICAL: Output tech-spec decision marker for orchestrator parsing -->
+    <action>Output tech-spec decision for orchestrator</action>
+    <for-each item="story_key" in="story_keys_array">
+      <output>[TECH-SPEC-DECISION: {{tech_spec_decision_for_story_key}}]</output>
+    </for-each>
+
+    <action>Report completion</action>
+    <output>**SPRINT-RUNNER STORY CREATION COMPLETE**
+
+      **Stories Created:**
+      {{for each story_key: list story file path and tech-spec decision}}
+
+      **Tech-Spec Decisions:**
+      {{for each story_key: [TECH-SPEC-DECISION: REQUIRED] or [TECH-SPEC-DECISION: SKIP]}}
+
+      **Next Phase:** Orchestrator will proceed based on tech-spec decisions
+    </output>
+  </step>
+
+</workflow>

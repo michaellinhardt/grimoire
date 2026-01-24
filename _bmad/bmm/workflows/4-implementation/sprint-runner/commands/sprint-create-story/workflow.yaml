@@ -1,0 +1,37 @@
+name: sprint-create-story
+description: 'Create story files using injected context via sprint-runner orchestrator'
+author: 'BMad'
+
+# Sprint-runner optimized command
+# Context is PRE-INJECTED via --prompt-system-append by the orchestrator
+# DO NOT read project-context.md, discovery files, or architecture from disk
+
+# Critical variables from config
+config_source: '{project-root}/_bmad/bmm/config.yaml'
+user_name: '{config_source}:user_name'
+communication_language: '{config_source}:communication_language'
+date: system-generated
+planning_artifacts: '{config_source}:planning_artifacts'
+implementation_artifacts: '{config_source}:implementation_artifacts'
+output_folder: '{implementation_artifacts}'
+story_dir: '{implementation_artifacts}'
+
+# Workflow components
+installed_path: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/commands/sprint-create-story'
+template: '{installed_path}/template.md'
+instructions: '{installed_path}/instructions.xml'
+validation: '{installed_path}/checklist.md'
+
+# Sprint-runner specific variables (provided by orchestrator)
+variables:
+  story_keys: '' # Comma-separated story keys (e.g., "2a-1,2a-2") - PROVIDED BY ORCHESTRATOR
+  epic_id: '' # Epic identifier (e.g., "2a") - PROVIDED BY ORCHESTRATOR
+  epics_file: '{planning_artifacts}/epics*.md' # Epic file pattern
+
+# Output naming convention for sprint-runner
+default_output_file: '{story_dir}/sprint-{{story_key}}.md'
+
+# Logging script location
+sprint_log_script: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh'
+
+standalone: true

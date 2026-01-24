@@ -1,0 +1,35 @@
+name: sprint-commit
+description: 'Smart git commit by story IDs - stages and commits only files related to current batch stories'
+author: 'BMad'
+
+# Sprint Runner v3 optimized command
+# Receives context via --prompt-system-append injection
+# Story files contain File List sections that identify related files
+
+# Variables received from orchestrator injection
+variables:
+  story_keys: '' # Comma-separated story IDs (e.g., "2a-1,2a-2")
+  epic_id: '' # Epic identifier (e.g., "2a")
+
+# Workflow components
+installed_path: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/commands/sprint-commit'
+instructions: '{installed_path}/instructions.xml'
+
+# Logging configuration
+log_script: '{project-root}/_bmad/bmm/workflows/4-implementation/sprint-runner/scripts/sprint-log.sh'
+task_ids:
+  - setup
+  - stage
+  - commit
+  - validate
+
+# Output markers
+output_markers:
+  commit_success: '[COMMIT-SUCCESS: {hash}]' # Commit hash on success
+  commit_failed: '[COMMIT-FAILED: {reason}]' # Reason for failure
+  no_changes: '[NO-CHANGES-TO-COMMIT]' # No matching files found
+
+# Commit message format
+commit_format: 'feat({epic_id}): implement stories {story_ids}'
+
+standalone: true

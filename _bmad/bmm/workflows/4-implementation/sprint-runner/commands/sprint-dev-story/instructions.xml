@@ -1,0 +1,233 @@
+<workflow>
+  <workflow_mode>IMPLEMENTATION</workflow_mode>
+
+  <objective>Implement story code based on injected story file and tech-spec</objective>
+
+  <critical_rules>
+    <rule priority="1">ALL CONTEXT IS PRE-INJECTED: story file, tech-spec, project context, discovery file</rule>
+    <rule priority="2">DO NOT read these files from disk - use the injected content from file_injections</rule>
+    <rule priority="3">DO NOT update sprint-status.yaml - orchestrator handles all status updates</rule>
+    <rule priority="4">Work AUTONOMOUSLY - no human available for questions</rule>
+    <rule priority="5">Update story status to "review" in the story file when complete</rule>
+    <rule priority="6">Only modify story file sections: Tasks/Subtasks checkboxes, Dev Agent Record, File List, Change Log, Status</rule>
+  </critical_rules>
+
+  <injected_context>
+    <rule>Story file content is in file_injections - contains requirements, acceptance criteria, tasks</rule>
+    <rule>Tech-spec content is in file_injections - contains implementation design</rule>
+    <rule>Project context is in file_injections - contains coding standards and patterns</rule>
+    <rule>Discovery file is in file_injections - contains codebase analysis</rule>
+    <rule>DO NOT attempt to read these files from disk - they are already in your context</rule>
+    <rule>If you need a file NOT in injections, you may read it from disk</rule>
+  </injected_context>
+
+  <autonomous_mode>
+    <rule>AUTONOMOUS MODE - No human available to answer questions</rule>
+    <rule>Make all decisions yourself based on injected context</rule>
+    <rule>Do NOT ask for confirmation - execute everything autonomously</rule>
+    <rule>If workflow asks for approval - proceed without approval, you have full authority</rule>
+    <rule>If multiple approaches exist - choose the most thorough one</rule>
+    <rule>If you encounter ambiguity, make a reasonable choice and document it in Dev Agent Record</rule>
+    <rule>Never wait for human input - YOU are the decision maker</rule>
+  </autonomous_mode>
+
+  <step n="1" goal="Initialize from injected context">
+    <action>Log start of setup phase</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"setup","status":"start","message":"Loading implementation context for {{story_key}}"}'</bash>
+
+    <action>Parse injected story file content from file_injections</action>
+    <action>Extract from injected story content:</action>
+    <extract_list>
+      <item>Story requirements and user story statement</item>
+      <item>All acceptance criteria</item>
+      <item>Tasks/Subtasks list with checkboxes</item>
+      <item>Dev Notes section with architecture guidance</item>
+      <item>Technical requirements and constraints</item>
+    </extract_list>
+
+    <action>Parse injected tech-spec content from file_injections</action>
+    <action>Extract implementation details:</action>
+    <extract_list>
+      <item>Implementation approach and design decisions</item>
+      <item>File structure and component organization</item>
+      <item>API contracts and data models</item>
+      <item>Testing strategy</item>
+    </extract_list>
+
+    <action>Parse injected project context from file_injections</action>
+    <action>Extract coding standards and patterns to follow</action>
+
+    <action>Identify first incomplete task (unchecked [ ]) in Tasks/Subtasks</action>
+
+    <check if="no incomplete tasks">
+      <action>Story already complete - proceed to validation</action>
+      <goto step="5" />
+    </check>
+
+    <action>Count total tasks and files referenced in injected content</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"setup","status":"end","message":"Context loaded (files:N)"}'</bash>
+  </step>
+
+  <step n="2" goal="Implement tasks using red-green-refactor cycle">
+    <critical>FOLLOW THE STORY FILE TASKS/SUBTASKS SEQUENCE EXACTLY AS WRITTEN - NO DEVIATION</critical>
+    <critical>Execute continuously without pausing until all tasks/subtasks are complete</critical>
+
+    <action>Log start of implementation phase</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"implement","status":"start","message":"Implementing story code"}'</bash>
+
+    <foreach task="in story Tasks/Subtasks">
+      <action>Review the current task/subtask from the injected story file - this is your authoritative implementation guide</action>
+      <action>Plan implementation following red-green-refactor cycle</action>
+
+      <!-- RED PHASE -->
+      <action>Write FAILING tests first for the task/subtask functionality</action>
+      <action>Confirm tests fail before implementation - this validates test correctness</action>
+
+      <!-- GREEN PHASE -->
+      <action>Implement MINIMAL code to make tests pass</action>
+      <action>Run tests to confirm they now pass</action>
+      <action>Handle error conditions and edge cases as specified in task/subtask</action>
+
+      <!-- REFACTOR PHASE -->
+      <action>Improve code structure while keeping tests green</action>
+      <action>Ensure code follows architecture patterns from injected tech-spec and project context</action>
+
+      <action>Mark task checkbox [x] in story file when complete</action>
+      <action>Update File List with any new/modified files</action>
+      <action>Add implementation notes to Dev Agent Record</action>
+    </foreach>
+
+    <halt_conditions>
+      <condition>New dependencies required beyond story specifications</condition>
+      <condition>3 consecutive implementation failures</condition>
+      <condition>Required configuration is missing</condition>
+    </halt_conditions>
+
+    <action>Count files created/modified and lines of code</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"implement","status":"end","message":"Implementation complete (files:N, lines:N)"}'</bash>
+  </step>
+
+  <step n="3" goal="Author and run tests">
+    <action>Log start of testing phase</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"tests","status":"start","message":"Writing and running tests"}'</bash>
+
+    <action>Create unit tests for business logic and core functionality</action>
+    <action>Add integration tests for component interactions</action>
+    <action>Include end-to-end tests for critical user flows when story requires</action>
+    <action>Cover edge cases and error handling scenarios from acceptance criteria</action>
+
+    <action>Determine test framework from project structure</action>
+    <action>Run all existing tests to ensure no regressions</action>
+    <action>Run new tests to verify implementation correctness</action>
+
+    <check if="regression tests fail">
+      <action>STOP and fix before continuing - identify breaking changes immediately</action>
+    </check>
+
+    <check if="new tests fail">
+      <action>STOP and fix before continuing - ensure implementation correctness</action>
+    </check>
+
+    <action>Count passing tests</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"tests","status":"end","message":"Tests complete (tests:N passed)"}'</bash>
+  </step>
+
+  <step n="4" goal="Run linting and code quality checks">
+    <action>Log start of lint phase</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"lint","status":"start","message":"Running lint and format"}'</bash>
+
+    <action>Run linting checks if configured in project</action>
+    <action>Run code formatting if configured in project</action>
+    <action>Run static analysis if available</action>
+
+    <check if="lint errors found">
+      <action>Fix all lint errors automatically where possible</action>
+      <action>Document any manual fixes needed in Dev Agent Record</action>
+    </check>
+
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"lint","status":"end","message":"Lint passed"}'</bash>
+  </step>
+
+  <step n="5" goal="Final validation and completion">
+    <action>Log start of validation phase</action>
+    <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"validate","status":"start","message":"Running final validation"}'</bash>
+
+    <action>Verify ALL tasks and subtasks are marked [x]</action>
+    <action>Run full regression suite one final time</action>
+    <action>Validate implementation meets ALL acceptance criteria</action>
+    <action>Confirm File List includes every changed file</action>
+
+    <definition_of_done>
+      <criterion>All tasks/subtasks marked complete with [x]</criterion>
+      <criterion>Implementation satisfies every Acceptance Criterion</criterion>
+      <criterion>Unit tests for core functionality added/updated</criterion>
+      <criterion>Integration tests for component interactions added when required</criterion>
+      <criterion>All tests pass (no regressions, new tests successful)</criterion>
+      <criterion>Code quality checks pass (linting, static analysis)</criterion>
+      <criterion>File List includes every new/modified/deleted file</criterion>
+      <criterion>Dev Agent Record contains implementation notes</criterion>
+      <criterion>Change Log includes summary of changes</criterion>
+    </definition_of_done>
+
+    <check if="all validation passes">
+      <action>Update story Status to: "review"</action>
+      <action>Save the story file to disk at {{story_file}}</action>
+      <action>Add completion notes to Dev Agent Record</action>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"validate","status":"end","message":"Validation passed"}'</bash>
+      <output>[DEV-STORY-COMPLETE: YES]</output>
+    </check>
+
+    <check if="validation fails">
+      <action>Document failures in Dev Agent Record</action>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"validate","status":"end","message":"Validation failed - see Dev Agent Record"}'</bash>
+      <output>[DEV-STORY-COMPLETE: NO]</output>
+    </check>
+
+    <check if="blocked by external dependency">
+      <action>Document blocker in Dev Agent Record with details</action>
+      <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"validate","status":"end","message":"Blocked - {{blocker_reason}}"}'</bash>
+      <output>[DEV-STORY-BLOCKED: YES]</output>
+    </check>
+  </step>
+
+  <step n="6" goal="Output completion summary">
+    <output_format>
+      **DEV-STORY IMPLEMENTATION COMPLETE**
+
+      **Story:** {{story_key}}
+      **Status:** review
+
+      **Implementation Summary:**
+      - Tasks completed: [count]
+      - Files created/modified: [list]
+      - Tests added: [count]
+
+      **Key Changes:**
+      [Brief summary of what was implemented]
+
+      **Next Phase:** Orchestrator will trigger code-review
+    </output_format>
+
+    <critical>MUST output exactly one of these markers:</critical>
+    <output_markers>
+      <marker condition="implementation successful">[DEV-STORY-COMPLETE: YES]</marker>
+      <marker condition="implementation failed">[DEV-STORY-COMPLETE: NO]</marker>
+      <marker condition="blocked by external issue">[DEV-STORY-BLOCKED: YES]</marker>
+    </output_markers>
+  </step>
+
+  <logging_reference>
+    <script>{{log_script}}</script>
+    <command_name>dev-story</command_name>
+    <task_ids>setup, implement, tests, lint, validate</task_ids>
+    <format>
+      sprint-log.sh '{"epic_id":"{{epic_id}}","story_id":"{{story_key}}","command":"dev-story","task_id":"[TASK_ID]","status":"[start|end]","message":"[description]"}'
+    </format>
+    <message_conventions>
+      <start>Describe what the task is about to do</start>
+      <end>Describe outcome with metrics suffix (metric:value)</end>
+      <metrics>files, lines, tests</metrics>
+    </message_conventions>
+  </logging_reference>
+
+</workflow>
