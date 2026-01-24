@@ -1,6 +1,6 @@
 # Story 5-SR.2: SQLite Database Schema and Operations
 
-Status: review
+Status: completed
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -287,6 +287,13 @@ None required - all tests pass on first run.
 ### Change Log
 
 - 2026-01-24: Initial implementation of SQLite database module with complete schema, CRUD operations for all 5 tables, helper queries, and 55 unit tests. All acceptance criteria satisfied.
+- 2026-01-24 (Code Review Fixes): Applied all critical and high-priority fixes from code review:
+  - **CRITICAL: SQL Injection Prevention** - Added field whitelist validation to all update_* functions (update_batch, update_story, update_command, update_background_task). Invalid fields now raise ValueError before SQL execution.
+  - **HIGH: Foreign Key Constraints** - Added missing FK constraints on events table (story_id REFERENCES stories(id), command_id REFERENCES commands(id)) to enforce referential integrity.
+  - **HIGH: Type Hints** - Converted all return type hints from `list[dict]` to `List[dict]` for Python 3.8 compatibility (using typing.List import).
+  - **HIGH: Return Value Tracking** - All update functions now return cursor.rowcount instead of None, enabling callers to detect update failures and verify affected rows.
+  - **MEDIUM: Performance Index** - Added compound index idx_stories_batch_key on stories(batch_id, story_key) to optimize get_story_by_key queries.
+  - **Tests** - Added 10 new tests covering field validation, return values, and FK constraints. All 65 tests pass (55 original + 10 new).
 
 ### File List
 

@@ -80,6 +80,7 @@ class TestDatabaseInit:
 
         assert 'idx_stories_batch_id' in indexes
         assert 'idx_stories_story_key' in indexes
+        assert 'idx_stories_batch_key' in indexes  # Compound index
         assert 'idx_commands_story_id' in indexes
         assert 'idx_events_batch_id' in indexes
         assert 'idx_events_timestamp' in indexes
@@ -133,13 +134,14 @@ class TestBatchOperations:
 
     def test_update_batch(self, temp_db, sample_batch):
         """update_batch should modify specified fields."""
-        temp_db.update_batch(
+        rows = temp_db.update_batch(
             sample_batch,
             cycles_completed=2,
             status='completed',
             ended_at=int(time.time())
         )
 
+        assert rows == 1
         batch = temp_db.get_batch(sample_batch)
         assert batch['cycles_completed'] == 2
         assert batch['status'] == 'completed'
@@ -148,7 +150,8 @@ class TestBatchOperations:
     def test_update_batch_empty_kwargs(self, temp_db, sample_batch):
         """update_batch with no kwargs should do nothing."""
         original = temp_db.get_batch(sample_batch)
-        temp_db.update_batch(sample_batch)
+        rows = temp_db.update_batch(sample_batch)
+        assert rows == 0
         updated = temp_db.get_batch(sample_batch)
         assert original == updated
 
@@ -173,6 +176,21 @@ class TestBatchOperations:
 
         active = temp_db.get_active_batch()
         assert active['id'] == batch2
+
+    def test_update_batch_rejects_invalid_fields(self, temp_db, sample_batch):
+        """update_batch should raise ValueError for invalid fields."""
+        import pytest
+        with pytest.raises(ValueError, match="Invalid fields"):
+            temp_db.update_batch(sample_batch, invalid_field="value")
+
+    def test_update_batch_returns_rowcount(self, temp_db, sample_batch):
+        """update_batch should return number of affected rows."""
+        rows = temp_db.update_batch(sample_batch, status='completed')
+        assert rows == 1
+
+        # Update non-existent batch
+        rows = temp_db.update_batch(99999, status='completed')
+        assert rows == 0
 
 
 # =============================================================================
@@ -199,12 +217,13 @@ class TestStoryOperations:
 
     def test_update_story(self, temp_db, sample_story):
         """update_story should modify specified fields."""
-        temp_db.update_story(
+        rows = temp_db.update_story(
             sample_story,
             status='done',
             ended_at=int(time.time())
         )
 
+        assert rows == 1
         story = temp_db.get_story(sample_story)
         assert story['status'] == 'done'
         assert story['ended_at'] is not None
@@ -212,7 +231,8 @@ class TestStoryOperations:
     def test_update_story_empty_kwargs(self, temp_db, sample_story):
         """update_story with no kwargs should do nothing."""
         original = temp_db.get_story(sample_story)
-        temp_db.update_story(sample_story)
+        rows = temp_db.update_story(sample_story)
+        assert rows == 0
         updated = temp_db.get_story(sample_story)
         assert original == updated
 
@@ -259,6 +279,21 @@ class TestStoryOperations:
         assert stories[1]['id'] == id2
         assert stories[2]['id'] == id3
 
+    def test_update_story_rejects_invalid_fields(self, temp_db, sample_story):
+        """update_story should raise ValueError for invalid fields."""
+        import pytest
+        with pytest.raises(ValueError, match="Invalid fields"):
+            temp_db.update_story(sample_story, invalid_field="value")
+
+    def test_update_story_returns_rowcount(self, temp_db, sample_story):
+        """update_story should return number of affected rows."""
+        rows = temp_db.update_story(sample_story, status='done')
+        assert rows == 1
+
+        # Update non-existent story
+        rows = temp_db.update_story(99999, status='done')
+        assert rows == 0
+
 
 # =============================================================================
 # Test: Command CRUD operations (8.4)
@@ -288,13 +323,14 @@ class TestCommandOperations:
         """update_command should modify specified fields."""
         cmd_id = temp_db.create_command(sample_story, "code-review", "analyze")
 
-        temp_db.update_command(
+        rows = temp_db.update_command(
             cmd_id,
             status='completed',
             ended_at=int(time.time()),
             output_summary='(issues:0)'
         )
 
+        assert rows == 1
         commands = temp_db.get_commands_by_story(sample_story)
         assert commands[0]['status'] == 'completed'
         assert commands[0]['output_summary'] == '(issues:0)'
@@ -304,7 +340,8 @@ class TestCommandOperations:
         """update_command with no kwargs should do nothing."""
         cmd_id = temp_db.create_command(sample_story, "cmd", "task")
         original = temp_db.get_commands_by_story(sample_story)[0]
-        temp_db.update_command(cmd_id)
+        rows = temp_db.update_command(cmd_id)
+        assert rows == 0
         updated = temp_db.get_commands_by_story(sample_story)[0]
         assert original == updated
 
@@ -333,6 +370,22 @@ class TestCommandOperations:
                 command="cmd",
                 task_id="task"
             )
+
+    def test_update_command_rejects_invalid_fields(self, temp_db, sample_story):
+        """update_command should raise ValueError for invalid fields."""
+        cmd_id = temp_db.create_command(sample_story, "cmd", "task")
+        with pytest.raises(ValueError, match="Invalid fields"):
+            temp_db.update_command(cmd_id, invalid_field="value")
+
+    def test_update_command_returns_rowcount(self, temp_db, sample_story):
+        """update_command should return number of affected rows."""
+        cmd_id = temp_db.create_command(sample_story, "cmd", "task")
+        rows = temp_db.update_command(cmd_id, status='completed')
+        assert rows == 1
+
+        # Update non-existent command
+        rows = temp_db.update_command(99999, status='completed')
+        assert rows == 0
 
 
 # =============================================================================
@@ -455,6 +508,38 @@ class TestEventOperations:
         """get_events_by_batch should return empty list for batch with no events."""
         assert temp_db.get_events_by_batch(sample_batch) == []
 
+    def test_event_foreign_key_story_constraint(self, temp_db, sample_batch):
+        """create_event should fail with non-existent story_id."""
+        import sqlite3
+        with pytest.raises(sqlite3.IntegrityError):
+            temp_db.create_event(
+                batch_id=sample_batch,
+                story_id=99999,  # Non-existent
+                command_id=None,
+                epic_id="1",
+                story_key="1-1",
+                command="cmd",
+                task_id="task",
+                status="start",
+                message="test"
+            )
+
+    def test_event_foreign_key_command_constraint(self, temp_db, sample_batch):
+        """create_event should fail with non-existent command_id."""
+        import sqlite3
+        with pytest.raises(sqlite3.IntegrityError):
+            temp_db.create_event(
+                batch_id=sample_batch,
+                story_id=None,
+                command_id=99999,  # Non-existent
+                epic_id="1",
+                story_key="1-1",
+                command="cmd",
+                task_id="task",
+                status="start",
+                message="test"
+            )
+
 
 # =============================================================================
 # Test: Background task operations (8.6)
@@ -486,12 +571,13 @@ class TestBackgroundTaskOperations:
             sample_batch, "2a-1", "context-refresh"
         )
 
-        temp_db.update_background_task(
+        rows = temp_db.update_background_task(
             task_id,
             status='completed',
             completed_at=int(time.time())
         )
 
+        assert rows == 1
         # Should no longer appear in pending
         pending = temp_db.get_pending_background_tasks(sample_batch)
         assert len(pending) == 0
@@ -500,7 +586,8 @@ class TestBackgroundTaskOperations:
         """update_background_task with no kwargs should do nothing."""
         task_id = temp_db.create_background_task(sample_batch, "1-1", "type")
         original = temp_db.get_pending_background_tasks(sample_batch)[0]
-        temp_db.update_background_task(task_id)
+        rows = temp_db.update_background_task(task_id)
+        assert rows == 0
         updated = temp_db.get_pending_background_tasks(sample_batch)[0]
         assert original == updated
 
@@ -544,6 +631,22 @@ class TestBackgroundTaskOperations:
                 story_key="1-1",
                 task_type="type"
             )
+
+    def test_update_background_task_rejects_invalid_fields(self, temp_db, sample_batch):
+        """update_background_task should raise ValueError for invalid fields."""
+        task_id = temp_db.create_background_task(sample_batch, "1-1", "type")
+        with pytest.raises(ValueError, match="Invalid fields"):
+            temp_db.update_background_task(task_id, invalid_field="value")
+
+    def test_update_background_task_returns_rowcount(self, temp_db, sample_batch):
+        """update_background_task should return number of affected rows."""
+        task_id = temp_db.create_background_task(sample_batch, "1-1", "type")
+        rows = temp_db.update_background_task(task_id, status='completed')
+        assert rows == 1
+
+        # Update non-existent task
+        rows = temp_db.update_background_task(99999, status='completed')
+        assert rows == 0
 
 
 # =============================================================================

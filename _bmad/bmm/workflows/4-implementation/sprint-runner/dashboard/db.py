@@ -17,10 +17,19 @@ import sqlite3
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, Any, Generator
+from typing import Optional, Any, Generator, List
 
 # Database location - same directory as this file
 DB_PATH = Path(__file__).parent / 'sprint-runner.db'
+
+# =============================================================================
+# Field Whitelists for SQL Injection Prevention
+# =============================================================================
+
+BATCH_FIELDS = {'started_at', 'ended_at', 'max_cycles', 'cycles_completed', 'status'}
+STORY_FIELDS = {'batch_id', 'story_key', 'epic_id', 'status', 'started_at', 'ended_at'}
+COMMAND_FIELDS = {'command', 'task_id', 'started_at', 'ended_at', 'status', 'output_summary'}
+BACKGROUND_TASK_FIELDS = {'task_type', 'spawned_at', 'completed_at', 'status'}
 
 
 @contextmanager
@@ -103,7 +112,9 @@ CREATE TABLE IF NOT EXISTS events (
     command TEXT NOT NULL,
     task_id TEXT NOT NULL,
     status TEXT NOT NULL,
-    message TEXT
+    message TEXT,
+    FOREIGN KEY (story_id) REFERENCES stories(id),
+    FOREIGN KEY (command_id) REFERENCES commands(id)
 );
 
 -- Background tasks (fire-and-forget)
@@ -121,6 +132,7 @@ CREATE TABLE IF NOT EXISTS background_tasks (
 -- Indexes for query performance
 CREATE INDEX IF NOT EXISTS idx_stories_batch_id ON stories(batch_id);
 CREATE INDEX IF NOT EXISTS idx_stories_story_key ON stories(story_key);
+CREATE INDEX IF NOT EXISTS idx_stories_batch_key ON stories(batch_id, story_key);
 CREATE INDEX IF NOT EXISTS idx_commands_story_id ON commands(story_id);
 CREATE INDEX IF NOT EXISTS idx_events_batch_id ON events(batch_id);
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);
@@ -166,25 +178,36 @@ def create_batch(max_cycles: int) -> int:
         return cursor.lastrowid  # type: ignore
 
 
-def update_batch(batch_id: int, **kwargs: Any) -> None:
+def update_batch(batch_id: int, **kwargs: Any) -> int:
     """
     Update batch fields.
 
     Args:
         batch_id: The batch to update
         **kwargs: Fields to update (ended_at, cycles_completed, status, etc.)
+
+    Returns:
+        Number of rows affected
+
+    Raises:
+        ValueError: If invalid fields are provided
     """
     if not kwargs:
-        return
+        return 0
+
+    invalid = set(kwargs.keys()) - BATCH_FIELDS
+    if invalid:
+        raise ValueError(f"Invalid fields for batch: {invalid}")
 
     fields = ', '.join(f"{k} = ?" for k in kwargs.keys())
     values = list(kwargs.values()) + [batch_id]
 
     with get_connection() as conn:
-        conn.execute(
+        cursor = conn.execute(
             f"UPDATE batches SET {fields} WHERE id = ?",
             values
         )
+        return cursor.rowcount
 
 
 def get_batch(batch_id: int) -> Optional[dict]:
@@ -246,25 +269,36 @@ def create_story(batch_id: int, story_key: str, epic_id: str) -> int:
         return cursor.lastrowid  # type: ignore
 
 
-def update_story(story_id: int, **kwargs: Any) -> None:
+def update_story(story_id: int, **kwargs: Any) -> int:
     """
     Update story fields.
 
     Args:
         story_id: The story to update
         **kwargs: Fields to update (status, ended_at, etc.)
+
+    Returns:
+        Number of rows affected
+
+    Raises:
+        ValueError: If invalid fields are provided
     """
     if not kwargs:
-        return
+        return 0
+
+    invalid = set(kwargs.keys()) - STORY_FIELDS
+    if invalid:
+        raise ValueError(f"Invalid fields for story: {invalid}")
 
     fields = ', '.join(f"{k} = ?" for k in kwargs.keys())
     values = list(kwargs.values()) + [story_id]
 
     with get_connection() as conn:
-        conn.execute(
+        cursor = conn.execute(
             f"UPDATE stories SET {fields} WHERE id = ?",
             values
         )
+        return cursor.rowcount
 
 
 def get_story(story_id: int) -> Optional[dict]:
@@ -303,7 +337,7 @@ def get_story_by_key(story_key: str, batch_id: int) -> Optional[dict]:
         return dict(row) if row else None
 
 
-def get_stories_by_batch(batch_id: int) -> list[dict]:
+def get_stories_by_batch(batch_id: int) -> List[dict]:
     """
     Get all stories in a batch.
 
@@ -346,28 +380,39 @@ def create_command(story_id: int, command: str, task_id: str) -> int:
         return cursor.lastrowid  # type: ignore
 
 
-def update_command(command_id: int, **kwargs: Any) -> None:
+def update_command(command_id: int, **kwargs: Any) -> int:
     """
     Update command fields.
 
     Args:
         command_id: The command to update
         **kwargs: Fields to update (ended_at, status, output_summary, etc.)
+
+    Returns:
+        Number of rows affected
+
+    Raises:
+        ValueError: If invalid fields are provided
     """
     if not kwargs:
-        return
+        return 0
+
+    invalid = set(kwargs.keys()) - COMMAND_FIELDS
+    if invalid:
+        raise ValueError(f"Invalid fields for command: {invalid}")
 
     fields = ', '.join(f"{k} = ?" for k in kwargs.keys())
     values = list(kwargs.values()) + [command_id]
 
     with get_connection() as conn:
-        conn.execute(
+        cursor = conn.execute(
             f"UPDATE commands SET {fields} WHERE id = ?",
             values
         )
+        return cursor.rowcount
 
 
-def get_commands_by_story(story_id: int) -> list[dict]:
+def get_commands_by_story(story_id: int) -> List[dict]:
     """
     Get all commands for a story.
 
@@ -427,7 +472,7 @@ def create_event(
         return cursor.lastrowid  # type: ignore
 
 
-def get_events(limit: int = 100, offset: int = 0) -> list[dict]:
+def get_events(limit: int = 100, offset: int = 0) -> List[dict]:
     """
     Get recent events, newest first.
 
@@ -450,7 +495,7 @@ def get_events(limit: int = 100, offset: int = 0) -> list[dict]:
         return [dict(row) for row in cursor.fetchall()]
 
 
-def get_events_by_batch(batch_id: int) -> list[dict]:
+def get_events_by_batch(batch_id: int) -> List[dict]:
     """
     Get all events for a specific batch.
 
@@ -497,28 +542,39 @@ def create_background_task(batch_id: int, story_key: str, task_type: str) -> int
         return cursor.lastrowid  # type: ignore
 
 
-def update_background_task(task_id: int, **kwargs: Any) -> None:
+def update_background_task(task_id: int, **kwargs: Any) -> int:
     """
     Update background task fields.
 
     Args:
         task_id: The task to update
         **kwargs: Fields to update (completed_at, status, etc.)
+
+    Returns:
+        Number of rows affected
+
+    Raises:
+        ValueError: If invalid fields are provided
     """
     if not kwargs:
-        return
+        return 0
+
+    invalid = set(kwargs.keys()) - BACKGROUND_TASK_FIELDS
+    if invalid:
+        raise ValueError(f"Invalid fields for background_task: {invalid}")
 
     fields = ', '.join(f"{k} = ?" for k in kwargs.keys())
     values = list(kwargs.values()) + [task_id]
 
     with get_connection() as conn:
-        conn.execute(
+        cursor = conn.execute(
             f"UPDATE background_tasks SET {fields} WHERE id = ?",
             values
         )
+        return cursor.rowcount
 
 
-def get_pending_background_tasks(batch_id: int) -> list[dict]:
+def get_pending_background_tasks(batch_id: int) -> List[dict]:
     """
     Get background tasks that are still running for a batch.
 
