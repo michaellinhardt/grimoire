@@ -63,6 +63,18 @@ Its very important to make the list of feature in the custom prompt and command 
 
 Even the reporting of state from the subagent have to be documented in our new command.
 
+## Remove cleanup workflow
+
+The cleanup will be done by the script. it list all files with a story id from the current batch within implementation artifacts folder, then move them to the archived-artifacts folder.
+
+## Rework Github Commit workflow
+
+The subagent which do the github commit will have a custom command `sprint-commit` as well. To operate, it run git status and deduct which files related to the story IDs it received. If needed it can investigate files, only if doubt. Then it stagged/commit those impacted files only, any file not likely to be related to the loop process is ignored. 
+
+## File convention
+
+In the implementation artifact folders, the artifacts we generate such as `3a-1-3a-2-discovery-story.md` will all start with the prefix `sprint-`
+
 ## Using prompt system append
 
 All the data that should be passed to the command, are injected to the prompt system with the flag appropriate to append.
@@ -75,6 +87,26 @@ We append the following data, with an appropriate structure (xml) and indicate f
   - provide discovery tech spec when running command create-tech-spec
   - ...
 -> the phylosophie is to reduce as much as possible the workfload of the subagent regarding to setup. Also adding it to prompt system enforce the data weight.
+
+-> we are also going to go one step deeper in the injection. We have one routine that run and scan bmad-output implementation artifacts folder for any file containing one ID of one of the story concerned (1 or more story at once). We put all those files discovered into a string, structured with XML. We inject it into the prompt system
+
+The script have to know where is files like project-context.md, so in the custom command we will create, we enforce the path where to save it. maybe use a dedicated file name is better such as `sprint-project-context.md` 
+
+Important: When injecting an existing file, we always use XML tag with the file path in the tag.
+
+Every command have a clear instruction that mandate, if you received a file in the prompt system, you do not read it during your initialization. The steps have to be skip, conditionnaly, per file injected. If some file need to be read but havnt been injected, its allow to read them.
+
+in the prompt system that you append, all existing file that you injext will be in one unique XML tag (you can rename tag):
+
+<file_injections [if possible, enforce rule in the tag, about not reading those file at initialization or setup]>
+<file path="ddwd">
+wefwe
+</file>
+</file_injections>
+
+### Example with discovery project
+
+- After the sub agent write the discovery-project.md we inject it in all subagent that need to have it.
 
 # Workflow
 
@@ -129,5 +161,3 @@ You NEVER read the files written by subagent, you just get their feedback if suc
 You pilote the flow until its implemented.
 
 You will also update documentation of the command ( README.md etc.. )
-
-At the end you 
