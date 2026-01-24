@@ -482,6 +482,17 @@ Events are written directly to the SQLite database (no intermediate log file).
 - **fixed**: Run a specific number of cycles (default: 2)
 - **all**: Run until all stories are done
 
+### Git Status Injection
+
+When the orchestrator spawns the `sprint-commit` command:
+
+1. **Pre-capture**: `_capture_git_status()` runs `git status` immediately before spawning the agent
+2. **XML Format**: Output is XML-escaped and wrapped in `<git_status>` block with `<instruction>` and `<output>` elements
+3. **Injection**: Git status is appended to the prompt system append content for the commit agent
+4. **Size Validation**: Combined injection size is validated against error/warning thresholds (see Settings API)
+
+This ensures the commit agent has access to an accurate, frozen view of the working directory state without needing to run git itself.
+
 ### Starting the Orchestrator
 
 ```bash

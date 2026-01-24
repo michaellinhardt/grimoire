@@ -97,6 +97,31 @@ Different phases receive different file sets:
 - **dev-story**: Project context + story file + discovery + tech-spec (if exists)
 - **code-review**: Project context + story file + discovery + tech-spec
 
+### Git Status Injection (sprint-commit)
+
+For the `sprint-commit` command, the orchestrator automatically captures and injects the current git status:
+
+```xml
+<git_status>
+  <instruction>This is the result of `git status` executed immediately before spawning this agent. Use this to understand the current state of the working directory and what files need to be committed.</instruction>
+  <output>
+    On branch main
+    Changes not staged for commit:
+      modified:   src/component.ts
+      modified:   tests/component.spec.ts
+    ...
+  </output>
+</git_status>
+```
+
+The `_capture_git_status()` method:
+- Runs `git status` before spawning the commit agent
+- XML-escapes the output for safe injection
+- Handles errors gracefully (timeouts, git failures)
+- Provides accurate working directory state to the agent without re-running git
+
+The injected status is appended to the prompt system append content along with story files, enabling the commit agent to make informed decisions about file organization and commit strategy. Combined injection size is validated against error/warning thresholds.
+
 ### Custom Commands Structure
 
 Each command in `commands/` follows this structure:
@@ -317,6 +342,19 @@ def cleanup_batch_files(self, story_keys: list[str]) -> int
 ```
 
 Moves files matching story keys from `implementation-artifacts/` to `archived-artifacts/`.
+
+### `_capture_git_status()`
+
+Captures current git status for sprint-commit injection:
+
+```python
+def _capture_git_status(self) -> str
+```
+
+- Runs `git status` at orchestrator execution time
+- Returns XML-escaped output for safe prompt injection
+- Handles failures gracefully (timeouts, git errors)
+- Used in `_execute_batch_commit()` to inject pre-captured state into sprint-commit command
 
 ## File Naming Conventions
 

@@ -51,8 +51,7 @@
   <step n="2" goal="Analyze git status and match files to stories">
     <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"stage","status":"start","message":"Analyzing git status for file matching"}'</bash>
 
-    <action>Run git status to get all modified/staged/untracked files</action>
-    <bash>git status --porcelain</bash>
+    <action>Analyze the git_status section injected in your system prompt to understand the current state of the working directory and what files need to be committed. This status was captured immediately before this agent was spawned to ensure consistency. Do NOT run git status yourself - use the pre-captured output.</action>
 
     <action>Parse git status output to categorize files:</action>
     <file_categories>
@@ -133,8 +132,6 @@
     <bash>git diff-tree --no-commit-id --name-only -r HEAD | wc -l</bash>
     <output_variable name="files_committed">Count of files in commit</output_variable>
 
-    <action>Verify working tree status</action>
-    <bash>git status --porcelain</bash>
     <note>Remaining files should be the unrelated ones we intentionally left unstaged</note>
 
     <bash>{{log_script}} '{"epic_id":"{{epic_id}}","story_id":"{{story_keys}}","command":"sprint-commit","task_id":"validate","status":"end","message":"Validation complete ({{files_committed}} files committed)"}'</bash>

@@ -27,7 +27,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, AsyncGenerator, Optional
 
+import logging
+import subprocess
+from xml.sax.saxutils import escape as xml_escape
+
 import yaml
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 # Imports from sibling modules (Story 5-SR-2 and 5-SR-5)
 from .settings import get_settings
@@ -1146,6 +1153,31 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
 
         return result
 
+    def _capture_git_status(self) -> str:
+        """Capture current git status for injection into sprint-commit."""
+        try:
+            result = subprocess.run(
+                ["git", "status"],
+                cwd=str(self.project_root),
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode == 0:
+                return xml_escape(result.stdout)
+            else:
+                error_msg = f"Error capturing git status (exit {result.returncode}): {result.stderr}"
+                logger.warning(error_msg)
+                return xml_escape(error_msg)
+        except subprocess.TimeoutExpired:
+            error_msg = "Error capturing git status: command timed out after 10 seconds"
+            logger.warning(error_msg)
+            return xml_escape(error_msg)
+        except (subprocess.SubprocessError, OSError) as e:
+            error_msg = f"Error capturing git status: {e}"
+            logger.warning(error_msg)
+            return xml_escape(error_msg)
+
     # =========================================================================
     # Main Orchestration Loop (AC: #1, #5, #6)
     # =========================================================================
@@ -1486,6 +1518,15 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
         story_ids_str = ",".join(completed_stories)
         epic_id = self._extract_epic(completed_stories[0])
 
+        # Capture git status for injection
+        git_status_output = self._capture_git_status()
+        git_status_xml = f"""<git_status>
+  <instruction>This is the result of `git status` executed immediately before spawning this agent. Use this to understand the current state of the working directory and what files need to be committed.</instruction>
+  <output>
+{git_status_output}
+  </output>
+</git_status>"""
+
         # Build injection with story files for File List extraction
         injection = self.build_prompt_system_append(
             command_name="sprint-commit",
@@ -1495,13 +1536,36 @@ Output the file to: {self.project_root}/_bmad-output/planning-artifacts/project-
             include_tech_spec=False,
         )
 
+        # Append git status to injection
+        full_injection = injection + "\n" + git_status_xml
+
+        # Validate combined injection size
+        size_bytes = len(full_injection.encode('utf-8'))
+        error_threshold = self._get_injection_error_threshold()
+        warning_threshold = self._get_injection_warning_threshold()
+        if size_bytes > error_threshold:
+            raise ValueError(
+                f"Injection size ({size_bytes} bytes) exceeds maximum "
+                f"({error_threshold} bytes) for command 'sprint-commit'."
+            )
+        if size_bytes > warning_threshold:
+            self.emit_event(
+                "injection:warning",
+                {
+                    "command": "sprint-commit",
+                    "size_bytes": size_bytes,
+                    "threshold_bytes": warning_threshold,
+                    "message": f"Injection size ({size_bytes} bytes) exceeds warning threshold",
+                },
+            )
+
         # Build prompt with story keys and epic id
         prompt = f"Story keys: {story_ids_str}\nEpic ID: {epic_id}"
 
         await self.spawn_subagent(
             prompt,
             "sprint-commit",
-            prompt_system_append=injection,
+            prompt_system_append=full_injection,
         )
 
     # =========================================================================
