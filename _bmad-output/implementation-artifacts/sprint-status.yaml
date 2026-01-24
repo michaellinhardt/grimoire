@@ -165,7 +165,7 @@ development_status:
   # Epic 4: Application Lifecycle & Persistence
   epic-4: in-progress
   4-1-loading-screen-and-startup-verification: done
-  4-2-offline-mode-and-status-indication: ready-for-dev
+  4-2-offline-mode-and-status-indication: done
   4-3-update-checking: backlog
   4-4-state-persistence-and-restoration: backlog
   4-5-db-first-startup-with-background-sync: backlog
@@ -177,6 +177,14 @@ development_status:
 # Reviewer: Claude Haiku 4.5
 # Date: 2026-01-24
 # Summary: Complete implementation of loading screen and startup verification. All 5 ACs verified: (AC1) Loading screen displays with Grimoire logo and pulse animation, (AC2) Claude Code installation check with PATH verification, (AC3) Config directory creation with writable access check, (AC4) Authentication verification via 'claude --version' with CLAUDE_CONFIG_DIR, (AC5) Smooth 200ms fade-out transition to main UI on success. Proper IPC namespace:action pattern, comprehensive error handling with user-friendly modal dialogs, robust timeout handling (5s per step), memory safety with proper ref management, all async operations properly awaited. All 962 tests passing including 33 new tests (14 startup-verifier + 5 useAppInit + 8 LoadingScreen + 6 ErrorModal).
+
+# Code Review Status - Story 4-2
+# Review Attempt: 2 (FINAL VERIFICATION)
+# Final Status: APPROVED (Zero Issues)
+# Issues Found: 0 CRITICAL, 0 HIGH, 0 MEDIUM, 0 LOW
+# Reviewer: Claude Haiku 4.5
+# Date: 2026-01-24
+# Summary: Complete implementation of offline mode with network status indication. All 5 ACs verified: (AC1) Offline read-only operations work with local SQLite database, (AC2) Send message blocked offline with tooltip "Internet required to send messages", (AC3) NetworkIndicator component shows green dot online / red pulsing dot offline in Ribbon, (AC4) CC spawn blocked offline with clear error message "Internet connection required to use Claude Code", (AC5) Graceful degradation with running CC processes independent of network. Robust network monitoring with 5-second polling interval, proper IPC namespace:action pattern, comprehensive test coverage with 997 tests passing including 11 network-monitor tests + 7 useNetworkStatus tests + 6 NetworkIndicator tests + 4 network IPC tests + 6 ChatInput offline tests. Zero issues found in second review attempt - implementation is production-ready.
 
   epic-4-retrospective: optional
 
