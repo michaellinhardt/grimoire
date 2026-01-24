@@ -46,6 +46,12 @@ You run 2 sub agent for each study done, use the most appropriate commands from 
 
 You run 1 sub agent, it review together the 2 study done. use the most appropriate commands from BMAD. The agent study the coherence of the 2 files, are they compatible, no mismatch, etc.. because we will deploy change separately, it have to match. Fix anything.
 
+## Pause compacting 1
+
+You write a file `memory` to explain everything we did, what we try to attempt and how. Condensed report.
+
+Then you make a pause and you ask me to compact your prompt before continuing.
+
 ## Plan
 
 1 sub agent per study, get the `change context`, write a plan on how to implement, include acceptance criteria, checklists to guide quality and completness. (parallel)
@@ -59,6 +65,12 @@ then (sequencial), one agent to review the coherence of the 2 plan together.
 ---
 
 Repeat the process above with Haiku agent
+
+## Pause compacting 2
+
+You update file `memory` to explain everything we did, what we try to attempt and how. Condensed report.
+
+Then you make a pause and you ask me to compact your prompt before continuing.
 
 ## Implement
 
