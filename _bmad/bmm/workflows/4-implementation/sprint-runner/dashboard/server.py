@@ -455,6 +455,120 @@ async def story_descriptions_handler(request: web.Request) -> web.Response:
     )
 
 
+# =============================================================================
+# Orchestrator Control Handlers (Story 5-SR-6)
+# =============================================================================
+
+# Global orchestrator instance (lazy initialization)
+_orchestrator_instance: Optional["Orchestrator"] = None
+_orchestrator_task: Optional[asyncio.Task] = None
+
+
+async def orchestrator_start_handler(request: web.Request) -> web.Response:
+    """
+    Start the orchestrator with specified batch size.
+
+    POST /api/orchestrator/start
+    Body: { "batch_size": number | "all" }
+    """
+    global _orchestrator_instance, _orchestrator_task
+
+    try:
+        data = await request.json()
+    except json.JSONDecodeError:
+        return web.Response(status=400, text="Invalid JSON body")
+
+    batch_size = data.get("batch_size", 2)
+
+    # Check if already running
+    if _orchestrator_instance and _orchestrator_instance.state.value != "idle":
+        return web.Response(status=409, text="Orchestrator is already running")
+
+    try:
+        from orchestrator import Orchestrator
+
+        if batch_size == "all":
+            _orchestrator_instance = Orchestrator(batch_mode="all", max_cycles=999)
+        else:
+            try:
+                max_cycles = int(batch_size)
+                if max_cycles < 1:
+                    return web.Response(status=400, text="batch_size must be positive")
+                _orchestrator_instance = Orchestrator(batch_mode="fixed", max_cycles=max_cycles)
+            except (ValueError, TypeError):
+                return web.Response(status=400, text="Invalid batch_size")
+
+        # Start orchestrator in background
+        _orchestrator_task = asyncio.create_task(_orchestrator_instance.start())
+
+        return web.json_response(
+            {"status": "started", "batch_size": batch_size},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+
+    except ImportError as e:
+        return web.Response(status=500, text=f"Orchestrator module not available: {e}")
+    except Exception as e:
+        return web.Response(status=500, text=f"Failed to start orchestrator: {e}")
+
+
+async def orchestrator_stop_handler(request: web.Request) -> web.Response:
+    """
+    Stop the orchestrator gracefully.
+
+    POST /api/orchestrator/stop
+    """
+    global _orchestrator_instance
+
+    if not _orchestrator_instance or _orchestrator_instance.state.value == "idle":
+        return web.Response(status=409, text="Orchestrator is not running")
+
+    try:
+        await _orchestrator_instance.stop()
+        return web.json_response(
+            {"status": "stopping"},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except Exception as e:
+        return web.Response(status=500, text=f"Failed to stop orchestrator: {e}")
+
+
+async def orchestrator_status_handler(request: web.Request) -> web.Response:
+    """
+    Get current orchestrator status.
+
+    GET /api/orchestrator/status
+    """
+    global _orchestrator_instance
+
+    if not _orchestrator_instance:
+        return web.json_response(
+            {
+                "status": "idle",
+                "batch_id": None,
+                "cycles_completed": 0,
+                "max_cycles": 0,
+            },
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+
+    return web.json_response(
+        {
+            "status": _orchestrator_instance.state.value,
+            "batch_id": _orchestrator_instance.current_batch_id,
+            "cycles_completed": _orchestrator_instance.cycles_completed,
+            "max_cycles": _orchestrator_instance.max_cycles,
+            "current_stories": _orchestrator_instance.current_story_keys,
+        },
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
+
+
+# =============================================================================
+# Static File Serving
+# =============================================================================
+
+
 async def serve_file_handler(request: web.Request) -> web.Response:
     """Serve whitelisted data files or static files from dashboard directory"""
     filename = request.match_info["filename"]
@@ -547,6 +661,18 @@ async def on_cleanup(app: web.Application) -> None:
     print("Closed all WebSocket connections")
 
 
+async def cors_preflight_handler(request: web.Request) -> web.Response:
+    """Handle CORS preflight requests for API endpoints."""
+    return web.Response(
+        status=204,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+        },
+    )
+
+
 def create_app() -> web.Application:
     """Create and configure the aiohttp application."""
     app = web.Application()
@@ -555,6 +681,15 @@ def create_app() -> web.Application:
     app.router.add_get("/ws", websocket_handler)
     app.router.add_get("/", index_handler)
     app.router.add_get("/story-descriptions.json", story_descriptions_handler)
+
+    # Orchestrator control API (Story 5-SR-6)
+    app.router.add_post("/api/orchestrator/start", orchestrator_start_handler)
+    app.router.add_post("/api/orchestrator/stop", orchestrator_stop_handler)
+    app.router.add_get("/api/orchestrator/status", orchestrator_status_handler)
+    app.router.add_options("/api/orchestrator/start", cors_preflight_handler)
+    app.router.add_options("/api/orchestrator/stop", cors_preflight_handler)
+
+    # Static file handler (must be last due to wildcard pattern)
     app.router.add_get("/{filename}", serve_file_handler)
 
     # Add lifecycle handlers
@@ -572,11 +707,14 @@ def main() -> None:
     print(f"\nServing at: http://localhost:{PORT}/")
     print(f"WebSocket at: ws://localhost:{PORT}/ws")
     print(f"\nEndpoints:")
-    print(f"  - /                         Dashboard")
-    print(f"  - /ws                       WebSocket (real-time events)")
-    print(f"  - /story-descriptions.json  Dynamic story descriptions")
-    print(f"  - /sprint-status.yaml       Sprint data")
-    print(f"  - /orchestrator.md          Activity log")
+    print(f"  - /                              Dashboard")
+    print(f"  - /ws                            WebSocket (real-time events)")
+    print(f"  - /story-descriptions.json       Dynamic story descriptions")
+    print(f"  - /sprint-status.yaml            Sprint data")
+    print(f"  - /orchestrator.md               Activity log")
+    print(f"  - POST /api/orchestrator/start   Start sprint run")
+    print(f"  - POST /api/orchestrator/stop    Stop sprint run")
+    print(f"  - GET  /api/orchestrator/status  Get current status")
     print(f"\nPress Ctrl+C to stop\n")
 
     web.run_app(create_app(), port=PORT, print=None)

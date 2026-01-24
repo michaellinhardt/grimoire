@@ -1,7 +1,29 @@
 #!/bin/bash
 set -e
 
-# Sprint Runner Event Logger
+# =============================================================================
+# DEPRECATED: Story 5-SR-8 (2026-01-24)
+# =============================================================================
+# This shell script CSV event logger has been replaced by Python implementation in:
+#   _bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/orchestrator.py
+#   _bmad/bmm/workflows/4-implementation/sprint-runner/dashboard/db.py
+#
+# The Python implementation provides:
+#   - SQLite database storage (events table) instead of CSV
+#   - Real-time WebSocket event broadcasting
+#   - Structured event types with payload validation
+#   - Integration with dashboard UI for live monitoring
+#
+# Event logging is now handled by:
+#   - orchestrator.py: emit_event() function for WebSocket broadcast
+#   - db.py: create_event() function for database persistence
+#
+# This script is kept for backwards compatibility with any remaining
+# subagent prompts that may reference it, but should not be used.
+# New implementations should use the Python event system.
+# =============================================================================
+
+# Sprint Runner Event Logger (DEPRECATED)
 # Usage: ./orchestrator.sh <epic_id> <story_id> <command> <task_id> <status> <message>
 #
 # Parameters:
@@ -16,6 +38,9 @@ set -e
 #   timestamp,epicID,storyID,command,task-id,status,"message"
 #
 # See task-taxonomy.yaml for valid task IDs per command.
+#
+# NOTE: This script still works but logs to CSV only. For real-time
+# dashboard updates, use the Python orchestrator instead.
 
 EPIC_ID="$1"
 STORY_ID="$2"

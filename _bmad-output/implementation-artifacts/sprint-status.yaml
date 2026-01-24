@@ -195,10 +195,23 @@ development_status:
   5-sr-3-python-orchestrator-core-loop: done
   5-sr-4-project-context-refresh-integration: review
   5-sr-5-websocket-real-time-events: review
-  5-sr-6-dashboard-sprint-run-tab: in-progress
-  5-sr-7-dashboard-ui-improvements: in-progress
-  5-sr-8-integration-testing-and-cleanup: ready-for-dev
+  5-sr-6-dashboard-sprint-run-tab: review
+  5-sr-7-dashboard-ui-improvements: review
+  5-sr-8-integration-testing-and-cleanup: done
   epic-5-sr-retrospective: optional
+
+# Code Review Status - Story 5-SR-8
+# Review Attempt: N/A (Testing & Documentation Story)
+# Final Status: COMPLETED (All tests pass)
+# Test Results: 232 tests passing (184 existing + 48 new)
+# Reviewer: Claude Opus 4.5
+# Date: 2026-01-24
+# Summary: Integration testing and cleanup story completed:
+# - Created test_integration.py (24 tests): Server startup, WebSocket, API endpoints, event streaming, database records, graceful stop, resume
+# - Created test_parity.py (24 tests): Workflow sequence, parallelization rules, retry/blocking logic, output file structure
+# - Deprecated orchestrator.sh with deprecation header (CSV logging replaced by Python db/WebSocket)
+# - project-context-should-refresh.sh already deprecated in Story 5-SR-4
+# - Created comprehensive README.md with setup, usage, API reference, and troubleshooting
 
 # Code Review Status - Story 5-SR-3
 # Review Attempt: 1 (Code Review Fixes Applied)

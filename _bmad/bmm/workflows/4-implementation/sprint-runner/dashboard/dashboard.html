@@ -1527,9 +1527,487 @@
                 color: #666;
             }
         }
+
+        /* ============================================================
+           SPRINT RUN TAB STYLES (Story 5-SR-6)
+           ============================================================ */
+
+        /* Control Panel */
+        .sprint-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #e8e7e5;
+            flex-wrap: wrap;
+        }
+
+        .sprint-controls-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sprint-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sprint-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .sprint-btn.start {
+            background: #10b981;
+            color: white;
+        }
+
+        .sprint-btn.start:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .sprint-btn.stop {
+            background: #ef4444;
+            color: white;
+        }
+
+        .sprint-btn.stop:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .batch-size-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .batch-size-group label {
+            font-size: 13px;
+            color: #787774;
+            font-weight: 500;
+        }
+
+        .batch-size-input {
+            width: 60px;
+            padding: 8px 10px;
+            border: 1px solid #e8e7e5;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .batch-size-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .batch-size-input:disabled {
+            background: #f7f6f3;
+            color: #9ca3af;
+        }
+
+        .run-all-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .run-all-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #10b981;
+            cursor: pointer;
+        }
+
+        .run-all-group label {
+            font-size: 13px;
+            color: #787774;
+            cursor: pointer;
+        }
+
+        /* Status Display */
+        .sprint-status {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 200px;
+        }
+
+        .sprint-status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sprint-status-label {
+            font-size: 12px;
+            color: #787774;
+            min-width: 60px;
+        }
+
+        .sprint-status-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #37352f;
+        }
+
+        .sprint-status-value.idle {
+            color: #9ca3af;
+        }
+
+        .sprint-status-value.running {
+            color: #10b981;
+        }
+
+        .sprint-status-value.stopping {
+            color: #f59e0b;
+        }
+
+        .sprint-status-value.error {
+            color: #ef4444;
+        }
+
+        /* Progress Section */
+        .sprint-progress {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #e8e7e5;
+        }
+
+        .sprint-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .sprint-progress-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #37352f;
+        }
+
+        .sprint-progress-stats {
+            font-size: 13px;
+            color: #787774;
+        }
+
+        .sprint-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e8e7e5;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .sprint-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .sprint-active-stories {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .sprint-story-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #e8e7e5;
+            color: #787774;
+        }
+
+        .sprint-story-badge.in-progress {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .sprint-story-badge.done {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Event Log */
+        .sprint-log {
+            background: #1a1a2e;
+            color: #e0e0e0;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 12px;
+            padding: 16px;
+            border-radius: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #2a2a4e;
+        }
+
+        .sprint-log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a4e;
+            margin-bottom: 12px;
+        }
+
+        .sprint-log-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .sprint-log-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sprint-log-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 4px;
+            color: #a0a0a0;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .sprint-log-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .sprint-log-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .log-entry {
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: flex;
+            gap: 12px;
+            line-height: 1.4;
+        }
+
+        .log-entry.start {
+            background: rgba(59, 130, 246, 0.15);
+            border-left: 3px solid #3b82f6;
+        }
+
+        .log-entry.progress {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 3px solid #fbbf24;
+        }
+
+        .log-entry.end {
+            background: rgba(16, 185, 129, 0.15);
+            border-left: 3px solid #10b981;
+        }
+
+        .log-entry.error {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 3px solid #ef4444;
+        }
+
+        .log-entry.system {
+            background: rgba(139, 92, 246, 0.15);
+            border-left: 3px solid #8b5cf6;
+        }
+
+        .log-timestamp {
+            color: #6b7280;
+            flex-shrink: 0;
+            width: 70px;
+        }
+
+        .log-story-key {
+            color: #60a5fa;
+            flex-shrink: 0;
+            min-width: 80px;
+        }
+
+        .log-command {
+            color: #c084fc;
+            flex-shrink: 0;
+            min-width: 100px;
+        }
+
+        .log-task-id {
+            color: #9ca3af;
+            flex-shrink: 0;
+            min-width: 80px;
+        }
+
+        .log-status {
+            font-weight: 600;
+            flex-shrink: 0;
+            min-width: 60px;
+        }
+
+        .log-status.start { color: #3b82f6; }
+        .log-status.progress { color: #fbbf24; }
+        .log-status.end { color: #10b981; }
+        .log-status.error { color: #ef4444; }
+
+        .log-message {
+            color: #d1d5db;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .log-empty {
+            color: #6b7280;
+            text-align: center;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        /* Connection Status */
+        .ws-connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #787774;
+        }
+
+        .ws-connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+        }
+
+        .ws-connection-dot.connected {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .ws-connection-dot.disconnected {
+            background: #ef4444;
+        }
+
+        .ws-connection-dot.connecting {
+            background: #fbbf24;
+            animation: pulse 1s infinite;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast.success {
+            border-left: 4px solid #10b981;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .toast-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #37352f;
+            margin-bottom: 2px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #787774;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .toast-close:hover {
+            color: #37352f;
+        }
+
+        /* Sprint Run Tab Active Indicator */
+        .tab-btn[data-tab="sprintrun"] .tab-count.active {
+            background: #10b981;
+            color: white;
+        }
+
     </style>
 </head>
 <body>
+    <!-- Toast Container (fixed position) -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <div class="container">
         <!-- Story Tooltip -->
         <div class="story-tooltip" id="storyTooltip"></div>
@@ -1570,6 +2048,7 @@
                 <button class="tab-btn" data-tab="stories">Stories <span class="tab-count" id="storiesCount">0</span></button>
                 <button class="tab-btn" data-tab="activity">Activity <span class="tab-count" id="activityCount">0</span></button>
                 <button class="tab-btn" data-tab="timeline">Timeline</button>
+                <button class="tab-btn" data-tab="sprintrun">Sprint Run <span class="tab-count" id="sprintrunCount"></span></button>
             </div>
 
             <!-- Epic Board Tab -->
@@ -1696,6 +2175,75 @@
 
                 <!-- Tooltip (positioned absolutely) -->
                 <div class="timeline-tooltip" id="timelineTooltip"></div>
+            </div>
+
+            <!-- Sprint Run Tab (Story 5-SR-6) -->
+            <div class="tab-panel" id="tab-sprintrun">
+                <!-- Control Panel -->
+                <div class="sprint-controls">
+                    <div class="sprint-controls-row">
+                        <button class="sprint-btn start" id="sprintStartBtn">
+                            <span>&#9654;</span> Start
+                        </button>
+                        <button class="sprint-btn stop" id="sprintStopBtn" disabled>
+                            <span>&#9632;</span> Stop
+                        </button>
+                    </div>
+
+                    <div class="batch-size-group">
+                        <label for="batchSizeInput">Batch Size:</label>
+                        <input type="number" id="batchSizeInput" class="batch-size-input" value="2" min="1" max="100">
+                    </div>
+
+                    <div class="run-all-group">
+                        <input type="checkbox" id="runAllCheckbox">
+                        <label for="runAllCheckbox">Run All</label>
+                    </div>
+
+                    <div class="sprint-status">
+                        <div class="sprint-status-row">
+                            <span class="sprint-status-label">Status:</span>
+                            <span class="sprint-status-value idle" id="sprintStatusValue">Idle</span>
+                        </div>
+                        <div class="sprint-status-row">
+                            <span class="sprint-status-label">Current:</span>
+                            <span class="sprint-status-value" id="sprintCurrentOp">-</span>
+                        </div>
+                    </div>
+
+                    <div class="ws-connection-status">
+                        <span class="ws-connection-dot" id="wsConnectionDot"></span>
+                        <span id="wsConnectionText">Disconnected</span>
+                    </div>
+                </div>
+
+                <!-- Progress Section (Creative Enhancement) -->
+                <div class="sprint-progress" id="sprintProgressSection" style="display: none;">
+                    <div class="sprint-progress-header">
+                        <span class="sprint-progress-title">Cycle Progress</span>
+                        <span class="sprint-progress-stats" id="sprintProgressStats">0/0 cycles</span>
+                    </div>
+                    <div class="sprint-progress-bar">
+                        <div class="sprint-progress-fill" id="sprintProgressFill" style="width: 0%;"></div>
+                    </div>
+                    <div class="sprint-active-stories" id="sprintActiveStories">
+                        <!-- Active story badges will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Event Log -->
+                <div class="sprint-log" id="sprintLog">
+                    <div class="sprint-log-header">
+                        <span class="sprint-log-title">Event Log</span>
+                        <div class="sprint-log-actions">
+                            <button class="sprint-log-btn" onclick="clearSprintLog()">Clear</button>
+                            <button class="sprint-log-btn" onclick="toggleAutoScroll()">Auto-scroll: <span id="autoScrollState">ON</span></button>
+                        </div>
+                    </div>
+                    <div class="sprint-log-entries" id="sprintLogEntries">
+                        <div class="log-empty">No events yet. Start a sprint run to see live events.</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2527,6 +3075,19 @@
             const inProgressEl = document.getElementById('epicsInProgressCol');
             const doneEl = document.getElementById('epicsDone');
 
+            // Capture currently expanded epic IDs before update (Story 5-SR-7)
+            const previouslyExpanded = new Set(
+                Array.from(document.querySelectorAll('.epic-card.expanded'))
+                    .map(el => el.dataset.epicId)
+            );
+
+            // Build map of existing cards for incremental update
+            const existingCards = new Map();
+            document.querySelectorAll('.epic-card').forEach(card => {
+                existingCards.set(card.dataset.epicId, card);
+            });
+
+            // Clear columns (we'll re-add cards)
             backlogEl.innerHTML = '';
             inProgressEl.innerHTML = '';
             doneEl.innerHTML = '';
@@ -2548,27 +3109,60 @@
                 });
                 const totalDuration = totalDurationSecs > 0 ? formatDuration(totalDurationSecs) : '';
 
-                const card = document.createElement('div');
-                card.className = 'epic-card';
-                card.dataset.epicId = epic.id;
-
                 const safeEpicName = escapeHtml(epic.name);
                 const safeTotalDuration = escapeHtml(totalDuration);
 
-                card.innerHTML = `
-                    <div class="epic-card-header">
-                        <div class="epic-card-title">${safeEpicName}</div>
-                        <span class="epic-expand-icon">&#9654;</span>
-                    </div>
-                    <div class="epic-card-meta">
-                        <span class="epic-card-progress">${doneStories}/${totalStories} stories</span>
-                        ${safeTotalDuration ? `<span class="epic-card-duration">${safeTotalDuration}</span>` : ''}
-                    </div>
-                    <div class="epic-card-progress-bar">
-                        <div class="epic-card-progress-fill" style="width: ${progress}%"></div>
-                    </div>
-                    <div class="epic-stories-list" style="display: none;"></div>
-                `;
+                // Check if card already exists
+                let card = existingCards.get(epic.id);
+                const wasExpanded = previouslyExpanded.has(epic.id);
+
+                if (card) {
+                    // Update existing card in-place (incremental update)
+                    const progressEl = card.querySelector('.epic-card-progress');
+                    if (progressEl) progressEl.textContent = `${doneStories}/${totalStories} stories`;
+
+                    const durationEl = card.querySelector('.epic-card-duration');
+                    if (safeTotalDuration) {
+                        if (durationEl) {
+                            durationEl.textContent = safeTotalDuration;
+                        } else {
+                            const metaEl = card.querySelector('.epic-card-meta');
+                            if (metaEl) {
+                                const newDuration = document.createElement('span');
+                                newDuration.className = 'epic-card-duration';
+                                newDuration.textContent = safeTotalDuration;
+                                metaEl.appendChild(newDuration);
+                            }
+                        }
+                    } else if (durationEl) {
+                        durationEl.remove();
+                    }
+
+                    const progressFill = card.querySelector('.epic-card-progress-fill');
+                    if (progressFill) progressFill.style.width = `${progress}%`;
+
+                    existingCards.delete(epic.id);
+                } else {
+                    // Create new card
+                    card = document.createElement('div');
+                    card.className = 'epic-card';
+                    card.dataset.epicId = epic.id;
+
+                    card.innerHTML = `
+                        <div class="epic-card-header">
+                            <div class="epic-card-title">${safeEpicName}</div>
+                            <span class="epic-expand-icon">&#9654;</span>
+                        </div>
+                        <div class="epic-card-meta">
+                            <span class="epic-card-progress">${doneStories}/${totalStories} stories</span>
+                            ${safeTotalDuration ? `<span class="epic-card-duration">${safeTotalDuration}</span>` : ''}
+                        </div>
+                        <div class="epic-card-progress-bar">
+                            <div class="epic-card-progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="epic-stories-list" style="display: none;"></div>
+                    `;
+                }
 
                 // Auto-detect epic status based on story completion
                 // (overrides YAML status for accuracy)
@@ -2591,7 +3185,35 @@
                 } else {
                     backlogEl.appendChild(card);
                 }
+
+                // Restore expanded state (Story 5-SR-7)
+                if (wasExpanded && !card.classList.contains('expanded')) {
+                    // Re-expand with fresh data
+                    card.classList.add('expanded');
+                    const storiesList = card.querySelector('.epic-stories-list');
+                    if (storiesList && epicStories.length > 0) {
+                        storiesList.innerHTML = epicStories.map(story => {
+                            const safeId = escapeHtml(story.id);
+                            const safeIdJs = escapeJsString(story.id);
+                            const statusClass = normalizeStatusForClass(story.status);
+                            const safeStatus = escapeHtml(story.status);
+                            return `
+                                <div class="epic-story-item"
+                                     data-story-id="${safeId}"
+                                     onmouseenter="showStoryTooltip(event, '${safeIdJs}')"
+                                     onmouseleave="hideStoryTooltip()">
+                                    <span class="story-name">${safeId}</span>
+                                    <span class="badge badge-${statusClass}">${safeStatus}</span>
+                                </div>
+                            `;
+                        }).join('');
+                        storiesList.style.display = 'block';
+                    }
+                }
             });
+
+            // Remove cards that no longer exist in data
+            existingCards.forEach(card => card.remove());
 
             if (!backlogEl.children.length) {
                 backlogEl.innerHTML = '<div class="empty-state">No epics</div>';
@@ -2604,6 +3226,9 @@
             }
 
             attachEpicCardHandlers();
+
+            // Save UI state after render (Story 5-SR-7)
+            saveUIState();
         }
 
         function toggleEpicCard(epicId) {
@@ -2638,6 +3263,9 @@
             } else {
                 storiesList.style.display = 'none';
             }
+
+            // Save UI state when epic expansion changes (Story 5-SR-7)
+            saveUIState();
         }
 
         function attachEpicCardHandlers() {
@@ -2652,7 +3280,11 @@
 
         function renderStoryTable(data, epicFilter = 'all', statusFilter = 'all') {
             const tbody = document.getElementById('storyTableBody');
+            const tableContainer = tbody.closest('.table-container');
             const stories = data.stories.filter(s => !s.id.includes('retrospective'));
+
+            // Save scroll position before update (Story 5-SR-7)
+            const scrollPos = saveScrollPosition(tableContainer);
 
             let filtered = stories;
             if (epicFilter !== 'all') {
@@ -2667,7 +3299,15 @@
                 return;
             }
 
-            tbody.innerHTML = filtered.map(story => {
+            // Build map of existing rows for incremental update (Story 5-SR-7)
+            const existingRows = new Map();
+            tbody.querySelectorAll('.story-row').forEach(row => {
+                existingRows.set(row.dataset.storyId, row);
+            });
+
+            const newRowIds = new Set(filtered.map(s => s.id));
+
+            filtered.forEach((story, index) => {
                 const activity = state.orchestratorData?.find(a => a.storyId === story.id);
                 const duration = activity?.duration || '-';
                 const safeId = escapeHtml(story.id);
@@ -2678,19 +3318,52 @@
                 const statusClass = normalizeStatusForClass(story.status);
                 const safeStatus = escapeHtml(story.status);
 
-                return `
-                    <tr class="story-row"
-                        data-story-id="${safeId}"
-                        onmouseenter="showStoryTooltip(event, '${safeIdJs}')"
-                        onmouseleave="hideStoryTooltip()">
+                let row = existingRows.get(story.id);
+
+                if (row) {
+                    // Update existing row in-place
+                    const cells = row.querySelectorAll('td');
+                    if (cells[0]) updateTextContent(cells[0], safeId);
+                    if (cells[1]) updateTextContent(cells[1], safeName);
+                    if (cells[2]) updateTextContent(cells[2], safeEpic);
+                    if (cells[3]) updateTextContent(cells[3], safeDuration);
+                    if (cells[4]) {
+                        const badge = cells[4].querySelector('.badge');
+                        if (badge) {
+                            badge.className = `badge badge-${statusClass}`;
+                            updateTextContent(badge, safeStatus);
+                        }
+                    }
+                    existingRows.delete(story.id);
+
+                    // Ensure row is in correct position
+                    if (tbody.children[index] !== row) {
+                        tbody.insertBefore(row, tbody.children[index] || null);
+                    }
+                } else {
+                    // Create new row
+                    row = document.createElement('tr');
+                    row.className = 'story-row';
+                    row.dataset.storyId = safeId;
+                    row.setAttribute('onmouseenter', `showStoryTooltip(event, '${safeIdJs}')`);
+                    row.setAttribute('onmouseleave', 'hideStoryTooltip()');
+                    row.innerHTML = `
                         <td class="story-id">${safeId}</td>
                         <td>${safeName}</td>
                         <td>${safeEpic}</td>
                         <td class="story-duration">${safeDuration}</td>
                         <td><span class="badge badge-${statusClass}">${safeStatus}</span></td>
-                    </tr>
-                `;
-            }).join('');
+                    `;
+                    // Insert at correct position
+                    tbody.insertBefore(row, tbody.children[index] || null);
+                }
+            });
+
+            // Remove rows that no longer exist
+            existingRows.forEach(row => row.remove());
+
+            // Restore scroll position after update (Story 5-SR-7)
+            restoreScrollPosition(tableContainer, scrollPos);
         }
 
         function updateEpicFilter(data) {
@@ -2720,6 +3393,28 @@
                 logEl.innerHTML = '<div class="empty-state">No activity yet</div>';
                 return;
             }
+
+            // Capture current expanded/collapsed state before update (Story 5-SR-7)
+            const expandedIndices = new Set();
+            const collapsedCommands = new Map(); // Map<activityIndex, Set<cmdIndex>>
+            logEl.querySelectorAll('.activity-item').forEach(item => {
+                const idx = parseInt(item.dataset.index, 10);
+                if (!item.classList.contains('collapsed')) {
+                    expandedIndices.add(idx);
+                }
+                // Track collapsed commands within this activity
+                const collapsedCmds = new Set();
+                item.querySelectorAll('.command-group.collapsed').forEach(cmd => {
+                    const cmdIdx = parseInt(cmd.dataset.cmdIndex, 10);
+                    collapsedCmds.add(cmdIdx);
+                });
+                if (collapsedCmds.size > 0) {
+                    collapsedCommands.set(idx, collapsedCmds);
+                }
+            });
+
+            // Save scroll position
+            const scrollPos = saveScrollPosition(logEl);
 
             const toRender = activities.slice(0, 10);
             console.log('Rendering', toRender.length, 'activities:', toRender.map(a => a.storyId));
@@ -2837,12 +3532,45 @@
                     </div>
                 `;
             }).join('');
+
+            // Restore expanded/collapsed state (Story 5-SR-7)
+            logEl.querySelectorAll('.activity-item').forEach(item => {
+                const idx = parseInt(item.dataset.index, 10);
+                // First item defaults to expanded, others to collapsed
+                // But if we captured a state, honor it
+                if (expandedIndices.size > 0) {
+                    // Use captured state
+                    if (expandedIndices.has(idx)) {
+                        item.classList.remove('collapsed');
+                    } else if (idx > 0) {
+                        item.classList.add('collapsed');
+                    }
+                }
+                // Restore collapsed commands
+                const collapsedCmds = collapsedCommands.get(idx);
+                if (collapsedCmds) {
+                    item.querySelectorAll('.command-group').forEach(cmd => {
+                        const cmdIdx = parseInt(cmd.dataset.cmdIndex, 10);
+                        if (collapsedCmds.has(cmdIdx)) {
+                            cmd.classList.add('collapsed');
+                        }
+                    });
+                }
+            });
+
+            // Restore scroll position (Story 5-SR-7)
+            restoreScrollPosition(logEl, scrollPos);
+
+            // Save UI state (Story 5-SR-7)
+            saveUIState();
         }
 
         function toggleActivity(index) {
             const item = document.querySelector(`.activity-item[data-index="${index}"]`);
             if (item) {
                 item.classList.toggle('collapsed');
+                // Save UI state when activity expansion changes (Story 5-SR-7)
+                saveUIState();
             }
         }
 
@@ -3157,6 +3885,9 @@
 
             // Re-render timeline to update sort order and bounds
             renderTimeline();
+
+            // Save UI state when visibility changes (Story 5-SR-7)
+            saveUIState();
         }
 
         // Hide all stories in timeline
@@ -3232,6 +3963,9 @@
             } else {
                 timelineState.expandedStoryIds.add(storyId);
             }
+
+            // Save UI state when timeline row expansion changes (Story 5-SR-7)
+            saveUIState();
         }
 
         // Toggle command expand/collapse in timeline
@@ -3763,9 +4497,36 @@
                     state.sprintData = parseSprintStatus(sprintText);
                     state.lastUpdateTime = Date.now();
                     renderSummaryCards(state.sprintData);
-                    renderEpicBoard(state.sprintData);
                     updateEpicFilter(state.sprintData);
-                    renderStoryTable(state.sprintData);
+
+                    // Restore filter values before rendering table (Story 5-SR-7)
+                    try {
+                        const filtersJson = localStorage.getItem(UI_STATE_KEYS.FILTERS);
+                        if (filtersJson) {
+                            const filters = JSON.parse(filtersJson);
+                            const epicFilter = document.getElementById('epicFilter');
+                            const statusFilter = document.getElementById('statusFilter');
+                            // Only set if option exists in filter
+                            if (epicFilter && filters.epic && Array.from(epicFilter.options).some(o => o.value === filters.epic)) {
+                                epicFilter.value = filters.epic;
+                            }
+                            if (statusFilter && filters.status) {
+                                statusFilter.value = filters.status;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Failed to restore filters:', e);
+                    }
+
+                    renderEpicBoard(state.sprintData);
+
+                    // Render story table with restored filters
+                    const epicFilter = document.getElementById('epicFilter').value;
+                    const statusFilter = document.getElementById('statusFilter').value;
+                    renderStoryTable(state.sprintData, epicFilter, statusFilter);
+
+                    // Restore expanded epics after render (Story 5-SR-7)
+                    restoreExpandedEpics();
                 }
 
                 let orchText = null;
@@ -3780,6 +4541,9 @@
                     console.log('Parsed activities:', state.orchestratorData.length, 'stories:', state.orchestratorData.map(a => a.storyId));
                     state.lastUpdateTime = Date.now();
                     renderActivityLog(state.orchestratorData);
+
+                    // Restore expanded activities after render (Story 5-SR-7)
+                    restoreExpandedActivities();
                 }
 
                 if (state.sprintData || state.orchestratorData) {
@@ -3787,6 +4551,9 @@
                     document.getElementById('updateDot').classList.remove('inactive');
                     state.autoLoadWorks = true;
                     updateTabCounts(state.sprintData, state.orchestratorData);
+
+                    // Restore scroll positions after initial render (Story 5-SR-7)
+                    setTimeout(restoreScrollPositions, 100);
 
                     if (!state.watchInterval) {
                         state.isWatching = true;
@@ -3808,6 +4575,8 @@
             if (state.sprintData) {
                 const statusFilter = document.getElementById('statusFilter').value;
                 renderStoryTable(state.sprintData, e.target.value, statusFilter);
+                // Save UI state when filter changes (Story 5-SR-7)
+                saveUIState();
             }
         });
 
@@ -3815,10 +4584,13 @@
             if (state.sprintData) {
                 const epicFilter = document.getElementById('epicFilter').value;
                 renderStoryTable(state.sprintData, epicFilter, e.target.value);
+                // Save UI state when filter changes (Story 5-SR-7)
+                saveUIState();
             }
         });
 
-        // Initialize
+        // Initialize (Story 5-SR-7: Restore UI state before initial render)
+        restoreUIState();
         restoreColumnWidth();
         initColumnResize();
         initTimelineCursorLine();
@@ -3827,6 +4599,491 @@
 
         // Update time display
         setInterval(updateLastUpdatedTime, 1000);
+
+        // Save scroll positions periodically to localStorage (Story 5-SR-7)
+        setInterval(saveUIState, 5000);
+
+        // ============================================================
+        // SPRINT RUN TAB FUNCTIONALITY (Story 5-SR-6)
+        // ============================================================
+
+        // Sprint Run State
+        const sprintRunState = {
+            ws: null,
+            wsReconnectTimer: null,
+            wsReconnectAttempts: 0,
+            isRunning: false,
+            isStopping: false,
+            currentBatchId: null,
+            maxCycles: 0,
+            currentCycle: 0,
+            activeStories: [],
+            currentOperation: null,
+            autoScroll: true,
+            userScrolled: false
+        };
+
+        // Toast Notifications (AC: #6)
+        function showToast(message, type = 'info', title = null, duration = 5000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                error: '&#10060;',
+                success: '&#10004;',
+                warning: '&#9888;',
+                info: '&#8505;'
+            };
+
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type] || icons.info}</span>
+                <div class="toast-content">
+                    ${title ? `<div class="toast-title">${title}</div>` : ''}
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto-dismiss (errors stay longer or persist)
+            if (type !== 'error' || duration > 0) {
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.style.animation = 'slideIn 0.3s ease reverse';
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, type === 'error' ? 10000 : duration);
+            }
+        }
+
+        // WebSocket Connection (AC: #5)
+        function connectSprintWebSocket() {
+            const wsUrl = `ws://${window.location.host}/ws`;
+            updateWsConnectionStatus('connecting');
+
+            try {
+                sprintRunState.ws = new WebSocket(wsUrl);
+
+                sprintRunState.ws.onopen = () => {
+                    console.log('WebSocket connected');
+                    updateWsConnectionStatus('connected');
+                    sprintRunState.wsReconnectAttempts = 0;
+                    addLogEntry({ type: 'system', message: 'Connected to server' }, 'system');
+                };
+
+                sprintRunState.ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketEvent(data);
+                    } catch (e) {
+                        console.error('Failed to parse WebSocket message:', e);
+                    }
+                };
+
+                sprintRunState.ws.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    updateWsConnectionStatus('disconnected');
+                    scheduleWsReconnect();
+                };
+
+                sprintRunState.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    updateWsConnectionStatus('disconnected');
+                };
+            } catch (e) {
+                console.error('Failed to create WebSocket:', e);
+                updateWsConnectionStatus('disconnected');
+                scheduleWsReconnect();
+            }
+        }
+
+        function scheduleWsReconnect() {
+            if (sprintRunState.wsReconnectTimer) return;
+
+            const delay = Math.min(3000 * Math.pow(2, sprintRunState.wsReconnectAttempts), 30000);
+            sprintRunState.wsReconnectAttempts++;
+
+            sprintRunState.wsReconnectTimer = setTimeout(() => {
+                sprintRunState.wsReconnectTimer = null;
+                connectSprintWebSocket();
+            }, delay);
+        }
+
+        function updateWsConnectionStatus(status) {
+            const dot = document.getElementById('wsConnectionDot');
+            const text = document.getElementById('wsConnectionText');
+
+            dot.className = 'ws-connection-dot ' + status;
+            text.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        }
+
+        // WebSocket Event Handling (AC: #5)
+        function handleWebSocketEvent(event) {
+            const { type, payload, timestamp } = event;
+
+            switch (type) {
+                case 'init':
+                    // Initial state from server
+                    if (payload.batch) {
+                        handleBatchState(payload.batch);
+                    }
+                    if (payload.events) {
+                        payload.events.forEach(e => addLogEntry(e, getEventStatus(e)));
+                    }
+                    break;
+
+                case 'batch:start':
+                    sprintRunState.isRunning = true;
+                    sprintRunState.isStopping = false;
+                    sprintRunState.currentBatchId = payload.batch_id;
+                    sprintRunState.maxCycles = payload.max_cycles || 0;
+                    sprintRunState.currentCycle = 0;
+                    updateSprintUI();
+                    showProgressSection(true);
+                    addLogEntry({ type, payload, timestamp }, 'start');
+                    updateTabIndicator(true);
+                    break;
+
+                case 'batch:end':
+                    sprintRunState.isRunning = false;
+                    sprintRunState.isStopping = false;
+                    sprintRunState.currentOperation = null;
+                    updateSprintUI();
+                    addLogEntry({ type, payload, timestamp }, payload.status === 'completed' ? 'end' : 'system');
+                    updateTabIndicator(false);
+                    if (payload.status === 'completed') {
+                        showToast(`Batch completed: ${payload.cycles_completed} cycles`, 'success', 'Sprint Complete');
+                    }
+                    break;
+
+                case 'cycle:start':
+                    sprintRunState.currentCycle = payload.cycle_number;
+                    sprintRunState.activeStories = payload.story_keys || [];
+                    updateProgress();
+                    updateActiveStories();
+                    addLogEntry({ type, payload, timestamp }, 'start');
+                    break;
+
+                case 'cycle:end':
+                    updateProgress();
+                    addLogEntry({ type, payload, timestamp }, 'end');
+                    break;
+
+                case 'command:start':
+                    sprintRunState.currentOperation = `${payload.story_key} ${payload.command} (${payload.task_id})`;
+                    updateCurrentOperation();
+                    addLogEntry({ type, payload, timestamp }, 'start');
+                    break;
+
+                case 'command:progress':
+                    addLogEntry({ type, payload, timestamp }, 'progress');
+                    break;
+
+                case 'command:end':
+                    if (sprintRunState.currentOperation &&
+                        sprintRunState.currentOperation.includes(payload.story_key)) {
+                        sprintRunState.currentOperation = null;
+                        updateCurrentOperation();
+                    }
+                    addLogEntry({ type, payload, timestamp }, payload.status === 'error' ? 'error' : 'end');
+                    break;
+
+                case 'story:status':
+                    updateStoryBadge(payload.story_key, payload.new_status);
+                    addLogEntry({ type, payload, timestamp }, 'system');
+                    break;
+
+                case 'error':
+                    addLogEntry({ type, payload, timestamp }, 'error');
+                    showToast(payload.message, 'error', 'Error');
+                    break;
+
+                case 'context:create':
+                case 'context:refresh':
+                case 'context:complete':
+                    addLogEntry({ type, payload, timestamp }, 'system');
+                    break;
+
+                default:
+                    console.log('Unknown WebSocket event:', type, payload);
+            }
+        }
+
+        function getEventStatus(event) {
+            if (event.type?.includes('start')) return 'start';
+            if (event.type?.includes('end') || event.type?.includes('complete')) return 'end';
+            if (event.type?.includes('progress')) return 'progress';
+            if (event.type?.includes('error')) return 'error';
+            return 'system';
+        }
+
+        function handleBatchState(batch) {
+            if (batch && batch.status === 'running') {
+                sprintRunState.isRunning = true;
+                sprintRunState.currentBatchId = batch.id;
+                sprintRunState.maxCycles = batch.max_cycles;
+                sprintRunState.currentCycle = batch.cycles_completed || 0;
+                updateSprintUI();
+                showProgressSection(true);
+                updateTabIndicator(true);
+            }
+        }
+
+        // Event Log (AC: #5)
+        function addLogEntry(event, status) {
+            const entries = document.getElementById('sprintLogEntries');
+
+            // Remove empty state message if present
+            const emptyMsg = entries.querySelector('.log-empty');
+            if (emptyMsg) emptyMsg.remove();
+
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${status}`;
+
+            const timestamp = event.timestamp ? formatLogTime(event.timestamp) : formatLogTime(Date.now());
+            const payload = event.payload || {};
+
+            if (event.type === 'system' || status === 'system') {
+                entry.innerHTML = `
+                    <span class="log-timestamp">${timestamp}</span>
+                    <span class="log-message">${payload.message || event.message || event.type}</span>
+                `;
+            } else {
+                entry.innerHTML = `
+                    <span class="log-timestamp">${timestamp}</span>
+                    <span class="log-story-key">${payload.story_key || '-'}</span>
+                    <span class="log-command">${payload.command || event.type?.split(':')[0] || '-'}</span>
+                    <span class="log-task-id">${payload.task_id || '-'}</span>
+                    <span class="log-status ${status}">${status}</span>
+                    <span class="log-message">${payload.message || ''}</span>
+                `;
+            }
+
+            // Insert at top (newest first)
+            entries.insertBefore(entry, entries.firstChild);
+
+            // Auto-scroll handling
+            if (sprintRunState.autoScroll && !sprintRunState.userScrolled) {
+                const logContainer = document.getElementById('sprintLog');
+                logContainer.scrollTop = 0;
+            }
+
+            // Limit entries to prevent memory issues
+            while (entries.children.length > 500) {
+                entries.removeChild(entries.lastChild);
+            }
+        }
+
+        function formatLogTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', { hour12: false });
+        }
+
+        function clearSprintLog() {
+            const entries = document.getElementById('sprintLogEntries');
+            entries.innerHTML = '<div class="log-empty">Log cleared. Events will appear here.</div>';
+        }
+
+        function toggleAutoScroll() {
+            sprintRunState.autoScroll = !sprintRunState.autoScroll;
+            document.getElementById('autoScrollState').textContent = sprintRunState.autoScroll ? 'ON' : 'OFF';
+        }
+
+        // Auto-scroll detection
+        document.getElementById('sprintLog')?.addEventListener('scroll', function() {
+            const isAtTop = this.scrollTop < 50;
+            sprintRunState.userScrolled = !isAtTop;
+        });
+
+        // Control Panel (AC: #2, #3, #4)
+        function updateSprintUI() {
+            const startBtn = document.getElementById('sprintStartBtn');
+            const stopBtn = document.getElementById('sprintStopBtn');
+            const batchInput = document.getElementById('batchSizeInput');
+            const runAllCheckbox = document.getElementById('runAllCheckbox');
+            const statusValue = document.getElementById('sprintStatusValue');
+
+            if (sprintRunState.isRunning) {
+                startBtn.disabled = true;
+                stopBtn.disabled = sprintRunState.isStopping;
+                batchInput.disabled = true;
+                runAllCheckbox.disabled = true;
+
+                if (sprintRunState.isStopping) {
+                    statusValue.textContent = 'Stopping...';
+                    statusValue.className = 'sprint-status-value stopping';
+                } else {
+                    const cycleText = sprintRunState.maxCycles > 0
+                        ? `Running cycle ${sprintRunState.currentCycle}/${sprintRunState.maxCycles}`
+                        : `Running cycle ${sprintRunState.currentCycle}`;
+                    statusValue.textContent = cycleText;
+                    statusValue.className = 'sprint-status-value running';
+                }
+            } else {
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                batchInput.disabled = runAllCheckbox.checked;
+                runAllCheckbox.disabled = false;
+                statusValue.textContent = 'Idle';
+                statusValue.className = 'sprint-status-value idle';
+            }
+        }
+
+        function updateCurrentOperation() {
+            const opDisplay = document.getElementById('sprintCurrentOp');
+            opDisplay.textContent = sprintRunState.currentOperation || '-';
+        }
+
+        function showProgressSection(show) {
+            const section = document.getElementById('sprintProgressSection');
+            section.style.display = show ? 'block' : 'none';
+        }
+
+        function updateProgress() {
+            const fill = document.getElementById('sprintProgressFill');
+            const stats = document.getElementById('sprintProgressStats');
+
+            const progress = sprintRunState.maxCycles > 0
+                ? (sprintRunState.currentCycle / sprintRunState.maxCycles) * 100
+                : 0;
+
+            fill.style.width = `${Math.min(progress, 100)}%`;
+            stats.textContent = sprintRunState.maxCycles > 0
+                ? `${sprintRunState.currentCycle}/${sprintRunState.maxCycles} cycles`
+                : `${sprintRunState.currentCycle} cycles`;
+        }
+
+        function updateActiveStories() {
+            const container = document.getElementById('sprintActiveStories');
+            container.innerHTML = sprintRunState.activeStories.map(key =>
+                `<span class="sprint-story-badge in-progress" data-story="${key}">${key}</span>`
+            ).join('');
+        }
+
+        function updateStoryBadge(storyKey, status) {
+            const badge = document.querySelector(`.sprint-story-badge[data-story="${storyKey}"]`);
+            if (badge) {
+                badge.className = `sprint-story-badge ${status === 'done' ? 'done' : 'in-progress'}`;
+            }
+        }
+
+        function updateTabIndicator(isActive) {
+            const countSpan = document.getElementById('sprintrunCount');
+            if (isActive) {
+                countSpan.textContent = '●';
+                countSpan.classList.add('active');
+            } else {
+                countSpan.textContent = '';
+                countSpan.classList.remove('active');
+            }
+        }
+
+        // Start/Stop Actions (AC: #3, #4)
+        async function startSprint() {
+            const batchInput = document.getElementById('batchSizeInput');
+            const runAllCheckbox = document.getElementById('runAllCheckbox');
+
+            const batchSize = runAllCheckbox.checked ? 'all' : parseInt(batchInput.value, 10);
+
+            if (!runAllCheckbox.checked && (isNaN(batchSize) || batchSize < 1)) {
+                showToast('Please enter a valid batch size (positive number)', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/orchestrator/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ batch_size: batchSize })
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error || 'Failed to start sprint');
+                }
+
+                // UI updates will come via WebSocket
+                showToast('Sprint started', 'success');
+
+            } catch (error) {
+                console.error('Failed to start sprint:', error);
+                showToast(error.message || 'Failed to start sprint', 'error');
+            }
+        }
+
+        async function stopSprint() {
+            sprintRunState.isStopping = true;
+            updateSprintUI();
+
+            try {
+                const response = await fetch('/api/orchestrator/stop', {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to stop sprint');
+                }
+
+                showToast('Stop signal sent. Waiting for current operation to complete...', 'warning');
+
+            } catch (error) {
+                console.error('Failed to stop sprint:', error);
+                showToast(error.message || 'Failed to stop sprint', 'error');
+                sprintRunState.isStopping = false;
+                updateSprintUI();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('sprintStartBtn')?.addEventListener('click', startSprint);
+        document.getElementById('sprintStopBtn')?.addEventListener('click', stopSprint);
+
+        document.getElementById('runAllCheckbox')?.addEventListener('change', function() {
+            const batchInput = document.getElementById('batchSizeInput');
+            batchInput.disabled = this.checked;
+            if (this.checked) {
+                batchInput.value = '';
+            } else {
+                batchInput.value = localStorage.getItem('dashboard-sprintrun-batchsize') || '2';
+            }
+            saveSprintRunPrefs();
+        });
+
+        document.getElementById('batchSizeInput')?.addEventListener('change', saveSprintRunPrefs);
+
+        // Persistence (Story 5-SR-7 pattern)
+        function saveSprintRunPrefs() {
+            const batchInput = document.getElementById('batchSizeInput');
+            const runAllCheckbox = document.getElementById('runAllCheckbox');
+
+            if (batchInput.value && !runAllCheckbox.checked) {
+                localStorage.setItem('dashboard-sprintrun-batchsize', batchInput.value);
+            }
+            localStorage.setItem('dashboard-sprintrun-runall', runAllCheckbox.checked);
+        }
+
+        function restoreSprintRunPrefs() {
+            const savedBatchSize = localStorage.getItem('dashboard-sprintrun-batchsize');
+            const savedRunAll = localStorage.getItem('dashboard-sprintrun-runall') === 'true';
+
+            if (savedBatchSize) {
+                document.getElementById('batchSizeInput').value = savedBatchSize;
+            }
+            document.getElementById('runAllCheckbox').checked = savedRunAll;
+            document.getElementById('batchSizeInput').disabled = savedRunAll;
+        }
+
+        // Initialize Sprint Run Tab
+        function initSprintRunTab() {
+            restoreSprintRunPrefs();
+            connectSprintWebSocket();
+            updateSprintUI();
+        }
+
+        // Initialize when DOM is ready
+        initSprintRunTab();
     </script>
 </body>
 </html>
