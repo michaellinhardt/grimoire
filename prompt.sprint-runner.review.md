@@ -39,6 +39,16 @@ When done, Start one subagent to review the 2 plan at once, it focus on coherenc
 
 Sub agent to repeat the review process, this time with Haiku
 
+## Implementation
+
+Start one subagent to implement plan 1
+Start one subagent to implement plan 2
+
+When done, Start one subagent per implementation to review and fix.
+Repeat a second time with Haiku sub agents.
+
+One last review fix with an agent, it review the 2 implementation at once, to identify mismatch between both, gap etc.. it focus on relationship of the two implementation.
+
 ## Move Artifacts
 
 Move all generated implementation artifacts inside `archived-artifacts` from sprint-runner command folder.
