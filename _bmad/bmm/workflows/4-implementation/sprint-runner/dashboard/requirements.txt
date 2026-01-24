@@ -1,0 +1,13 @@
+# Sprint Runner Dashboard Dependencies
+# Python 3.9+ compatible
+#
+# Note: aiohttp and websockets will be used in Story 5-SR-5 (WebSocket integration)
+# Currently server.py uses stdlib http.server, will be migrated to aiohttp in future stories
+
+aiohttp>=3.9.0
+pyyaml>=6.0
+websockets>=12.0
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0

@@ -5,13 +5,13 @@ Enhanced Dashboard Server
 Serves dashboard files and provides dynamic story description extraction.
 
 Features:
-- Serves static files from docs/ directory
+- Serves static files from dashboard/ directory
 - Dynamically generates story-descriptions.json from story files
 - Serves sprint-status.yaml and orchestrator files from implementation-artifacts
 - Auto-symlinks required files if not present
 
 Usage:
-    cd /Users/teazyou/dev/grimoire/docs
+    cd /path/to/grimoire/_bmad/bmm/workflows/4-implementation/sprint-runner/dashboard
     python3 server.py
 
 Then open: http://localhost:8080/dashboard.html
@@ -30,9 +30,21 @@ from typing import Optional, Dict
 
 PORT = 8080
 
-# Paths
-DOCS_DIR = Path(__file__).parent
-PROJECT_ROOT = DOCS_DIR.parent
+# Paths - Robust project root detection
+DASHBOARD_DIR = Path(__file__).parent
+
+
+def find_project_root() -> Path:
+    """Find project root by looking for package.json or .git"""
+    current = Path(__file__).parent
+    while current != current.parent:
+        if (current / 'package.json').exists() or (current / '.git').exists():
+            return current
+        current = current.parent
+    raise RuntimeError("Could not find project root (no package.json or .git found)")
+
+
+PROJECT_ROOT = find_project_root()
 ARTIFACTS_DIR = PROJECT_ROOT / '_bmad-output' / 'implementation-artifacts'
 
 
@@ -41,8 +53,9 @@ def extract_story_id(filename: str) -> Optional[str]:
     # Remove .md extension and return full name as story ID
     if filename.endswith('.md'):
         story_id = filename[:-3]  # Remove .md
-        # Verify it starts with a story pattern (digit followed by optional letter, dash, digit)
-        if re.match(r'^\d+[a-z]?-\d+', story_id):
+        # Verify it starts with a story pattern (digit, optional letter, dash, then word chars/dashes)
+        # Supports formats: 1-2, 2a-1, 5-sr-1, 5-sr-1-description
+        if re.match(r'^\d+[a-z]?-[\w-]+', story_id):
             return story_id
     return None
 
@@ -116,14 +129,19 @@ def scan_artifacts() -> Dict[str, str]:
 
 
 def ensure_symlinks():
-    """Create symlinks for data files if they don't exist"""
+    """Create symlinks for data files if they don't exist (in dashboard directory)
+
+    These symlinks enable direct file access during development while the same files
+    are also served via HTTP endpoints (/sprint-status.yaml, /orchestrator.md) for
+    the dashboard UI.
+    """
     links = {
         'sprint-status.yaml': ARTIFACTS_DIR / 'sprint-status.yaml',
         'orchestrator.md': ARTIFACTS_DIR / 'orchestrator.md',
     }
 
     for link_name, target in links.items():
-        link_path = DOCS_DIR / link_name
+        link_path = DASHBOARD_DIR / link_name
         if not link_path.exists() and target.exists():
             try:
                 link_path.symlink_to(target)
@@ -136,7 +154,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     """Custom handler that serves story descriptions dynamically"""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(DOCS_DIR), **kwargs)
+        super().__init__(*args, directory=str(DASHBOARD_DIR), **kwargs)
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -154,7 +172,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             self.serve_artifact_file(path)
             return
 
-        # Security: Validate path doesn't escape docs directory
+        # Security: Validate path doesn't escape dashboard directory
         try:
             normalized = os.path.normpath(path)
             if normalized.startswith('..') or normalized.startswith('/'):
@@ -168,11 +186,11 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
 
     def serve_artifact_file(self, filename):
-        """Serve a file from artifacts directory, or docs if not found there"""
-        # Try artifacts first, then docs
+        """Serve a file from artifacts directory, or dashboard if not found there"""
+        # Try artifacts first, then dashboard
         filepath = ARTIFACTS_DIR / filename
         if not filepath.exists():
-            filepath = DOCS_DIR / filename
+            filepath = DASHBOARD_DIR / filename
         if not filepath.exists():
             self.send_error(404, f"File not found: {filename}")
             return
@@ -214,8 +232,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
 
 def main():
-    # Change to docs directory
-    os.chdir(DOCS_DIR)
+    # Change to dashboard directory
+    os.chdir(DASHBOARD_DIR)
 
     # Ensure symlinks exist
     ensure_symlinks()
@@ -232,8 +250,8 @@ def main():
         print(f"\nEndpoints:")
         print(f"  - /dashboard.html          Main dashboard")
         print(f"  - /story-descriptions.json Dynamic story descriptions")
-        print(f"  - /sprint-status.yaml      Sprint data (symlinked)")
-        print(f"  - /orchestrator.md         Activity log (symlinked)")
+        print(f"  - /sprint-status.yaml      Sprint data")
+        print(f"  - /orchestrator.md         Activity log")
         print(f"\nPress Ctrl+C to stop\n")
 
         try:

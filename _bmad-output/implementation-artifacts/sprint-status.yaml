@@ -188,6 +188,18 @@ development_status:
 
   epic-4-retrospective: optional
 
+  # Epic 5-SR: Sprint Runner Dashboard Orchestrator
+  epic-5-sr: in-progress
+  5-sr-1-folder-structure-and-file-relocation: review
+  5-sr-2-sqlite-database-schema-and-operations: review
+  5-sr-3-python-orchestrator-core-loop: in-progress
+  5-sr-4-project-context-refresh-integration: ready-for-dev
+  5-sr-5-websocket-real-time-events: ready-for-dev
+  5-sr-6-dashboard-sprint-run-tab: ready-for-dev
+  5-sr-7-dashboard-ui-improvements: ready-for-dev
+  5-sr-8-integration-testing-and-cleanup: ready-for-dev
+  epic-5-sr-retrospective: optional
+
   # Epic 5a: Folder Hierarchy
   epic-5a: backlog
   5a-1-folder-selection-for-new-sessions: backlog
