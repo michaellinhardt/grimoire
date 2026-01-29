@@ -1,0 +1,11 @@
+{
+  "project_context_max_age_hours": 24,
+  "injection_warning_kb": 100,
+  "injection_error_kb": 300,
+  "default_max_cycles": 2,
+  "max_code_review_attempts": 10,
+  "haiku_after_review": 2,
+  "server_port": 8080,
+  "websocket_heartbeat_seconds": 30,
+  "default_batch_list_limit": 20
+}
