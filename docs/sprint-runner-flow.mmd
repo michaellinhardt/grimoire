@@ -1,0 +1,146 @@
+```mermaid
+flowchart TD
+    START([START]) --> INIT_BATCH[Parse batch size<br/>default=2, or 'all']
+    INIT_BATCH --> CTX_CHECK{Project context<br/>status?}
+
+    CTX_CHECK -->|missing| CTX_CREATE[spawn generate-project-context<br/>BLOCKING - wait]
+    CTX_CHECK -->|expired| CTX_REFRESH[spawn background refresh<br/>NON-BLOCKING - continue]
+    CTX_CHECK -->|fresh| CTX_SKIP[Skip regeneration]
+
+    CTX_CREATE --> CTX_COPY[Copy project-context.md<br/>to sprint-project-context.md]
+    CTX_REFRESH --> CTX_COPY
+    CTX_SKIP --> CTX_COPY
+
+    CTX_COPY --> STEP1
+
+    subgraph CYCLE[Main Cycle Loop]
+        STEP1[Step 1: Read sprint-status.yaml]
+        STEP1 --> STORIES_LEFT{Non-done/blocked<br/>stories remaining?}
+
+        STORIES_LEFT -->|No| SPRINT_DONE([Sprint Complete])
+        STORIES_LEFT -->|Yes| SELECT_STORIES[Select 1-2 stories<br/>pair if same epic]
+
+        SELECT_STORIES --> STATUS_CHECK{First story<br/>status?}
+
+        %% BACKLOG PATH
+        STATUS_CHECK -->|backlog| CREATE_PHASE
+
+        subgraph CREATE_PHASE[Step 2: Create-Story Phase]
+            direction TB
+            subgraph PARALLEL_CREATE[Parallel Execution]
+                CREATE_STORY[sprint-create-story<br/>creates story files]
+                CREATE_DISCOVERY[sprint-create-story-discovery<br/>creates discovery files]
+            end
+            PARALLEL_CREATE --> INJECT_CTX[Inject project-context<br/>into discovery files]
+            INJECT_CTX --> PARSE_DECISION[Parse TECH-SPEC-DECISION<br/>REQUIRED or SKIP]
+        end
+
+        CREATE_PHASE --> STORY_REVIEW
+
+        subgraph STORY_REVIEW[Step 2b: Story Review]
+            direction TB
+            SR_REVIEW1[story-review-1<br/>BLOCKING - default model]
+            SR_REVIEW1 --> SR_CRITICAL{Critical<br/>issues?}
+            SR_CRITICAL -->|Yes| SR_BG[Spawn background chain<br/>Haiku: review-2 → review-3<br/>Fire & forget]
+            SR_CRITICAL -->|No| SR_DONE[Review complete]
+            SR_BG --> SR_CONTINUE[Continue immediately]
+        end
+
+        STORY_REVIEW --> TECHSPEC_CHECK{tech_spec_needed?}
+
+        TECHSPEC_CHECK -->|Yes| TECHSPEC_PHASE
+        TECHSPEC_CHECK -->|No| DEV_PHASE
+
+        subgraph TECHSPEC_PHASE[Step 3: Tech-Spec Phase]
+            direction TB
+            TS_CREATE[sprint-create-tech-spec<br/>handles all stories sequentially]
+            TS_CREATE --> TS_REVIEW1[tech-spec-review-1<br/>BLOCKING - default model]
+            TS_REVIEW1 --> TS_CRITICAL{Critical<br/>issues?}
+            TS_CRITICAL -->|Yes| TS_BG[Spawn background chain<br/>Haiku: review-2 → review-3<br/>Fire & forget]
+            TS_CRITICAL -->|No| TS_DONE[Review complete]
+            TS_BG --> TS_CONTINUE[Continue immediately]
+        end
+
+        TECHSPEC_PHASE --> DEV_PHASE
+
+        %% READY-FOR-DEV PATH
+        STATUS_CHECK -->|ready-for-dev| DEV_PHASE
+
+        %% REVIEW PATH (skip dev-story)
+        STATUS_CHECK -->|review| CODE_REVIEW_LOOP
+
+        %% IN-PROGRESS PATH
+        STATUS_CHECK -->|in-progress| DEV_PHASE
+
+        subgraph DEV_PHASE[Step 4: Dev + Code-Review]
+            direction TB
+            DEV_LOOP_START[FOR each story in batch]
+            DEV_LOOP_START --> DEV_STORY[sprint-dev-story<br/>implement code]
+            DEV_STORY --> CODE_REVIEW_LOOP
+
+            subgraph CODE_REVIEW_LOOP[Code Review Loop]
+                direction TB
+                CR_START[attempt = 1]
+                CR_START --> CR_MODEL{attempt >= 2?}
+                CR_MODEL -->|Yes| CR_HAIKU[Use Haiku model]
+                CR_MODEL -->|No| CR_DEFAULT[Use default model]
+                CR_HAIKU --> CR_EXECUTE[sprint-code-review]
+                CR_DEFAULT --> CR_EXECUTE
+                CR_EXECUTE --> CR_PARSE[Parse severity<br/>from output]
+                CR_PARSE --> CR_ZERO{ZERO issues?}
+                CR_ZERO -->|Yes| CR_DONE_OK[status = done]
+                CR_ZERO -->|No| CR_3X{Same error<br/>3x consecutive?}
+                CR_3X -->|Yes| CR_BLOCKED[status = blocked]
+                CR_3X -->|No| CR_3_CHECK{attempt >= 3<br/>AND not CRITICAL?}
+                CR_3_CHECK -->|Yes| CR_DONE_OK
+                CR_3_CHECK -->|No| CR_10{attempt = 10?}
+                CR_10 -->|Yes| CR_BLOCKED
+                CR_10 -->|No| CR_INCREMENT[attempt++]
+                CR_INCREMENT --> CR_MODEL
+            end
+
+            CR_DONE_OK --> NEXT_STORY{More stories<br/>in batch?}
+            CR_BLOCKED --> NEXT_STORY
+            NEXT_STORY -->|Yes| DEV_LOOP_START
+            NEXT_STORY -->|No| BATCH_COMMIT_PHASE
+        end
+
+        subgraph BATCH_COMMIT_PHASE[Step 4c: Batch Commit]
+            direction TB
+            BC_COLLECT[Collect completed stories<br/>exclude blocked]
+            BC_COLLECT --> BC_CHECK{Any completed?}
+            BC_CHECK -->|No| BC_SKIP[Skip commit]
+            BC_CHECK -->|Yes| BC_CAPTURE[Capture git status]
+            BC_CAPTURE --> BC_COMMIT[sprint-commit<br/>archive + git commit]
+        end
+
+        BC_SKIP --> CYCLE_CONTROL
+        BC_COMMIT --> CYCLE_CONTROL
+
+        subgraph CYCLE_CONTROL[Step 6: Loop Control]
+            direction TB
+            LC_INC[cycles_completed++]
+            LC_INC --> LC_MODE{batch_mode?}
+            LC_MODE -->|all| LC_CONTINUE[Continue to Step 1]
+            LC_MODE -->|fixed| LC_LIMIT{cycles >=<br/>max_cycles?}
+            LC_LIMIT -->|Yes| LC_PROMPT[Prompt user<br/>for next batch]
+            LC_LIMIT -->|No| LC_CONTINUE
+        end
+    end
+
+    LC_CONTINUE --> STEP1
+    LC_PROMPT --> BATCH_END([Batch Complete])
+
+    %% Styling
+    classDef startEnd fill:#e1f5fe,stroke:#01579b
+    classDef decision fill:#fff3e0,stroke:#e65100
+    classDef process fill:#e8f5e9,stroke:#2e7d32
+    classDef parallel fill:#f3e5f5,stroke:#7b1fa2
+    classDef background fill:#fce4ec,stroke:#c2185b
+
+    class START,SPRINT_DONE,BATCH_END startEnd
+    class CTX_CHECK,STORIES_LEFT,STATUS_CHECK,TECHSPEC_CHECK,SR_CRITICAL,TS_CRITICAL,CR_ZERO,CR_3X,CR_3_CHECK,CR_10,NEXT_STORY,BC_CHECK,LC_MODE,LC_LIMIT,CR_MODEL decision
+    class INIT_BATCH,CTX_CREATE,CTX_REFRESH,CTX_SKIP,CTX_COPY,STEP1,SELECT_STORIES,INJECT_CTX,PARSE_DECISION,DEV_STORY,CR_EXECUTE,CR_PARSE,BC_COLLECT,BC_CAPTURE,BC_COMMIT,LC_INC process
+    class PARALLEL_CREATE parallel
+    class SR_BG,TS_BG background
+```
